@@ -1,5 +1,5 @@
 import { Button } from "../ui/button";
-import { Home, FileText, MessageCircle, User, Briefcase, Bell, CreditCard } from "lucide-react";
+import { Home, FileText, MessageCircle, User, Briefcase, Bell, CreditCard, Receipt } from "lucide-react";
 import LightLogo from "../../assets/light-logo.png";
 import DarkLogo from "../../assets/dark-logo.png";
 import { useEffect, useState, useRef } from "react";
@@ -12,7 +12,8 @@ const navLinks = [
     { label: "Minha Conta", icon: User, key: "Minha Conta" },
     { label: "Meu Portfólio", icon: Briefcase, key: "Portfólio" },
     { label: "Notificações", icon: Bell, key: "Notificações" },
-    { label: "Subscrição", icon: CreditCard, key: "Subscrição" }
+    { label: "Subscrição", icon: CreditCard, key: "Subscrição" },
+    { label: "Histórico de Pagamentos", icon: Receipt, key: "Histórico de Pagamentos" },
 ];
 
 interface SidebarProps {

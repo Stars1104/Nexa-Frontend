@@ -1,161 +1,396 @@
-import React, { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogClose,
-} from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Checkbox } from "../ui/checkbox";
-import { Button } from "../ui/button";
+import React, { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useToast } from '@/hooks/use-toast'
+import { apiClient } from '@/services/apiClient'
 
-export default function SubscriptionModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const [accepted, setAccepted] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    cpf: "",
-    card: "",
-    expiry: "",
-    cvc: "",
-  });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-md p-0 rounded-2xl overflow-hidden">
-        <form className="bg-background w-full flex flex-col px-5 py-6 gap-4 sm:gap-6" onSubmit={e => { e.preventDefault(); /* handle payment */ }}>
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold mb-2 text-foreground">Finalizar assinatura</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col gap-3">
-            <div>
-              <Label htmlFor="name">Nome completo</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Ana Silva"
-                autoComplete="name"
-                value={form.name}
-                onChange={handleChange}
-                required
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="ana.silva@email.com"
-                autoComplete="email"
-                value={form.email}
-                onChange={handleChange}
-                required
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="cpf">CPF</Label>
-              <Input
-                id="cpf"
-                name="cpf"
-                type="text"
-                placeholder="000.000.000-00"
-                autoComplete="off"
-                value={form.cpf}
-                onChange={handleChange}
-                required
-                className="mt-1"
-              />
-            </div>
-          </div>
-          <div className="border-t pt-4 flex flex-col gap-3">
-            <div className="font-medium text-base text-foreground mb-1">Dados do cartão</div>
-            <div>
-              <Label htmlFor="card">Número do cartão</Label>
-              <Input
-                id="card"
-                name="card"
-                type="text"
-                placeholder="0000 0000 0000 0000"
-                autoComplete="cc-number"
-                value={form.card}
-                onChange={handleChange}
-                required
-                className="mt-1"
-                inputMode="numeric"
-                maxLength={19}
-              />
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex-1">
-                <Label htmlFor="expiry">Validade</Label>
-                <Input
-                  id="expiry"
-                  name="expiry"
-                  type="text"
-                  placeholder="MM/AA"
-                  autoComplete="cc-exp"
-                  value={form.expiry}
-                  onChange={handleChange}
-                  required
-                  className="mt-1"
-                  inputMode="numeric"
-                  maxLength={5}
-                />
-              </div>
-              <div className="flex-1">
-                <Label htmlFor="cvc">CVC</Label>
-                <Input
-                  id="cvc"
-                  name="cvc"
-                  type="text"
-                  placeholder="000"
-                  autoComplete="cc-csc"
-                  value={form.cvc}
-                  onChange={handleChange}
-                  required
-                  className="mt-1"
-                  inputMode="numeric"
-                  maxLength={4}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="flex items-start gap-2 mt-2">
-            <Checkbox id="terms" checked={accepted} onCheckedChange={v => setAccepted(!!v)} />
-            <Label htmlFor="terms" className="text-xs text-muted-foreground select-none">
-              Aceito os <a href="#" className="text-[#E91E63] hover:underline">Termos de Uso</a> e a <a href="#" className="text-[#E91E63] hover:underline">Política de Privacidade</a>
-            </Label>
-          </div>
-          <Button
-            type="submit"
-            className="w-full mt-2 bg-[#E91E63] hover:bg-pink-600 text-white font-semibold text-base py-3 rounded-lg"
-            disabled={!accepted}
-          >
-            Confirmar pagamento
-          </Button>
-        </form>
-        <DialogClose asChild>
-          <button
-            aria-label="Fechar"
-            className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors rounded-full focus:outline-none focus:ring-2 focus:ring-[#E91E63]"
-            type="button"
-          >
-            <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 6 6 18M6 6l12 12"/></svg>
-          </button>
-        </DialogClose>
-      </DialogContent>
-    </Dialog>
-  );
+interface SubscriptionModalProps {
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  onClose?: () => void
+  onSuccess?: () => void
 }
 
+export default function SubscriptionModal({ open, onOpenChange, onClose, onSuccess }: SubscriptionModalProps) {
+  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    card_number: '',
+    card_holder_name: '',
+    card_expiration_date: '',
+    card_cvv: '',
+    cpf: '',
+  })
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const formatCPF = (value: string) => {
+    // Remove all non-digits
+    const numbers = value.replace(/\D/g, '')
+    
+    // Apply CPF mask: XXX.XXX.XXX-XX
+    if (numbers.length <= 3) return numbers
+    if (numbers.length <= 6) return `${numbers.slice(0, 3)}.${numbers.slice(3)}`
+    if (numbers.length <= 9) return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`
+    return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`
+  }
+
+  const formatCardNumber = (value: string) => {
+    // Remove all non-digits
+    const numbers = value.replace(/\D/g, '')
+    // Add spaces every 4 digits
+    return numbers.replace(/(\d{4})(?=\d)/g, '$1 ').trim()
+  }
+
+  const formatExpiration = (value: string) => {
+    // Remove all non-digits
+    const numbers = value.replace(/\D/g, '')
+    // Format as MM/YY
+    if (numbers.length <= 2) return numbers
+    return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}`
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    let formattedValue = value
+
+    switch (name) {
+      case 'cpf':
+        formattedValue = formatCPF(value)
+        break
+      case 'card_number':
+        formattedValue = formatCardNumber(value)
+        break
+      case 'card_expiration_date':
+        formattedValue = formatExpiration(value)
+        break
+    }
+
+    setFormData(prev => ({ ...prev, [name]: formattedValue }))
+  }
+
+  // CPF validation function
+  const validateCPF = (cpf: string): boolean => {
+    // Remove formatting
+    const numbers = cpf.replace(/[.-]/g, '')
+    
+    // Check if it has 11 digits
+    if (numbers.length !== 11) {
+      return false
+    }
+    
+    // Check if all digits are the same
+    if (/^(\d)\1{10}$/.test(numbers)) {
+      return false
+    }
+    
+    // Validate first digit
+    let sum = 0
+    for (let i = 0; i < 9; i++) {
+      sum += parseInt(numbers[i]) * (10 - i)
+    }
+    let remainder = sum % 11
+    let digit1 = remainder < 2 ? 0 : 11 - remainder
+    
+    if (parseInt(numbers[9]) !== digit1) {
+      return false
+    }
+    
+    // Validate second digit
+    sum = 0
+    for (let i = 0; i < 10; i++) {
+      sum += parseInt(numbers[i]) * (11 - i)
+    }
+    remainder = sum % 11
+    let digit2 = remainder < 2 ? 0 : 11 - remainder
+    
+    return parseInt(numbers[10]) === digit2
+  }
+
+  const validateForm = () => {
+    const errors: string[] = []
+
+    if (!formData.card_number.replace(/\s/g, '').match(/^\d{16}$/)) {
+      errors.push('Card number must be 16 digits')
+    }
+
+    if (!formData.card_holder_name.trim()) {
+      errors.push('Card holder name is required')
+    }
+
+    if (!formData.card_expiration_date.match(/^\d{2}\/\d{2}$/)) {
+      errors.push('Expiration date must be in MM/YY format')
+    }
+
+    if (!formData.card_cvv.match(/^\d{3,4}$/)) {
+      errors.push('CVV must be 3 or 4 digits')
+    }
+
+    if (!formData.cpf.match(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/)) {
+      errors.push('CPF must be in XXX.XXX.XXX-XX format')
+    } else if (!validateCPF(formData.cpf)) {
+      errors.push('CPF is not valid. Please check the number.')
+    }
+
+    return errors
+  }
+
+  const handlePay = async () => {
+    // Check if user is authenticated
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to continue with the payment",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Check if modal is still open
+    if (!open) {
+      
+      return;
+    }
+
+    const errors = validateForm();
+    
+    if (errors.length > 0) {
+      toast({
+        title: "Validation Error",
+        description: errors.join(', '),
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      // Prepare data for backend
+      const paymentData = {
+        card_number: formData.card_number.replace(/\s/g, ''),
+        card_holder_name: formData.card_holder_name.trim(),
+        card_expiration_date: formData.card_expiration_date.replace('/', ''), // Remove slash to get MMYY format
+        card_cvv: formData.card_cvv,
+        cpf: formData.cpf, // Keep the formatted CPF (XXX.XXX.XXX-XX)
+      }
+
+      // Validate data before sending
+      if (paymentData.card_number.length !== 16) {
+        toast({
+          title: "Validation Error",
+          description: "Card number must be exactly 16 digits",
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (paymentData.card_expiration_date.length !== 4) {
+        toast({
+          title: "Validation Error",
+          description: "Expiration date must be in MMYY format",
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (paymentData.card_cvv.length < 3 || paymentData.card_cvv.length > 4) {
+        toast({
+          title: "Validation Error",
+          description: "CVV must be 3 or 4 digits",
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (!paymentData.cpf.match(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/)) {
+        toast({
+          title: "Validation Error",
+          description: "CPF must be in XXX.XXX.XXX-XX format",
+          variant: "destructive",
+        })
+        return
+      }
+
+
+      const response = await apiClient.post('/payment/subscription', paymentData)
+
+      if (response.data.success) {
+
+        handleSuccess()
+      } else {
+        throw new Error(response.data.message || 'Payment failed')
+      }
+
+    } catch (error: any) {
+      console.error('Payment error:', error)
+      console.error('Error response data:', error.response?.data)
+      console.error('Error response status:', error.response?.status)
+      console.error('Full error response:', JSON.stringify(error.response?.data, null, 2))
+      
+      // Handle different types of errors
+      if (error.response?.status === 401) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to continue with the payment",
+          variant: "destructive",
+        })
+      } else if (error.response?.status === 422) {
+        const validationErrors = error.response?.data?.errors
+        if (validationErrors) {
+          const errorMessages = Object.values(validationErrors).flat().join(', ')
+          toast({
+            title: "Validation Error",
+            description: errorMessages,
+            variant: "destructive",
+          })
+        } else {
+          toast({
+            title: "Validation Error",
+            description: error.response?.data?.message || 'Please check your input and try again',
+            variant: "destructive",
+          })
+        }
+      } else if (error.response?.status === 403) {
+        toast({
+          title: "Access Denied",
+          description: error.response?.data?.message || 'You do not have permission to perform this action',
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Payment Failed",
+          description: error.response?.data?.message || error.message || 'An error occurred during payment',
+          variant: "destructive",
+        })
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleClose = () => {
+    if (onOpenChange) {
+      onOpenChange(false)
+    } else if (onClose) {
+      onClose()
+    }
+  }
+
+  const handleSuccess = () => {
+    // Dispatch event to notify other components about premium status update
+    window.dispatchEvent(new CustomEvent('premium-status-updated'));
+    
+    onSuccess?.()
+    handleClose()
+  }
+
+  // If using controlled state and modal is not open, don't render
+  if (open !== undefined && !open) {
+    return null
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <Card className="w-full max-w-md mx-4">
+        <CardHeader>
+          <CardTitle>Premium Subscription</CardTitle>
+          <CardDescription>
+            Get access to premium features for R$ 49.99/month
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="card_number">Card Number</Label>
+            <Input
+              id="card_number"
+              name="card_number"
+              placeholder="1234 5678 9012 3456"
+              value={formData.card_number}
+              onChange={handleInputChange}
+              maxLength={19}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="card_holder_name">Card Holder Name</Label>
+            <Input
+              id="card_holder_name"
+              name="card_holder_name"
+              placeholder="John Doe"
+              value={formData.card_holder_name}
+              onChange={handleInputChange}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="card_expiration_date">Expiration</Label>
+              <Input
+                id="card_expiration_date"
+                name="card_expiration_date"
+                placeholder="MM/YY"
+                value={formData.card_expiration_date}
+                onChange={handleInputChange}
+                maxLength={5}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="card_cvv">CVV</Label>
+              <Input
+                id="card_cvv"
+                name="card_cvv"
+                placeholder="123"
+                value={formData.card_cvv}
+                onChange={handleInputChange}
+                maxLength={4}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cpf">CPF</Label>
+            <Input
+              id="cpf"
+              name="cpf"
+              placeholder="111.444.777-35"
+              value={formData.cpf}
+              onChange={handleInputChange}
+              maxLength={14}
+            />
+            {import.meta.env.DEV && (
+              <p className="text-xs text-muted-foreground">
+                Valid test CPFs: 111.444.777-35, 123.456.789-09, 987.654.321-00
+              </p>
+            )}
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={handleClose}
+              disabled={isLoading}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handlePay}
+              disabled={isLoading}
+              className="flex-1"
+            >
+              {isLoading ? 'Processing...' : 'Pay R$ 49.99'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

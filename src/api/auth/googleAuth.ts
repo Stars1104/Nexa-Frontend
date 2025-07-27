@@ -58,7 +58,7 @@ export const initiateGoogleOAuth = async (role?: 'creator' | 'brand') => {
         if (role) {
             sessionStorage.setItem('google_oauth_role', role);
         } else {
-            console.log('Google OAuth initiated without role (will default to creator)');
+        
         }
         
         // Redirect to Google OAuth

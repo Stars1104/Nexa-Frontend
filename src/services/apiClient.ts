@@ -45,6 +45,11 @@ apiClient.interceptors.response.use(
             // Don't automatically clear token, let the auth hook handle it
         }
         
+        // Handle 403 Premium Required
+        if (error.response?.status === 403 && error.response?.data?.error === 'premium_required') {
+            // Let the PremiumAccessGuard handle this
+        }
+        
         // Handle 419 CSRF Token Mismatch with retry
         if (error.response?.status === 419) {
             

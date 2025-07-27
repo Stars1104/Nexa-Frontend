@@ -13,11 +13,12 @@ const GoogleOAuthCallback: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { navigateToRoleDashboard } = useRoleNavigation();
+  const { navigateToRoleDashboard, navigateToSubscription } = useRoleNavigation();
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isNewRegistration, setIsNewRegistration] = useState(false);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -50,14 +51,26 @@ const GoogleOAuthCallback: React.FC = () => {
         
         if (result && result.user) {
           setStatus('success');
-          toast.success('Successfully signed in with Google!');
+          
+          // Check if this is a new registration by checking if the user has premium access
+          // New users typically don't have premium access
+          const isNewUser = !result.user.isPremium && result.user.role === 'creator';
+          setIsNewRegistration(isNewUser);
+          
+          toast.success(isNewUser ? 'Account created successfully!' : 'Successfully signed in with Google!');
           
           // Clean up URL parameters
           window.history.replaceState({}, document.title, window.location.pathname);
           
-          // Navigate to appropriate dashboard
+          // Navigate to appropriate page
           setTimeout(() => {
-            navigateToRoleDashboard(result.user.role);
+            if (isNewUser) {
+              // Redirect new Creator registrations to subscription page
+              navigateToSubscription();
+            } else {
+              // Navigate to appropriate dashboard for existing users or non-creators
+              navigateToRoleDashboard(result.user.role);
+            }
           }, 1000);
         } else {
           throw new Error('Authentication failed');

@@ -3,6 +3,7 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
+import { PremiumProvider } from "./contexts/PremiumContext";
 import { useAuthRehydration } from "./hooks/useAuthRehydration";
 import { useSocket } from "./hooks/useSocket";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -32,10 +33,11 @@ const App = () => {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="system" storageKey="nexa-ui-theme">
-          <TooltipProvider>
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
+          <PremiumProvider>
+            <TooltipProvider>
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<AuthStep />} />
                 <Route path="/auth/login" element={<Signup />} />
@@ -49,6 +51,11 @@ const App = () => {
                   </ProtectedRoute>
                 } />
                 <Route path="/creator" element={
+                  <ProtectedRoute allowedRoles={['creator', 'student']}>
+                    <CreatorIndex />
+                  </ProtectedRoute>
+                } />
+                <Route path="/creator/subscription" element={
                   <ProtectedRoute allowedRoles={['creator', 'student']}>
                     <CreatorIndex />
                   </ProtectedRoute>
@@ -74,7 +81,8 @@ const App = () => {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
-          </TooltipProvider>
+            </TooltipProvider>
+          </PremiumProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>

@@ -4,7 +4,8 @@ import Sidebar from "../../components/creator/Sidebar";
 import Dashboard from "../../components/creator/Dashboard";
 import { useIsMobile } from "../../hooks/use-mobile";
 import { CreatorProfile } from "../../components/creator/CreatorProfile";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import NotFound from "../NotFound";
 import ProjectDetail from "../../components/creator/ProjectDetail";
 import MyApplication from "../../components/creator/MyApplication";
@@ -12,14 +13,42 @@ import Chat from "../../components/Chat";
 import Portfolio from "../../components/creator/Portfolio";
 import Notification from "@/components/Notification";
 import Subscription from "@/components/creator/Subscription";
+import TransactionHistory from "@/components/creator/TransactionHistory";
+import PremiumAccessGuard from "../../components/PremiumAccessGuard";
+import { usePremiumContext } from "../../contexts/PremiumContext";
 
 const Index = () => {
     const isMobile = useIsMobile();
+    const location = useLocation();
+    const { hasPremium, loading: premiumLoading } = usePremiumContext();
 
     const [component, setComponent] = useState<string | null>("Painel");
     const [projectId, setProjectId] = useState<number | null>(null);
 
+    // Handle subscription route
+    useEffect(() => {
+        if (location.pathname === '/creator/subscription') {
+            setComponent("Subscrição");
+        } else if (location.pathname === '/creator' && !component) {
+            // Set default component if on main creator page
+            setComponent("Painel");
+        }
+    }, [location.pathname, component]);
+
     const CreatorComponent = () => {
+        // Define which components require premium access
+        const premiumRequiredComponents = ["Painel", "Detalhes do Projeto", "Minha Aplicação", "Chat", "Notificações"];
+        const isPremiumRequired = premiumRequiredComponents.includes(component || "");
+        
+        // If premium is required and user doesn't have it, show premium guard
+        if (isPremiumRequired && !hasPremium && !premiumLoading) {
+            return (
+                <PremiumAccessGuard>
+                    <div>This component requires premium</div>
+                </PremiumAccessGuard>
+            );
+        }
+        
         switch (component) {
             case "Painel":
                 return <Dashboard setComponent={setComponent} setProjectId={setProjectId} />;
@@ -34,12 +63,27 @@ const Index = () => {
             case "Portfólio":
                 return <Portfolio />;
             case "Notificações":
-                return <Notification />
+                return <Notification />;
             case "Subscrição":
-                return <Subscription />
+                return <Subscription />;
+            case "Histórico de Pagamentos":
+                return <TransactionHistory />;
             default:
                 return <NotFound />;
         }
+    }
+
+    // Show loading while checking premium status
+    if (premiumLoading) {
+        return (
+            <ThemeProvider>
+                <div className="flex h-screen bg-background text-foreground">
+                    <div className="flex-1 flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                </div>
+            </ThemeProvider>
+        );
     }
 
     return (

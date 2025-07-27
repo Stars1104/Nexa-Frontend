@@ -32,6 +32,10 @@ export const useRoleNavigation = () => {
     navigate("/student-verify", { replace: true });
   };
 
+  const navigateToSubscription = () => {
+    navigate("/creator/subscription", { replace: true });
+  };
+
   const navigateToLogin = (from?: string) => {
     navigate("/auth/login", { 
       state: from ? { from: { pathname: from } } : undefined,
@@ -43,6 +47,7 @@ export const useRoleNavigation = () => {
     getDefaultDashboard,
     navigateToRoleDashboard,
     navigateToStudentVerification,
+    navigateToSubscription,
     navigateToLogin,
   };
 }; 

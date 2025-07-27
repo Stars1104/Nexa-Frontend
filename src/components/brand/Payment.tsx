@@ -362,36 +362,6 @@ export default function Payment() {
             </div>
           </CardContent>
         </Card>
-        {/* Histórico de Transações */}
-        {/* <Card>
-          <CardContent className="p-6 md:p-8">
-            <h2 className="text-base md:text-lg font-semibold mb-4">Histórico de Transações</h2>
-            <div className="flex flex-col gap-3">
-              {transactions.map((tx, idx) => (
-                <div
-                  key={idx}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 border rounded-lg px-4 py-3 bg-background border-muted"
-                >
-                  <div className="flex items-center gap-3">
-                    {tx.type === "out" ? (
-                      <AlertCircle className="w-6 h-6 text-red-400" />
-                    ) : (
-                      <CheckCircle2 className="w-6 h-6 text-green-500" />
-                    )}
-                    <div className="flex flex-col text-sm">
-                      <span className="font-medium">{tx.title}</span>
-                      <span className="text-xs text-muted-foreground">{tx.date}</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 mt-2 sm:mt-0">
-                    <span className={`font-medium ${tx.type === "out" ? "text-red-500" : "text-green-600"}`}>{tx.amount}</span>
-                    <span className="text-xs text-green-500">{tx.status}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card> */}
       </div>
 
       {/* Add Dialog */}

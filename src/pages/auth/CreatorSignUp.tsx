@@ -38,12 +38,13 @@ const CreatorSignUp = () => {
   const systemTheme = useSystemTheme();
   const isDarkMode = theme === "dark" || (theme === "system" && systemTheme);
   const [authType, setAuthType] = useState("signup");
+  const [isNewRegistration, setIsNewRegistration] = useState(false);
   const { role } = useParams<{ role: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
   const { loginType } = useParams<{ loginType: string }>();
-  const { navigateToRoleDashboard, navigateToStudentVerification } = useRoleNavigation();
+  const { navigateToRoleDashboard, navigateToStudentVerification, navigateToSubscription } = useRoleNavigation();
   
   const { isSigningUp, isLoading, error, isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
@@ -69,6 +70,9 @@ const CreatorSignUp = () => {
       // Handle student verification flow
       if (user.isStudent && user.role === 'creator') {
         navigateToStudentVerification();
+      } else if (isNewRegistration && user.role === 'creator') {
+        // Redirect new Creator registrations to subscription page
+        navigateToSubscription();
       } else {
         // Check if there's a redirect location from ProtectedRoute
         const from = location.state?.from?.pathname;
@@ -79,7 +83,7 @@ const CreatorSignUp = () => {
         }
       }
     }
-  }, [isAuthenticated, user, role, navigateToRoleDashboard, navigateToStudentVerification, location]);
+  }, [isAuthenticated, user, role, navigateToRoleDashboard, navigateToStudentVerification, navigateToSubscription, location, isNewRegistration]);
 
 
 
@@ -93,6 +97,7 @@ const CreatorSignUp = () => {
   // Reset form when switching auth types
   const handleAuthTypeChange = (newAuthType: string) => {
     setAuthType(newAuthType);
+    setIsNewRegistration(false); // Reset new registration flag
     form.reset({
       name: "",
       email: "",
@@ -122,6 +127,7 @@ const CreatorSignUp = () => {
       const response = await dispatch(signupUser(signupData)).unwrap();
       if (response.user !== null) {
         toast.success("Conta criada com sucesso!");
+        setIsNewRegistration(true); // Set flag for new registration
       }
       // Navigation will be handled by useEffect after successful signup
     } catch (error) {
