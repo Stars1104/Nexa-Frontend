@@ -10,8 +10,7 @@ const statusStyles = {
     "bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-300",
   pending:
     "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
-  rejected:
-    "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300",
+  rejected: "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300",
 };
 
 const statusLabels = {
@@ -20,13 +19,20 @@ const statusLabels = {
   rejected: "Rejeitado",
 };
 
-interface MyApplicationProps {  
+interface MyApplicationProps {
   setComponent: (component: string) => void;
 }
 
 const MyApplication: React.FC<MyApplicationProps> = ({ setComponent }) => {
   const dispatch = useAppDispatch();
-  const { creatorApplications, isLoading, error } = useAppSelector((state) => state.campaign);
+  const { creatorApplications, isLoading, error } = useAppSelector(
+    (state) => state.campaign
+  );
+
+  // Ensure creatorApplications is always an array
+  const safeCreatorApplications = Array.isArray(creatorApplications)
+    ? creatorApplications
+    : [];
 
   // Fetch creator applications on component mount
   useEffect(() => {
@@ -34,11 +40,11 @@ const MyApplication: React.FC<MyApplicationProps> = ({ setComponent }) => {
       try {
         await dispatch(fetchCreatorApplications()).unwrap();
       } catch (error) {
-        console.error('Error fetching applications:', error);
+        console.error("Error fetching applications:", error);
         toast.error("Erro ao carregar aplicações");
       }
     };
-    
+
     fetchApplications();
   }, [dispatch]);
 
@@ -58,7 +64,7 @@ const MyApplication: React.FC<MyApplicationProps> = ({ setComponent }) => {
   // Format date for display
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
+    return date.toLocaleDateString("pt-BR");
   };
 
   return (
@@ -66,11 +72,14 @@ const MyApplication: React.FC<MyApplicationProps> = ({ setComponent }) => {
       <h2 className="text-xl sm:text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
         Minhas Aplicações
       </h2>
-      
+
       {isLoading ? (
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4 shadow-sm">
+            <div
+              key={i}
+              className="rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4 shadow-sm"
+            >
               <div className="flex justify-between items-center mb-2">
                 <Skeleton className="h-4 w-20" />
                 <Skeleton className="h-4 w-32" />
@@ -102,10 +111,14 @@ const MyApplication: React.FC<MyApplicationProps> = ({ setComponent }) => {
             </div>
           ))}
         </div>
-      ) : creatorApplications.length === 0 ? (
+      ) : safeCreatorApplications.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground text-lg">Você ainda não se candidatou a nenhuma campanha.</p>
-          <p className="text-muted-foreground text-sm mt-2">Explore as campanhas disponíveis e comece a se candidatar!</p>
+          <p className="text-muted-foreground text-lg">
+            Você ainda não se candidatou a nenhuma campanha.
+          </p>
+          <p className="text-muted-foreground text-sm mt-2">
+            Explore as campanhas disponíveis e comece a se candidatar!
+          </p>
         </div>
       ) : (
         <>
@@ -124,7 +137,7 @@ const MyApplication: React.FC<MyApplicationProps> = ({ setComponent }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {creatorApplications.map((app) => (
+                  {safeCreatorApplications.map((app) => (
                     <tr
                       key={app.id}
                       className="border-t border-gray-100 dark:border-neutral-700"
@@ -133,16 +146,24 @@ const MyApplication: React.FC<MyApplicationProps> = ({ setComponent }) => {
                         {app.campaign?.title || `Campanha #${app.campaign_id}`}
                       </td>
                       <td className="px-6 py-4 text-indigo-500 dark:text-indigo-300 whitespace-nowrap">
-                        {app.campaign?.brand?.name || 'N/A'}
+                        {app.campaign?.brand?.name || "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {app.proposed_budget ? `R$${app.proposed_budget}` : 'N/A'}
+                        {app.proposed_budget
+                          ? `R$${app.proposed_budget}`
+                          : "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {app.estimated_delivery_days ? `${app.estimated_delivery_days} dias` : 'N/A'}
+                        {app.estimated_delivery_days
+                          ? `${app.estimated_delivery_days} dias`
+                          : "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyles[app.status]}`}>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            statusStyles[app.status]
+                          }`}
+                        >
                           {statusLabels[app.status]}
                         </span>
                       </td>
@@ -157,7 +178,9 @@ const MyApplication: React.FC<MyApplicationProps> = ({ setComponent }) => {
                         ) : (
                           <button
                             className="text-gray-700 dark:text-gray-200 hover:underline font-medium"
-                            onClick={() => handleComponent("Detalhes do Projeto")}
+                            onClick={() =>
+                              handleComponent("Detalhes do Projeto")
+                            }
                           >
                             Ver campanha
                           </button>
@@ -169,40 +192,64 @@ const MyApplication: React.FC<MyApplicationProps> = ({ setComponent }) => {
               </table>
             </div>
           </div>
-          
+
           {/* Mobile Cards */}
           <div className="md:hidden space-y-4">
-            {creatorApplications.map((app) => (
+            {safeCreatorApplications.map((app) => (
               <div
                 key={app.id}
                 className="rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4 shadow-sm"
               >
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold text-gray-500 dark:text-gray-300">Campanha</span>
+                  <span className="text-sm font-semibold text-gray-500 dark:text-gray-300">
+                    Campanha
+                  </span>
                   <span className="text-gray-900 dark:text-gray-100 font-medium">
                     {app.campaign?.title || `Campanha #${app.campaign_id}`}
                   </span>
                 </div>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold text-gray-500 dark:text-gray-300">Marca</span>
-                  <span className="text-indigo-500 dark:text-indigo-300 font-medium">{app.campaign?.brand?.name || 'N/A'}</span>
+                  <span className="text-sm font-semibold text-gray-500 dark:text-gray-300">
+                    Marca
+                  </span>
+                  <span className="text-indigo-500 dark:text-indigo-300 font-medium">
+                    {app.campaign?.brand?.name || "N/A"}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold text-gray-500 dark:text-gray-300">Valor</span>
-                  <span>{app.proposed_budget ? `R$${app.proposed_budget}` : 'N/A'}</span>
+                  <span className="text-sm font-semibold text-gray-500 dark:text-gray-300">
+                    Valor
+                  </span>
+                  <span>
+                    {app.proposed_budget ? `R$${app.proposed_budget}` : "N/A"}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold text-gray-500 dark:text-gray-300">Prazo</span>
-                  <span>{app.estimated_delivery_days ? `${app.estimated_delivery_days} dias` : 'N/A'}</span>
+                  <span className="text-sm font-semibold text-gray-500 dark:text-gray-300">
+                    Prazo
+                  </span>
+                  <span>
+                    {app.estimated_delivery_days
+                      ? `${app.estimated_delivery_days} dias`
+                      : "N/A"}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold text-gray-500 dark:text-gray-300">Status</span>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyles[app.status]}`}>
+                  <span className="text-sm font-semibold text-gray-500 dark:text-gray-300">
+                    Status
+                  </span>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      statusStyles[app.status]
+                    }`}
+                  >
                     {statusLabels[app.status]}
                   </span>
                 </div>
                 <div className="flex justify-between items-center mt-2">
-                  <span className="text-sm font-semibold text-gray-500 dark:text-gray-300">Ações</span>
+                  <span className="text-sm font-semibold text-gray-500 dark:text-gray-300">
+                    Ações
+                  </span>
                   {app.status === "approved" ? (
                     <button
                       className="text-pink-500 hover:underline font-medium"
