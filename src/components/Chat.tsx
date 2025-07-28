@@ -24,12 +24,18 @@ import {
     ZoomOut,
     RotateCw,
     Maximize2,
-    Minimize2
+    Minimize2,
+    Briefcase,
+    DollarSign,
+    Calendar,
+    AlertCircle
 } from "lucide-react";
 import { useSocket } from "../hooks/useSocket";
 import { chatService, ChatRoom, Message } from "../services/chatService";
 import { useAppSelector } from "../store/hooks";
 import { format, isToday, isYesterday } from "date-fns";
+import CreateOffer from "./brand/CreateOffer";
+import { hiringApi, Offer } from "../api/hiring";
 
 export default function Chat() {
     const { user } = useAppSelector((state) => state.auth);
@@ -45,6 +51,11 @@ export default function Chat() {
     const [filePreview, setFilePreview] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [openDropdowns, setOpenDropdowns] = useState<Set<number>>(new Set());
+    
+    // Offer functionality state
+    const [showOfferModal, setShowOfferModal] = useState(false);
+    const [offers, setOffers] = useState<Offer[]>([]);
+    const [isLoadingOffers, setIsLoadingOffers] = useState(false);
     
     // Image viewer state
     const [imageViewer, setImageViewer] = useState<{
@@ -64,7 +75,7 @@ export default function Chat() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isMountedRef = useRef(true);
     const imageViewerRef = useRef<HTMLDivElement>(null);
 
@@ -82,6 +93,80 @@ export default function Chat() {
         reconnect,
         onMessagesRead,
     } = useSocket({ enableNotifications: false, enableChat: true });
+
+    // Check if current user is a brand and can send offers
+    const canSendOffer = user?.role === 'brand' && selectedRoom;
+
+    // Handle offer creation
+    const handleOfferCreated = () => {
+        setShowOfferModal(false);
+        // Refresh offers after creating a new one
+        if (selectedRoom) {
+            loadOffers(selectedRoom.room_id);
+        }
+        loadChatRooms();
+    };
+
+    // Handle offer cancellation
+    const handleOfferCancel = () => {
+        setShowOfferModal(false);
+    };
+
+    // Load offers for a chat room
+    const loadOffers = async (roomId: string) => {
+        if (!isMountedRef.current) return;
+        
+        try {
+            setIsLoadingOffers(true);
+            const response = await hiringApi.getOffersForChatRoom(roomId);
+            if (isMountedRef.current) {
+                setOffers(response.data);
+            }
+        } catch (error) {
+            console.error('Error loading offers:', error);
+        } finally {
+            if (isMountedRef.current) {
+                setIsLoadingOffers(false);
+            }
+        }
+    };
+
+    // Handle offer actions
+    const handleAcceptOffer = async (offerId: number) => {
+        try {
+            await hiringApi.acceptOffer(offerId);
+            // Refresh offers after accepting
+            if (selectedRoom) {
+                loadOffers(selectedRoom.room_id);
+            }
+        } catch (error) {
+            console.error('Error accepting offer:', error);
+        }
+    };
+
+    const handleRejectOffer = async (offerId: number) => {
+        try {
+            await hiringApi.rejectOffer(offerId);
+            // Refresh offers after rejecting
+            if (selectedRoom) {
+                loadOffers(selectedRoom.room_id);
+            }
+        } catch (error) {
+            console.error('Error rejecting offer:', error);
+        }
+    };
+
+    const handleCancelOffer = async (offerId: number) => {
+        try {
+            await hiringApi.cancelOffer(offerId);
+            // Refresh offers after cancelling
+            if (selectedRoom) {
+                loadOffers(selectedRoom.room_id);
+            }
+        } catch (error) {
+            console.error('Error cancelling offer:', error);
+        }
+    };
 
     // Component mount/unmount tracking
     useEffect(() => {
@@ -351,6 +436,9 @@ export default function Chat() {
         
         // Load messages for the selected room
         await loadMessages(room);
+        
+        // Load offers for the selected room
+        await loadOffers(room.room_id);
         
         // Focus input
         setTimeout(() => {
@@ -1650,8 +1738,143 @@ export default function Chat() {
                                             <span className="text-xs">Offline</span>
                                         </div>
                                     )}
+                                    {canSendOffer && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowOfferModal(true)}
+                                            className="flex items-center gap-2 bg-gradient-to-r from-pink-50 to-purple-50 hover:from-pink-100 hover:to-purple-100 border-pink-200 hover:border-pink-300 text-pink-700 hover:text-pink-800 dark:from-pink-900/20 dark:to-purple-900/20 dark:hover:from-pink-900/30 dark:hover:to-purple-900/30 dark:border-pink-700 dark:hover:border-pink-600 dark:text-pink-300 dark:hover:text-pink-200 transition-all duration-200"
+                                            title="Enviar oferta de trabalho"
+                                        >
+                                            <Briefcase className="w-4 h-4" />
+                                            <span className="hidden sm:inline">Enviar Oferta</span>
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
+
+                            {/* Offers Section */}
+                            {offers.length > 0 && (
+                                <div className="border-b bg-slate-50 dark:bg-slate-800/50">
+                                    <div className="p-4">
+                                        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                                            <Briefcase className="w-4 h-4" />
+                                            Ofertas de Trabalho ({offers.length})
+                                        </h3>
+                                        <div className="space-y-3">
+                                            {offers.map((offer) => (
+                                                <div key={offer.id} className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
+                                                    <div className="flex items-start justify-between mb-3">
+                                                        <div className="flex-1">
+                                                            <h4 className="font-medium text-slate-900 dark:text-white mb-1">
+                                                                {offer.title}
+                                                            </h4>
+                                                            <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                                                                {offer.description}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 ml-4">
+                                                            <Badge 
+                                                                variant={
+                                                                    offer.status === 'pending' ? 'default' :
+                                                                    offer.status === 'accepted' ? 'default' :
+                                                                    offer.status === 'rejected' ? 'destructive' :
+                                                                    'secondary'
+                                                                }
+                                                                className={
+                                                                    offer.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400' :
+                                                                    offer.status === 'accepted' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
+                                                                    offer.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
+                                                                    'bg-slate-100 text-slate-800 dark:bg-slate-900/20 dark:text-slate-400'
+                                                                }
+                                                            >
+                                                                {offer.status === 'pending' ? 'Pendente' :
+                                                                 offer.status === 'accepted' ? 'Aceita' :
+                                                                 offer.status === 'rejected' ? 'Rejeitada' :
+                                                                 'Expirada'}
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400 mb-3">
+                                                        <div className="flex items-center gap-1">
+                                                            <DollarSign className="w-4 h-4" />
+                                                            <span className="font-medium">{offer.budget}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <Calendar className="w-4 h-4" />
+                                                            <span>{offer.estimated_days} dias</span>
+                                                        </div>
+                                                        {offer.status === 'pending' && offer.days_until_expiry > 0 && (
+                                                            <div className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
+                                                                <AlertCircle className="w-4 h-4" />
+                                                                <span>Expira em {offer.days_until_expiry} dias</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {offer.requirements && offer.requirements.length > 0 && (
+                                                        <div className="mb-3">
+                                                            <h5 className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Requisitos:</h5>
+                                                            <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+                                                                {offer.requirements.map((req, index) => (
+                                                                    <li key={index} className="flex items-start gap-2">
+                                                                        <span className="text-pink-500 mt-1">•</span>
+                                                                        <span>{req}</span>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Action buttons based on user role and offer status */}
+                                                    {offer.status === 'pending' && (
+                                                        <div className="flex items-center gap-2">
+                                                            {user?.role === 'creator' && offer.can_be_accepted && (
+                                                                <>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        onClick={() => handleAcceptOffer(offer.id)}
+                                                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                                                    >
+                                                                        Aceitar Oferta
+                                                                    </Button>
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        onClick={() => handleRejectOffer(offer.id)}
+                                                                        className="border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                                                                    >
+                                                                        Rejeitar
+                                                                    </Button>
+                                                                </>
+                                                            )}
+                                                            {user?.role === 'brand' && offer.can_be_cancelled && (
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => handleCancelOffer(offer.id)}
+                                                                    className="border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                                                                >
+                                                                    Cancelar Oferta
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {offer.status === 'rejected' && offer.rejection_reason && (
+                                                        <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
+                                                            <p className="text-xs text-red-700 dark:text-red-400">
+                                                                <strong>Motivo da rejeição:</strong> {offer.rejection_reason}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Messages */}
                             <ScrollArea className="flex-1 p-4">
@@ -1830,6 +2053,34 @@ export default function Chat() {
 
             {/* Image Viewer */}
             <ImageViewer />
+
+            {/* Offer Modal */}
+            {showOfferModal && selectedRoom && (
+                <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+                                    Enviar Oferta para {selectedRoom.other_user.name}
+                                </h2>
+                                <button
+                                    onClick={handleOfferCancel}
+                                    className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <CreateOffer
+                                creatorId={selectedRoom.other_user.id}
+                                creatorName={selectedRoom.other_user.name}
+                                chatRoomId={selectedRoom.room_id}
+                                onOfferCreated={handleOfferCreated}
+                                onCancel={handleOfferCancel}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

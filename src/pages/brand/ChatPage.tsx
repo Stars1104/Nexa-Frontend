@@ -44,12 +44,18 @@ import {
     RotateCcw,
     ZoomIn,
     ZoomOut,
-    Minimize2
+    Minimize2,
+    Briefcase,
+    DollarSign,
+    Calendar,
+    AlertCircle
 } from "lucide-react";
 import { useSocket } from "../../hooks/useSocket";
 import { chatService, ChatRoom, Message } from "../../services/chatService";
 import { useAppSelector } from "../../store/hooks";
 import { format, isToday, isYesterday } from "date-fns";
+import CreateOffer from "../../components/brand/CreateOffer";
+import { hiringApi, Offer } from "../../api/hiring";
 
 interface ChatPageProps {
     setComponent?: (component: string) => void;
@@ -70,6 +76,11 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [openDropdowns, setOpenDropdowns] = useState<Set<number>>(new Set());
     
+    // Offer-related state
+    const [showOfferModal, setShowOfferModal] = useState(false);
+    const [offers, setOffers] = useState<Offer[]>([]);
+    const [isLoadingOffers, setIsLoadingOffers] = useState(false);
+    
     // Image viewer state
     const [imageViewer, setImageViewer] = useState<{
         isOpen: boolean;
@@ -88,7 +99,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isMountedRef = useRef(true);
     const imageViewerRef = useRef<HTMLDivElement>(null);
 
@@ -183,6 +194,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         if (selectedRoom) {
             joinRoom(selectedRoom.room_id);
             loadMessages(selectedRoom.room_id);
+            loadOffers(selectedRoom.room_id);
             
             return () => {
                 if (isMountedRef.current) {
@@ -623,6 +635,80 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
             return 'Yesterday';
         } else {
             return format(date, 'MMM d');
+        }
+    };
+
+    // Check if current user is a brand and can send offers
+    const canSendOffer = user?.role === 'brand' && selectedRoom;
+
+    // Handle offer creation
+    const handleOfferCreated = () => {
+        setShowOfferModal(false);
+        // Refresh offers after creating a new one
+        if (selectedRoom) {
+            loadOffers(selectedRoom.room_id);
+        }
+        loadChatRooms();
+    };
+
+    // Handle offer cancellation
+    const handleOfferCancel = () => {
+        setShowOfferModal(false);
+    };
+
+    // Load offers for a chat room
+    const loadOffers = async (roomId: string) => {
+        if (!isMountedRef.current) return;
+        
+        try {
+            setIsLoadingOffers(true);
+            const response = await hiringApi.getOffersForChatRoom(roomId);
+            if (isMountedRef.current) {
+                setOffers(response.data);
+            }
+        } catch (error) {
+            console.error('Error loading offers:', error);
+        } finally {
+            if (isMountedRef.current) {
+                setIsLoadingOffers(false);
+            }
+        }
+    };
+
+    // Handle offer actions
+    const handleAcceptOffer = async (offerId: number) => {
+        try {
+            await hiringApi.acceptOffer(offerId);
+            // Refresh offers after accepting
+            if (selectedRoom) {
+                loadOffers(selectedRoom.room_id);
+            }
+        } catch (error) {
+            console.error('Error accepting offer:', error);
+        }
+    };
+
+    const handleRejectOffer = async (offerId: number, reason?: string) => {
+        try {
+            await hiringApi.rejectOffer(offerId, reason);
+            // Refresh offers after rejecting
+            if (selectedRoom) {
+                loadOffers(selectedRoom.room_id);
+            }
+        } catch (error) {
+            console.error('Error rejecting offer:', error);
+        }
+    };
+
+    const handleCancelOffer = async (offerId: number) => {
+        try {
+            await hiringApi.cancelOffer(offerId);
+            // Refresh offers after cancelling
+            if (selectedRoom) {
+                loadOffers(selectedRoom.room_id);
+            }
+        } catch (error) {
+            console.error('Error cancelling offer:', error);
         }
     };
 
@@ -1572,12 +1658,129 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                                             <span className="text-xs">Offline</span>
                                         </div>
                                     )}
+                                    {canSendOffer && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowOfferModal(true)}
+                                            className="flex items-center gap-2 bg-gradient-to-r from-pink-50 to-purple-50 hover:from-pink-100 hover:to-purple-100 border-pink-200 hover:border-pink-300 text-pink-700 hover:text-pink-800 dark:from-pink-900/20 dark:to-purple-900/20 dark:hover:from-pink-900/30 dark:hover:to-purple-900/30 dark:border-pink-700 dark:hover:border-pink-600 dark:text-pink-300 dark:hover:text-pink-200 transition-all duration-200"
+                                            title="Enviar oferta de trabalho"
+                                        >
+                                            <Briefcase className="w-4 h-4" />
+                                            <span className="hidden sm:inline">Enviar Oferta</span>
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
 
                             {/* Messages */}
                             <ScrollArea className="flex-1 p-4">
                                 <div className="space-y-4">
+                                    {/* Display existing offers */}
+                                    {offers.length > 0 && (
+                                        <div className="mb-6">
+                                            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                                                <Briefcase className="w-4 h-4" />
+                                                Ofertas de Trabalho
+                                            </h3>
+                                            <div className="space-y-3">
+                                                {offers.map((offer) => (
+                                                    <div
+                                                        key={offer.id}
+                                                        className="bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 border border-pink-200 dark:border-pink-800 rounded-xl p-4 shadow-sm"
+                                                    >
+                                                        <div className="flex items-start justify-between mb-3">
+                                                            <div className="flex-1">
+                                                                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">
+                                                                    {offer.title}
+                                                                </h4>
+                                                                <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">
+                                                                    {offer.description}
+                                                                </p>
+                                                                <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                                                                    <span className="flex items-center gap-1">
+                                                                        <DollarSign className="w-3 h-3" />
+                                                                        {offer.budget}
+                                                                    </span>
+                                                                    <span className="flex items-center gap-1">
+                                                                        <Calendar className="w-3 h-3" />
+                                                                        {offer.estimated_days} dias
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <Badge
+                                                                className={cn(
+                                                                    "ml-2",
+                                                                    offer.status === 'pending' && "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300",
+                                                                    offer.status === 'accepted' && "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300",
+                                                                    offer.status === 'rejected' && "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300",
+                                                                    offer.status === 'expired' && "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300"
+                                                                )}
+                                                            >
+                                                                {offer.status === 'pending' && 'Pendente'}
+                                                                {offer.status === 'accepted' && 'Aceita'}
+                                                                {offer.status === 'rejected' && 'Rejeitada'}
+                                                                {offer.status === 'expired' && 'Expirada'}
+                                                            </Badge>
+                                                        </div>
+                                                        
+                                                        {/* Offer actions based on status and user role */}
+                                                        {offer.status === 'pending' && (
+                                                            <div className="flex items-center gap-2">
+                                                                {user?.role === 'creator' && (
+                                                                    <>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            onClick={() => handleAcceptOffer(offer.id)}
+                                                                            className="bg-green-600 hover:bg-green-700 text-white"
+                                                                        >
+                                                                            Aceitar
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                            onClick={() => handleRejectOffer(offer.id)}
+                                                                            className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+                                                                        >
+                                                                            Rejeitar
+                                                                        </Button>
+                                                                    </>
+                                                                )}
+                                                                {user?.role === 'brand' && (
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        onClick={() => handleCancelOffer(offer.id)}
+                                                                        className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+                                                                    >
+                                                                        Cancelar
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        
+                                                        {offer.status === 'rejected' && offer.rejection_reason && (
+                                                            <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg">
+                                                                <p className="text-xs text-red-600 dark:text-red-400">
+                                                                    <strong>Motivo da rejeição:</strong> {offer.rejection_reason}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                        
+                                                        <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                                            Criada em {formatMessageTime(offer.created_at)}
+                                                            {offer.expires_at && offer.status === 'pending' && (
+                                                                <span className="ml-2">
+                                                                    • Expira em {offer.days_until_expiry} dias
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    
                                     {messages.map((message) => (
                                         <div
                                             key={message.id}
@@ -1872,6 +2075,19 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                     </div>
                 </div>,
                 document.body
+            )}
+
+            {/* Offer Modal */}
+            {showOfferModal && selectedRoom && (
+                <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <CreateOffer
+                        creatorId={selectedRoom.other_user.id}
+                        creatorName={selectedRoom.other_user.name}
+                        chatRoomId={selectedRoom.room_id}
+                        onOfferCreated={handleOfferCreated}
+                        onCancel={handleOfferCancel}
+                    />
+                </div>
             )}
         </div>
     );
