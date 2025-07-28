@@ -25,13 +25,15 @@ const CampaignLogo: React.FC<CampaignLogoProps> = ({
       return logoPath;
     }
     
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+    
     // If it starts with /, it's a relative path from the backend
     if (logoPath.startsWith('/')) {
-      return `http://localhost:8000${logoPath}`;
+      return `${backendUrl}${logoPath}`;
     }
     
     // Otherwise, assume it's a relative path and prepend the backend URL
-    return `http://localhost:8000/${logoPath}`;
+    return `${backendUrl}/${logoPath}`;
   };
 
   const getInitials = (name: string) => {

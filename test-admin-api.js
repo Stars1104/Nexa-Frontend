@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = process.env.VITE_BACKEND_URL ? `${process.env.VITE_BACKEND_URL}/api` : 'http://localhost:8000/api';
 
 // Test admin credentials
 const adminCredentials = {

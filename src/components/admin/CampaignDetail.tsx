@@ -110,7 +110,7 @@ const CampaignDetail = ({
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg overflow-hidden border">
               {displayData.logo ? (
                 <img 
-                  src={`http://localhost:8000${displayData.logo}`} 
+                  src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${displayData.logo}`} 
                   alt={`${displayData.brand?.name || 'Campaign'} logo`}
                   className="w-full h-full object-cover"
                 />
@@ -208,7 +208,7 @@ const CampaignDetail = ({
                                   size="sm"
                                   className="h-8 w-8 p-0"
                                   onClick={() => {
-                                    const url = attachment.url || `http://localhost:8000${attachment}`;
+                                    const url = attachment.url || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${attachment}`;
                                     window.open(url, '_blank');
                                   }}
                                 >
@@ -219,7 +219,7 @@ const CampaignDetail = ({
                                   size="sm"
                                   className="h-8 w-8 p-0"
                                   onClick={() => {
-                                    const url = attachment.url || `http://localhost:8000${attachment}`;
+                                    const url = attachment.url || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${attachment}`;
                                     const link = document.createElement('a');
                                     link.href = url;
                                     link.download = attachment.name || attachment;
@@ -269,7 +269,7 @@ const CampaignDetail = ({
                             size="sm"
                             className="h-8 w-8 p-0"
                             onClick={() => {
-                              const url = attachment.url || `http://localhost:8000${attachment}`;
+                              const url = attachment.url || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${attachment}`;
                               window.open(url, '_blank');
                             }}
                           >
@@ -280,7 +280,7 @@ const CampaignDetail = ({
                             size="sm"
                             className="h-8 w-8 p-0"
                             onClick={() => {
-                              const url = attachment.url || `http://localhost:8000${attachment}`;
+                              const url = attachment.url || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${attachment}`;
                               const link = document.createElement('a');
                               link.href = url;
                               link.download = attachment.name || attachment;
@@ -314,7 +314,7 @@ const CampaignDetail = ({
                           size="sm"
                           className="h-8 w-8 p-0"
                           onClick={() => {
-                            const url = `http://localhost:8000${attachments}`;
+                            const url = `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${attachments}`;
                             window.open(url, '_blank');
                           }}
                         >
@@ -325,7 +325,7 @@ const CampaignDetail = ({
                           size="sm"
                           className="h-8 w-8 p-0"
                           onClick={() => {
-                            const url = `http://localhost:8000${attachments}`;
+                            const url = `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${attachments}`;
                             const link = document.createElement('a');
                             link.href = url;
                             link.download = attachments;

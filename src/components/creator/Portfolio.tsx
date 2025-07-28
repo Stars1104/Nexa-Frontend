@@ -461,10 +461,10 @@ export default function Portfolio() {
                                                 <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${item.media_type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.media_type === 'image' ? 'Foto' : 'Vídeo'}</span>
                                                 {item.media_type === 'image' ? (
                                                     <img 
-                                                        src={item.file_url || `http://localhost:8000/storage/${item.file_path}`} 
+                                                        src={item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/storage/${item.file_path}`} 
                                                         alt={item.title} 
                                                         className="object-cover w-full h-full rounded-md cursor-pointer" 
-                                                        onClick={() => handleImageClick(item.file_url || `http://localhost:8000/storage/${item.file_path}`)}
+                                                        onClick={() => handleImageClick(item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/storage/${item.file_path}`)}
                                                         onError={(e) => {
                                                             console.error('Image failed to load:', item.file_url || item.file_path);
                                                             e.currentTarget.style.display = 'none';
@@ -569,10 +569,10 @@ export default function Portfolio() {
                                     <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${item.media_type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.media_type === 'image' ? 'Foto' : 'Vídeo'}</span>
                                     {item.media_type === 'image' ? (
                                         <img 
-                                            src={item.file_url || `http://localhost:8000/storage/${item.file_path}`} 
+                                            src={item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/storage/${item.file_path}`} 
                                             alt={item.title} 
                                             className="object-cover w-full h-full rounded-md cursor-pointer" 
-                                            onClick={() => handleImageClick(item.file_url || `http://localhost:8000/storage/${item.file_path}`)}
+                                            onClick={() => handleImageClick(item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/storage/${item.file_path}`)}
                                             onError={(e) => {
                                                 console.error('Image failed to load:', item.file_url || item.file_path);
                                                 e.currentTarget.style.display = 'none';

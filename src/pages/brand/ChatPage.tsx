@@ -1586,7 +1586,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                                         )}
                                     >
                                         <Avatar className="w-12 h-12">
-                                            <AvatarImage src={`http://localhost:8000${room.other_user.avatar}`} />
+                                            <AvatarImage src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${room.other_user.avatar}`} />
                                             <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400">
                                                 {room.other_user.name.charAt(0).toUpperCase()}
                                             </AvatarFallback>
@@ -1632,7 +1632,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                             <div className="flex items-center justify-between p-4 border-b bg-background">
                                 <div className="flex items-center gap-3">
                                     <Avatar className="w-10 h-10">
-                                        <AvatarImage src={`http://localhost:8000${selectedRoom.other_user.avatar}`} />
+                                        <AvatarImage src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${selectedRoom.other_user.avatar}`} />
                                         <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400">
                                             {selectedRoom.other_user.name.charAt(0).toUpperCase()}
                                         </AvatarFallback>
@@ -1791,7 +1791,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                                         >
                                             {!message.is_sender && (
                                                 <Avatar className="w-8 h-8">
-                                                    <AvatarImage src={`http://localhost:8000${selectedRoom.other_user.avatar}`} />
+                                                    <AvatarImage src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${selectedRoom.other_user.avatar}`} />
                                                     <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400 text-xs">
                                                         {selectedRoom.other_user.name.charAt(0).toUpperCase()}
                                                     </AvatarFallback>

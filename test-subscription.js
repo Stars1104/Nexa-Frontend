@@ -1,7 +1,7 @@
 // Test script for subscription payment
 const axios = require('axios');
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = process.env.VITE_BACKEND_URL ? `${process.env.VITE_BACKEND_URL}/api` : 'http://localhost:8000/api';
 
 async function testSubscription() {
   try {

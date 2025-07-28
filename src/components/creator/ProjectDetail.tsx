@@ -69,7 +69,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ setComponent, projectId  
                             <div className="flex-shrink-0">
                                 {project.logo ? (
                                     <img
-                                        src={`http://localhost:8000${project.logo}`}
+                                        src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${project.logo}`}
                                         alt={`${project.title} logo`}
                                         className="w-16 h-16 rounded-xl object-cover border border-border"
                                         onError={(e) => {
@@ -144,13 +144,13 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ setComponent, projectId  
                                         const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|mp4|mov|avi|wmv|flv|mkv|webm)$/i.test(file);
                                         return isImage ? (
                                             <img
-                                                src={`http://localhost:8000${file}`}
+                                                src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${file}`}
                                                 alt="Anexo visual"
                                                 className="rounded-xl w-full h-full border border-border"
                                             />
                                         ) : (
                                             <a
-                                                href={`http://localhost:8000${file}`}
+                                                href={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${file}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-blue-600 underline break-all"

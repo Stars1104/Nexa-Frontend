@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:8000/api';
+const BASE_URL = process.env.VITE_BACKEND_URL ? `${process.env.VITE_BACKEND_URL}/api` : 'http://localhost:8000/api';
 
 // Test portfolio API endpoints
 async function testPortfolioAPI() {

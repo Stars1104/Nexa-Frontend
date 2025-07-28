@@ -119,7 +119,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                         <Avatar className="h-8 w-8">
                             {campaign.logo && campaign.logo.trim() !== '' ? (
                                 <AvatarImage 
-                                    src={`http://localhost:8000${campaign.logo}`} 
+                                    src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${campaign.logo}`} 
                                     alt={campaign.title}
                                     onError={(e) => {
                                         // Hide the image if it fails to load, fallback will show

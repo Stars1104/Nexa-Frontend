@@ -60,7 +60,7 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
         <div className="flex flex-col sm:flex-row items-center justify-between sm:items-start gap-4 border-b border-gray-200 dark:border-neutral-700 pb-4 mb-4">
           <div className="flex justify-center items-center gap-4">
             <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gray-200 dark:bg-neutral-700 flex items-center justify-center text-3xl font-bold text-gray-400">
-            <img src={`http://localhost:8000${campaign.logo}`} alt="Brand" className="w-16 h-16 rounded-full" />
+            <img src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${campaign.logo}`} alt="Brand" className="w-16 h-16 rounded-full" />
           </div>
           <div className="flex-1 text-center sm:text-left">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">{campaign.title}</h2>

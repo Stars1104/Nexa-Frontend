@@ -287,7 +287,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                             >
                                 <div className="flex items-center gap-3">
                                     <img
-                                        src={`http://localhost:8000${campaign.logo}`}
+                                        src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${campaign.logo}`}
                                         alt="campaign"
                                         className="w-12 h-12 rounded-full object-cover border border-zinc-200 dark:border-zinc-700"
                                     />
