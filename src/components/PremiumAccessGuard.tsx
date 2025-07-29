@@ -1,107 +1,156 @@
-import React, { useEffect, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { useToast } from '@/hooks/use-toast'
-import { usePremiumContext } from '@/contexts/PremiumContext'
-import { apiClient } from '@/services/apiClient'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Crown, Lock, ArrowRight } from 'lucide-react'
+import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { usePremiumContext } from "@/contexts/PremiumContext";
+import { apiClient } from "@/services/apiClient";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Crown, Lock, ArrowRight } from "lucide-react";
 
 interface PremiumAccessGuardProps {
-  children: React.ReactNode
-  fallback?: React.ReactNode
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
 }
 
 interface User {
-  id: number
-  name: string
-  email: string
-  role: string
-  has_premium: boolean
-  premium_expires_at: string | null
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  has_premium: boolean;
+  premium_expires_at: string | null;
 }
 
-export default function PremiumAccessGuard({ children, fallback }: PremiumAccessGuardProps) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const { toast } = useToast()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { hasPremium, isPremiumActive, loading: premiumLoading, refreshPremiumStatus } = usePremiumContext()
+export default function PremiumAccessGuard({
+  children,
+  fallback,
+}: PremiumAccessGuardProps) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [lastCheck, setLastCheck] = useState<number>(0);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const {
+    hasPremium,
+    isPremiumActive,
+    loading: premiumLoading,
+    refreshPremiumStatus,
+  } = usePremiumContext();
 
   useEffect(() => {
-    checkUserAndPremiumStatus()
-  }, [])
+    checkUserAndPremiumStatus();
+  }, []);
 
   // Re-check premium status when user data changes or when navigating
   useEffect(() => {
-    if (user && user.role === 'creator' && !premiumLoading) {
-      refreshPremiumStatus()
+    if (user && user.role === "creator" && !premiumLoading) {
+      refreshPremiumStatus();
     }
-  }, [user?.has_premium, location.pathname, premiumLoading, refreshPremiumStatus])
+  }, [
+    user?.has_premium,
+    location.pathname,
+    premiumLoading,
+    refreshPremiumStatus,
+  ]);
 
   // Listen for premium status updates and refresh user data
   useEffect(() => {
     const handlePremiumUpdate = async () => {
-      try {
-        const response = await apiClient.get('/user')
-        const userData = response.data
-        setUser(userData)
-        
-        // Force a re-render by updating loading state
-        setLoading(true)
-        setTimeout(() => setLoading(false), 100)
-      } catch (error) {
-        console.error('PremiumAccessGuard: Error refreshing user data:', error)
-      }
-    }
+      await refreshPremiumStatus();
 
-    window.addEventListener('premium-status-updated', handlePremiumUpdate)
-    
+      // Also refresh user data
+      try {
+        const response = await apiClient.get("/user");
+        const userData = response.data;
+        setUser(userData);
+      } catch (error) {
+        console.error("Error refreshing user data:", error);
+      }
+    };
+
+    window.addEventListener("premium-status-updated", handlePremiumUpdate);
+
     return () => {
-      window.removeEventListener('premium-status-updated', handlePremiumUpdate)
-    }
-  }, [])
+      window.removeEventListener("premium-status-updated", handlePremiumUpdate);
+    };
+  }, []);
 
   const checkUserAndPremiumStatus = async () => {
     try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        setLoading(false)
-        return
+      // Prevent rapid successive calls
+      const now = Date.now();
+      if (now - lastCheck < 3000) {
+        // 3 second minimum interval
+        console.log(
+          "PremiumAccessGuard: Skipping check, too soon since last check"
+        );
+        return;
       }
 
-      const response = await apiClient.get('/user')
-      const userData = response.data
-      setUser(userData)
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      setLastCheck(now);
+
+      // Add a small delay to prevent rapid successive calls
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const response = await apiClient.get("/user");
+      const userData = response.data;
+      setUser(userData);
 
       // Only check premium for creators
-      if (userData.role === 'creator') {
+      if (userData.role === "creator") {
         // Premium status is now handled by the hook
         if (!hasPremium && !premiumLoading) {
-          showPremiumWarning()
+          showPremiumWarning();
         }
       }
     } catch (error: any) {
-      console.error('Error checking user status:', error)
-      
+      console.error("Error checking user status:", error);
+
+      // If it's a 401 error, clear user data
+      if (error.response?.status === 401) {
+        setUser(null);
+        localStorage.removeItem("token");
+      }
+
       // If it's a premium required error, show the warning
-      if (error.response?.status === 403 && error.response?.data?.error === 'premium_required') {
-        showPremiumWarning()
+      if (
+        error.response?.status === 403 &&
+        error.response?.data?.error === "premium_required"
+      ) {
+        showPremiumWarning();
+      }
+
+      // If it's a rate limit error, don't retry immediately
+      if (error.response?.status === 429) {
+        console.log("Rate limited, will retry later");
       }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const showPremiumWarning = () => {
     toast({
       title: "Premium Access Required",
-      description: "You need a premium subscription to access this feature. Subscribe now to unlock all features!",
+      description:
+        "You need a premium subscription to access this feature. Subscribe now to unlock all features!",
       variant: "destructive",
       action: (
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size="sm"
           onClick={handleSubscribeClick}
           className="ml-2"
@@ -109,79 +158,78 @@ export default function PremiumAccessGuard({ children, fallback }: PremiumAccess
           Subscribe Now
         </Button>
       ),
-    })
-  }
+    });
+  };
 
   // Debug function to manually refresh premium status
   const debugRefreshPremium = async () => {
-    await refreshPremiumStatus()
-    
+    await refreshPremiumStatus();
+
     // Also refresh user data
     try {
-      const response = await apiClient.get('/user')
-      const userData = response.data
-      setUser(userData)
+      const response = await apiClient.get("/user");
+      const userData = response.data;
+      setUser(userData);
     } catch (error) {
-      console.error('Debug: Error refreshing user data:', error)
+      console.error("Debug: Error refreshing user data:", error);
     }
-  }
+  };
 
   const handleSubscribeClick = () => {
     // Update URL immediately for better UX
-    window.history.pushState({}, '', '/creator/subscription');
-    
+    window.history.pushState({}, "", "/creator/subscription");
+
     try {
       // Try React Router navigation
-      navigate('/creator/subscription', { replace: true });
+      navigate("/creator/subscription", { replace: true });
     } catch (error) {
-      console.error('React Router navigation error:', error);
+      console.error("React Router navigation error:", error);
       // Fallback to direct navigation
-      window.location.href = '/creator/subscription';
+      window.location.href = "/creator/subscription";
     }
-  }
+  };
 
   if (loading || premiumLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
-    )
+    );
   }
-
-
 
   // If user is not a creator, or has premium, show children
   // Check both hook premium status and user's has_premium field
   const userHasPremium = hasPremium || user?.has_premium;
-  
-  if (!user || user.role !== 'creator' || userHasPremium) {
-    return <>{children}</>
+
+  if (!user || user.role !== "creator" || userHasPremium) {
+    return <>{children}</>;
   }
 
   // Allow access to profile, portfolio, and subscription pages even for non-premium creators
   // For creator pages, we need to check both the pathname and the component state
   const allowedPaths = [
-    '/creator/subscription',
-    '/creator/profile',
-    '/creator/portfolio'
+    "/creator/subscription",
+    "/creator/profile",
+    "/creator/portfolio",
   ];
-  
+
   const currentPath = location.pathname;
-  const isAllowedPath = allowedPaths.some(path => currentPath.includes(path));
-  
+  const isAllowedPath = allowedPaths.some((path) => currentPath.includes(path));
+
   // Special handling for creator main page - check if we're on a restricted component
-  const isCreatorMainPage = currentPath === '/creator' || currentPath === '/creator/';
-  
+  const isCreatorMainPage =
+    currentPath === "/creator" || currentPath === "/creator/";
+
   if (isAllowedPath) {
-    return <>{children}</>
+    return <>{children}</>;
   }
-  
+
   // For creator main page, we need to check the component being rendered
   // This will be handled by the parent component passing the correct fallback
 
   // If fallback is provided, use it
   if (fallback) {
-    return <>{fallback}</>
+    return <>{fallback}</>;
   }
 
   // Default premium required screen
@@ -203,24 +251,30 @@ export default function PremiumAccessGuard({ children, fallback }: PremiumAccess
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
               <Lock className="h-5 w-5 text-green-400" />
-              <span className="text-sm text-gray-200">Access to all campaigns</span>
+              <span className="text-sm text-gray-200">
+                Access to all campaigns
+              </span>
             </div>
             <div className="flex items-center space-x-3">
               <Lock className="h-5 w-5 text-green-400" />
-              <span className="text-sm text-gray-200">Bid on premium campaigns</span>
+              <span className="text-sm text-gray-200">
+                Bid on premium campaigns
+              </span>
             </div>
             <div className="flex items-center space-x-3">
               <Lock className="h-5 w-5 text-green-400" />
-              <span className="text-sm text-gray-200">Direct messaging with brands</span>
+              <span className="text-sm text-gray-200">
+                Direct messaging with brands
+              </span>
             </div>
             <div className="flex items-center space-x-3">
               <Lock className="h-5 w-5 text-green-400" />
               <span className="text-sm text-gray-200">Priority support</span>
             </div>
           </div>
-          
+
           <div className="pt-4">
-            <Button 
+            <Button
               onClick={handleSubscribeClick}
               className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-semibold py-3"
             >
@@ -229,19 +283,19 @@ export default function PremiumAccessGuard({ children, fallback }: PremiumAccess
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
-          
+
           <div className="text-center space-y-2">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/creator/profile')}
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/creator/profile")}
               className="text-sm text-gray-400 hover:text-gray-200 hover:bg-gray-800"
             >
               Continue to Profile
             </Button>
-            
+
             {import.meta.env.DEV && (
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={debugRefreshPremium}
                 className="text-xs text-gray-500 hover:text-gray-300 hover:bg-gray-800 block w-full"
               >
@@ -252,5 +306,5 @@ export default function PremiumAccessGuard({ children, fallback }: PremiumAccess
         </CardContent>
       </Card>
     </div>
-  )
-} 
+  );
+}

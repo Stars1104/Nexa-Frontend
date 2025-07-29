@@ -1,4 +1,4 @@
-import { apiClient } from '../../services/apiClient';
+import { apiClient, paymentClient } from '../../services/apiClient';
 import axios from 'axios';
 
 export interface PaymentMethod {
@@ -96,7 +96,7 @@ export const paymentApi = {
 
   // Process a payment
   processPayment: async (data: ProcessPaymentRequest): Promise<any> => {
-    const response = await apiClient.post('/payment/process', data);
+    const response = await paymentClient.post('/payment/process', data);
     return response.data;
   },
 
@@ -110,7 +110,7 @@ export const paymentApi = {
 
   // Process subscription payment for creators
   processSubscription: async (data: SubscriptionPaymentRequest): Promise<any> => {
-    const response = await apiClient.post('/payment/subscription', data);
+    const response = await paymentClient.post('/payment/subscription', data);
     return response.data;
   },
 
