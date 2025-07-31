@@ -12,7 +12,7 @@ import { Calendar as CalendarIcon, UploadCloud, X, PlusCircle } from "lucide-rea
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
 import { createCampaign } from "../../store/thunks/campaignThunks";
-import { clearError } from "../../store/slices/campaignSlice";
+import { clearError, CampaignFormData } from "../../store/slices/campaignSlice";
 
 // Campaign types
 const CAMPAIGN_TYPES = [
@@ -223,9 +223,10 @@ export default function CreateCampaign() {
     }
 
     try {
-      const campaignData = {
+      const campaignData: CampaignFormData = {
         title: title.trim(),
         description: description.trim(),
+        briefing: creatorReq.trim(),
         budget: budget.trim(),
         deadline: deadline!,
         states: selectedStates,
@@ -351,7 +352,7 @@ export default function CreateCampaign() {
              </select>
            </div>
 
-                     {/* Prazo Final */}
+          {/* Prazo Final */}
            <div className="mb-5">
              <label className="block text-xs font-medium text-zinc-500 mb-1">Prazo Final *</label>
             <Popover>
@@ -361,26 +362,26 @@ export default function CreateCampaign() {
                     readOnly
                     value={deadline ? deadline.toLocaleDateString("pt-BR") : ""}
                     placeholder="Clique para selecionar a data"
-                    className="rounded-lg border-zinc-200 dark:border-zinc-700 bg-background text-zinc-900 dark:text-zinc-100 text-sm pr-10 cursor-pointer"
+                    className="rounded-lg border-zinc-200 dark:border-zinc-700 bg-background text-zinc-900 dark:text-zinc-100 text-sm pr-10 cursor-pointer hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-pink-500 dark:focus:border-pink-400"
                   />
                   <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400 pointer-events-none" />
                 </div>
               </PopoverTrigger>
-              <PopoverContent className="p-0" align="start">
+              <PopoverContent className="w-auto p-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-xl rounded-lg" align="start">
                 <Calendar
                   mode="single"
                   selected={deadline}
                   onSelect={(date) => {
                     setDeadline(date);
                   }}
-                  fromDate={new Date()}
+                  className="rounded-md border"
                 />
               </PopoverContent>
             </Popover>
           </div>
 
-                     {/* Estados */}
-           <div className="mb-5">
+          {/* Estados */}
+          <div className="mb-5">
              <label className="block text-xs font-medium text-zinc-500 mb-1">Em quais estados a campanha será divulgada? *</label>
              <span className="block text-xs text-zinc-400 mb-2">Selecione um ou mais estados. Apenas criadores desses estados verão esta campanha.</span>
             <div className="flex flex-wrap gap-2 mb-2">
@@ -462,17 +463,6 @@ export default function CreateCampaign() {
               </div>
             )}
           </div>
-
-            {/* Requisitos para Criadores */}
-           <div className="mb-5">
-             <label className="block text-xs font-medium text-zinc-500 mb-1">Requisitos para Criadores</label>
-             <Input
-               placeholder="Ex: +10k seguidores, Instagram ativo, etc."
-               value={creatorReq}
-               onChange={e => setCreatorReq(e.target.value)}
-               className="rounded-lg border-zinc-200 dark:border-zinc-700 bg-background text-zinc-900 dark:text-zinc-100 text-sm"
-             />
-           </div>
 
            {/* Anexos */}
            <div className="mb-5">

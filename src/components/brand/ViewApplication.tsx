@@ -1,25 +1,5 @@
 import React from "react";
 
-const campaign = {
-  title: "Campanha de Verão 2023",
-  brand: "Marca Solar",
-  type: "Vídeo",
-  value: "R$ 2.500",
-  deadline: "15/12/2023",
-  submissionDate: "20/11/2023",
-  briefing:
-    "Criar conteúdo mostrando produtos de verão em uso na praia. A campanha visa destacar a linha de proteção solar da marca, enfatizando a importância da proteção contra os raios UV. Buscamos criadores que frequentam praias e piscinas e possam demonstrar o uso adequado dos produtos em situações reais.",
-  requirements: [
-    "Criador deve mostrar o produto sendo aplicado",
-    "Mencionar os benefícios de proteção solar",
-    "Incluir a hashtag #VerãoProtegido",
-    "Vídeo deve ter entre 30 e 60 segundos",
-  ],
-  audience: "Pessoas de 18 a 35 anos que frequentam praias e piscinas",
-  deliverables: "1 vídeo para Instagram/TikTok",
-  states: ["SP", "RJ", "BA", "CE", "SC"],
-};
-
 const labelClass =
   "text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1";
 const valueClass = "text-base font-semibold text-gray-800 dark:text-gray-100";
@@ -77,7 +57,7 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
           </div>
           <div>
             <div className={labelClass}>Data de criação</div>
-            <div className={valueClass}>{campaign.deadline ? new Date(campaign.created_at).toLocaleDateString('pt-BR') : ''}</div>
+            <div className={valueClass}>{campaign.created_at ? new Date(campaign.created_at).toLocaleDateString('pt-BR') : ''}</div>
           </div>
           <div>
             <div className={labelClass}>Data de Submissão</div>
@@ -95,13 +75,13 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
         <section className="mb-6">
           <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Estados</h3>
           <div className="flex flex-wrap gap-2">
-            {(campaign.states ?? []).map((uf) => (
+            {campaign.target_states.map((uf: string, i: number) => (
               <span
                 key={uf}
                 className="px-2 py-1 rounded-full bg-pink-100 dark:bg-pink-900 text-pink-700 dark:text-pink-200 text-xs font-medium"
               >
                 {uf}
-              </span>
+              </span>           
             ))}
           </div>
         </section>

@@ -158,17 +158,17 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                     </Badge>
                 </div>
 
-                {/* Location badges */}
-                {campaign.location && (
+                {/* States badges */}
+                {Array.isArray(campaign.target_states) && campaign.target_states.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-3">
-                        {campaign.location.split(',').map((uf: string, i: number) => (
+                        {campaign.target_states.map((uf: string, i: number) => (
                             <Badge
-                                key={uf.trim()}
+                                key={uf}
                                 variant="secondary"
                                 className={`text-xs ${statesColors[i % statesColors.length]}`}
                             >
                                 <MapPin className="h-3 w-3 mr-1" />
-                                {uf.trim()}
+                                {uf}
                             </Badge>
                         ))}
                     </div>

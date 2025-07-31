@@ -50,10 +50,6 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
       // Prevent rapid successive calls
       const now = Date.now();
       if (now - lastCheck < 2000) {
-        // 2 second minimum interval
-        console.log(
-          "PremiumContext: Skipping check, too soon since last check"
-        );
         return null;
       }
 
@@ -63,15 +59,12 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
       // Check if user is authenticated
       const token = localStorage.getItem("token");
       if (!token) {
-        console.log("PremiumContext: No authentication token found");
         setPremiumStatus(null);
         return null;
       }
 
-      console.log("PremiumContext: Checking premium status...");
       const response = await apiClient.get("/payment/subscription-status");
       const status = response.data;
-      console.log("PremiumContext: Received status:", status);
       setPremiumStatus(status);
       return status;
     } catch (error) {

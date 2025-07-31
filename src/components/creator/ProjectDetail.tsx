@@ -136,15 +136,15 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             </div>
 
             <div className="flex flex-wrap gap-2 mb-2">
-              {campaign.location &&
-                campaign.location.split(",").map((uf: string, i: number) => (
+              {Array.isArray(campaign.target_states) && campaign.target_states.length > 0 &&
+                campaign.target_states.map((uf: string, i: number) => (
                   <span
-                    key={uf.trim()}
+                    key={uf}
                     className={`px-2 py-1 rounded-full text-xs font-medium ${
                       statesColors[i % statesColors.length]
                     }`}
                   >
-                    {uf.trim()}
+                    {uf}
                   </span>
                 ))}
             </div>

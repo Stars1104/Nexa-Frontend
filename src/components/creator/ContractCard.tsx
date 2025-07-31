@@ -39,7 +39,7 @@ interface Contract {
   platform_fee: string;
   estimated_days: number;
   requirements: string[];
-  status: "active" | "completed" | "cancelled" | "disputed";
+  status: "active" | "completed" | "cancelled" | "disputed" | "terminated";
   started_at: string;
   expected_completion_at: string;
   completed_at?: string;
@@ -109,8 +109,10 @@ export default function ContractCard({
         return "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200";
       case "disputed":
         return "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-200";
+      case "terminated":
+        return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
       default:
-        return "text-gray-600";
+        return "text-gray-600 dark:text-gray-400";
     }
   };
 
@@ -124,6 +126,8 @@ export default function ContractCard({
         return "Cancelado";
       case "disputed":
         return "Em Disputa";
+      case "terminated":
+        return "Terminado";
       default:
         return "Desconhecido";
     }
@@ -265,11 +269,11 @@ export default function ContractCard({
   return (
     <>
       <Card
-        className={`transition-all duration-200 hover:shadow-md ${
+        className={`transition-all duration-200 hover:shadow-md dark:hover:shadow-lg${
           contract.is_overdue
-            ? "border-red-200 bg-red-50"
+            ? "border-red-200 dark:bg-[#171717] dark:border-[#333]"
             : contract.is_near_completion
-            ? "border-orange-200 bg-orange-50"
+            ? "border-orange-200 dark:bg-[#171717] dark:border-[#333]"
             : ""
         }`}
       >
@@ -283,8 +287,8 @@ export default function ContractCard({
                 </AvatarFallback>
               </Avatar>
               <div>
-                <CardTitle className="text-lg">{contract.title}</CardTitle>
-                <p className="text-sm text-gray-600">
+                <CardTitle className="text-lg dark:text-gray-100">{contract.title}</CardTitle>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   com {contract.other_user?.name || "Usuário"}
                 </p>
               </div>
@@ -292,7 +296,7 @@ export default function ContractCard({
             <div className="flex items-center gap-2">
               <Badge className={getStatusColor()}>{getStatusText()}</Badge>
               {contract.is_overdue && (
-                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
               )}
             </div>
           </div>
@@ -301,19 +305,19 @@ export default function ContractCard({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-green-600" />
+              <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
               <div>
-                <p className="text-sm text-gray-600">Orçamento</p>
-                <p className="font-semibold">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Orçamento</p>
+                <p className="font-semibold dark:text-gray-100">
                   {formatCurrency(contract.budget)}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-blue-600" />
+              <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               <div>
-                <p className="text-sm text-gray-600">Prazo</p>
-                <p className="font-semibold">{contract.estimated_days} dias</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Prazo</p>
+                <p className="font-semibold dark:text-gray-100">{contract.estimated_days} dias</p>
               </div>
             </div>
           </div>
@@ -321,11 +325,11 @@ export default function ContractCard({
           {contract.status === "active" && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Progresso</span>
-                <span>{contract.progress_percentage}%</span>
+                <span className="dark:text-gray-300">Progresso</span>
+                <span className="dark:text-gray-300">{contract.progress_percentage}%</span>
               </div>
               <Progress value={contract.progress_percentage} className="h-2" />
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <Clock className="h-4 w-4" />
                 <span>
                   {contract.days_until_completion > 0
@@ -338,43 +342,11 @@ export default function ContractCard({
             </div>
           )}
 
-          {contract.payment && (
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Award className="h-4 w-4 text-green-600" />
-                <span className="font-semibold text-sm">Pagamento</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <span className="text-gray-600">Status:</span>
-                  <Badge
-                    variant={
-                      contract.payment.status === "completed"
-                        ? "default"
-                        : "secondary"
-                    }
-                    className="ml-1"
-                  >
-                    {contract.payment.status === "completed"
-                      ? "Pago"
-                      : "Pendente"}
-                  </Badge>
-                </div>
-                <div>
-                  <span className="text-gray-600">Valor:</span>
-                  <span className="font-semibold ml-1">
-                    {formatCurrency(contract.payment.creator_amount)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
           {contract.review && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3">
+            <div className="bg-yellow-50 dark:bg-yellow-950/30 rounded-lg p-3 border border-yellow-200 dark:border-yellow-800/50">
               <div className="flex items-center gap-2 mb-2">
-                <Star className="h-4 w-4 text-yellow-600" />
-                <span className="font-semibold text-sm">
+                <Star className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                <span className="font-semibold text-sm dark:text-gray-200">
                   Avaliação Recebida
                 </span>
               </div>
@@ -384,17 +356,17 @@ export default function ContractCard({
                     key={i}
                     className={`h-4 w-4 ${
                       i < contract.review!.rating
-                        ? "text-yellow-500 fill-current"
-                        : "text-gray-300"
+                        ? "text-yellow-500 dark:text-yellow-400 fill-current"
+                        : "text-gray-300 dark:text-gray-600"
                     }`}
                   />
                 ))}
-                <span className="ml-2 text-sm font-semibold">
+                <span className="ml-2 text-sm font-semibold dark:text-gray-200">
                   {contract.review!.rating}/5
                 </span>
               </div>
               {contract.review!.comment && (
-                <p className="text-sm text-gray-600 italic">
+                <p className="text-sm text-gray-600 dark:text-gray-400 italic">
                   "{contract.review!.comment}"
                 </p>
               )}
@@ -406,7 +378,7 @@ export default function ContractCard({
               <Button
                 onClick={handleComplete}
                 disabled={isProcessing}
-                className="flex-1 bg-green-600 hover:bg-green-700"
+                className="flex-1 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 {isProcessing ? "Processando..." : "Concluir"}
@@ -429,17 +401,12 @@ export default function ContractCard({
               <Button
                 onClick={() => setShowReviewDialog(true)}
                 disabled={isProcessing}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
               >
                 <Star className="h-4 w-4 mr-2" />
                 Avaliar
               </Button>
             )}
-
-            <Button variant="outline" size="sm">
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Chat
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -469,8 +436,8 @@ export default function ContractCard({
                     <Star
                       className={`h-6 w-6 ${
                         rating <= reviewData.rating
-                          ? "text-yellow-500 fill-current"
-                          : "text-gray-300"
+                          ? "text-yellow-500 dark:text-yellow-400 fill-current"
+                          : "text-gray-300 dark:text-gray-600"
                       }`}
                     />
                   </button>

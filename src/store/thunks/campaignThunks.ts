@@ -89,22 +89,44 @@ export const createCampaign = createAsyncThunk<
     const formData = new FormData();
     formData.append('title', campaignData.title);
     formData.append('description', campaignData.description);
-    formData.append('briefing', campaignData.briefing);
-    formData.append('budget', campaignData.budget);
-    formData.append('deadline', campaignData.deadline.toISOString());
+    const requirements = (campaignData.briefing || campaignData.creatorRequirements || '').trim();
+    formData.append('requirements', requirements);
+    // Ensure budget is a valid number
+    const budgetValue = parseFloat(campaignData.budget);
+    if (isNaN(budgetValue) || budgetValue <= 0) {
+      throw new Error('Budget must be a valid positive number');
+    }
+    formData.append('budget', budgetValue.toString());
+    // Ensure deadline is a valid date
+    if (!campaignData.deadline || isNaN(campaignData.deadline.getTime())) {
+      throw new Error('Deadline must be a valid date');
+    }
+    formData.append('deadline', campaignData.deadline.toISOString().split('T')[0]); // Send only the date part
     
-    // Handle states - send as comma-separated string
-    formData.append('states', campaignData.states.join(','));
-    formData.append('locations', campaignData.states.join(',')); // Also send as locations in case backend expects it
+    // Handle target_states - send as array
+    if (campaignData.states && campaignData.states.length > 0) {
+      campaignData.states.forEach((state: string) => {
+        formData.append('target_states[]', state);
+      });
+    }
     
-    formData.append('creatorRequirements', campaignData.creatorRequirements);
-    formData.append('type', campaignData.type);
-    formData.append('category', campaignData.type); // Also send as category in case backend expects it
-    formData.append('brand', user.name);
-    formData.append('brandId', user.id);
-    formData.append('status', 'pending');
-    formData.append('submissionDate', new Date().toISOString());
-    formData.append('approvedCreators', '0');
+    // Always send campaign_type and category, even if empty
+    formData.append('campaign_type', campaignData.type?.trim() || '');
+    formData.append('category', campaignData.type?.trim() || '');
+    
+    // Debug: Log the form data being sent
+    console.log('Campaign data being sent:', {
+      title: campaignData.title,
+      description: campaignData.description,
+      requirements: requirements,
+      budget: budgetValue,
+      deadline: campaignData.deadline.toISOString().split('T')[0],
+      deadline_full: campaignData.deadline.toISOString(),
+      deadline_date: campaignData.deadline,
+      target_states: campaignData.states,
+      campaign_type: campaignData.type?.trim() || '',
+      category: campaignData.type?.trim() || ''
+    });
     
     if (campaignData.logo) {
       formData.append('logo', campaignData.logo);

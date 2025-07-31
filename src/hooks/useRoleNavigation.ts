@@ -33,7 +33,7 @@ export const useRoleNavigation = () => {
   };
 
   const navigateToSubscription = () => {
-    navigate("/creator/subscription", { replace: true });
+    navigate("/creator", { replace: true });
   };
 
   const navigateToLogin = (from?: string) => {

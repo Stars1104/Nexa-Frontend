@@ -98,21 +98,6 @@ export default function ContractList() {
     return counts;
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "active":
-        return <Clock className="h-4 w-4" />;
-      case "completed":
-        return <CheckCircle className="h-4 w-4" />;
-      case "cancelled":
-        return <XCircle className="h-4 w-4" />;
-      case "disputed":
-        return <AlertTriangle className="h-4 w-4" />;
-      default:
-        return <FileText className="h-4 w-4" />;
-    }
-  };
-
   const statusCounts = getStatusCounts();
 
   if (isLoading) {
@@ -120,7 +105,7 @@ export default function ContractList() {
       <div className="flex items-center justify-center h-64">
         <div className="flex items-center gap-2">
           <RefreshCw className="h-6 w-6 animate-spin" />
-          <span>Carregando contratos...</span>
+          <span className="dark:text-gray-300">Carregando contratos...</span>
         </div>
       </div>
     );
@@ -130,7 +115,7 @@ export default function ContractList() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 dark:text-gray-100">
             <FileText className="h-5 w-5" />
             Meus Contratos
           </CardTitle>
@@ -139,7 +124,7 @@ export default function ContractList() {
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
                 <Input
                   placeholder="Buscar contratos..."
                   value={searchTerm}
@@ -220,7 +205,7 @@ export default function ContractList() {
               <div className="grid gap-4">
                 {filteredContracts.length === 0 ? (
                   <div className="text-center py-8">
-                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <FileText className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                       Nenhum contrato encontrado
                     </h3>
@@ -247,7 +232,7 @@ export default function ContractList() {
                 {filteredContracts.filter((c) => c.status === "active")
                   .length === 0 ? (
                   <div className="text-center py-8">
-                    <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <Clock className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                       Nenhum contrato ativo
                     </h3>
@@ -274,7 +259,7 @@ export default function ContractList() {
                 {filteredContracts.filter((c) => c.status === "completed")
                   .length === 0 ? (
                   <div className="text-center py-8">
-                    <CheckCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <CheckCircle className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                       Nenhum contrato concluído
                     </h3>
@@ -301,7 +286,7 @@ export default function ContractList() {
                 {filteredContracts.filter((c) => c.status === "cancelled")
                   .length === 0 ? (
                   <div className="text-center py-8">
-                    <XCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <XCircle className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                       Nenhum contrato cancelado
                     </h3>
@@ -328,7 +313,7 @@ export default function ContractList() {
                 {filteredContracts.filter((c) => c.status === "disputed")
                   .length === 0 ? (
                   <div className="text-center py-8">
-                    <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <AlertTriangle className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                       Nenhuma disputa
                     </h3>

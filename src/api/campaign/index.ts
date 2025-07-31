@@ -54,8 +54,16 @@ export const CreateNewCampaign = async (data: FormData, token: string) => {
     } catch (error: any) {
         console.error("Campaign creation error:", error);
         console.error("Error response:", error.response?.data);
+        console.error("Validation errors:", error.response?.data?.errors);
         console.error("Error status:", error.response?.status);
         console.error("Error headers:", error.response?.headers);
+        
+        // Log the form data that was sent
+        console.log("Form data that was sent:");
+        for (let [key, value] of data.entries()) {
+            console.log(`${key}:`, value);
+        }
+        
         throw error;
     }
 };

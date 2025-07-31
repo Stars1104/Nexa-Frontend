@@ -26,7 +26,7 @@ const Sidebar = ({ setComponent, component }: SidebarProps) => {
     const [selectedComponent, setSelectedComponent] = useState(component || "Painel");
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
-    const closeTimeout = useRef<NodeJS.Timeout | null>(null);
+    const closeTimeout = useRef<number | null>(null);
     const isMobile = useIsMobile();
 
     useEffect(() => {

@@ -74,10 +74,6 @@ export default function PremiumAccessGuard({
       // Prevent rapid successive calls
       const now = Date.now();
       if (now - lastCheck < 3000) {
-        // 3 second minimum interval
-        console.log(
-          "PremiumAccessGuard: Skipping check, too soon since last check"
-        );
         return;
       }
 

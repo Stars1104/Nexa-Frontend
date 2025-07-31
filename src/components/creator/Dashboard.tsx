@@ -388,6 +388,7 @@ export default function Dashboard({
           (approvedApplications / safeCreatorApplications.length) * 100
         )
       : 0;
+  console.log(averageBudget);
   const totalEarnings = approvedApplications * averageBudget; // Simplified calculation
 
   useEffect(() => {

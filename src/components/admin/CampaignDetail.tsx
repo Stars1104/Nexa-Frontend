@@ -75,6 +75,8 @@ const CampaignDetail = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  console.log(campaign);
+
   // Use real campaign data with fallbacks only when needed
   const displayData = {
     ...campaign,
@@ -84,7 +86,7 @@ const CampaignDetail = ({
     requirements: campaign.creatorRequirements || ["Requisitos não especificados"],
     audience: "Público-alvo não especificado", // This might not be in the campaign data
     deliverables: "Entregáveis não especificados", // This might not be in the campaign data
-    states: Array.isArray(campaign.states) ? campaign.states : ["Estados não especificados"],
+    states: Array.isArray(campaign.target_states) ? campaign.target_states : ["Estados não especificados"],
   };
 
   // Get attachments from campaign data
@@ -150,7 +152,7 @@ const CampaignDetail = ({
             <div>
               <div className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">Data de Submissão</div>
               <div className="text-base font-semibold text-gray-800 dark:text-gray-100">
-                {displayData.submissionDate ? new Date(displayData.submissionDate).toLocaleDateString("pt-BR") : 'Não especificado'}
+                {displayData.created_at ? new Date(displayData.created_at).toLocaleDateString("pt-BR") : 'Não especificado'}
               </div>
             </div>
           </div>
@@ -165,12 +167,12 @@ const CampaignDetail = ({
           <section>
             <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Estados</h3>
             <div className="flex flex-wrap gap-2">
-              {displayData.location && displayData.location.split(',').map((uf: string, i: number) => (
+              {Array.isArray(displayData.states) && displayData.states.map((uf: string, i: number) => (
                 <span
-                  key={uf.trim()}
+                  key={uf}
                   className={`px-2 py-1 rounded-full text-xs font-medium ${statesColors[i % statesColors.length]}`}
                 >
-                  {uf.trim()}
+                  {uf}
                 </span>
               ))}
             </div>
