@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { apiClient } from '@/services/apiClient';
-import { Loader2 } from 'lucide-react';
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { apiClient } from "@/services/apiClient";
+import { Loader2 } from "lucide-react";
 
 interface CreateOfferProps {
   creatorId: number;
@@ -14,6 +14,8 @@ interface CreateOfferProps {
   chatRoomId: string;
   onOfferCreated?: () => void;
   onCancel?: () => void;
+  onExistingOffer?: (offerId: number) => void; // Callback for existing offer
+  onReloadMessages?: () => void; // Callback to reload messages
 }
 
 interface OfferFormData {
@@ -21,22 +23,24 @@ interface OfferFormData {
   estimated_days: string;
 }
 
-export default function CreateOffer({ 
-  creatorId, 
-  creatorName, 
-  chatRoomId, 
-  onOfferCreated, 
-  onCancel 
+export default function CreateOffer({
+  creatorId,
+  creatorName,
+  chatRoomId,
+  onOfferCreated,
+  onCancel,
+  onExistingOffer,
+  onReloadMessages,
 }: CreateOfferProps) {
   const [formData, setFormData] = useState<OfferFormData>({
-    budget: '',
-    estimated_days: '',
+    budget: "",
+    estimated_days: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const handleInputChange = (field: keyof OfferFormData, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -76,12 +80,12 @@ export default function CreateOffer({
     try {
       const payload = {
         creator_id: creatorId,
-        chat_room_id: chatRoomId,
+        chat_room_id: chatRoomId, // Send the room_id string as expected by backend
         budget: parseBudgetToNumber(formData.budget),
         estimated_days: parseInt(formData.estimated_days),
       };
 
-      const response = await apiClient.post('/offers', payload);
+      const response = await apiClient.post("/offers", payload);
 
       if (response.data.success) {
         toast({
@@ -90,14 +94,30 @@ export default function CreateOffer({
         });
 
         onOfferCreated?.();
+        onReloadMessages?.(); // Reload messages to show the offer in chat
       } else {
-        throw new Error(response.data.message || 'Erro ao enviar oferta');
+        throw new Error(response.data.message || "Erro ao enviar oferta");
       }
     } catch (error: any) {
-      console.error('Error creating offer:', error);
+      console.error("Error creating offer:", error);
+
+      const errorMessage =
+        error.response?.data?.message || "Erro ao enviar oferta";
+
+      // Check if it's an existing offer error
+      if (
+        error.response?.data?.message?.includes("already have a pending offer")
+      ) {
+        const existingOfferId = error.response?.data?.existing_offer_id;
+        if (existingOfferId && onExistingOffer) {
+          onExistingOffer(existingOfferId);
+          return; // Don't show toast, let the parent handle it
+        }
+      }
+
       toast({
         title: "Erro",
-        description: error.response?.data?.message || 'Erro ao enviar oferta',
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -107,13 +127,13 @@ export default function CreateOffer({
 
   const formatCurrency = (value: string) => {
     // Remove non-numeric characters
-    const numericValue = value.replace(/\D/g, '');
-    
-    if (numericValue === '') return '';
-    
+    const numericValue = value.replace(/\D/g, "");
+
+    if (numericValue === "") return "";
+
     // Convert to number and format as currency
     const number = parseFloat(numericValue) / 100;
-    return number.toLocaleString('pt-BR', {
+    return number.toLocaleString("pt-BR", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
@@ -121,7 +141,7 @@ export default function CreateOffer({
 
   const handleBudgetChange = (value: string) => {
     const formatted = formatCurrency(value);
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       budget: formatted,
     }));
@@ -129,15 +149,15 @@ export default function CreateOffer({
 
   const parseBudgetToNumber = (budgetString: string): number => {
     // Remove all non-numeric characters except comma and dot
-    const cleanValue = budgetString.replace(/[^\d,.-]/g, '');
-    
+    const cleanValue = budgetString.replace(/[^\d,.-]/g, "");
+
     // Handle Brazilian currency format (1.500,50 -> 1500.50)
     // If there's a comma, treat it as Brazilian format
-    if (cleanValue.includes(',')) {
+    if (cleanValue.includes(",")) {
       // Remove all dots (thousands separators)
-      const withoutThousands = cleanValue.replace(/\./g, '');
+      const withoutThousands = cleanValue.replace(/\./g, "");
       // Then replace comma with dot (decimal separator)
-      const numericValue = withoutThousands.replace(',', '.');
+      const numericValue = withoutThousands.replace(",", ".");
       return parseFloat(numericValue) || 0;
     } else {
       // No comma, treat as standard decimal format
@@ -173,7 +193,9 @@ export default function CreateOffer({
                 id="estimated_days"
                 type="number"
                 value={formData.estimated_days}
-                onChange={(e) => handleInputChange('estimated_days', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("estimated_days", e.target.value)
+                }
                 placeholder="7"
                 min="1"
                 max="365"
@@ -197,7 +219,7 @@ export default function CreateOffer({
                   Enviando...
                 </>
               ) : (
-                'Enviar Oferta'
+                "Enviar Oferta"
               )}
             </Button>
           </div>
@@ -205,4 +227,4 @@ export default function CreateOffer({
       </CardContent>
     </Card>
   );
-} 
+}

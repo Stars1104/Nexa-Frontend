@@ -16,6 +16,7 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Calendar } from "../ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import {
   CalendarIcon,
   Filter,
@@ -28,12 +29,15 @@ import {
   Users,
   Star,
   TrendingUp,
+  FileText,
+  Briefcase,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { fetchCreatorApplications } from "../../store/thunks/campaignThunks";
 import CampaignCard from "./CampaignCard";
 import CampaignStats from "./CampaignStats";
+import ContractList from "./ContractList";
 import {
   Card,
   CardContent,
@@ -677,129 +681,148 @@ export default function Dashboard({
         )}
       </div>
 
-      {/* Campaigns */}
-      <div>
-        <div className="flex items-center justify-between mb-3 sm:mb-4">
-          <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold">
-            Campanhas Disponíveis
-          </h3>
-          {filteredAndSortedCampaigns.length > 0 && (
-            <span className="text-sm text-muted-foreground">
-              {filteredAndSortedCampaigns.length} de {campaigns.length}{" "}
-              campanhas
-            </span>
-          )}
-        </div>
+      {/* Tabs for Campaigns and Contracts */}
+      <Tabs defaultValue="campaigns" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="campaigns" className="flex items-center gap-2">
+            <Briefcase className="h-4 w-4" />
+            Campanhas
+          </TabsTrigger>
+          <TabsTrigger value="contracts" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Contratos
+          </TabsTrigger>
+        </TabsList>
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-            {[...Array(8)].map((_, i) => (
-              <Card key={i} className="overflow-hidden">
-                <CardHeader className="pb-3">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                </CardHeader>
-                <CardContent className="pb-3">
-                  <div className="flex gap-2 mb-3">
-                    <Skeleton className="h-6 w-20" />
-                    <Skeleton className="h-6 w-24" />
-                  </div>
-                  <Skeleton className="h-16 w-full" />
-                </CardContent>
-                <CardFooter>
-                  <div className="flex justify-between items-center w-full">
-                    <Skeleton className="h-6 w-16" />
-                    <Skeleton className="h-9 w-24" />
-                  </div>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        ) : filteredAndSortedCampaigns.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              {hasActiveFilters ? (
-                <>
-                  <div className="mb-4">
-                    <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">
-                      Nenhuma campanha encontrada
-                    </h3>
-                    <p className="text-muted-foreground text-sm mb-4">
-                      Nenhuma campanha corresponde aos filtros atuais.
-                    </p>
-                    <p className="text-muted-foreground text-sm mb-6">
-                      Tente ajustar os filtros ou limpe-os para ver todas as
-                      campanhas.
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    onClick={clearFilters}
-                    className="mx-auto"
-                  >
-                    Limpar Filtros
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <div className="mb-4">
-                    <Star className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">
-                      Nenhuma campanha disponível
-                    </h3>
-                    <p className="text-muted-foreground text-sm mb-4">
-                      Não há campanhas aprovadas disponíveis no momento.
-                    </p>
-                    <p className="text-muted-foreground text-sm">
-                      Volte mais tarde para novas oportunidades!
-                    </p>
-                  </div>
-                </>
+        <TabsContent value="campaigns" className="space-y-6">
+          <div>
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold">
+                Campanhas Disponíveis
+              </h3>
+              {filteredAndSortedCampaigns.length > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  {filteredAndSortedCampaigns.length} de {campaigns.length}{" "}
+                  campanhas
+                </span>
               )}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-            {filteredAndSortedCampaigns
-              .filter((campaign: any) => {
-                if (statusFilter === "all") return true;
-                const myApp =
-                  user?.role === "creator"
-                    ? safeCreatorApplications.find(
-                        (app) =>
-                          app.campaign_id === campaign.id &&
-                          app.creator_id === user.id
-                      )
-                    : null;
-                if (!myApp) return false;
-                return myApp.status === statusFilter;
-              })
-              .map((campaign: any) => {
-                const myApp =
-                  user?.role === "creator"
-                    ? safeCreatorApplications.find(
-                        (app) =>
-                          app.campaign_id === campaign.id &&
-                          app.creator_id === user.id
-                      )
-                    : null;
+            </div>
 
-                return (
-                  <CampaignCard
-                    key={campaign.id}
-                    campaign={campaign}
-                    userApplication={myApp}
-                    onViewDetails={(campaignId) => {
-                      setComponent("Detalhes do Projeto");
-                      setProjectId(campaignId);
-                    }}
-                  />
-                );
-              })}
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+                {[...Array(8)].map((_, i) => (
+                  <Card key={i} className="overflow-hidden">
+                    <CardHeader className="pb-3">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </CardHeader>
+                    <CardContent className="pb-3">
+                      <div className="flex gap-2 mb-3">
+                        <Skeleton className="h-6 w-20" />
+                        <Skeleton className="h-6 w-24" />
+                      </div>
+                      <Skeleton className="h-16 w-full" />
+                    </CardContent>
+                    <CardFooter>
+                      <div className="flex justify-between items-center w-full">
+                        <Skeleton className="h-6 w-16" />
+                        <Skeleton className="h-9 w-24" />
+                      </div>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            ) : filteredAndSortedCampaigns.length === 0 ? (
+              <Card className="text-center py-12">
+                <CardContent>
+                  {hasActiveFilters ? (
+                    <>
+                      <div className="mb-4">
+                        <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">
+                          Nenhuma campanha encontrada
+                        </h3>
+                        <p className="text-muted-foreground text-sm mb-4">
+                          Nenhuma campanha corresponde aos filtros atuais.
+                        </p>
+                        <p className="text-muted-foreground text-sm mb-6">
+                          Tente ajustar os filtros ou limpe-os para ver todas as
+                          campanhas.
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={clearFilters}
+                        className="mx-auto"
+                      >
+                        Limpar Filtros
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="mb-4">
+                        <Star className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">
+                          Nenhuma campanha disponível
+                        </h3>
+                        <p className="text-muted-foreground text-sm mb-4">
+                          Não há campanhas aprovadas disponíveis no momento.
+                        </p>
+                        <p className="text-muted-foreground text-sm">
+                          Volte mais tarde para novas oportunidades!
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+                {filteredAndSortedCampaigns
+                  .filter((campaign: any) => {
+                    if (statusFilter === "all") return true;
+                    const myApp =
+                      user?.role === "creator"
+                        ? safeCreatorApplications.find(
+                            (app) =>
+                              app.campaign_id === campaign.id &&
+                              app.creator_id === user.id
+                          )
+                        : null;
+                    if (!myApp) return false;
+                    return myApp.status === statusFilter;
+                  })
+                  .map((campaign: any) => {
+                    const myApp =
+                      user?.role === "creator"
+                        ? safeCreatorApplications.find(
+                            (app) =>
+                              app.campaign_id === campaign.id &&
+                              app.creator_id === user.id
+                          )
+                        : null;
+
+                    return (
+                      <CampaignCard
+                        key={campaign.id}
+                        campaign={campaign}
+                        userApplication={myApp}
+                        onViewDetails={(campaignId) => {
+                          setComponent("Detalhes do Projeto");
+                          setProjectId(campaignId);
+                        }}
+                      />
+                    );
+                  })}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </TabsContent>
+
+        <TabsContent value="contracts" className="space-y-6">
+          <ContractList />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

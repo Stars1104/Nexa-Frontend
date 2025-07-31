@@ -36,7 +36,8 @@ export interface Contract {
   platform_fee: string;
   estimated_days: number;
   requirements: string[];
-  status: 'active' | 'completed' | 'cancelled' | 'disputed';
+  status: 'active' | 'completed' | 'cancelled' | 'disputed' | 'terminated';
+  workflow_status?: 'active' | 'waiting_review' | 'payment_available' | 'payment_withdrawn' | 'terminated';
   started_at: string;
   expected_completion_at: string;
   completed_at?: string;
@@ -48,6 +49,19 @@ export interface Contract {
   is_near_completion: boolean;
   can_be_completed: boolean;
   can_be_cancelled: boolean;
+  is_waiting_for_review?: boolean;
+  is_payment_available?: boolean;
+  is_payment_withdrawn?: boolean;
+  creator: {
+    id: number;
+    name: string;
+    avatar_url?: string;
+  };
+  brand?: {
+    id: number;
+    name: string;
+    avatar_url?: string;
+  };
   other_user: {
     id: number;
     name: string;
@@ -67,6 +81,12 @@ export interface Contract {
     comment?: string;
     created_at: string;
   };
+  // Review status fields
+  has_brand_review?: boolean;
+  has_creator_review?: boolean;
+  has_both_reviews?: boolean;
+  can_review?: boolean;
+  review_message?: string;
   created_at: string;
 }
 
@@ -249,6 +269,11 @@ export const hiringApi = {
     return response.data;
   },
 
+  getContractsForChatRoom: async (roomId: string): Promise<{ data: Contract[] }> => {
+    const response = await apiClient.get(`/contracts/chat-room/${roomId}`);
+    return response.data;
+  },
+
   getContract: async (id: number): Promise<{ data: Contract }> => {
     const response = await apiClient.get(`/contracts/${id}`);
     return response.data;
@@ -269,15 +294,25 @@ export const hiringApi = {
     return response.data;
   },
 
+  terminateContract: async (id: number, reason?: string): Promise<any> => {
+    const response = await apiClient.post(`/contracts/${id}/terminate`, { reason });
+    return response.data;
+  },
+
   // Reviews
   createReview: async (data: CreateReviewRequest): Promise<any> => {
     const response = await apiClient.post('/reviews', data);
     return response.data;
   },
 
-  getReviews: async (creatorId: number, rating?: number, publicOnly?: boolean): Promise<{ data: { reviews: { data: Review[] }, stats: any } }> => {
+  getContractReviewStatus: async (contractId: number): Promise<any> => {
+    const response = await apiClient.get(`/contracts/${contractId}/review-status`);
+    return response.data;
+  },
+
+  getReviews: async (userId: number, rating?: number, publicOnly?: boolean): Promise<{ data: { reviews: { data: Review[] }, stats: any } }> => {
     const params = new URLSearchParams();
-    params.append('creator_id', creatorId.toString());
+    params.append('user_id', userId.toString());
     if (rating) params.append('rating', rating.toString());
     if (publicOnly !== undefined) params.append('public_only', publicOnly.toString());
     
@@ -320,7 +355,7 @@ export const hiringApi = {
     return response.data;
   },
 
-  getWorkHistory: async (): Promise<{ data: { data: Contract[] } }> => {
+  getCreatorWorkHistory: async (): Promise<{ data: { data: Contract[] } }> => {
     const response = await apiClient.get('/creator-balance/work-history');
     return response.data;
   },
@@ -351,6 +386,26 @@ export const hiringApi = {
 
   getWithdrawalStatistics: async (): Promise<{ data: any }> => {
     const response = await apiClient.get('/withdrawals/statistics');
+    return response.data;
+  },
+
+  // Post-contract workflow
+  getContractsWaitingForReview: async (): Promise<{ data: Contract[] }> => {
+    const response = await apiClient.get('/post-contract/waiting-review');
+    return response.data;
+  },
+
+  getContractsWithPaymentAvailable: async (): Promise<{ data: Contract[] }> => {
+    const response = await apiClient.get('/post-contract/payment-available');
+    return response.data;
+  },
+
+  getWorkHistory: async (userId: number, type: 'creator' | 'brand'): Promise<any> => {
+    const params = new URLSearchParams();
+    params.append('user_id', userId.toString());
+    params.append('type', type);
+    
+    const response = await apiClient.get(`/post-contract/work-history?${params.toString()}`);
     return response.data;
   },
 }; 

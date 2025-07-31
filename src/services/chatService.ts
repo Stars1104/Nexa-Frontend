@@ -13,7 +13,7 @@ export interface ChatRoom {
     last_message?: {
         id: number;
         message: string;
-        message_type: string;
+        message_type: 'text' | 'file' | 'image' | 'offer' | 'system';
         sender_id: number;
         is_sender: boolean;
         created_at: string;
@@ -25,7 +25,7 @@ export interface ChatRoom {
 export interface Message {
     id: number;
     message: string;
-    message_type: 'text' | 'file' | 'image';
+    message_type: 'text' | 'file' | 'image' | 'offer' | 'system';
     sender_id: number;
     sender_name: string;
     sender_avatar?: string;
@@ -39,6 +39,26 @@ export interface Message {
     is_read: boolean;
     read_at?: string;
     created_at: string;
+    offer_data?: {
+        offer_id: number;
+        title: string;
+        description: string;
+        budget: string;
+        formatted_budget: string;
+        estimated_days: number;
+        status: 'pending' | 'accepted' | 'rejected' | 'expired' | 'cancelled';
+        expires_at: string;
+        days_until_expiry: number;
+        sender: {
+            id: number;
+            name: string;
+            avatar_url?: string;
+        };
+        contract_id?: number;
+        contract_status?: string;
+        can_be_completed?: boolean;
+        rejection_reason?: string;
+    };
 }
 
 export interface ChatRoomResponse {
@@ -65,7 +85,9 @@ class ChatService {
 
     // Get messages for a specific chat room
     async getMessages(roomId: string): Promise<ChatRoomResponse> {
+        console.log(`[ChatService] Fetching messages for room: ${roomId}`);
         const response = await apiClient.get(`/chat/rooms/${roomId}/messages`);
+        console.log(`[ChatService] Received ${response.data.data.messages.length} messages for room: ${roomId}`);
         return response.data.data;
     }
 
