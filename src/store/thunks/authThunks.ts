@@ -32,7 +32,9 @@ interface AuthResponse {
     role: 'creator' | 'brand' | 'student';
     whatsapp?: string;
     isStudent?: boolean;
-    isPremium?: boolean;
+    isPremium?: boolean; // Legacy field
+    has_premium?: boolean;
+    premium_expires_at?: string;
   };
   token: string;
 }
@@ -40,7 +42,7 @@ interface AuthResponse {
 // Async thunk for signup
 export const signupUser = createAsyncThunk(
   'auth/signup',
-  async (credentials: SignupCredentials, { dispatch, rejectWithValue }) => {
+  async (credentials: SignupCredentials, { dispatch, rejectWithValue }: any) => {
     try {
       dispatch(signupStart());
       
@@ -67,7 +69,7 @@ export const signupUser = createAsyncThunk(
 // Async thunk for login
 export const loginUser = createAsyncThunk(
   'auth/login',
-  async (credentials: LoginCredentials, { dispatch, rejectWithValue }) => {
+  async (credentials: LoginCredentials, { dispatch, rejectWithValue }: any) => {
     try {
       dispatch(loginStart());
       
@@ -95,7 +97,7 @@ export const loginUser = createAsyncThunk(
 // Async thunk for logout
 export const logoutUser = createAsyncThunk(
   'auth/logout',
-  async (_, { dispatch }) => {
+  async (_, { dispatch }: any) => {
     try {
       // Call logout API to invalidate token on server
       await logoutAPI();
@@ -115,9 +117,9 @@ export const logoutUser = createAsyncThunk(
 // Async thunk for updating password
 export const updateUserPassword = createAsyncThunk(
   'auth/updatePassword',
-  async (credentials: UpdatePasswordCredentials, { rejectWithValue }) => {
+  async (credentials: UpdatePasswordCredentials, { rejectWithValue }: any) => {
     try {
-      const response = await updatePassword(credentials.userId,credentials.newPassword, credentials.currentPassword);
+      const response = await updatePassword(credentials.userId, credentials.newPassword, credentials.currentPassword);
       
       if (!response.success) {
         throw new Error(response.message || 'Password update failed');
@@ -134,7 +136,7 @@ export const updateUserPassword = createAsyncThunk(
 // Async thunk for Google OAuth initiation
 export const initiateGoogleOAuthFlow = createAsyncThunk(
   'auth/googleOAuthInit',
-  async (role?: 'creator' | 'brand', { rejectWithValue }) => {
+  async (role: 'creator' | 'brand' | undefined, { rejectWithValue }: any) => {
     try {
       await initiateGoogleOAuth(role);
     } catch (error: unknown) {
@@ -147,7 +149,7 @@ export const initiateGoogleOAuthFlow = createAsyncThunk(
 // Async thunk for Google OAuth callback
 export const handleGoogleOAuthCallback = createAsyncThunk(
   'auth/googleOAuthCallback',
-  async (_, { dispatch, rejectWithValue }) => {
+  async (_, { dispatch, rejectWithValue }: any) => {
     try {
       dispatch(loginStart());
       

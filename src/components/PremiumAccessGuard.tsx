@@ -12,34 +12,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Crown, Lock, ArrowRight } from "lucide-react";
+import { useAppSelector } from "@/store/hooks";
 
 interface PremiumAccessGuardProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
-}
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  has_premium: boolean;
-  premium_expires_at: string | null;
+  setComponent?: (component: string) => void;
 }
 
 export default function PremiumAccessGuard({
   children,
   fallback,
+  setComponent
 }: PremiumAccessGuardProps) {
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastCheck, setLastCheck] = useState<number>(0);
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Use Redux state instead of local state
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  
   const {
     hasPremium,
-    isPremiumActive,
     loading: premiumLoading,
     refreshPremiumStatus,
   } = usePremiumContext();
@@ -60,19 +56,10 @@ export default function PremiumAccessGuard({
     refreshPremiumStatus,
   ]);
 
-  // Listen for premium status updates and refresh user data
+  // Listen for premium status updates and refresh premium status
   useEffect(() => {
     const handlePremiumUpdate = async () => {
       await refreshPremiumStatus();
-
-      // Also refresh user data
-      try {
-        const response = await apiClient.get("/user");
-        const userData = response.data;
-        setUser(userData);
-      } catch (error) {
-        console.error("Error refreshing user data:", error);
-      }
     };
 
     window.addEventListener("premium-status-updated", handlePremiumUpdate);
@@ -80,7 +67,7 @@ export default function PremiumAccessGuard({
     return () => {
       window.removeEventListener("premium-status-updated", handlePremiumUpdate);
     };
-  }, []);
+  }, [refreshPremiumStatus]);
 
   const checkUserAndPremiumStatus = async () => {
     try {
@@ -105,9 +92,9 @@ export default function PremiumAccessGuard({
       // Add a small delay to prevent rapid successive calls
       await new Promise((resolve) => setTimeout(resolve, 100));
 
+      // User data is now managed by Redux, no need to set local state
       const response = await apiClient.get("/user");
       const userData = response.data;
-      setUser(userData);
 
       // Only check premium for creators
       if (userData.role === "creator") {
@@ -119,9 +106,8 @@ export default function PremiumAccessGuard({
     } catch (error: any) {
       console.error("Error checking user status:", error);
 
-      // If it's a 401 error, clear user data
+      // If it's a 401 error, clear token (user data is managed by Redux)
       if (error.response?.status === 401) {
-        setUser(null);
         localStorage.removeItem("token");
       }
 
@@ -161,31 +147,20 @@ export default function PremiumAccessGuard({
     });
   };
 
-  // Debug function to manually refresh premium status
-  const debugRefreshPremium = async () => {
-    await refreshPremiumStatus();
-
-    // Also refresh user data
-    try {
-      const response = await apiClient.get("/user");
-      const userData = response.data;
-      setUser(userData);
-    } catch (error) {
-      console.error("Debug: Error refreshing user data:", error);
-    }
-  };
-
   const handleSubscribeClick = () => {
     // Update URL immediately for better UX
-    window.history.pushState({}, "", "/creator/subscription");
+    // window.history.pushState({}, "", "/creator/subscription");
+    setComponent("Subscrição");
 
     try {
       // Try React Router navigation
-      navigate("/creator/subscription", { replace: true });
+      // navigate("/creator/subscription", { replace: true });
+      setComponent("Subscrição");
     } catch (error) {
       console.error("React Router navigation error:", error);
       // Fallback to direct navigation
-      window.location.href = "/creator/subscription";
+      setComponent("Subscrição");
+      // window.location.href = "/creator/subscription";
     }
   };
 
@@ -200,8 +175,20 @@ export default function PremiumAccessGuard({
   // If user is not a creator, or has premium, show children
   // Check both hook premium status and user's has_premium field
   const userHasPremium = hasPremium || user?.has_premium;
+  
+  // Debug logging
+  console.log('PremiumAccessGuard Debug:', {
+    user: user ? { id: user.id, role: user.role, has_premium: user.has_premium } : null,
+    hasPremium,
+    userHasPremium,
+    isAuthenticated,
+    loading,
+    premiumLoading,
+    currentPath: location.pathname
+  });
 
   if (!user || user.role !== "creator" || userHasPremium) {
+    console.log('PremiumAccessGuard: Allowing access');
     return <>{children}</>;
   }
 
@@ -241,10 +228,10 @@ export default function PremiumAccessGuard({
             <Crown className="h-8 w-8 text-white" />
           </div>
           <CardTitle className="text-2xl font-bold text-white">
-            Premium Access Required
+            Acesso Premium necessário
           </CardTitle>
           <CardDescription className="text-gray-300">
-            Unlock all features with our premium subscription
+            Desbloqueie todos os recursos com nossa assinatura premium
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -252,24 +239,24 @@ export default function PremiumAccessGuard({
             <div className="flex items-center space-x-3">
               <Lock className="h-5 w-5 text-green-400" />
               <span className="text-sm text-gray-200">
-                Access to all campaigns
+                Acesso a todas as campanhas
               </span>
             </div>
             <div className="flex items-center space-x-3">
               <Lock className="h-5 w-5 text-green-400" />
               <span className="text-sm text-gray-200">
-                Bid on premium campaigns
+                Lance em campanhas premium
               </span>
             </div>
             <div className="flex items-center space-x-3">
               <Lock className="h-5 w-5 text-green-400" />
               <span className="text-sm text-gray-200">
-                Direct messaging with brands
+                Mensagens diretas com marcas
               </span>
             </div>
             <div className="flex items-center space-x-3">
               <Lock className="h-5 w-5 text-green-400" />
-              <span className="text-sm text-gray-200">Priority support</span>
+              <span className="text-sm text-gray-200">Suporte prioritário</span>
             </div>
           </div>
 
@@ -279,29 +266,9 @@ export default function PremiumAccessGuard({
               className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-semibold py-3"
             >
               <Crown className="mr-2 h-4 w-4" />
-              Get Premium Access
+                Obtenha acesso premium
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-          </div>
-
-          <div className="text-center space-y-2">
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/creator/profile")}
-              className="text-sm text-gray-400 hover:text-gray-200 hover:bg-gray-800"
-            >
-              Continue to Profile
-            </Button>
-
-            {import.meta.env.DEV && (
-              <Button
-                variant="ghost"
-                onClick={debugRefreshPremium}
-                className="text-xs text-gray-500 hover:text-gray-300 hover:bg-gray-800 block w-full"
-              >
-                Debug: Refresh Premium Status
-              </Button>
-            )}
           </div>
         </CardContent>
       </Card>

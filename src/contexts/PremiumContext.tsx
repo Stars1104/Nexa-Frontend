@@ -68,8 +68,10 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
         return null;
       }
 
+      console.log("PremiumContext: Checking premium status...");
       const response = await apiClient.get("/payment/subscription-status");
       const status = response.data;
+      console.log("PremiumContext: Received status:", status);
       setPremiumStatus(status);
       return status;
     } catch (error) {
@@ -103,6 +105,7 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
   // Listen for custom events to refresh premium status
   useEffect(() => {
     const handlePremiumUpdate = () => {
+      console.log("PremiumContext: Received premium-status-updated event");
       refreshPremiumStatus();
     };
 

@@ -8,7 +8,9 @@ interface User {
   role: 'creator' | 'brand' | 'student' | 'admin';
   whatsapp?: string;
   isStudent?: boolean;
-  isPremium?: boolean; // Added for testing
+  isPremium?: boolean; // Legacy field, use has_premium instead
+  has_premium?: boolean;
+  premium_expires_at?: string;
   avatar?: string;
   avatar_url?: string;
   bio?: string;
@@ -137,13 +139,28 @@ const authSlice = createSlice({
     // Toggle premium status (for testing)
     togglePremium: (state) => {
       if (state.user) {
-        state.user.isPremium = !state.user.isPremium;
+        state.user.has_premium = !state.user.has_premium;
+        // Also update legacy field for backward compatibility
+        state.user.isPremium = state.user.has_premium;
       }
     },
     // Temporary action to toggle admin role for testing
     toggleAdminRole: (state) => {
       if (state.user) {
         state.user.role = state.user.role === 'admin' ? 'creator' : 'admin';
+      }
+    },
+    // Update user data (useful for refreshing user data after subscription)
+    updateUser: (state, action: PayloadAction<Partial<User>>) => {
+      console.log('AuthSlice updateUser called with:', action.payload);
+      if (state.user) {
+        const oldUser = { ...state.user };
+        state.user = { ...state.user, ...action.payload };
+        console.log('AuthSlice updateUser - before:', oldUser, 'after:', state.user);
+        // Also update localStorage
+        localStorage.setItem('user', JSON.stringify(state.user));
+      } else {
+        console.log('AuthSlice updateUser - no user in state');
       }
     },
   },
@@ -179,6 +196,7 @@ export const {
   logout, 
   clearError,
   togglePremium,
-  toggleAdminRole
+  toggleAdminRole,
+  updateUser
 } = authSlice.actions;
 export default authSlice.reducer; 

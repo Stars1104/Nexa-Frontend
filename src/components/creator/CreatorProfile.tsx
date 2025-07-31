@@ -78,7 +78,7 @@ export const CreatorProfile = () => {
     gender: profile?.gender || defaultProfile.gender,
     categories: profile?.categories || defaultProfile.categories,
     image: profile?.avatar || profile?.avatar_url || null,
-    has_premium: profile?.has_premium || user?.isPremium || false,
+    has_premium: profile?.has_premium || user?.has_premium || false,
     balance: profile?.balance || user?.balance || defaultProfile.balance,
   };
 

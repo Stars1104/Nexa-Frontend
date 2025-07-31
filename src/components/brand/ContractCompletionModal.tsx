@@ -140,10 +140,21 @@ export default function ContractCompletionModal({
   };
 
   const formatCurrency = (amount: string) => {
+    // If the amount is already formatted (contains "R$"), return it as is
+    if (amount && amount.includes('R$')) {
+      return amount;
+    }
+    
+    // Otherwise, format it as currency
+    const numericAmount = parseFloat(amount);
+    if (isNaN(numericAmount)) {
+      return 'R$ 0,00';
+    }
+    
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
-    }).format(parseFloat(amount));
+    }).format(numericAmount);
   };
 
   const renderStars = (

@@ -16,11 +16,13 @@ import Subscription from "@/components/creator/Subscription";
 import TransactionHistory from "@/components/creator/TransactionHistory";
 import PremiumAccessGuard from "../../components/PremiumAccessGuard";
 import { usePremiumContext } from "../../contexts/PremiumContext";
+import { useAppSelector } from "../../store/hooks";
 
 const Index = () => {
     const isMobile = useIsMobile();
     const location = useLocation();
     const { hasPremium, loading: premiumLoading } = usePremiumContext();
+    const { user } = useAppSelector((state) => state.auth);
 
     const [component, setComponent] = useState<string | null>("Painel");
     const [projectId, setProjectId] = useState<number | null>(null);
@@ -40,10 +42,23 @@ const Index = () => {
         const premiumRequiredComponents = ["Painel", "Detalhes do Projeto", "Minha Aplicação", "Chat", "Notificações"];
         const isPremiumRequired = premiumRequiredComponents.includes(component || "");
         
+        // Check both PremiumContext and Redux user state for premium access
+        const userHasPremium = hasPremium || user?.has_premium;
+        
+        // Debug logging
+        console.log('CreatorIndex Debug:', {
+            component,
+            isPremiumRequired,
+            hasPremium,
+            userHasPremium,
+            userHasPremiumFromRedux: user?.has_premium,
+            premiumLoading
+        });
+        
         // If premium is required and user doesn't have it, show premium guard
-        if (isPremiumRequired && !hasPremium && !premiumLoading) {
+        if (isPremiumRequired && !userHasPremium && !premiumLoading) {
             return (
-                <PremiumAccessGuard>
+                <PremiumAccessGuard setComponent={setComponent}>
                     <div>This component requires premium</div>
                 </PremiumAccessGuard>
             );
@@ -51,7 +66,11 @@ const Index = () => {
         
         switch (component) {
             case "Painel":
-                return <Dashboard setComponent={setComponent} setProjectId={setProjectId} />;
+                return (
+                    <div>
+                        <Dashboard setComponent={setComponent} setProjectId={setProjectId} />
+                    </div>
+                );
             case "Minha Conta":
                 return <CreatorProfile />;
             case "Detalhes do Projeto":

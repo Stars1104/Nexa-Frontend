@@ -47,8 +47,7 @@ export default function Subscription() {
             const isNowActive = status.is_premium_active;
             
             setSubscriptionStatus(status);
-      
-            
+    
             // Show success message if subscription just became active
             if (!wasActive && isNowActive) {
                 toast({
@@ -57,7 +56,6 @@ export default function Subscription() {
                 });
             }
         } catch (error) {
-            console.error('Error loading subscription status:', error);
             toast({
                 title: "Erro",
                 description: "Não foi possível carregar o status da assinatura.",

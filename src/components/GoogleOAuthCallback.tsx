@@ -54,7 +54,7 @@ const GoogleOAuthCallback: React.FC = () => {
           
           // Check if this is a new registration by checking if the user has premium access
           // New users typically don't have premium access
-          const isNewUser = !result.user.isPremium && result.user.role === 'creator';
+          const isNewUser = !result.user.has_premium && result.user.role === 'creator';
           setIsNewRegistration(isNewUser);
           
           toast.success(isNewUser ? 'Account created successfully!' : 'Successfully signed in with Google!');

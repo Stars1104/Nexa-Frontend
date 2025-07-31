@@ -11,6 +11,10 @@ import {
 } from "../ui/card";
 import { useToast } from "../../hooks/use-toast";
 import { paymentClient } from "../../services/apiClient";
+import { useAppDispatch } from "../../store/hooks";
+import { checkAuthStatus, updateUser } from "../../store/slices/authSlice";
+import { fetchUserProfile } from "../../store/thunks/userThunks";
+import { apiClient } from "../../services/apiClient";
 
 interface SubscriptionModalProps {
   open?: boolean;
@@ -26,6 +30,7 @@ export default function SubscriptionModal({
   onSuccess,
 }: SubscriptionModalProps) {
   const { toast } = useToast();
+  const dispatch = useAppDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     card_number: "",
@@ -41,10 +46,7 @@ export default function SubscriptionModal({
   };
 
   const formatCPF = (value: string) => {
-    // Remove all non-digits
     const numbers = value.replace(/\D/g, "");
-
-    // Apply CPF mask: XXX.XXX.XXX-XX
     if (numbers.length <= 3) return numbers;
     if (numbers.length <= 6)
       return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
@@ -59,16 +61,12 @@ export default function SubscriptionModal({
   };
 
   const formatCardNumber = (value: string) => {
-    // Remove all non-digits
     const numbers = value.replace(/\D/g, "");
-    // Add spaces every 4 digits
     return numbers.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
   };
 
   const formatExpiration = (value: string) => {
-    // Remove all non-digits
     const numbers = value.replace(/\D/g, "");
-    // Format as MM/YY
     if (numbers.length <= 2) return numbers;
     return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}`;
   };
@@ -92,22 +90,14 @@ export default function SubscriptionModal({
     setFormData((prev) => ({ ...prev, [name]: formattedValue }));
   };
 
-  // CPF validation function
   const validateCPF = (cpf: string): boolean => {
-    // Remove formatting
     const numbers = cpf.replace(/[.-]/g, "");
-
-    // Check if it has 11 digits
     if (numbers.length !== 11) {
       return false;
     }
-
-    // Check if all digits are the same
     if (/^(\d)\1{10}$/.test(numbers)) {
       return false;
     }
-
-    // Validate first digit
     let sum = 0;
     for (let i = 0; i < 9; i++) {
       sum += parseInt(numbers[i]) * (10 - i);
@@ -119,7 +109,6 @@ export default function SubscriptionModal({
       return false;
     }
 
-    // Validate second digit
     sum = 0;
     for (let i = 0; i < 10; i++) {
       sum += parseInt(numbers[i]) * (11 - i);
@@ -134,43 +123,41 @@ export default function SubscriptionModal({
     const errors: string[] = [];
 
     if (!formData.card_number.replace(/\s/g, "").match(/^\d{16}$/)) {
-      errors.push("Card number must be 16 digits");
+      errors.push("O número do cartão deve ter 16 dígitos");
     }
 
     if (!formData.card_holder_name.trim()) {
-      errors.push("Card holder name is required");
+      errors.push("O nome do titular é obrigatório");
     }
 
     if (!formData.card_expiration_date.match(/^\d{2}\/\d{2}$/)) {
-      errors.push("Expiration date must be in MM/YY format");
+      errors.push("A data de validade deve estar no formato MM/AA");
     }
 
     if (!formData.card_cvv.match(/^\d{3,4}$/)) {
-      errors.push("CVV must be 3 or 4 digits");
+      errors.push("O CVV deve ter 3 ou 4 dígitos");
     }
 
     if (!formData.cpf.match(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/)) {
-      errors.push("CPF must be in XXX.XXX.XXX-XX format");
+      errors.push("O CPF deve estar no formato XXX.XXX.XXX-XX");
     } else if (!validateCPF(formData.cpf)) {
-      errors.push("CPF is not valid. Please check the number.");
+      errors.push("CPF inválido. Verifique o número.");
     }
 
     return errors;
   };
 
   const handlePay = async () => {
-    // Check if user is authenticated
     const token = localStorage.getItem("token");
     if (!token) {
       toast({
-        title: "Authentication Required",
-        description: "Please log in to continue with the payment",
+        title: "Autenticação Necessária",
+        description: "Faça login para prosseguir com o pagamento",
         variant: "destructive",
       });
       return;
     }
 
-    // Check if modal is still open
     if (!open) {
       return;
     }
@@ -179,7 +166,7 @@ export default function SubscriptionModal({
 
     if (errors.length > 0) {
       toast({
-        title: "Validation Error",
+        title: "Erro de Validação",
         description: errors.join(", "),
         variant: "destructive",
       });
@@ -189,21 +176,19 @@ export default function SubscriptionModal({
     setIsLoading(true);
 
     try {
-      // Prepare data for backend
       const paymentData = {
         card_number: formData.card_number.replace(/\s/g, ""),
         card_holder_name: formData.card_holder_name.trim(),
-        card_expiration_date: formData.card_expiration_date.replace("/", ""), // Remove slash to get MMYY format
+        card_expiration_date: formData.card_expiration_date.replace("/", ""),
         card_cvv: formData.card_cvv,
-        cpf: formData.cpf, // Keep the formatted CPF (XXX.XXX.XXX-XX)
-        test_mode: import.meta.env.DEV ? "true" : "false", // Enable test mode in development
+        cpf: formData.cpf,
+        test_mode: import.meta.env.DEV ? "true" : "false",
       };
 
-      // Validate data before sending
       if (paymentData.card_number.length !== 16) {
         toast({
-          title: "Validation Error",
-          description: "Card number must be exactly 16 digits",
+          title: "Erro de Validação",
+          description: "O número do cartão deve ter exatamente 16 dígitos",
           variant: "destructive",
         });
         return;
@@ -211,8 +196,8 @@ export default function SubscriptionModal({
 
       if (paymentData.card_expiration_date.length !== 4) {
         toast({
-          title: "Validation Error",
-          description: "Expiration date must be in MMYY format",
+          title: "Erro de Validação",
+          description: "A data de validade deve estar no formato MMAA",
           variant: "destructive",
         });
         return;
@@ -220,8 +205,8 @@ export default function SubscriptionModal({
 
       if (paymentData.card_cvv.length < 3 || paymentData.card_cvv.length > 4) {
         toast({
-          title: "Validation Error",
-          description: "CVV must be 3 or 4 digits",
+          title: "Erro de Validação",
+          description: "O CVV deve ter 3 ou 4 dígitos",
           variant: "destructive",
         });
         return;
@@ -229,8 +214,8 @@ export default function SubscriptionModal({
 
       if (!paymentData.cpf.match(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/)) {
         toast({
-          title: "Validation Error",
-          description: "CPF must be in XXX.XXX.XXX-XX format",
+          title: "Erro de Validação",
+          description: "O CPF deve estar no formato XXX.XXX.XXX-XX",
           variant: "destructive",
         });
         return;
@@ -244,29 +229,22 @@ export default function SubscriptionModal({
       if (response.data.success) {
         handleSuccess();
       } else {
-        throw new Error(response.data.message || "Payment failed");
+        throw new Error(response.data.message || "Falha no pagamento");
       }
     } catch (error: any) {
-      console.error("Payment error:", error);
-      console.error("Error response data:", error.response?.data);
-      console.error("Error response status:", error.response?.status);
-      console.error(
-        "Full error response:",
-        JSON.stringify(error.response?.data, null, 2)
-      );
+      console.error("Erro no pagamento:", error);
 
-      // Handle different types of errors
       if (error.code === "ECONNABORTED" || error.message.includes("timeout")) {
         toast({
-          title: "Payment Timeout",
+          title: "Tempo de Espera Excedido",
           description:
-            "The payment request took too long. Please check your internet connection and try again.",
+            "A solicitação demorou demais. Verifique sua conexão e tente novamente.",
           variant: "destructive",
         });
       } else if (error.response?.status === 401) {
         toast({
-          title: "Authentication Required",
-          description: "Please log in to continue with the payment",
+          title: "Autenticação Necessária",
+          description: "Faça login para prosseguir com o pagamento",
           variant: "destructive",
         });
       } else if (error.response?.status === 400) {
@@ -276,47 +254,47 @@ export default function SubscriptionModal({
             .flat()
             .join(", ");
           toast({
-            title: "Validation Error",
+            title: "Erro de Validação",
             description: errorMessages,
             variant: "destructive",
           });
         } else {
           toast({
-            title: "Validation Error",
+            title: "Erro de Validação",
             description:
               error.response?.data?.message ||
-              "Please check your input and try again",
+              "Verifique seus dados e tente novamente",
             variant: "destructive",
           });
         }
       } else if (error.response?.status === 403) {
         toast({
-          title: "Access Denied",
+          title: "Acesso Negado",
           description:
             error.response?.data?.message ||
-            "You do not have permission to perform this action",
+            "Você não tem permissão para executar esta ação",
           variant: "destructive",
         });
       } else if (error.response?.status === 429) {
         toast({
-          title: "Too Many Requests",
-          description: "Please wait a moment before trying again",
+          title: "Muitas Solicitações",
+          description: "Aguarde um momento antes de tentar novamente",
           variant: "destructive",
         });
       } else if (!error.response) {
         toast({
-          title: "Network Error",
+          title: "Erro de Rede",
           description:
-            "Unable to connect to the server. Please check your internet connection and try again.",
+            "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",
           variant: "destructive",
         });
       } else {
         toast({
-          title: "Payment Failed",
+          title: "Falha no Pagamento",
           description:
             error.response?.data?.message ||
             error.message ||
-            "An error occurred during payment",
+            "Ocorreu um erro durante o pagamento",
           variant: "destructive",
         });
       }
@@ -333,15 +311,96 @@ export default function SubscriptionModal({
     }
   };
 
-  const handleSuccess = () => {
-    // Dispatch event to notify other components about premium status update
+  const handleSuccess = async () => {
+    console.log('SubscriptionModal: Starting success handler');
+    
+    // Dispatch premium status update event
     window.dispatchEvent(new CustomEvent("premium-status-updated"));
-
+    console.log('SubscriptionModal: Dispatched premium-status-updated event');
+    
+    // Immediately update user data with premium status
+    dispatch(updateUser({ has_premium: true }));
+    console.log('SubscriptionModal: Updated Redux user with has_premium: true');
+    
+    // Add a small delay to ensure backend has processed the subscription
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    console.log('SubscriptionModal: Waited 2 seconds for backend processing');
+    
+    // Refresh ALL user data from different sources
+    try {
+      // First, refresh the user data directly from the API
+      const userResponse = await apiClient.get("/user");
+      const userData = userResponse.data;
+      console.log('SubscriptionModal: Fetched user data from API:', userData);
+      
+      // Check if the backend has actually updated the user's premium status
+      if (!userData.has_premium) {
+        console.warn('SubscriptionModal: Backend has not updated user premium status yet');
+        // Wait a bit more and try again
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const retryResponse = await apiClient.get("/user");
+        const retryUserData = retryResponse.data;
+        console.log('SubscriptionModal: Retry user data from API:', retryUserData);
+        
+        if (retryUserData.has_premium) {
+          userData.has_premium = retryUserData.has_premium;
+          userData.premium_expires_at = retryUserData.premium_expires_at;
+        }
+      }
+      
+      // Update the user data in Redux with the fresh data from backend
+      dispatch(updateUser({
+        has_premium: userData.has_premium,
+        premium_expires_at: userData.premium_expires_at,
+        ...userData
+      }));
+      console.log('SubscriptionModal: Updated Redux with fresh user data');
+      
+      // Refresh auth state (includes basic user data)
+      await dispatch(checkAuthStatus());
+      console.log('SubscriptionModal: Refreshed auth status');
+      
+      // Refresh user profile data
+      await dispatch(fetchUserProfile());
+      console.log('SubscriptionModal: Refreshed user profile');
+      
+      // Dispatch another premium status update event to ensure all listeners get it
+      window.dispatchEvent(new CustomEvent("premium-status-updated"));
+      console.log('SubscriptionModal: Dispatched second premium-status-updated event');
+      
+      // Show success message
+      toast({
+        title: "🎉 Assinatura Ativada!",
+        description: "Sua assinatura premium foi ativada com sucesso! Você agora tem acesso a todos os recursos premium.",
+      });
+      
+      // Force a page reload after a short delay to ensure all state is properly updated
+      setTimeout(() => {
+        console.log('SubscriptionModal: Reloading page to ensure state consistency');
+        window.location.reload();
+      }, 3000);
+      
+    } catch (error) {
+      console.error("Error refreshing user data after subscription:", error);
+      
+      // Show error message but still close modal
+      toast({
+        title: "Aviso",
+        description: "Sua assinatura foi processada, mas houve um problema ao atualizar os dados. Por favor, recarregue a página.",
+        variant: "destructive",
+      });
+      
+      // Force reload even on error to ensure state consistency
+      setTimeout(() => {
+        console.log('SubscriptionModal: Reloading page due to error');
+        window.location.reload();
+      }, 2000);
+    }
+    
     onSuccess?.();
     handleClose();
   };
 
-  // If using controlled state and modal is not open, don't render
   if (open !== undefined && !open) {
     return null;
   }
@@ -350,19 +409,14 @@ export default function SubscriptionModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <Card className="w-full max-w-md mx-4">
         <CardHeader>
-          <CardTitle>Premium Subscription</CardTitle>
+          <CardTitle>Assinatura Premium</CardTitle>
           <CardDescription>
-            Get access to premium features for R$ 49.99/month
-            {import.meta.env.DEV && (
-              <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-yellow-800 text-sm">
-                🧪 Test Mode: Payments will be simulated for development
-              </div>
-            )}
+            Tenha acesso a recursos premium por R$ 49,99/mês
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="card_number">Card Number</Label>
+            <Label htmlFor="card_number">Número do Cartão</Label>
             <Input
               id="card_number"
               name="card_number"
@@ -374,11 +428,11 @@ export default function SubscriptionModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="card_holder_name">Card Holder Name</Label>
+            <Label htmlFor="card_holder_name">Nome do Titular</Label>
             <Input
               id="card_holder_name"
               name="card_holder_name"
-              placeholder="John Doe"
+              placeholder="João da Silva"
               value={formData.card_holder_name}
               onChange={handleInputChange}
             />
@@ -386,11 +440,11 @@ export default function SubscriptionModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="card_expiration_date">Expiration</Label>
+              <Label htmlFor="card_expiration_date">Validade</Label>
               <Input
                 id="card_expiration_date"
                 name="card_expiration_date"
-                placeholder="MM/YY"
+                placeholder="MM/AA"
                 value={formData.card_expiration_date}
                 onChange={handleInputChange}
                 maxLength={5}
@@ -422,7 +476,7 @@ export default function SubscriptionModal({
             />
             {import.meta.env.DEV && (
               <p className="text-xs text-muted-foreground">
-                Valid test CPFs: 111.444.777-35, 123.456.789-09, 987.654.321-00
+                CPFs de teste válidos: 111.444.777-35, 123.456.789-09, 987.654.321-00
               </p>
             )}
           </div>
@@ -434,10 +488,10 @@ export default function SubscriptionModal({
               disabled={isLoading}
               className="flex-1"
             >
-              Cancel
+              Cancelar
             </Button>
             <Button onClick={handlePay} disabled={isLoading} className="flex-1">
-              {isLoading ? "Processing..." : "Pay R$ 49.99"}
+              {isLoading ? "Processando..." : "Pagar R$ 49,99"}
             </Button>
           </div>
         </CardContent>

@@ -19,6 +19,7 @@ import CreatorIndex from "./pages/creator/Index";
 import BrandIndex from "./pages/brand/Index";
 import AdminIndex from "./pages/admin";
 import NotificationsPage from "./pages/Notifications";
+import { DebugUserState } from "./components/DebugUserState";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => {
           <PremiumProvider>
             <TooltipProvider>
               <Sonner />
+              {/* <DebugUserState /> */}
               <BrowserRouter>
                 <Routes>
                 <Route path="/" element={<Index />} />
