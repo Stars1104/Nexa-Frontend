@@ -152,15 +152,13 @@ const authSlice = createSlice({
     },
     // Update user data (useful for refreshing user data after subscription)
     updateUser: (state, action: PayloadAction<Partial<User>>) => {
-      console.log('AuthSlice updateUser called with:', action.payload);
       if (state.user) {
         const oldUser = { ...state.user };
         state.user = { ...state.user, ...action.payload };
-        console.log('AuthSlice updateUser - before:', oldUser, 'after:', state.user);
         // Also update localStorage
         localStorage.setItem('user', JSON.stringify(state.user));
       } else {
-        console.log('AuthSlice updateUser - no user in state');
+        console.error('AuthSlice updateUser - no user in state');
       }
     },
   },

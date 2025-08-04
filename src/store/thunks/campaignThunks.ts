@@ -114,20 +114,6 @@ export const createCampaign = createAsyncThunk<
     formData.append('campaign_type', campaignData.type?.trim() || '');
     formData.append('category', campaignData.type?.trim() || '');
     
-    // Debug: Log the form data being sent
-    console.log('Campaign data being sent:', {
-      title: campaignData.title,
-      description: campaignData.description,
-      requirements: requirements,
-      budget: budgetValue,
-      deadline: campaignData.deadline.toISOString().split('T')[0],
-      deadline_full: campaignData.deadline.toISOString(),
-      deadline_date: campaignData.deadline,
-      target_states: campaignData.states,
-      campaign_type: campaignData.type?.trim() || '',
-      category: campaignData.type?.trim() || ''
-    });
-    
     if (campaignData.logo) {
       formData.append('logo', campaignData.logo);
     }
