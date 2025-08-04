@@ -96,7 +96,7 @@ const Sidebar = ({ setComponent, component }: SidebarProps) => {
                 {/* Sidebar */}
                 <aside
                     className={`fixed top-0 left-0 h-full w-72 max-w-full bg-background flex flex-col shadow-2xl z-0
-                        transition-transform transition-opacity duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
+                        transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
                         ${mobileSidebarOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'}
                         pointer-events-auto`}
                     style={{ willChange: 'transform, opacity' }}

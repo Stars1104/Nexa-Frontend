@@ -2801,7 +2801,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
 
                 {/* Enhanced File preview */}
                 {selectedFile && (
-                  <div className="group relative overflow-hidden bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-2xl border border-pink-200 dark:border-pink-800 shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-[1.02] animate-in slide-in-from-bottom-2 duration-300">
+                  <div className="group relative overflow-hidden bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-2xl border border-pink-200 dark:border-pink-800 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] animate-in slide-in-from-bottom-2 duration-300">
                     <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <div className="relative flex items-center gap-4 p-4">
                       {filePreview ? (
