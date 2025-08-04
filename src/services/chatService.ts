@@ -85,9 +85,8 @@ class ChatService {
 
     // Get messages for a specific chat room
     async getMessages(roomId: string): Promise<ChatRoomResponse> {
-        console.log(`[ChatService] Fetching messages for room: ${roomId}`);
-        const response = await apiClient.get(`/chat/rooms/${roomId}/messages`);
-        console.log(`[ChatService] Received ${response.data.data.messages.length} messages for room: ${roomId}`);
+        const timestamp = Date.now(); // Cache-busting parameter
+        const response = await apiClient.get(`/chat/rooms/${roomId}/messages?t=${timestamp}`);
         return response.data.data;
     }
 

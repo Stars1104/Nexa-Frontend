@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Briefcase, FileText } from "lucide-react";
+import { Briefcase, FileText, CreditCard } from "lucide-react";
 import ContractList from "./ContractList";
+import BrandPaymentMethods from "./BrandPaymentMethods";
 
 const campaigns = {
   ongoing: [
@@ -70,9 +71,9 @@ const BrandDashboard: React.FC<BrandDashboardProps> = ({ setComponent }) => {
         Gerencie suas campanhas e conecte-se com criadores incríveis!
       </p>
 
-      {/* Tabs for Campaigns and Contracts */}
+      {/* Tabs for Campaigns, Contracts, and Payment Methods */}
       <Tabs defaultValue="campaigns" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="campaigns" className="flex items-center gap-2">
             <Briefcase className="h-4 w-4" />
             Campanhas
@@ -80,6 +81,10 @@ const BrandDashboard: React.FC<BrandDashboardProps> = ({ setComponent }) => {
           <TabsTrigger value="contracts" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             Contratos
+          </TabsTrigger>
+          <TabsTrigger value="payment" className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4" />
+            Pagamentos
           </TabsTrigger>
         </TabsList>
 
@@ -275,6 +280,10 @@ const BrandDashboard: React.FC<BrandDashboardProps> = ({ setComponent }) => {
 
         <TabsContent value="contracts" className="space-y-6">
           <ContractList />
+        </TabsContent>
+
+        <TabsContent value="payment" className="space-y-6">
+          <BrandPaymentMethods />
         </TabsContent>
       </Tabs>
     </div>

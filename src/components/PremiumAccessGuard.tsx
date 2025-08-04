@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import { usePremiumContext } from "@/contexts/PremiumContext";
-import { apiClient } from "@/services/apiClient";
-import { Button } from "@/components/ui/button";
+import { useLocation } from "react-router-dom";
+import { useToast } from "../hooks/use-toast";
+import { usePremiumContext } from "../contexts/PremiumContext";
+import { apiClient } from "../services/apiClient";
+import { Button } from "./ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "./ui/card";
 import { Crown, Lock, ArrowRight } from "lucide-react";
-import { useAppSelector } from "@/store/hooks";
+import { useAppSelector } from "../store/hooks";
 
 interface PremiumAccessGuardProps {
   children: React.ReactNode;
@@ -28,7 +28,6 @@ export default function PremiumAccessGuard({
   const [loading, setLoading] = useState(true);
   const [lastCheck, setLastCheck] = useState<number>(0);
   const { toast } = useToast();
-  const navigate = useNavigate();
   const location = useLocation();
   
   // Use Redux state instead of local state
@@ -114,11 +113,6 @@ export default function PremiumAccessGuard({
       ) {
         showPremiumWarning();
       }
-
-      // If it's a rate limit error, don't retry immediately
-      if (error.response?.status === 429) {
-        console.log("Rate limited, will retry later");
-      }
     } finally {
       setLoading(false);
     }
@@ -171,20 +165,8 @@ export default function PremiumAccessGuard({
   // If user is not a creator, or has premium, show children
   // Check both hook premium status and user's has_premium field
   const userHasPremium = hasPremium || user?.has_premium;
-  
-  // Debug logging
-  console.log('PremiumAccessGuard Debug:', {
-    user: user ? { id: user.id, role: user.role, has_premium: user.has_premium } : null,
-    hasPremium,
-    userHasPremium,
-    isAuthenticated,
-    loading,
-    premiumLoading,
-    currentPath: location.pathname
-  });
 
   if (!user || user.role !== "creator" || userHasPremium) {
-    console.log('PremiumAccessGuard: Allowing access');
     return <>{children}</>;
   }
 
@@ -217,16 +199,16 @@ export default function PremiumAccessGuard({
 
   // Default premium required screen
   return (
-    <div className="flex items-center justify-center min-h-[91vh] bg-[#171717] p-4">
-      <Card className="w-full max-w-md bg-background border-gray-800">
+    <div className="flex items-center justify-center min-h-[91vh] dark:bg-[#171717] p-4">
+      <Card className="w-full max-w-md bg-background border">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 to-orange-500">
             <Crown className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-2xl font-bold text-white">
+          <CardTitle className="text-2xl font-bold text-slate-900 dark:text-white">
             Acesso Premium necessário
           </CardTitle>
-          <CardDescription className="text-gray-300">
+          <CardDescription className="text-gray-700 dark:text-slate-300">
             Desbloqueie todos os recursos com nossa assinatura premium
           </CardDescription>
         </CardHeader>
@@ -234,25 +216,25 @@ export default function PremiumAccessGuard({
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
               <Lock className="h-5 w-5 text-green-400" />
-              <span className="text-sm text-gray-200">
+              <span className="text-sm text-gray-700 dark:text-slate-300">
                 Acesso a todas as campanhas
               </span>
             </div>
             <div className="flex items-center space-x-3">
               <Lock className="h-5 w-5 text-green-400" />
-              <span className="text-sm text-gray-200">
+              <span className="text-sm text-gray-700 dark:text-slate-300">
                 Lance em campanhas premium
               </span>
             </div>
             <div className="flex items-center space-x-3">
               <Lock className="h-5 w-5 text-green-400" />
-              <span className="text-sm text-gray-200">
+              <span className="text-sm text-gray-700 dark:text-slate-300">
                 Mensagens diretas com marcas
               </span>
             </div>
             <div className="flex items-center space-x-3">
               <Lock className="h-5 w-5 text-green-400" />
-              <span className="text-sm text-gray-200">Suporte prioritário</span>
+              <span className="text-sm text-gray-700 dark:text-slate-300">Suporte prioritário</span>
             </div>
           </div>
 

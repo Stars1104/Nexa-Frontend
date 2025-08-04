@@ -334,6 +334,28 @@ export default function Dashboard({
     }).format(budget);
   };
 
+// Helper function to safely convert budget to number
+  const safeParseBudget = (budget: any): number => {
+    if (typeof budget === 'number') {
+      return isNaN(budget) ? 0 : budget;
+    }
+    if (typeof budget === 'string') {
+      // Remove currency symbols and formatting
+      const cleanValue = budget.replace(/[^\d,.-]/g, '');
+      if (cleanValue.includes(',')) {
+        // Handle Brazilian format (1.500,50 -> 1500.50)
+        const withoutThousands = cleanValue.replace(/\./g, '');
+        const numericValue = withoutThousands.replace(',', '.');
+        const parsed = parseFloat(numericValue);
+        return isNaN(parsed) ? 0 : parsed;
+      } else {
+        const parsed = parseFloat(cleanValue);
+        return isNaN(parsed) ? 0 : parsed;
+      }
+    }
+    return 0;
+  };
+
   // Calculate days until deadline
   const getDaysUntilDeadline = (deadline: string) => {
     const deadlineDate = new Date(deadline);
@@ -375,27 +397,24 @@ export default function Dashboard({
   const activeOpportunities = campaigns.filter(
     (c) => getDaysUntilDeadline(c.deadline) > 0
   ).length;
+
   const averageBudget =
     campaigns.length > 0
-      ? campaigns.reduce((sum, c) => sum + c.budget, 0) / campaigns.length
+      ? campaigns.reduce((sum, c) => sum + safeParseBudget(c.budget), 0) / campaigns.length
       : 0;
+
   const approvedApplications = safeCreatorApplications.filter(
     (app) => app.status === "approved"
   ).length;
+
   const successRate =
     safeCreatorApplications.length > 0
       ? Math.round(
           (approvedApplications / safeCreatorApplications.length) * 100
         )
       : 0;
-  console.log(averageBudget);
-  const totalEarnings = approvedApplications * averageBudget; // Simplified calculation
 
-  useEffect(() => {
-    if (user?.role === "creator") {
-      dispatch(fetchCreatorApplications());
-    }
-  }, [dispatch, user?.id, user?.role]);
+  const totalEarnings = approvedApplications * averageBudget;
 
   return (
     <div className="flex flex-col gap-4 sm:gap-6 lg:gap-8 p-4 sm:p-6 lg:p-8 min-h-[92vh] dark:bg-[#171717]">

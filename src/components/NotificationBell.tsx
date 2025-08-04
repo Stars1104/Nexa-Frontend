@@ -74,29 +74,6 @@ const NotificationBell = () => {
         }
     };
 
-    const handleNotificationClick = (notification: any) => {
-        setIsOpen(false);
-        // Navigate to notification page
-        window.location.href = '/notifications';
-    };
-
-    const getNotificationIcon = (type: string) => {
-        switch (type) {
-            case 'login_detected':
-            case 'new_project':
-            case 'project_approved':
-            case 'proposal_approved':
-                return '✅';
-            case 'project_rejected':
-            case 'proposal_rejected':
-                return '❌';
-            case 'new_message':
-                return '💬';
-            default:
-                return '🔔';
-        }
-    };
-
     const formatTime = (dateString: string) => {
         const date = new Date(dateString);
         const now = new Date();
@@ -146,10 +123,7 @@ const NotificationBell = () => {
                         <div className="space-y-0">
                             {recentNotifications.map((notification, index) => (
                                 <div key={notification.id}>
-                                    <div 
-                                        className="p-4 hover:bg-accent/50 cursor-pointer transition-colors"
-                                        onClick={() => handleNotificationClick(notification)}
-                                    >
+                                    <div  className="p-4 hover:bg-accent/50 transition-colors">
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-start justify-between gap-2">

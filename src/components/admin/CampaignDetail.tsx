@@ -75,8 +75,6 @@ const CampaignDetail = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  console.log(campaign);
-
   // Use real campaign data with fallbacks only when needed
   const displayData = {
     ...campaign,

@@ -48,6 +48,15 @@ export const handleApiError = (error: any): ApiError => {
         };
       
       case 422:
+        // Handle validation errors with specific field messages
+        if (data?.errors) {
+          const errorMessages = Object.values(data.errors).flat() as string[];
+          return {
+            message: errorMessages[0] || 'Dados inválidos. Verifique as informações fornecidas.',
+            status,
+            code: 'VALIDATION_ERROR'
+          };
+        }
         return {
           message: data?.message || 'Dados inválidos. Verifique as informações fornecidas.',
           status,

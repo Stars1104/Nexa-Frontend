@@ -11,7 +11,7 @@ import ChatPage from "./ChatPage";
 import ViewCreators from "@/components/brand/ViewCreators";
 import ViewApplication from "@/components/brand/ViewApplication";
 import CreateCampaign from "@/components/brand/CreateCampaign";
-import Payment from "@/components/brand/Payment";
+import BrandPaymentMethods from "@/components/brand/BrandPaymentMethods";
 import Notification from "@/components/Notification";
 
 const Index = () => {
@@ -31,7 +31,7 @@ const Index = () => {
                 case "Nova campanha":
                     return <CreateCampaign />
                 case "Pagamentos":
-                    return <Payment />
+                    return <BrandPaymentMethods />
                 case "Notificações":
                     return <Notification />
                 default:

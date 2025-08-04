@@ -16,6 +16,13 @@ interface UseSocketReturn {
     stopTyping: (roomId: string) => void;
     markMessagesAsRead: (roomId: string, messageIds: number[]) => Promise<void>;
     onMessagesRead: (callback: (data: { roomId: string; messageIds: number[]; readBy: number; timestamp: string }) => void) => void;
+    onOfferCreated: (callback: (data: { roomId: string; offerData: any; senderId: number; timestamp: string }) => void) => void;
+    onOfferAccepted: (callback: (data: { roomId: string; offerData: any; contractData: any; senderId: number; timestamp: string }) => void) => void;
+    onOfferRejected: (callback: (data: { roomId: string; offerData: any; senderId: number; rejectionReason?: string; timestamp: string }) => void) => void;
+    onOfferCancelled: (callback: (data: { roomId: string; offerData: any; senderId: number; timestamp: string }) => void) => void;
+    onContractCompleted: (callback: (data: { roomId: string; contractData: any; senderId: number; timestamp: string }) => void) => void;
+    onContractTerminated: (callback: (data: { roomId: string; contractData: any; senderId: number; terminationReason?: string; timestamp: string }) => void) => void;
+    onContractActivated: (callback: (data: { roomId: string; contractData: any; senderId: number; timestamp: string }) => void) => void;
     reconnect: () => void;
 }
 
@@ -31,7 +38,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
     const socketRef = useRef<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const [connectionError, setConnectionError] = useState<string | null>(null);
-    const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const reconnectAttemptsRef = useRef(0);
     const maxReconnectAttempts = 5;
     const isMountedRef = useRef(true);
@@ -373,6 +380,132 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         };
     }, [enableChat]);
 
+    // Set up offer created callback
+    const onOfferCreated = useCallback((callback: (data: { roomId: string; offerData: any; senderId: number; timestamp: string }) => void) => {
+        if (!socketRef.current || !enableChat) return;
+
+        const handleOfferCreated = (data: any) => {
+            if (!isMountedRef.current) return;
+            callback(data);
+        };
+
+        socketRef.current.on('offer_created', handleOfferCreated);
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.off('offer_created', handleOfferCreated);
+            }
+        };
+    }, [enableChat]);
+
+    // Set up offer accepted callback
+    const onOfferAccepted = useCallback((callback: (data: { roomId: string; offerData: any; contractData: any; senderId: number; timestamp: string }) => void) => {
+        if (!socketRef.current || !enableChat) return;
+
+        const handleOfferAccepted = (data: any) => {
+            if (!isMountedRef.current) return;
+            callback(data);
+        };
+
+        socketRef.current.on('offer_accepted', handleOfferAccepted);
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.off('offer_accepted', handleOfferAccepted);
+            }
+        };
+    }, [enableChat]);
+
+    // Set up offer rejected callback
+    const onOfferRejected = useCallback((callback: (data: { roomId: string; offerData: any; senderId: number; rejectionReason?: string; timestamp: string }) => void) => {
+        if (!socketRef.current || !enableChat) return;
+
+        const handleOfferRejected = (data: any) => {
+            if (!isMountedRef.current) return;
+            callback(data);
+        };
+
+        socketRef.current.on('offer_rejected', handleOfferRejected);
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.off('offer_rejected', handleOfferRejected);
+            }
+        };
+    }, [enableChat]);
+
+    // Set up offer cancelled callback
+    const onOfferCancelled = useCallback((callback: (data: { roomId: string; offerData: any; senderId: number; timestamp: string }) => void) => {
+        if (!socketRef.current || !enableChat) return;
+
+        const handleOfferCancelled = (data: any) => {
+            if (!isMountedRef.current) return;
+            callback(data);
+        };
+
+        socketRef.current.on('offer_cancelled', handleOfferCancelled);
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.off('offer_cancelled', handleOfferCancelled);
+            }
+        };
+    }, [enableChat]);
+
+    // Set up contract completed callback
+    const onContractCompleted = useCallback((callback: (data: { roomId: string; contractData: any; senderId: number; timestamp: string }) => void) => {
+        if (!socketRef.current || !enableChat) return;
+
+        const handleContractCompleted = (data: any) => {
+            if (!isMountedRef.current) return;
+            callback(data);
+        };
+
+        socketRef.current.on('contract_completed', handleContractCompleted);
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.off('contract_completed', handleContractCompleted);
+            }
+        };
+    }, [enableChat]);
+
+    // Set up contract terminated callback
+    const onContractTerminated = useCallback((callback: (data: { roomId: string; contractData: any; senderId: number; terminationReason?: string; timestamp: string }) => void) => {
+        if (!socketRef.current || !enableChat) return;
+
+        const handleContractTerminated = (data: any) => {
+            if (!isMountedRef.current) return;
+            callback(data);
+        };
+
+        socketRef.current.on('contract_terminated', handleContractTerminated);
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.off('contract_terminated', handleContractTerminated);
+            }
+        };
+    }, [enableChat]);
+
+    // Set up contract activated callback
+    const onContractActivated = useCallback((callback: (data: { roomId: string; contractData: any; senderId: number; timestamp: string }) => void) => {
+        if (!socketRef.current || !enableChat) return;
+
+        const handleContractActivated = (data: any) => {
+            if (!isMountedRef.current) return;
+            callback(data);
+        };
+
+        socketRef.current.on('contract_activated', handleContractActivated);
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.off('contract_activated', handleContractActivated);
+            }
+        };
+    }, [enableChat]);
+
     return {
         socket: socketRef.current,
         isConnected,
@@ -384,6 +517,13 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         stopTyping,
         markMessagesAsRead,
         onMessagesRead,
+        onOfferCreated,
+        onOfferAccepted,
+        onOfferRejected,
+        onOfferCancelled,
+        onContractCompleted,
+        onContractTerminated,
+        onContractActivated,
         reconnect,
     };
 }; 

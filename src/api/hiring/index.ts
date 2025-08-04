@@ -8,7 +8,7 @@ export interface Offer {
   budget: string;
   estimated_days: number;
   requirements: string[];
-  status: 'pending' | 'accepted' | 'rejected' | 'expired';
+  status: 'pending' | 'accepted' | 'rejected' | 'expired' | 'cancelled';
   expires_at: string;
   days_until_expiry: number;
   is_expiring_soon: boolean;
@@ -36,8 +36,8 @@ export interface Contract {
   platform_fee: string;
   estimated_days: number;
   requirements: string[];
-  status: 'active' | 'completed' | 'cancelled' | 'disputed' | 'terminated';
-  workflow_status?: 'active' | 'waiting_review' | 'payment_available' | 'payment_withdrawn' | 'terminated';
+  status: 'pending' | 'active' | 'completed' | 'cancelled' | 'disputed' | 'terminated';
+  workflow_status?: 'active' | 'waiting_review' | 'payment_pending' | 'payment_available' | 'payment_withdrawn' | 'terminated';
   started_at: string;
   expected_completion_at: string;
   completed_at?: string;
@@ -49,6 +49,8 @@ export interface Contract {
   is_near_completion: boolean;
   can_be_completed: boolean;
   can_be_cancelled: boolean;
+  can_be_started?: boolean;
+  offer_id?: number;
   is_waiting_for_review?: boolean;
   is_payment_available?: boolean;
   is_payment_withdrawn?: boolean;
@@ -192,6 +194,8 @@ export interface WithdrawalMethod {
   max_amount: number;
   processing_time: string;
   fee: number;
+  required_fields?: string[];
+  field_config?: Record<string, any>;
 }
 
 export interface CreateOfferRequest {
@@ -281,6 +285,11 @@ export const hiringApi = {
 
   completeContract: async (id: number): Promise<any> => {
     const response = await apiClient.post(`/contracts/${id}/complete`);
+    return response.data;
+  },
+
+  activateContract: async (id: number): Promise<any> => {
+    const response = await apiClient.post(`/contracts/${id}/activate`);
     return response.data;
   },
 

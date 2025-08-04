@@ -311,27 +311,19 @@ export default function Chat() {
 
     try {
       setIsLoading(true);
-      console.log(`Loading messages for room: ${room.room_id}`);
       const response = await chatService.getMessages(room.room_id);
       if (isMountedRef.current) {
-        console.log(
-          `Loaded ${response.messages.length} messages for room: ${room.room_id}`
-        );
 
         // Only deduplicate if there are actual duplicates (same message ID)
         const messageIds = new Set();
         const deduplicatedMessages = response.messages.filter((message) => {
           if (messageIds.has(message.id)) {
-            console.log(`Removing duplicate message with ID: ${message.id}`);
             return false; // Skip duplicate message IDs
           }
           messageIds.add(message.id);
           return true;
         });
 
-        console.log(
-          `After deduplication: ${deduplicatedMessages.length} messages`
-        );
         setMessages(deduplicatedMessages);
 
         // Join the room for real-time updates
@@ -372,15 +364,8 @@ export default function Chat() {
         const contractsWithReviewStatus = await Promise.all(
           contractsData.map(async (contract: any) => {
             try {
-              console.log(
-                `Fetching review status for contract ${contract.id}...`
-              );
               const reviewStatusResponse =
                 await hiringApi.getContractReviewStatus(contract.id);
-              console.log(
-                `Review status for contract ${contract.id}:`,
-                reviewStatusResponse.data
-              );
               return {
                 ...contract,
                 ...reviewStatusResponse.data,
@@ -1642,15 +1627,9 @@ export default function Chat() {
                           return;
                         }
 
-                        console.log("Contract to review:", contractToReview);
                         setContractToReview(contractToReview);
                         setShowReviewModal(true);
-                        console.log(
-                          "System message opening review modal for contract:",
-                          contractToReview.id
-                        );
                       } else {
-                        console.error("No contract found for review!");
                         toast({
                           title: "Erro",
                           description:
@@ -1973,7 +1952,7 @@ export default function Chat() {
 
           {/* Conversation List */}
           <ScrollArea className="flex-1">
-            <div className="p-2">
+            <div className="p-2 w-[383px]">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin " />

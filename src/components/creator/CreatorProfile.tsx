@@ -5,11 +5,16 @@ import {
   updateUserProfile,
 } from "../../store/thunks/userThunks";
 import { updateUserPassword } from "../../store/thunks/authThunks";
-import { Crown, Key, AlertTriangle, DollarSign } from "lucide-react";
+import { Crown, Key, AlertTriangle, DollarSign, Wallet, TrendingUp, Clock } from "lucide-react";
 import { useSafeToast } from "../../hooks/useSafeToast";
 import EditProfile from "./EditProfile";
 import UpdatePasswordModal from "../ui/UpdatePasswordModal";
 import Reviews from "../Reviews";
+import WithdrawalModal from "./WithdrawalModal";
+import { hiringApi, CreatorBalance as CreatorBalanceType } from "@/api/hiring";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const getInitials = (name: string) => {
   return name
@@ -35,15 +40,37 @@ const defaultProfile = {
 export const CreatorProfile = () => {
   const dispatch = useAppDispatch();
   const safeToast = useSafeToast();
+  const { toast } = useToast();
   const [editMode, setEditMode] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [balance, setBalance] = useState<CreatorBalanceType | null>(null);
+  const [balanceLoading, setBalanceLoading] = useState(false);
 
   // Get profile data from Redux store
   const { profile, isLoading, error } = useAppSelector((state) => state.user);
   const { user } = useAppSelector((state) => state.auth);
+
+  // Load balance data
+  const loadBalance = async () => {
+    try {
+      setBalanceLoading(true);
+      const response = await hiringApi.getCreatorBalance();
+      setBalance(response.data);
+    } catch (error) {
+      console.error('Error loading balance:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar dados do saldo",
+        variant: "destructive",
+      });
+    } finally {
+      setBalanceLoading(false);
+    }
+  };
 
   // Fetch profile data on component mount
   useEffect(() => {
@@ -65,6 +92,7 @@ export const CreatorProfile = () => {
     // Only fetch if user is authenticated
     if (user?.id) {
       fetchProfile();
+      loadBalance();
     }
   }, [dispatch, user?.id]);
 
@@ -160,6 +188,11 @@ export const CreatorProfile = () => {
     },
     [dispatch, user?.id]
   );
+
+  const handleWithdrawalCreated = () => {
+    setShowWithdrawalModal(false);
+    loadBalance();
+  };
 
   // Handle edit mode toggle
   const handleEditModeToggle = useCallback(() => {
@@ -398,6 +431,89 @@ export const CreatorProfile = () => {
         </div>
       )}
 
+      {/* Balance and Withdrawal Section */}
+      {user?.id && (
+        <div className="mt-8">
+          <div className="bg-background rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700 p-6">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                  Saldo e Saques
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Gerencie seu saldo e solicite saques dos seus ganhos
+                </p>
+              </div>
+              <Button 
+                onClick={() => setShowWithdrawalModal(true)}
+                className="flex items-center gap-2"
+                disabled={!balance || balance.balance.available_balance <= 0 || balanceLoading}
+              >
+                <Wallet className="h-4 w-4" />
+                Solicitar Saque
+              </Button>
+            </div>
+
+            {balanceLoading ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : balance ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Saldo Disponível</CardTitle>
+                    <Wallet className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {balance.balance.formatted_available_balance}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Disponível para saque
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Ganhos do Mês</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {balance.earnings.formatted_this_month}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Este mês
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Saques Pendentes</CardTitle>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {balance.withdrawals.pending_count}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Aguardando processamento
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                Não foi possível carregar os dados do saldo
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Update Password Modal */}
       <UpdatePasswordModal
         isOpen={showPasswordModal}
@@ -405,6 +521,16 @@ export const CreatorProfile = () => {
         onSubmit={handleUpdatePassword}
         isLoading={isPasswordLoading}
       />
+
+      {/* Withdrawal Modal */}
+      {balance && (
+        <WithdrawalModal
+          isOpen={showWithdrawalModal}
+          onClose={() => setShowWithdrawalModal(false)}
+          balance={balance}
+          onWithdrawalCreated={handleWithdrawalCreated}
+        />
+      )}
     </div>
   );
 };

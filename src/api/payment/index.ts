@@ -1,5 +1,6 @@
 import { apiClient, paymentClient } from '../../services/apiClient';
 import axios from 'axios';
+export * from './creatorPayment';
 
 export interface PaymentMethod {
   id: string;
@@ -149,4 +150,7 @@ export const paymentApi = {
     const response = await apiClient.get('/payment/subscription-status');
     return response.data;
   },
-}; 
+};
+
+// Export creator payment API
+export { creatorPaymentApi } from './creatorPayment';

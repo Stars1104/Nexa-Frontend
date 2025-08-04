@@ -31,6 +31,7 @@ import {
   Timer,
   Check,
   X,
+  Play,
 } from "lucide-react";
 
 interface Offer {
@@ -67,7 +68,7 @@ interface Contract {
   platform_fee: string;
   estimated_days: number;
   requirements: string[];
-  status: "active" | "completed" | "cancelled" | "disputed";
+  status: "pending" | "active" | "completed" | "cancelled" | "disputed";
   started_at: string;
   expected_completion_at: string;
   completed_at?: string;
@@ -79,6 +80,7 @@ interface Contract {
   is_near_completion: boolean;
   can_be_completed: boolean;
   can_be_cancelled: boolean;
+  can_be_started?: boolean;
   other_user: {
     id: number;
     name: string;
@@ -614,6 +616,44 @@ function ContractCard({
     }
   };
 
+  const handleActivate = async () => {
+    if (!contract.can_be_started) {
+      toast({
+        title: "Erro",
+        description: "Este contrato não pode ser ativado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Call API to activate contract
+      const response = await hiringApi.activateContract(contract.id);
+
+      if (response.success) {
+        toast({
+          title: "Sucesso",
+          description: "Contrato ativado com sucesso",
+        });
+        onContractUpdated();
+      } else {
+        throw new Error(response.message || "Erro ao ativar contrato");
+      }
+    } catch (error: any) {
+      console.error("Error activating contract:", error);
+      toast({
+        title: "Erro",
+        description:
+          error.response?.data?.message || "Erro ao ativar contrato",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleCancel = async () => {
     if (!contract.can_be_cancelled) {
       toast({
@@ -822,6 +862,19 @@ function ContractCard({
           )}
 
           <div className="flex gap-2">
+            {contract.status === "pending" &&
+              userRole === "brand" &&
+              contract.can_be_started && (
+                <Button
+                  onClick={handleActivate}
+                  disabled={isProcessing}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  Ativar Contrato
+                </Button>
+              )}
+
             {contract.status === "active" &&
               userRole === "brand" &&
               contract.can_be_completed && (

@@ -14,6 +14,7 @@ import Dashboard from "@/components/admin/Dashboard";
 import PendingCampaign from "@/components/admin/PendingCampaign";
 import CampaignList from "@/components/admin/CampaignList";
 import UserList from "@/components/admin/UserList";
+import WithdrawalVerification from "@/components/admin/WithdrawalVerification";
 import Setting from "@/components/admin/Setting";
 import Notification from "@/components/Notification";
 
@@ -48,6 +49,8 @@ const AdminIndex = () => {
                 return <CampaignList />;
             case "Usuários":
                 return <UserList />;
+            case "Verificação de Saques":
+                return <WithdrawalVerification />;
             case "Configurações de Regras":
                 return <Setting />;
             case "Notificações":

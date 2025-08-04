@@ -1,5 +1,5 @@
 import { Button } from "../ui/button";
-import { Home, FileText, User, Briefcase, Text, Bell } from "lucide-react";
+import { Home, FileText, User, Briefcase, Text, Bell, Shield } from "lucide-react";
 import LightLogo from "../../assets/light-logo.png";
 import DarkLogo from "../../assets/dark-logo.png";
 import { useEffect, useState, useRef } from "react";
@@ -10,6 +10,7 @@ const navLinks = [
     { label: "Campanhas Pendentes", icon: FileText, key: "Campanhas Pendentes" },
     { label: "Todas as Campanhas", icon: Text, key: "Todas as Campanhas" },
     { label: "Usuários", icon: User, key: "Usuários" },
+    { label: "Verificação de Saques", icon: Shield, key: "Verificação de Saques" },
     { label: "Configurações de Regras", icon: Briefcase, key: "Configurações de Regras" },
     { label: "Notificações", icon: Bell, key: "Notificações" }
 ];
@@ -24,7 +25,7 @@ const Sidebar = ({ setComponent, component }: SidebarProps) => {
     const [selectedComponent, setSelectedComponent] = useState("Painel");
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
-    const closeTimeout = useRef<NodeJS.Timeout | null>(null);
+    const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isMobile = useIsMobile();
 
     useEffect(() => {

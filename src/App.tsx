@@ -19,7 +19,7 @@ import CreatorIndex from "./pages/creator/Index";
 import BrandIndex from "./pages/brand/Index";
 import AdminIndex from "./pages/admin";
 import NotificationsPage from "./pages/Notifications";
-import { DebugUserState } from "./components/DebugUserState";
+import BankRegistrationPage from "./pages/creator/BankRegistrationPage";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +60,11 @@ const App = () => {
                 <Route path="/creator/subscription" element={
                   <ProtectedRoute allowedRoles={['creator', 'student']}>
                     <CreatorIndex />
+                  </ProtectedRoute>
+                } />
+                <Route path="/creator/bank-registration" element={
+                  <ProtectedRoute allowedRoles={['creator', 'student']}>
+                    <BankRegistrationPage />
                   </ProtectedRoute>
                 } />
                 <Route path="/brand/*" element={

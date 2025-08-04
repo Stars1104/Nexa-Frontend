@@ -132,16 +132,21 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     startTyping,
     stopTyping,
     markMessagesAsRead,
+    onOfferCreated,
+    onOfferAccepted,
+    onOfferRejected,
+    onOfferCancelled,
+    onContractCompleted,
+    onContractTerminated,
+    onContractActivated,
     reconnect,
   } = useSocket({ enableNotifications: false, enableChat: true });
 
   // Component mount/unmount tracking
   useEffect(() => {
-    console.log("[ChatPage] Component mounted");
     isMountedRef.current = true;
 
     return () => {
-      console.log("[ChatPage] Component unmounting");
       isMountedRef.current = false;
       // Clear any pending timeouts
       if (typingTimeoutRef.current) {
@@ -153,7 +158,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
 
   // Load chat rooms on component mount
   useEffect(() => {
-    console.log("[ChatPage] Loading chat rooms on mount");
     if (isMountedRef.current) {
       loadChatRooms();
     }
@@ -208,22 +212,9 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     requestAnimationFrame(scrollToBottom);
   }, [messages]);
 
-  // Track messages state changes
-  useEffect(() => {
-    console.log(
-      `[ChatPage] Messages state changed: ${messages.length} messages`
-    );
-    console.log(
-      `[ChatPage] Message IDs:`,
-      messages.map((m) => m.id)
-    );
-  }, [messages]);
-
   // Join/leave room when selection changes
   useEffect(() => {
     if (!isMountedRef.current) return;
-
-    console.log(`[ChatPage] Room selection changed:`, selectedRoom?.room_id);
 
     if (selectedRoom) {
       joinRoom(selectedRoom.room_id);
@@ -233,7 +224,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
 
       return () => {
         if (isMountedRef.current) {
-          console.log(`[ChatPage] Leaving room: ${selectedRoom.room_id}`);
           leaveRoom(selectedRoom.room_id);
         }
       };
@@ -247,8 +237,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     // Listen for new messages from other users
     const handleNewMessage = (data: any) => {
       if (!isMountedRef.current) return;
-
-      console.log("[ChatPage] Received new message via socket:", data);
 
       if (data.roomId === selectedRoom?.room_id) {
         // Only add message if it's from another user (not the current user)
@@ -270,12 +258,8 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
             created_at: data.timestamp || new Date().toISOString(),
           };
 
-          console.log("[ChatPage] Adding new message to state:", newMessage);
           setMessages((prev) => {
             const updated = [...prev, newMessage];
-            console.log(
-              `[ChatPage] Messages state updated: ${prev.length} -> ${updated.length} messages`
-            );
             return updated;
           });
 
@@ -334,6 +318,246 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
       }
     };
   }, [socket, selectedRoom, user, markMessagesAsRead]);
+
+  // Socket event listeners for real-time contract and offer updates
+  useEffect(() => {
+    if (!socket || !isMountedRef.current) return;
+
+    // Listen for offer created events
+    const handleOfferCreated = (data: any) => {
+      if (!isMountedRef.current) return;
+      console.log('[ChatPage] Offer created via Socket.IO:', data);
+      
+      if (data.roomId === selectedRoom?.room_id) {
+        // Add new offer to the offers list
+        setOffers((prev) => {
+          const newOffer: Offer = {
+            id: data.offerData.id,
+            title: data.offerData.title,
+            description: data.offerData.description,
+            budget: data.offerData.formatted_budget,
+            estimated_days: data.offerData.estimated_days,
+            requirements: [],
+            status: data.offerData.status as 'pending' | 'accepted' | 'rejected' | 'expired',
+            expires_at: data.offerData.expires_at,
+            days_until_expiry: data.offerData.days_until_expiry,
+            is_expiring_soon: data.offerData.days_until_expiry <= 1,
+            is_expired: data.offerData.status === 'expired',
+            can_be_accepted: data.offerData.status === 'pending' && user?.role === 'creator',
+            can_be_rejected: data.offerData.status === 'pending' && user?.role === 'creator',
+            can_be_cancelled: data.offerData.status === 'pending' && user?.role === 'brand',
+            other_user: {
+              id: user?.role === 'brand' ? data.offerData.creator_id : data.offerData.brand_id,
+              name: '',
+              avatar_url: '',
+            },
+            created_at: new Date().toISOString(),
+          };
+          return [newOffer, ...prev];
+        });
+
+        // Reload messages to show the offer message
+        loadMessages(selectedRoom.room_id);
+      }
+    };
+
+    // Listen for offer accepted events
+    const handleOfferAccepted = (data: any) => {
+      if (!isMountedRef.current) return;
+      console.log('[ChatPage] Offer accepted via Socket.IO:', data);
+      
+      if (data.roomId === selectedRoom?.room_id) {
+        // Update offer status
+        setOffers((prev) =>
+          prev.map((offer) =>
+            offer.id === data.offerData.id
+              ? { ...offer, status: 'accepted' }
+              : offer
+          )
+        );
+
+        // Add new contract if contract data is provided
+        if (data.contractData) {
+          setContracts((prev) => {
+            const newContract = {
+              id: data.contractData.id,
+              title: data.contractData.title,
+              description: data.contractData.description,
+              status: data.contractData.status,
+              workflow_status: data.contractData.workflow_status,
+              can_be_completed: data.contractData.can_be_completed,
+            };
+            return [newContract, ...prev];
+          });
+        }
+
+        // Reload messages to show the acceptance message
+        loadMessages(selectedRoom.room_id);
+      }
+    };
+
+    // Listen for offer rejected events
+    const handleOfferRejected = (data: any) => {
+      if (!isMountedRef.current) return;
+      console.log('[ChatPage] Offer rejected via Socket.IO:', data);
+      
+      if (data.roomId === selectedRoom?.room_id) {
+        // Update offer status
+        setOffers((prev) =>
+          prev.map((offer) =>
+            offer.id === data.offerData.id
+              ? { ...offer, status: 'rejected' }
+              : offer
+          )
+        );
+
+        // Reload messages to show the rejection message
+        loadMessages(selectedRoom.room_id);
+      }
+    };
+
+    // Listen for offer cancelled events
+    const handleOfferCancelled = (data: any) => {
+      if (!isMountedRef.current) return;
+      console.log('[ChatPage] Offer cancelled via Socket.IO:', data);
+      
+      if (data.roomId === selectedRoom?.room_id) {
+        // Update offer status
+        setOffers((prev) =>
+          prev.map((offer) =>
+            offer.id === data.offerData.id
+              ? { ...offer, status: 'cancelled' }
+              : offer
+          )
+        );
+
+        // Reload messages to show the cancellation message
+        loadMessages(selectedRoom.room_id);
+      }
+    };
+
+    // Listen for contract completed events
+    const handleContractCompleted = (data: any) => {
+      if (!isMountedRef.current) return;
+      console.log('[ChatPage] Contract completed via Socket.IO:', data);
+      
+      if (data.roomId === selectedRoom?.room_id) {
+        // Update contract with complete data from server
+        setContracts((prev) =>
+          prev.map((contract) =>
+            contract.id === data.contractData.id
+              ? { 
+                  ...contract, 
+                  ...data.contractData,
+                  status: 'completed',
+                  workflow_status: 'waiting_review',
+                  can_review: true,
+                }
+              : contract
+          )
+        );
+
+        // Show success toast
+        toast({
+          title: "Contrato Finalizado",
+          description: "O contrato foi finalizado com sucesso!",
+        });
+
+        // Reload messages to show the completion message
+        loadMessages(selectedRoom.room_id);
+      }
+    };
+
+    // Listen for contract terminated events
+    const handleContractTerminated = (data: any) => {
+      if (!isMountedRef.current) return;
+      console.log('[ChatPage] Contract terminated via Socket.IO:', data);
+      
+      if (data.roomId === selectedRoom?.room_id) {
+        // Update contract with complete data from server
+        setContracts((prev) =>
+          prev.map((contract) =>
+            contract.id === data.contractData.id
+              ? { 
+                  ...contract, 
+                  ...data.contractData,
+                  status: 'terminated',
+                  workflow_status: 'terminated',
+                }
+              : contract
+          )
+        );
+
+        // Show notification
+        toast({
+          title: "Contrato Terminado",
+          description: data.terminationReason || "O contrato foi terminado",
+        });
+
+        // Reload messages to show the termination message
+        loadMessages(selectedRoom.room_id);
+      }
+    };
+
+    // Listen for contract activated events
+    const handleContractActivated = (data: any) => {
+      if (!isMountedRef.current) return;
+      console.log('[ChatPage] Contract activated via Socket.IO:', data);
+      
+      if (data.roomId === selectedRoom?.room_id) {
+        // Update contract with complete data from server
+        setContracts((prev) => {
+          const existingContract = prev.find(c => c.id === data.contractData.id);
+          if (existingContract) {
+            return prev.map((contract) =>
+              contract.id === data.contractData.id
+                ? { 
+                    ...contract, 
+                    ...data.contractData,
+                    status: 'active',
+                    workflow_status: data.contractData.workflow_status,
+                  }
+                : contract
+            );
+          } else {
+            // Add new contract with complete data
+            return [data.contractData, ...prev];
+          }
+        });
+
+        // The accepted offer will be cleared when contracts are reloaded
+
+        // Show success toast
+        toast({
+          title: "Contrato Ativado",
+          description: "O contrato foi ativado com sucesso!",
+        });
+
+        // Reload messages to show the activation message
+        loadMessages(selectedRoom.room_id);
+      }
+    };
+
+    // Set up event listeners
+    socket.on('offer_created', handleOfferCreated);
+    socket.on('offer_accepted', handleOfferAccepted);
+    socket.on('offer_rejected', handleOfferRejected);
+    socket.on('offer_cancelled', handleOfferCancelled);
+    socket.on('contract_completed', handleContractCompleted);
+    socket.on('contract_terminated', handleContractTerminated);
+    socket.on('contract_activated', handleContractActivated);
+
+    return () => {
+      // Cleanup event listeners
+      socket.off('offer_created', handleOfferCreated);
+      socket.off('offer_accepted', handleOfferAccepted);
+      socket.off('offer_rejected', handleOfferRejected);
+      socket.off('offer_cancelled', handleOfferCancelled);
+      socket.off('contract_completed', handleContractCompleted);
+      socket.off('contract_terminated', handleContractTerminated);
+      socket.off('contract_activated', handleContractActivated);
+    };
+  }, [socket, selectedRoom, user, onOfferCreated, onOfferAccepted, onOfferRejected, onOfferCancelled, onContractCompleted, onContractTerminated, onContractActivated]);
 
   // Auto-clear typing users after 3 seconds to prevent them from persisting
   useEffect(() => {
@@ -503,36 +727,33 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     if (!isMountedRef.current) return;
 
     try {
-      console.log(`[ChatPage] Loading messages for room: ${roomId}`);
+      console.log('[ChatPage] Loading messages for room:', roomId);
       const response = await chatService.getMessages(roomId);
+      console.log('[ChatPage] Messages loaded:', response.messages.length, 'messages');
+      
       if (isMountedRef.current) {
-        console.log(
-          `[ChatPage] Loaded ${response.messages.length} messages for room: ${roomId}`
-        );
-        console.log(
-          `[ChatPage] Message IDs:`,
-          response.messages.map((m) => m.id)
-        );
-
         // Only deduplicate if there are actual duplicates (same message ID)
         const messageIds = new Set();
         const deduplicatedMessages = response.messages.filter((message) => {
           if (messageIds.has(message.id)) {
-            console.log(
-              `[ChatPage] Removing duplicate message with ID: ${message.id}`
-            );
             return false; // Skip duplicate message IDs
           }
           messageIds.add(message.id);
           return true;
         });
 
-        console.log(
-          `[ChatPage] After deduplication: ${deduplicatedMessages.length} messages`
-        );
-        console.log(
-          `[ChatPage] Setting messages state with ${deduplicatedMessages.length} messages`
-        );
+        // Log offer messages for debugging
+        const offerMessages = deduplicatedMessages.filter(msg => msg.message_type === 'offer');
+        console.log('[ChatPage] Offer messages found:', offerMessages.length);
+        offerMessages.forEach(msg => {
+          console.log('[ChatPage] Offer message:', {
+            id: msg.id,
+            offer_id: msg.offer_data?.offer_id,
+            status: msg.offer_data?.status,
+            can_be_accepted: msg.offer_data?.status === "pending"
+          });
+        });
+
         setMessages(deduplicatedMessages);
       }
     } catch (error) {
@@ -554,15 +775,8 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         const contractsWithReviewStatus = await Promise.all(
           contractsData.map(async (contract: any) => {
             try {
-              console.log(
-                `Fetching review status for contract ${contract.id}...`
-              );
               const reviewStatusResponse =
                 await hiringApi.getContractReviewStatus(contract.id);
-              console.log(
-                `Review status for contract ${contract.id}:`,
-                reviewStatusResponse.data
-              );
               return {
                 ...contract,
                 ...reviewStatusResponse.data,
@@ -611,11 +825,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     e.preventDefault();
     if (!selectedRoom || (!input.trim() && !selectedFile)) return;
 
-    console.log("[ChatPage] Sending message:", {
-      input: input.trim(),
-      hasFile: !!selectedFile,
-    });
-
     try {
       let newMessage: Message;
 
@@ -633,17 +842,11 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         newMessage = await sendMessage(selectedRoom.room_id, input.trim());
       }
 
-      console.log("[ChatPage] Message sent successfully:", newMessage);
-
       if (isMountedRef.current) {
         // Add the message to the UI immediately for better UX
         // The message from the API response is already complete with proper ID
-        console.log("[ChatPage] Adding sent message to state:", newMessage);
         setMessages((prev) => {
           const updated = [...prev, newMessage];
-          console.log(
-            `[ChatPage] Messages state updated after send: ${prev.length} -> ${updated.length} messages`
-          );
           return updated;
         });
         setInput("");
@@ -850,43 +1053,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
       contract.status === "completed" && contract.can_review === true
   );
 
-  // Debug logging for review status
-  console.log("Review status debug:", {
-    contracts: contracts.map((c) => ({
-      id: c.id,
-      status: c.status,
-      can_review: c.can_review,
-      has_brand_review: c.has_brand_review,
-      has_creator_review: c.has_creator_review,
-      has_both_reviews: c.has_both_reviews,
-    })),
-    canReview,
-  });
-
-  // Debug logging for offer sending
-  console.log("Offer sending debug:", {
-    userRole: user?.role,
-    hasSelectedRoom: !!selectedRoom,
-    hasActiveContract: !!activeContract,
-    contractsCount: contracts.length,
-    offersCount: offers.length,
-    acceptedOffers: offers.filter((o) => o.status === "accepted").length,
-    canSendOffer,
-  });
-
-  // Debug logging for review button
-  console.log("Review button debug:", {
-    contracts: contracts.map((c) => ({
-      id: c.id,
-      status: c.status,
-      workflow_status: c.workflow_status,
-    })),
-    hasReviewContract: contracts.some(
-      (c) => c.status === "completed" && c.workflow_status === "waiting_review"
-    ),
-    allContracts: contracts,
-  });
-
   // Handle offer creation
   const handleOfferCreated = () => {
     setShowOfferModal(false);
@@ -947,12 +1113,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         description: "Oferta aceita com sucesso!",
       });
 
-      // Reload all data to show updated status
-      if (selectedRoom) {
-        loadMessages(selectedRoom.room_id);
-        loadOffers(selectedRoom.room_id);
-        loadContracts(selectedRoom.room_id);
-      }
+      // Socket.IO will handle real-time updates automatically
     } catch (error: any) {
       console.error("Error accepting offer:", error);
       toast({
@@ -960,6 +1121,13 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         description: error.response?.data?.message || "Erro ao aceitar oferta",
         variant: "destructive",
       });
+
+      // Reload data on error to show current status
+      if (selectedRoom) {
+        loadMessages(selectedRoom.room_id);
+        loadOffers(selectedRoom.room_id);
+        loadContracts(selectedRoom.room_id);
+      }
     }
   };
 
@@ -977,12 +1145,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         description: "Oferta rejeitada com sucesso!",
       });
 
-      // Reload all data to show updated status
-      if (selectedRoom) {
-        loadMessages(selectedRoom.room_id);
-        loadOffers(selectedRoom.room_id);
-        loadContracts(selectedRoom.room_id);
-      }
+      // Socket.IO will handle real-time updates automatically
     } catch (error: any) {
       console.error("Error rejecting offer:", error);
       toast({
@@ -990,6 +1153,13 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         description: error.response?.data?.message || "Erro ao rejeitar oferta",
         variant: "destructive",
       });
+
+      // Reload data on error to show current status
+      if (selectedRoom) {
+        loadMessages(selectedRoom.room_id);
+        loadOffers(selectedRoom.room_id);
+        loadContracts(selectedRoom.room_id);
+      }
     }
   };
 
@@ -1000,12 +1170,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         title: "Sucesso",
         description: "Oferta cancelada com sucesso!",
       });
-      // Reload all data to show updated status
-      if (selectedRoom) {
-        loadMessages(selectedRoom.room_id);
-        loadOffers(selectedRoom.room_id);
-        loadContracts(selectedRoom.room_id);
-      }
+      // Socket.IO will handle real-time updates automatically
     } catch (error: any) {
       console.error("Error cancelling offer:", error);
       toast({
@@ -1020,18 +1185,13 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
   const handleEndContract = async (contractId: number) => {
     try {
       await hiringApi.completeContract(contractId);
+      
       toast({
         title: "Sucesso",
         description: "Contrato finalizado com sucesso!",
       });
 
-      // Reload messages and contracts to show updated status
-      if (selectedRoom) {
-        loadMessages(selectedRoom.room_id);
-        loadContracts(selectedRoom.room_id);
-        loadOffers(selectedRoom.room_id);
-      }
-
+      // Socket.IO will handle real-time updates automatically
       // Find the completed contract and show review modal
       const completedContract = contracts.find((c) => c.id === contractId);
       if (completedContract) {
@@ -1054,18 +1214,45 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     if (!acceptedOffer) return;
 
     try {
-      // For now, we'll just show a message that the contract is activated
-      // In a real implementation, you might need to call an API to activate the contract
-      toast({
-        title: "Sucesso",
-        description: "Contrato ativado com sucesso!",
-      });
+      // Find the pending contract for this accepted offer
+      const pendingContract = contracts.find(contract => 
+        contract.status === 'pending' && 
+        contract.offer_id === acceptedOffer.id
+      );
 
-      // Reload data to show the activated contract
-      if (selectedRoom) {
-        loadMessages(selectedRoom.room_id);
-        loadContracts(selectedRoom.room_id);
-        loadOffers(selectedRoom.room_id);
+      if (!pendingContract) {
+        toast({
+          title: "Erro",
+          description: "Contrato pendente não encontrado",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Call the API to activate the contract
+      const response = await hiringApi.activateContract(pendingContract.id);
+      
+      if (response.success) {
+        toast({
+          title: "Sucesso",
+          description: "Contrato ativado com sucesso!",
+        });
+
+        // Update local state immediately
+        setContracts((prev) =>
+          prev.map((contract) =>
+            contract.id === pendingContract.id
+              ? { 
+                  ...contract, 
+                  status: 'active',
+                  workflow_status: 'active',
+                  can_be_completed: true,
+                }
+              : contract
+          )
+        );
+      } else {
+        throw new Error(response.message || "Erro ao ativar contrato");
       }
     } catch (error: any) {
       console.error("Error activating contract:", error);
@@ -1079,16 +1266,28 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
 
   const handleTerminateContract = async (contractId: number) => {
     try {
-      await hiringApi.terminateContract(contractId);
-      toast({
-        title: "Sucesso",
-        description: "Contrato terminado com sucesso!",
-      });
-      // Reload messages and contracts to show updated status
-      if (selectedRoom) {
-        loadMessages(selectedRoom.room_id);
-        loadContracts(selectedRoom.room_id);
-        loadOffers(selectedRoom.room_id);
+      const response = await hiringApi.terminateContract(contractId);
+      
+      if (response.success) {
+        toast({
+          title: "Sucesso",
+          description: "Contrato terminado com sucesso!",
+        });
+
+        // Update local state immediately
+        setContracts((prev) =>
+          prev.map((contract) =>
+            contract.id === contractId
+              ? { 
+                  ...contract, 
+                  status: 'terminated',
+                  workflow_status: 'terminated',
+                }
+              : contract
+          )
+        );
+      } else {
+        throw new Error(response.message || "Erro ao terminar contrato");
       }
     } catch (error: any) {
       console.error("Error terminating contract:", error);
@@ -1106,11 +1305,24 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     setShowReviewModal(false);
     setContractToReview(null);
 
-    // Reload data to show updated status
-    if (selectedRoom) {
-      loadMessages(selectedRoom.room_id);
-      loadContracts(selectedRoom.room_id);
-      loadOffers(selectedRoom.room_id);
+    // Update contract status to show review was submitted
+    if (contractToReview) {
+      setContracts((prev) =>
+        prev.map((contract) =>
+          contract.id === contractToReview.id
+            ? { 
+                ...contract, 
+                workflow_status: 'payment_available',
+                review: {
+                  id: Date.now(), // Temporary ID
+                  rating: 5,
+                  comment: "Review submitted",
+                  created_at: new Date().toISOString(),
+                },
+              }
+            : contract
+        )
+      );
     }
   };
 
@@ -1827,7 +2039,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                 <File className="w-5 h-5 text-pink-600 dark:text-pink-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                <div className="text-sm font-semibold text-slate-900 dark:t truncate">
                   {message.file_name}
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -1844,7 +2056,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
             <FileDropdown message={message} />
           </div>
           {message.message && message.message !== message.file_name && (
-            <p className="text-sm text-slate-700 dark:text-slate-300">
+            <p className="text-sm text-slate-300 dark:text-slate-300">
               {message.message}
             </p>
           )}
@@ -1986,11 +2198,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                   <Button
                     size="sm"
                     onClick={() => {
-                      console.log(
-                        "Avaliar Agora clicked! Contracts:",
-                        contracts
-                      );
-
                       // Try to find contract with waiting_review status first
                       let contractToReview = contracts.find(
                         (c) =>
@@ -2010,11 +2217,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                         contractToReview = contracts[0];
                       }
 
-                      console.log(
-                        "Selected contract for review:",
-                        contractToReview
-                      );
-
                       if (contractToReview) {
                         // Check if user can review this contract
                         if (contractToReview.can_review === false) {
@@ -2028,10 +2230,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
 
                         setContractToReview(contractToReview);
                         setShowReviewModal(true);
-                        console.log(
-                          "Opening review modal for contract:",
-                          contractToReview.id
-                        );
                       } else {
                         console.error("No contract found for review!");
                         toast({
@@ -2056,7 +2254,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     }
 
     return (
-      <p className="text-sm text-slate-700 dark:text-slate-300">
+      <p className="text-sm text-slate-300">
         {message.message}
       </p>
     );
@@ -2227,7 +2425,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
 
           {/* Conversation List */}
           <ScrollArea className="flex-1">
-            <div className="p-2">
+            <div className="p-2 w-[383px]">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
@@ -2334,24 +2532,47 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                 <div className="flex items-center gap-2">
                   {/* Send Offer Button */}
                   {canSendOffer && (
-                    <Button
-                      onClick={() => setShowOfferModal(true)}
-                      className="bg-purple-600 hover:bg-purple-700 text-white"
-                    >
-                      <Briefcase className="w-4 h-4 mr-2" />
-                      Enviar Oferta
-                    </Button>
+                    <>
+                      {/* Check if there's already a pending offer */}
+                      {offers.some(offer => offer.status === 'pending') ? (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={() => {
+                              const pendingOffer = offers.find(offer => offer.status === 'pending');
+                              if (pendingOffer) {
+                                handleExistingOffer(pendingOffer.id);
+                              }
+                            }}
+                            className="bg-orange-600 hover:bg-orange-700 text-white"
+                          >
+                            <AlertCircle className="w-4 h-4 mr-2" />
+                            Oferta Pendente
+                          </Button>
+                          <Button
+                            onClick={() => setShowOfferModal(true)}
+                            variant="outline"
+                            className="border-orange-600 text-orange-600 hover:bg-orange-50"
+                          >
+                            <Briefcase className="w-4 h-4 mr-2" />
+                            Nova Oferta
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={() => setShowOfferModal(true)}
+                          className="bg-purple-600 hover:bg-purple-700 text-white"
+                        >
+                          <Briefcase className="w-4 h-4 mr-2" />
+                          Enviar Oferta
+                        </Button>
+                      )}
+                    </>
                   )}
 
                   {/* Review Button for Completed Contracts */}
                   {canReview && (
                     <Button
                       onClick={() => {
-                        console.log(
-                          "Header Avaliar Trabalho clicked! Contracts:",
-                          contracts
-                        );
-
                         // Try to find contract with waiting_review status first
                         let contractToReview = contracts.find(
                           (c) =>
@@ -2371,11 +2592,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                           contractToReview = contracts[0];
                         }
 
-                        console.log(
-                          "Header selected contract for review:",
-                          contractToReview
-                        );
-
                         if (contractToReview) {
                           // Check if user can review this contract
                           if (contractToReview.can_review === false) {
@@ -2389,14 +2605,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
 
                           setContractToReview(contractToReview);
                           setShowReviewModal(true);
-                          console.log(
-                            "Header opening review modal for contract:",
-                            contractToReview.id
-                          );
                         } else {
-                          console.error(
-                            "Header: No contract found for review!"
-                          );
                           toast({
                             title: "Erro",
                             description:
@@ -2445,75 +2654,53 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                 <div className="mx-4 mt-4 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-300 dark:border-yellow-600 rounded-lg shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                      <span className="text-sm font-medium text-yellow-900 dark:text-yellow-100">
-                        ⚡ Contrato aguardando avaliação
+                      <Star className="w-4 h-4 text-yellow-600" />
+                      <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                        ⚡ Você tem contratos aguardando avaliação!
                       </span>
                     </div>
                     <Button
-                      size="sm"
                       onClick={() => {
-                        console.log(
-                          "Banner Avaliar Agora clicked! Contracts:",
-                          contracts
-                        );
-
-                        // Try to find contract with waiting_review status first
-                        let contractToReview = contracts.find(
+                        const contractToReview = contracts.find(
                           (c) =>
                             c.status === "completed" &&
                             c.workflow_status === "waiting_review"
                         );
-
-                        // If not found, try to find any completed contract
-                        if (!contractToReview) {
-                          contractToReview = contracts.find(
-                            (c) => c.status === "completed"
-                          );
-                        }
-
-                        // If still not found, try to find any contract
-                        if (!contractToReview && contracts.length > 0) {
-                          contractToReview = contracts[0];
-                        }
-
-                        console.log(
-                          "Banner selected contract for review:",
-                          contractToReview
-                        );
-
                         if (contractToReview) {
-                          // Check if user can review this contract
-                          if (contractToReview.can_review === false) {
-                            toast({
-                              title: "Avaliação já realizada",
-                              description: "Você já avaliou este contrato",
-                              variant: "destructive",
-                            });
-                            return;
-                          }
-
                           setContractToReview(contractToReview);
                           setShowReviewModal(true);
-                          console.log(
-                            "Banner opening review modal for contract:",
-                            contractToReview.id
-                          );
-                        } else {
-                          console.error(
-                            "Banner: No contract found for review!"
-                          );
-                          toast({
-                            title: "Erro",
-                            description:
-                              "Nenhum contrato encontrado para avaliação",
-                            variant: "destructive",
-                          });
                         }
                       }}
-                      className="bg-yellow-600 hover:bg-yellow-700 text-white text-sm px-4 py-2"
+                      size="sm"
+                      className="bg-yellow-600 hover:bg-yellow-700 text-white"
                     >
                       Avaliar Agora
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Existing Offer Notification Banner */}
+              {user?.role === "brand" && selectedRoom && offers.some(offer => offer.status === 'pending') && (
+                <div className="mx-4 mt-4 p-3 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border border-orange-300 dark:border-orange-600 rounded-lg shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-orange-600" />
+                      <span className="text-sm font-medium text-orange-800 dark:text-orange-200">
+                        📋 Você tem uma oferta pendente para este criador
+                      </span>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        const pendingOffer = offers.find(offer => offer.status === 'pending');
+                        if (pendingOffer) {
+                          handleExistingOffer(pendingOffer.id);
+                        }
+                      }}
+                      size="sm"
+                      className="bg-orange-600 hover:bg-orange-700 text-white"
+                    >
+                      Ver Oferta
                     </Button>
                   </div>
                 </div>
@@ -2559,7 +2746,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                             ? ""
                             : message.is_sender
                             ? "bg-pink-500 text-white"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300"
                         )}
                       >
                         {renderMessageContent(message)}
@@ -2907,11 +3094,39 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
       {showExistingOfferModal && (
         <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-background rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Oferta Existente</h3>
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-orange-500" />
+              Oferta Existente
+            </h3>
+            
+            {/* Show existing offer details */}
+            {existingOfferId && (
+              <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
+                <p className="text-sm text-orange-800 dark:text-orange-200 mb-2">
+                  <strong>Oferta Atual:</strong>
+                </p>
+                {(() => {
+                  const existingOffer = offers.find(offer => offer.id === existingOfferId);
+                  if (existingOffer) {
+                    return (
+                      <div className="text-sm">
+                        <p><strong>Valor:</strong> {existingOffer.budget}</p>
+                        <p><strong>Prazo:</strong> {existingOffer.estimated_days} dias</p>
+                        <p><strong>Status:</strong> {existingOffer.status === 'pending' ? 'Pendente' : existingOffer.status}</p>
+                        <p><strong>Expira em:</strong> {existingOffer.days_until_expiry} dias</p>
+                      </div>
+                    );
+                  }
+                  return <p className="text-sm text-gray-600">Detalhes da oferta não disponíveis</p>;
+                })()}
+              </div>
+            )}
+            
             <p className="text-muted-foreground mb-6">
               Você já tem uma oferta pendente para este criador. Deseja cancelar
               a oferta existente e criar uma nova?
             </p>
+            
             <div className="flex gap-3 justify-end">
               <Button
                 variant="outline"
@@ -2920,13 +3135,13 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                   setExistingOfferId(null);
                 }}
               >
-                Cancelar
+                Manter Oferta
               </Button>
               <Button
                 onClick={handleCancelExistingOffer}
                 className="bg-red-600 hover:bg-red-700"
               >
-                Cancelar Oferta Existente
+                Cancelar e Criar Nova
               </Button>
             </div>
           </div>

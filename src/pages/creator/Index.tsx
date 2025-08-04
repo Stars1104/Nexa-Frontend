@@ -14,9 +14,11 @@ import Portfolio from "../../components/creator/Portfolio";
 import Notification from "@/components/Notification";
 import Subscription from "@/components/creator/Subscription";
 import TransactionHistory from "@/components/creator/TransactionHistory";
+import BalanceAndWithdrawals from "@/components/creator/BalanceAndWithdrawals";
 import PremiumAccessGuard from "../../components/PremiumAccessGuard";
 import { usePremiumContext } from "../../contexts/PremiumContext";
 import { useAppSelector } from "../../store/hooks";
+import BankRegistrationDemo from "../BankRegistrationDemo";
 
 const Index = () => {
     const isMobile = useIsMobile();
@@ -45,16 +47,6 @@ const Index = () => {
         // Check both PremiumContext and Redux user state for premium access
         const userHasPremium = hasPremium || user?.has_premium;
         
-        // Debug logging
-        console.log('CreatorIndex Debug:', {
-            component,
-            isPremiumRequired,
-            hasPremium,
-            userHasPremium,
-            userHasPremiumFromRedux: user?.has_premium,
-            premiumLoading
-        });
-        
         // If premium is required and user doesn't have it, show premium guard
         if (isPremiumRequired && !userHasPremium && !premiumLoading) {
             return (
@@ -81,12 +73,16 @@ const Index = () => {
                 return <Chat />;
             case "Portfólio":
                 return <Portfolio />;
+            case "Saldo e Saques":
+                return <BalanceAndWithdrawals />;
             case "Notificações":
                 return <Notification />;
             case "Subscrição":
                 return <Subscription />;
             case "Histórico de Pagamentos":
                 return <TransactionHistory />;
+            case "Cadastro Bancário":
+                return <BankRegistrationDemo />;
             default:
                 return <NotFound />;
         }

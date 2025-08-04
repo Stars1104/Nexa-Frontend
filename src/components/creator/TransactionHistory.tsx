@@ -182,7 +182,7 @@ Obrigado pela sua assinatura!
   }
 
   return (
-    <div className="space-y-6 p-6 dark:bg-[#171717]">
+    <div className="space-y-6 p-6 dark:bg-[#171717] min-h-[calc(100vh-90px)]">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

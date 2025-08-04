@@ -130,8 +130,10 @@ const CreatorSignUp = () => {
         setIsNewRegistration(true); // Set flag for new registration
       }
       // Navigation will be handled by useEffect after successful signup
-    } catch (error) {
-      // Error is handled by Redux state
+    } catch (error: any) {
+      // Display specific error message in toast
+      const errorMessage = error || "Erro ao criar conta. Tente novamente.";
+      toast.error(errorMessage);
       console.error('Sign up error:', error);
     }
   };
@@ -149,8 +151,10 @@ const CreatorSignUp = () => {
         toast.success("Você fez login com sucesso.");
         // Navigation will be handled by useEffect after successful login
       }
-    } catch (error) {
-      // Error is handled by Redux state
+    } catch (error: any) {
+      // Display specific error message in toast
+      const errorMessage = error || "Erro ao fazer login. Tente novamente.";
+      toast.error(errorMessage);
       console.error('Sign in error:', error);
     }
   };

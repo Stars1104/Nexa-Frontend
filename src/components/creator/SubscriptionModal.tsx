@@ -312,35 +312,28 @@ export default function SubscriptionModal({
   };
 
   const handleSuccess = async () => {
-    console.log('SubscriptionModal: Starting success handler');
     
     // Dispatch premium status update event
     window.dispatchEvent(new CustomEvent("premium-status-updated"));
-    console.log('SubscriptionModal: Dispatched premium-status-updated event');
     
     // Immediately update user data with premium status
     dispatch(updateUser({ has_premium: true }));
-    console.log('SubscriptionModal: Updated Redux user with has_premium: true');
     
     // Add a small delay to ensure backend has processed the subscription
     await new Promise(resolve => setTimeout(resolve, 2000));
-    console.log('SubscriptionModal: Waited 2 seconds for backend processing');
     
     // Refresh ALL user data from different sources
     try {
       // First, refresh the user data directly from the API
       const userResponse = await apiClient.get("/user");
       const userData = userResponse.data;
-      console.log('SubscriptionModal: Fetched user data from API:', userData);
       
       // Check if the backend has actually updated the user's premium status
       if (!userData.has_premium) {
-        console.warn('SubscriptionModal: Backend has not updated user premium status yet');
         // Wait a bit more and try again
         await new Promise(resolve => setTimeout(resolve, 2000));
         const retryResponse = await apiClient.get("/user");
         const retryUserData = retryResponse.data;
-        console.log('SubscriptionModal: Retry user data from API:', retryUserData);
         
         if (retryUserData.has_premium) {
           userData.has_premium = retryUserData.has_premium;
@@ -354,32 +347,21 @@ export default function SubscriptionModal({
         premium_expires_at: userData.premium_expires_at,
         ...userData
       }));
-      console.log('SubscriptionModal: Updated Redux with fresh user data');
       
       // Refresh auth state (includes basic user data)
       await dispatch(checkAuthStatus());
-      console.log('SubscriptionModal: Refreshed auth status');
       
       // Refresh user profile data
       await dispatch(fetchUserProfile());
-      console.log('SubscriptionModal: Refreshed user profile');
       
       // Dispatch another premium status update event to ensure all listeners get it
       window.dispatchEvent(new CustomEvent("premium-status-updated"));
-      console.log('SubscriptionModal: Dispatched second premium-status-updated event');
       
       // Show success message
       toast({
         title: "🎉 Assinatura Ativada!",
         description: "Sua assinatura premium foi ativada com sucesso! Você agora tem acesso a todos os recursos premium.",
       });
-      
-      // Force a page reload after a short delay to ensure all state is properly updated
-      setTimeout(() => {
-        console.log('SubscriptionModal: Reloading page to ensure state consistency');
-        window.location.reload();
-      }, 3000);
-      
     } catch (error) {
       console.error("Error refreshing user data after subscription:", error);
       
@@ -391,10 +373,6 @@ export default function SubscriptionModal({
       });
       
       // Force reload even on error to ensure state consistency
-      setTimeout(() => {
-        console.log('SubscriptionModal: Reloading page due to error');
-        window.location.reload();
-      }, 2000);
     }
     
     onSuccess?.();

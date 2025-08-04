@@ -10,8 +10,6 @@ import {
   Clock,
   DollarSign,
   Star,
-  User,
-  FileText,
   AlertCircle,
   CheckCircle,
 } from "lucide-react";
@@ -46,12 +44,6 @@ export const ContractsWaitingReview: React.FC<ContractsWaitingReviewProps> = ({
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleReviewClick = (contract: Contract) => {
-    // Navigate to review form or open review modal
-    // This would typically open a review form component
-    console.log("Review contract:", contract.id);
   };
 
   if (loading) {
@@ -152,7 +144,6 @@ export const ContractsWaitingReview: React.FC<ContractsWaitingReviewProps> = ({
                     Waiting for Review
                   </Badge>
                   <Button
-                    onClick={() => handleReviewClick(contract)}
                     size="sm"
                     className="bg-orange-600 hover:bg-orange-700"
                   >

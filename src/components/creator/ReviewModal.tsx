@@ -41,7 +41,6 @@ export default function ReviewModal({
   contract,
   onReviewSubmitted,
 }: ReviewModalProps) {
-  console.log("ReviewModal contract:", contract);
   const [rating, setRating] = useState(3);
   const [comment, setComment] = useState("");
   const [ratingCategories, setRatingCategories] = useState({

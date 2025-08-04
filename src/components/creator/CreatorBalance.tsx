@@ -200,7 +200,7 @@ export default function CreatorBalance() {
               <DialogTitle>Solicitar Saque</DialogTitle>
             </DialogHeader>
             <WithdrawalForm 
-              availableBalance={balance.balance.available_balance}
+              availableBalance={Number(balance.balance.available_balance) || 0}
               withdrawalMethods={withdrawalMethods}
               onSuccess={() => {
                 setShowWithdrawalDialog(false);
@@ -326,6 +326,24 @@ export default function CreatorBalance() {
               <CardTitle>Métodos de Saque Disponíveis</CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs">ℹ</span>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-800">
+                      Saque via Pagar.me
+                    </h4>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Atualmente, apenas transferências bancárias via Pagar.me estão disponíveis. 
+                      Você precisa ter uma conta bancária registrada para solicitar saques.
+                    </p>
+                  </div>
+                </div>
+              </div>
               <div className="grid gap-4">
                 {withdrawalMethods.map((method) => (
                   <div key={method.id} className="p-4 border rounded-lg">
@@ -374,6 +392,8 @@ function WithdrawalForm({ availableBalance, withdrawalMethods, onSuccess }: With
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
+  // Ensure availableBalance is always a number
+  const safeAvailableBalance = Number(availableBalance) || 0;
   const selectedMethodData = withdrawalMethods.find(m => m.id === selectedMethod);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -388,7 +408,7 @@ function WithdrawalForm({ availableBalance, withdrawalMethods, onSuccess }: With
       return;
     }
 
-    if (parseFloat(amount) > availableBalance) {
+    if (parseFloat(amount) > safeAvailableBalance) {
       toast({
         title: "Erro",
         description: "Valor excede o saldo disponível",
@@ -445,7 +465,23 @@ function WithdrawalForm({ availableBalance, withdrawalMethods, onSuccess }: With
   };
 
   const getFormFields = () => {
+    if (!selectedMethodData) return [];
+
+    // Use dynamic field configuration if available
+    if (selectedMethodData.field_config) {
+      return Object.entries(selectedMethodData.field_config).map(([fieldName, config]) => ({
+        name: fieldName,
+        label: config.label,
+        required: config.required,
+        type: config.type || 'text',
+        options: config.options,
+      }));
+    }
+
+    // Fallback to hardcoded fields for backward compatibility
     switch (selectedMethod) {
+      case 'pagarme_bank_transfer':
+        return []; // No additional fields needed for Pagar.me bank transfer
       case 'bank_transfer':
         return [
           { name: 'bank', label: 'Banco', required: true },
@@ -485,7 +521,7 @@ function WithdrawalForm({ availableBalance, withdrawalMethods, onSuccess }: With
         <select
           value={selectedMethod}
           onChange={(e) => setSelectedMethod(e.target.value)}
-          className="w-full p-2 border rounded-md"
+          className="w-full p-2 border rounded-md text-black outline-none"
           required
         >
           <option value="">Selecione um método</option>
@@ -504,50 +540,71 @@ function WithdrawalForm({ availableBalance, withdrawalMethods, onSuccess }: With
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           min={selectedMethodData?.min_amount || 0}
-          max={Math.min(availableBalance, selectedMethodData?.max_amount || availableBalance)}
+          max={Math.min(safeAvailableBalance, selectedMethodData?.max_amount || safeAvailableBalance)}
           step="0.01"
-          className="w-full p-2 border rounded-md"
+          className="w-full p-2 border rounded-md text-black outline-none"
           placeholder="0,00"
           required
         />
         <p className="text-xs text-gray-500 mt-1">
-          Saldo disponível: R$ {availableBalance.toFixed(2)}
+          Saldo disponível: R$ {safeAvailableBalance.toFixed(2)}
         </p>
       </div>
 
       {selectedMethod && (
         <div className="space-y-3">
           <h4 className="font-medium">Dados para Saque</h4>
-          {getFormFields().map((field) => (
-            <div key={field.name}>
-              <label className="block text-sm font-medium mb-1">
-                {field.label} {field.required && '*'}
-              </label>
-              {field.type === 'select' ? (
-                <select
-                  value={formData[field.name] || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
-                  className="w-full p-2 border rounded-md"
-                  required={field.required}
-                >
-                  <option value="">Selecione...</option>
-                  {field.options?.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type="text"
-                  value={formData[field.name] || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
-                  className="w-full p-2 border rounded-md"
-                  required={field.required}
-                />
-              )}
+          {selectedMethod === 'pagarme_bank_transfer' ? (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs">✓</span>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-blue-800">
+                    Conta Bancária Registrada
+                  </h4>
+                  <p className="text-sm text-blue-700 mt-1">
+                    O saque será processado para sua conta bancária registrada via Pagar.me. 
+                    Não são necessárias informações adicionais.
+                  </p>
+                </div>
+              </div>
             </div>
-          ))}
+          ) : (
+            getFormFields().map((field) => (
+              <div key={field.name}>
+                <label className="block text-sm font-medium mb-1">
+                  {field.label} {field.required && '*'}
+                </label>
+                {field.type === 'select' ? (
+                  <select
+                    value={formData[field.name] || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
+                    className="w-full p-2 border rounded-md"
+                    required={field.required}
+                  >
+                    <option value="">Selecione...</option>
+                    {field.options?.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={formData[field.name] || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
+                    className="w-full p-2 border rounded-md"
+                    required={field.required}
+                  />
+                )}
+              </div>
+            ))
+          )}
         </div>
       )}
 

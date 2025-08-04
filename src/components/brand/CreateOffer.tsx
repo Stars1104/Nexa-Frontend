@@ -106,15 +106,35 @@ export default function CreateOffer({
 
       // Check if it's an existing offer error
       if (
-        error.response?.data?.message?.includes("already have a pending offer")
+        error.response?.data?.message?.includes("already have a pending offer") ||
+        error.response?.data?.message?.includes("pending offer for this creator")
       ) {
         const existingOfferId = error.response?.data?.existing_offer_id;
         if (existingOfferId && onExistingOffer) {
           onExistingOffer(existingOfferId);
           return; // Don't show toast, let the parent handle it
+        } else {
+          // Fallback: show toast if callback is not provided
+          toast({
+            title: "Oferta Pendente",
+            description: "Você já tem uma oferta pendente para este criador. Aguarde a resposta ou cancele a oferta existente.",
+            variant: "destructive",
+          });
+          return;
         }
       }
 
+      // Check if it's a payment method error
+      if (error.response?.data?.error_code === 'NO_PAYMENT_METHOD') {
+        toast({
+          title: "Método de Pagamento Necessário",
+          description: "Você precisa cadastrar um cartão de crédito antes de enviar ofertas. Acesse as configurações de pagamento.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Show generic error for other cases
       toast({
         title: "Erro",
         description: errorMessage,

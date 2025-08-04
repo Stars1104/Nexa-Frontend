@@ -27,7 +27,7 @@ import {
   CheckCircle,
   Clock,
   AlertTriangle,
-  Bank,
+  BanknoteIcon,
   Smartphone,
   User,
   Percent,
@@ -42,6 +42,8 @@ interface WithdrawalMethod {
   max_amount: number;
   processing_time: string;
   fee: number;
+  required_fields?: string[];
+  field_config?: Record<string, any>;
 }
 
 interface CreatorBalance {
@@ -195,11 +197,13 @@ export default function WithdrawalModal({
     setIsLoading(true);
 
     try {
-      const response = await apiClient.post("/creator-balance/withdrawals", {
+      const requestData = {
         amount: parseFloat(amount),
         withdrawal_method: selectedMethod,
         withdrawal_details: withdrawalDetails,
-      });
+      };
+      
+      const response = await apiClient.post("/withdrawals", requestData);
 
       if (response.data.success) {
         toast({
@@ -250,7 +254,8 @@ export default function WithdrawalModal({
       case "pix":
         return <Smartphone className="h-4 w-4" />;
       case "bank_transfer":
-        return <Bank className="h-4 w-4" />;
+      case "pagarme_bank_transfer":
+        return <BanknoteIcon className="h-4 w-4" />;
       default:
         return <CreditCard className="h-4 w-4" />;
     }
@@ -259,6 +264,80 @@ export default function WithdrawalModal({
   const renderMethodFields = () => {
     if (!selectedMethodData) return null;
 
+    // For Pagar.me bank transfer, no additional fields are needed
+    if (selectedMethodData.id === 'pagarme_bank_transfer') {
+      return (
+        <div className="space-y-3">
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <BanknoteIcon className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-blue-800">
+                  Conta Bancária Registrada
+                </h4>
+                <p className="text-sm text-blue-700 mt-1">
+                  O saque será processado para sua conta bancária registrada via Pagar.me. 
+                  Não são necessárias informações adicionais.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Use dynamic field configuration if available
+    if (selectedMethodData.field_config) {
+      return (
+        <div className="space-y-3">
+          {Object.entries(selectedMethodData.field_config).map(([fieldName, config]) => (
+            <div key={fieldName}>
+              <Label htmlFor={fieldName}>{config.label}</Label>
+              {config.type === 'select' ? (
+                <Select
+                  value={withdrawalDetails[fieldName] || ""}
+                  onValueChange={(value) =>
+                    setWithdrawalDetails((prev) => ({
+                      ...prev,
+                      [fieldName]: value,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={`Selecione ${config.label.toLowerCase()}`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {config.options?.map((option: any) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id={fieldName}
+                  type={config.type || 'text'}
+                  value={withdrawalDetails[fieldName] || ""}
+                  onChange={(e) =>
+                    setWithdrawalDetails((prev) => ({
+                      ...prev,
+                      [fieldName]: e.target.value,
+                    }))
+                  }
+                  placeholder={`Digite ${config.label.toLowerCase()}`}
+                  required={config.required}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // Fallback to hardcoded fields for backward compatibility
     switch (selectedMethodData.id) {
       case "pix":
         return (
@@ -405,6 +484,27 @@ export default function WithdrawalModal({
           </div>
         );
 
+      case "pagarme_account":
+        return (
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="holder_name">Nome do Titular</Label>
+              <Input
+                id="holder_name"
+                value={withdrawalDetails.holder_name || ""}
+                onChange={(e) =>
+                  setWithdrawalDetails((prev) => ({
+                    ...prev,
+                    holder_name: e.target.value,
+                  }))
+                }
+                placeholder="Nome completo do titular"
+                required
+              />
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -422,188 +522,213 @@ export default function WithdrawalModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            Solicitar Saque
-          </DialogTitle>
+          <DialogTitle>Solicitar Saque</DialogTitle>
           <DialogDescription>
-            Escolha o método de saque e o valor que deseja retirar
+            <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="w-5 h-5 bg-amber-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs">ℹ</span>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-amber-800">
+                    Conta Bancária Necessária
+                  </h4>
+                  <p className="text-sm text-amber-700 mt-1">
+                    Para solicitar um saque, você precisa ter uma conta bancária registrada via Pagar.me. 
+                    Se ainda não registrou sua conta, acesse seu perfil para fazer o cadastro.
+                  </p>
+                </div>
+              </div>
+            </div>
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Balance Info */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Saldo Disponível
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Saldo Disponível:</span>
-                <span className="font-bold text-green-600 text-lg">
-                  {balance.balance.formatted_available_balance}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Saldo Pendente:</span>
-                <span className="text-orange-600">
-                  {balance.balance.formatted_pending_balance}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Total Ganho:</span>
-                <span className="font-semibold">
-                  {balance.balance.formatted_total_earned}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Withdrawal Method */}
-          <div className="space-y-3">
-            <Label>Método de Saque</Label>
-            {isLoadingMethods ? (
-              <div className="flex items-center justify-center py-4">
-                <div className="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
-              </div>
-            ) : (
-              <Select value={selectedMethod} onValueChange={setSelectedMethod}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o método de saque" />
-                </SelectTrigger>
-                <SelectContent>
-                  {withdrawalMethods.map((method) => (
-                    <SelectItem key={method.id} value={method.id}>
-                      <div className="flex items-center gap-2">
-                        {getMethodIcon(method.id)}
-                        <span>{method.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-
-          {/* Method Details */}
-          {selectedMethodData && (
-            <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-              <CardContent className="pt-4">
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-2">
-                    {getMethodIcon(selectedMethodData.id)}
-                    {selectedMethodData.name}
-                  </h4>
-                  <p className="text-sm text-blue-700 dark:text-blue-200">
-                    {selectedMethodData.description}
-                  </p>
-                  <div className="grid grid-cols-2 gap-2 text-xs text-blue-600 dark:text-blue-300">
-                    <div>
-                      Min: {formatCurrency(selectedMethodData.min_amount)}
-                    </div>
-                    <div>
-                      Max: {formatCurrency(selectedMethodData.max_amount)}
-                    </div>
-                    <div>Taxa: {selectedMethodData.fee}%</div>
-                    <div>Tempo: {selectedMethodData.processing_time}</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Amount Input */}
-          <div className="space-y-3">
-            <Label htmlFor="amount">Valor do Saque</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              min="0"
-              max={balance.balance.available_balance}
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="Digite o valor"
-              required
-            />
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>
-                Valor mínimo:{" "}
-                {selectedMethodData
-                  ? formatCurrency(selectedMethodData.min_amount)
-                  : "R$ 0,00"}
-              </span>
-              <span>
-                Disponível: {balance.balance.formatted_available_balance}
-              </span>
-            </div>
-          </div>
-
-          {/* Method Specific Fields */}
-          {selectedMethod && renderMethodFields()}
-
-          {/* Fee Calculation */}
-          {selectedMethodData && amount && (
+        <div 
+          className="flex-1 overflow-y-auto pr-2 relative"
+          style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'rgb(156 163 175) rgb(243 244 246)',
+          }}
+        >
+          <form onSubmit={handleSubmit} className="space-y-6 pb-4">
+            {/* Balance Info */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Percent className="h-4 w-4" />
-                  Resumo do Saque
+                  <User className="h-4 w-4" />
+                  Saldo Disponível
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">
-                    Valor Solicitado:
-                  </span>
-                  <span className="font-semibold">
-                    {formatCurrency(amount)}
+                  <span className="text-sm text-gray-600">Saldo Disponível:</span>
+                  <span className="font-bold text-green-600 text-lg">
+                    {balance.balance.formatted_available_balance}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">
-                    Taxa ({selectedMethodData.fee}%):
-                  </span>
-                  <span className="text-red-600">
-                    -{formatCurrency(calculateFee())}
+                  <span className="text-sm text-gray-600">Saldo Pendente:</span>
+                  <span className="text-orange-600">
+                    {balance.balance.formatted_pending_balance}
                   </span>
                 </div>
-                <div className="border-t pt-3">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold">Valor Líquido:</span>
-                    <span className="font-bold text-green-600 text-lg">
-                      {formatCurrency(calculateNetAmount())}
-                    </span>
-                  </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Total Ganho:</span>
+                  <span className="font-semibold">
+                    {balance.balance.formatted_total_earned}
+                  </span>
                 </div>
               </CardContent>
             </Card>
-          )}
 
-          {/* Warning */}
-          <div className="flex items-start gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-            <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
-            <div className="space-y-1">
-              <h4 className="font-semibold text-yellow-900 dark:text-yellow-100">
-                Informações Importantes
-              </h4>
-              <p className="text-sm text-yellow-700 dark:text-yellow-200">
-                • O processamento pode levar até{" "}
-                {selectedMethodData?.processing_time || "2-3 dias úteis"}
-                <br />
-                • Verifique se os dados estão corretos antes de confirmar
-                <br />• Você receberá 95% do valor total do projeto
-              </p>
+            {/* Withdrawal Method */}
+            <div className="space-y-3">
+              <Label>Método de Saque</Label>
+              {isLoadingMethods ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : (
+                <Select value={selectedMethod} onValueChange={setSelectedMethod}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o método de saque" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {withdrawalMethods.map((method) => (
+                      <SelectItem key={method.id} value={method.id}>
+                        <div className="flex items-center gap-2">
+                          {getMethodIcon(method.id)}
+                          <span>{method.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
-          </div>
-        </form>
 
-        <DialogFooter>
+            {/* Method Details */}
+            {selectedMethodData && (
+              <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                <CardContent className="pt-4">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                      {getMethodIcon(selectedMethodData.id)}
+                      {selectedMethodData.name}
+                    </h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-200">
+                      {selectedMethodData.description}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-blue-600 dark:text-blue-300">
+                      <div>
+                        Min: {formatCurrency(selectedMethodData.min_amount)}
+                      </div>
+                      <div>
+                        Max: {formatCurrency(selectedMethodData.max_amount)}
+                      </div>
+                      <div>Taxa: {selectedMethodData.fee}%</div>
+                      <div>Tempo: {selectedMethodData.processing_time}</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Amount Input */}
+            <div className="space-y-3">
+              <Label htmlFor="amount">Valor do Saque</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                min="0"
+                max={balance.balance.available_balance}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Digite o valor"
+                required
+              />
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>
+                  Valor mínimo:{" "}
+                  {selectedMethodData
+                    ? formatCurrency(selectedMethodData.min_amount)
+                    : "R$ 0,00"}
+                </span>
+                <span>
+                  Disponível: {balance.balance.formatted_available_balance}
+                </span>
+              </div>
+            </div>
+
+            {/* Method Specific Fields */}
+            {selectedMethod && renderMethodFields()}
+
+            {/* Fee Calculation */}
+            {selectedMethodData && amount && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Percent className="h-4 w-4" />
+                    Resumo do Saque
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">
+                      Valor Solicitado:
+                    </span>
+                    <span className="font-semibold">
+                      {formatCurrency(amount)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">
+                      Taxa ({selectedMethodData.fee}%):
+                    </span>
+                    <span className="text-red-600">
+                      -{formatCurrency(calculateFee())}
+                    </span>
+                  </div>
+                  <div className="border-t pt-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold">Valor Líquido:</span>
+                      <span className="font-bold text-green-600 text-lg">
+                        {formatCurrency(calculateNetAmount())}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Warning */}
+            <div className="flex items-start gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <div className="space-y-1">
+                <h4 className="font-semibold text-yellow-900 dark:text-yellow-100">
+                  Informações Importantes
+                </h4>
+                <p className="text-sm text-yellow-700 dark:text-yellow-200">
+                  • O processamento pode levar até{" "}
+                  {selectedMethodData?.processing_time || "2-3 dias úteis"}
+                  <br />
+                  • Verifique se os dados estão corretos antes de confirmar
+                  <br />• Você receberá 95% do valor total do projeto
+                </p>
+              </div>
+            </div>
+          </form>
+          
+          {/* Scroll indicator gradient */}
+          <div className="absolute bottom-0 left-0 right-2 h-4 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+        </div>
+
+        <DialogFooter className="flex-shrink-0">
           <Button variant="outline" onClick={handleClose} disabled={isLoading}>
             Cancelar
           </Button>

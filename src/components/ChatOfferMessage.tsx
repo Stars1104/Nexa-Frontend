@@ -60,6 +60,15 @@ export default function ChatOfferMessage({
   onEndContract,
   isCreator = false,
 }: ChatOfferMessageProps) {
+  // Check if offer is expired
+  const isExpired = offer.status === "expired" || offer.days_until_expiry < 0;
+
+  // Determine the actual status to display
+  let displayStatus =
+    offer.status === "pending" && offer.days_until_expiry < 0
+      ? "expired"
+      : offer.status;
+
   // Safety check for incomplete offer data
   if (!offer || !offer.sender) {
     return (
@@ -145,15 +154,6 @@ export default function ChatOfferMessage({
       currency: "BRL",
     }).format(numBudget);
   };
-
-  // Check if offer is expired
-  const isExpired = offer.status === "expired" || offer.days_until_expiry < 0;
-
-  // Determine the actual status to display
-  const displayStatus =
-    offer.status === "pending" && offer.days_until_expiry < 0
-      ? "expired"
-      : offer.status;
 
   return (
     <div

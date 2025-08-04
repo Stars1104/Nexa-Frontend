@@ -5,7 +5,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { apiClient } from "@/services/apiClient";
+import { apiClient } from "../services/apiClient";
 
 interface PremiumStatus {
   has_premium: boolean;
@@ -24,6 +24,7 @@ interface PremiumContextType {
 
 const PremiumContext = createContext<PremiumContextType | undefined>(undefined);
 
+// Simplified export for testing
 export const usePremiumContext = () => {
   const context = useContext(PremiumContext);
   if (context === undefined) {
@@ -75,12 +76,6 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
         setPremiumStatus(null);
       }
 
-      // If it's a 429 error, don't retry immediately
-      if (error.response?.status === 429) {
-        console.log("PremiumContext: Rate limited, will retry later");
-        // Don't clear status on rate limit, just log it
-      }
-
       return null;
     } finally {
       setLoading(false);
@@ -98,7 +93,6 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
   // Listen for custom events to refresh premium status
   useEffect(() => {
     const handlePremiumUpdate = () => {
-      console.log("PremiumContext: Received premium-status-updated event");
       refreshPremiumStatus();
     };
 
