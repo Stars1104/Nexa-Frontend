@@ -18,7 +18,7 @@ function Calendar({
       weekStartsOn={1}
       className={cn("p-6 bg-gradient-to-br bg-[#171717] border border-slate-700/50 rounded-2xl shadow-2xl backdrop-blur-sm", className)}
       classNames={{
-        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+        months: "flex flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
         caption: "flex justify-center pt-2 relative items-center pb-6 border-b border-slate-600/30",
         caption_label: "text-xl font-bold text-white tracking-wide",
@@ -30,8 +30,8 @@ function Calendar({
         nav_button_previous: "absolute left-0",
         nav_button_next: "absolute right-0",
         table: "w-full border-collapse space-y-3",
-        head_cell:
-          "text-slate-400 rounded-xl font-semibold text-sm text-center flex items-center justify-center uppercase tracking-wider justify-self-center",
+        head: "flex justify-center items-center",
+        head_cell: "text-slate-400 rounded-xl font-semibold uppercase",
         row: "grid grid-cols-7 w-full",
         cell: "text-center text-sm p-0 relative flex items-center justify-center justify-self-center [&:has([aria-selected].day-range-end)]:rounded-r-xl [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-xl last:[&:has([aria-selected])]:rounded-r-xl focus-within:relative focus-within:z-20",
         day: cn(

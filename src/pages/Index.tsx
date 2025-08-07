@@ -6,6 +6,7 @@ import { Community } from "../components/landing/Community";
 import { Benefits } from "../components/landing/Benefits";
 import { Pricing } from "../components/landing/Pricing";
 import { CTA } from "../components/landing/CTA";
+import { FAQ } from "../components/landing/FAQ";
 import { Footer } from "../components/landing/Footer";
 
 const Index = () => {
@@ -19,6 +20,7 @@ const Index = () => {
       <Benefits />
       <Pricing />
       <CTA />
+      <FAQ />
       <Footer />
     </div>
   );
