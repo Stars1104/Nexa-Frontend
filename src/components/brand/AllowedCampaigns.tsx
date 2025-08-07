@@ -329,6 +329,8 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                                         {formatBudget(campaign.budget)}
                                     </span>
                                 </div>
+                                
+                                {/* Google Drive Link */}
 
                                 <div className="flex gap-3 mt-2 md:flex-row flex-col">
                                     <button 

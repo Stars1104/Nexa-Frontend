@@ -186,6 +186,70 @@ export const ArchiveCampaign = async (campaignId: number, token: string) => {
     return response.data;
 };
 
+// Toggle featured status (admin only)
+export const ToggleFeaturedCampaign = async (campaignId: number, token: string) => {
+    setAuthToken(token);
+    try {
+        const response = await CampaignAPI.patch(`/api/campaigns/${campaignId}/toggle-featured`);
+        return response.data;
+    } catch (error: any) {
+        console.error("Error toggling featured status:", error);
+        if (error.response?.status === 403) {
+            throw new Error("Acesso negado. Você não tem permissão para alterar o status de destaque.");
+        } else if (error.response?.status === 401) {
+            throw new Error("Sessão expirada. Por favor, faça login novamente.");
+        } else if (error.response?.status === 404) {
+            throw new Error("Campanha não encontrada.");
+        } else if (error.response?.status >= 500) {
+            throw new Error("Erro do servidor. Tente novamente mais tarde.");
+        } else {
+            throw new Error(error.response?.data?.message || "Erro ao alterar status de destaque");
+        }
+    }
+};
+
+// Toggle favorite status (creator only)
+export const ToggleFavoriteCampaign = async (campaignId: number, token: string) => {
+    setAuthToken(token);
+    try {
+        const response = await CampaignAPI.post(`/api/campaigns/${campaignId}/toggle-favorite`);
+        return response.data;
+    } catch (error: any) {
+        console.error("Error toggling favorite status:", error);
+        if (error.response?.status === 403) {
+            throw new Error("Acesso negado. Você não tem permissão para favoritar campanhas.");
+        } else if (error.response?.status === 401) {
+            throw new Error("Sessão expirada. Por favor, faça login novamente.");
+        } else if (error.response?.status === 404) {
+            throw new Error("Campanha não encontrada.");
+        } else if (error.response?.status >= 500) {
+            throw new Error("Erro do servidor. Tente novamente mais tarde.");
+        } else {
+            throw new Error(error.response?.data?.message || "Erro ao favoritar campanha");
+        }
+    }
+};
+
+// Get favorite campaigns (creator only)
+export const GetFavoriteCampaigns = async (token: string) => {
+    setAuthToken(token);
+    try {
+        const response = await CampaignAPI.get("/api/campaigns/favorites");
+        return response.data;
+    } catch (error: any) {
+        console.error("Error fetching favorite campaigns:", error);
+        if (error.response?.status === 403) {
+            throw new Error("Acesso negado. Você não tem permissão para acessar favoritos.");
+        } else if (error.response?.status === 401) {
+            throw new Error("Sessão expirada. Por favor, faça login novamente.");
+        } else if (error.response?.status >= 500) {
+            throw new Error("Erro do servidor. Tente novamente mais tarde.");
+        } else {
+            throw new Error(error.response?.data?.message || "Erro ao carregar campanhas favoritas");
+        }
+    }
+};
+
 // Get campaign by ID
 export const GetCampaignById = async (campaignId: number, token: string) => {
     setAuthToken(token);

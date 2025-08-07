@@ -57,26 +57,26 @@ export const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
     } else {
       // Check for at least 1 number
       if (!/\d/.test(formData.newPassword)) {
-        newErrors.newPassword = "Password must contain at least 1 number";
+        newErrors.newPassword = "A senha deve conter pelo menos 1 número";
       }
       // Check for at least 1 uppercase letter
       else if (!/[A-Z]/.test(formData.newPassword)) {
-        newErrors.newPassword = "Password must contain at least 1 uppercase letter";
+        newErrors.newPassword = "A senha deve conter pelo menos 1 letra maiúscula";
       }
       // Check for at least 1 special character
-      else if (!/[^a-zA-Z0-9]/.test(formData.newPassword)) {
-        newErrors.newPassword = "Password must contain at least 1 special character";
+      else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.newPassword)) {
+        newErrors.newPassword = "A senha deve conter pelo menos 1 caractere especial";
       }
       // Check for at least 1 lowercase letter
       else if (!/[a-z]/.test(formData.newPassword)) {
-        newErrors.newPassword = "Password must contain at least 1 lowercase letter";
+        newErrors.newPassword = "A senha deve conter pelo menos 1 letra minúscula";
       }
     }
 
     if (!formData.confirmPassword.trim()) {
-      newErrors.confirmPassword = "Please confirm your new password";
+      newErrors.confirmPassword = "Por favor, confirme sua nova senha";
     } else if (formData.newPassword !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = "As senhas não coincidem";
     }
 
     if (formData.currentPassword === formData.newPassword) {
@@ -129,7 +129,7 @@ export const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
             Update Password
           </DialogTitle>
           <DialogDescription>
-            Change your password to keep your account secure. Make sure to use a strong password.
+            Altere sua senha para manter sua conta segura. Certifique-se de usar uma senha forte.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -143,7 +143,7 @@ export const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
                 type={showPasswords.current ? "text" : "password"}
                 value={formData.currentPassword}
                 onChange={(e) => handleInputChange("currentPassword", e.target.value)}
-                placeholder="Enter your current password"
+                placeholder="Digite sua senha atual"
                 className={errors.currentPassword ? "border-red-500" : ""}
                 disabled={isLoading}
               />
@@ -163,7 +163,7 @@ export const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
 
           <div className="space-y-2">
             <label htmlFor="newPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              New Password
+              Nova Senha
             </label>
             <div className="relative">
               <Input
@@ -171,7 +171,7 @@ export const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
                 type={showPasswords.new ? "text" : "password"}
                 value={formData.newPassword}
                 onChange={(e) => handleInputChange("newPassword", e.target.value)}
-                placeholder="Enter your new password"
+                placeholder="Digite sua nova senha"
                 className={errors.newPassword ? "border-red-500" : ""}
                 disabled={isLoading}
               />
@@ -191,7 +191,7 @@ export const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
 
           <div className="space-y-2">
             <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Confirm New Password
+              Confirmar Nova Senha
             </label>
             <div className="relative">
               <Input
@@ -199,7 +199,7 @@ export const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
                 type={showPasswords.confirm ? "text" : "password"}
                 value={formData.confirmPassword}
                 onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                placeholder="Confirm your new password"
+                placeholder="Confirme sua nova senha"
                 className={errors.confirmPassword ? "border-red-500" : ""}
                 disabled={isLoading}
               />
@@ -224,14 +224,14 @@ export const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
               onClick={handleClose}
               disabled={isLoading}
             >
-              Cancel
+              Cancelar
             </Button>
             <Button
               type="submit"
               disabled={isLoading}
               className="bg-pink-500 hover:bg-pink-600"
             >
-              {isLoading ? "Updating..." : "Update Password"}
+              {isLoading ? "Atualizando..." : "Atualizar Senha"}
             </Button>
           </DialogFooter>
         </form>

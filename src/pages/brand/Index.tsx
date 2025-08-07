@@ -13,6 +13,7 @@ import ViewApplication from "@/components/brand/ViewApplication";
 import CreateCampaign from "@/components/brand/CreateCampaign";
 import BrandPaymentMethods from "@/components/brand/BrandPaymentMethods";
 import Notification from "@/components/Notification";
+import CreatorProfile from "@/components/brand/CreatorProfile";
 
 const Index = () => {
     const isMobile = useIsMobile();
@@ -34,6 +35,8 @@ const Index = () => {
                     return <BrandPaymentMethods />
                 case "Notificações":
                     return <Notification />
+                case "Perfil do Criador":
+                    return <CreatorProfile setComponent={setComponent} />;
                 default:
                     return <NotFound />;
             }
@@ -41,6 +44,8 @@ const Index = () => {
             return <ViewApplication setComponent={setComponent} campaign={component.campaign} />;
         } else if (typeof component === "object" && component.name === "Ver criadores") {
             return <ViewCreators setComponent={setComponent} campaignId={component.campaign?.id} campaignTitle={component.campaign?.title} />;
+        } else if (typeof component === "object" && component.name === "Perfil do Criador") {
+            return <CreatorProfile setComponent={setComponent} creatorId={component.creatorId} />;
         } else {
             return <NotFound />;
         }

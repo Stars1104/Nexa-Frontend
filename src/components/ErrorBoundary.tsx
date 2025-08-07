@@ -45,7 +45,7 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-    console.error('Unhandled promise rejection:', event.reason);
+    console.error('Rejeição de promessa não tratada:', event.reason);
     
     // Check if it's a 403 error
     if (event.reason?.code === 403 || event.reason?.status === 403) {
@@ -90,14 +90,14 @@ class ErrorBoundary extends Component<Props, State> {
               </Button>
             </div>
             
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {/* {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="mt-4 text-sm text-muted-foreground">
                 <summary>Detalhes do erro (desenvolvimento)</summary>
                 <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-auto">
                   {this.state.error.stack}
                 </pre>
               </details>
-            )}
+            )} */}
           </div>
         </div>
       );
@@ -107,4 +107,4 @@ class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-export default ErrorBoundary; 
+export default ErrorBoundary;

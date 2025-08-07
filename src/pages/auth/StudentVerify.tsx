@@ -54,7 +54,7 @@ export default function StudentVerify() {
         </Alert>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
-            <label htmlFor="fullName" className="text-xs text-muted-foreground">Full name</label>
+            <label htmlFor="fullName" className="text-xs text-muted-foreground">Nome completo</label>
             <Input
               id="fullName"
               name="fullName"
@@ -132,12 +132,12 @@ export default function StudentVerify() {
             />
           </div>
           <div className="md:col-span-2 flex flex-col gap-1">
-            <label htmlFor="institution" className="text-xs text-muted-foreground">Name of institution</label>
+            <label htmlFor="institution" className="text-xs text-muted-foreground">Nome da instituição</label>
             <Input
               id="institution"
               name="institution"
               type="text"
-              placeholder="Full name of school/platform"
+              placeholder="Nome completo da escola/plataforma"
               value={form.institution}
               onChange={handleChange}
               required

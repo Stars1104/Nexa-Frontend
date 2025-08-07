@@ -5,6 +5,7 @@ import { useAppSelector, useAppDispatch } from "../../store/hooks";
 import { formatDate } from "date-fns";
 import { toast } from "../ui/sonner";
 import { fetchCreatorApplications } from "../../store/thunks/campaignThunks";
+import { fetchApprovedCampaigns } from "../../store/thunks/campaignThunks";
 
 interface ProjectDetailProps {
   setComponent?: (component: string) => void;
@@ -34,12 +35,13 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
     ? creatorApplications
     : [];
   // Find the campaign by projectId
-  const campaign = Array.isArray(approvedCampaigns.data)
-    ? approvedCampaigns.data.find(
+  const campaign = Array.isArray(approvedCampaigns)
+    ? approvedCampaigns.find(
         (c: any) => String(c.id) === String(projectId)
       )
     : null;
   const project = campaign;
+  
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -47,6 +49,13 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
       dispatch(fetchCreatorApplications());
     }
   }, [dispatch, user?.id, user?.role]);
+
+  // Fetch campaigns if not loaded
+  useEffect(() => {
+    if (!approvedCampaigns || approvedCampaigns.length === 0) {
+      dispatch(fetchApprovedCampaigns());
+    }
+  }, [dispatch, approvedCampaigns]);
 
   // Check if user is eligible to apply
   const isCreator = user?.role === "creator";
@@ -135,9 +144,11 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               </p>
             </div>
 
+            {/* Google Drive Link */}
+
             <div className="flex flex-wrap gap-2 mb-2">
-              {Array.isArray(campaign.target_states) && campaign.target_states.length > 0 &&
-                campaign.target_states.map((uf: string, i: number) => (
+              {Array.isArray(project.target_states) && project.target_states.length > 0 &&
+                project.target_states.map((uf: string, i: number) => (
                   <span
                     key={uf}
                     className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -208,7 +219,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                       <img
                         src={`${
                           import.meta.env.VITE_BACKEND_URL ||
-                          "http://localhost:8000"
+                          "https://nexacreators.com.br"
                         }${file}`}
                         alt="Anexo visual"
                         className="rounded-xl w-full h-full border border-border"
@@ -217,7 +228,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                       <a
                         href={`${
                           import.meta.env.VITE_BACKEND_URL ||
-                          "http://localhost:8000"
+                          "https://nexacreators.com.br"
                         }${file}`}
                         target="_blank"
                         rel="noopener noreferrer"

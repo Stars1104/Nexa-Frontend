@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { fetchCreatorApplications } from "../../store/thunks/campaignThunks";
+import { fetchCreatorApplications, toggleFavoriteCampaign } from "../../store/thunks/campaignThunks";
 import CampaignCard from "./CampaignCard";
 import CampaignStats from "./CampaignStats";
 import ContractList from "./ContractList";
@@ -156,10 +156,8 @@ export default function Dashboard({
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // Ensure approvedCampaigns is always an array
-  const campaigns =
-    approvedCampaigns?.data && Array.isArray(approvedCampaigns.data)
-      ? approvedCampaigns.data
-      : [];
+  const campaigns = Array.isArray(approvedCampaigns) ? approvedCampaigns : [];
+  
 
   // Fetch approved campaigns on component mount
   useEffect(() => {
@@ -207,6 +205,18 @@ export default function Dashboard({
     filters.search ||
     filters.budgetMin ||
     filters.budgetMax;
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+  };
+
+  const handleToggleFavorite = async (campaignId: number) => {
+    try {
+      const result = await dispatch(toggleFavoriteCampaign(campaignId)).unwrap();
+    } catch (error) {
+      console.error('❌ Error in handleToggleFavorite:', error);
+    }
+  };
 
   // Filter and sort campaigns
   const filteredAndSortedCampaigns = campaigns
@@ -277,14 +287,16 @@ export default function Dashboard({
       // Date range filter
       if (filters.dateFrom) {
         const campaignDate = new Date(campaign.deadline);
-        if (campaignDate < filters.dateFrom) {
+        const fromDate = new Date(filters.dateFrom);
+        if (campaignDate < fromDate) {
           return false;
         }
       }
 
       if (filters.dateTo) {
         const campaignDate = new Date(campaign.deadline);
-        if (campaignDate > filters.dateTo) {
+        const toDate = new Date(filters.dateTo);
+        if (campaignDate > toDate) {
           return false;
         }
       }
@@ -292,29 +304,24 @@ export default function Dashboard({
       return true;
     })
     .sort((a, b) => {
+      // First priority: Favorited campaigns
+      if (a.is_favorited && !b.is_favorited) return -1;
+      if (!a.is_favorited && b.is_favorited) return 1;
+      
+      // Second priority: Sort by specified criteria
       switch (filters.sort) {
-        case "price-high-to-low":
-          return b.budget - a.budget;
-        case "price-low-to-high":
-          return a.budget - b.budget;
-        case "deadline-soonest":
-          return (
-            new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
-          );
-        case "deadline-latest":
-          return (
-            new Date(b.deadline).getTime() - new Date(a.deadline).getTime()
-          );
         case "newest-first":
-          return (
-            new Date(b.created_at || b.submissionDate).getTime() -
-            new Date(a.created_at || a.submissionDate).getTime()
-          );
+          return new Date(b.submissionDate || b.created_at).getTime() - new Date(a.submissionDate || a.created_at).getTime();
         case "oldest-first":
-          return (
-            new Date(a.created_at || a.submissionDate).getTime() -
-            new Date(b.created_at || b.submissionDate).getTime()
-          );
+          return new Date(a.submissionDate || a.created_at).getTime() - new Date(b.submissionDate || b.created_at).getTime();
+        case "budget-high":
+          return b.budget - a.budget;
+        case "budget-low":
+          return a.budget - b.budget;
+        case "deadline-soon":
+          return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+        case "deadline-late":
+          return new Date(b.deadline).getTime() - new Date(a.deadline).getTime();
         default:
           return 0;
       }
@@ -455,15 +462,16 @@ export default function Dashboard({
 
         {/* Filter Toggle and Quick Actions */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 justify-between">
-          <div className="flex items-center gap-2 w-full justify-between">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 w-full sm:w-auto"
             >
               <Filter className="h-4 w-4" />
-              Filtros Avançados
+              <span className="hidden sm:inline">Filtros Avançados</span>
+              <span className="sm:hidden">Filtros</span>
               {hasActiveFilters && (
                 <span className="ml-1 px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
                   {[
@@ -483,45 +491,48 @@ export default function Dashboard({
                 variant="ghost"
                 size="sm"
                 onClick={clearFilters}
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                className="flex items-center gap-2 text-muted-foreground hover:text-foreground w-full sm:w-auto"
               >
                 <X className="h-4 w-4" />
-                Limpar Filtros
+                <span className="hidden sm:inline">Limpar Filtros</span>
+                <span className="sm:hidden">Limpar</span>
               </Button>
             )}
-            <Select
-              value={filters.sort}
-              onValueChange={(value) =>
-                setFilters((prev) => ({ ...prev, sort: value }))
-              }
-            >
-              <SelectTrigger className="w-[180px] h-9">
-                <SelectValue placeholder="Ordenar por" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest-first">Mais recentes</SelectItem>
-                <SelectItem value="oldest-first">Mais antigas</SelectItem>
-                <SelectItem value="price-high-to-low">
-                  Maior orçamento
-                </SelectItem>
-                <SelectItem value="price-low-to-high">
-                  Menor orçamento
-                </SelectItem>
-                <SelectItem value="deadline-soonest">Prazo próximo</SelectItem>
-                <SelectItem value="deadline-latest">Prazo distante</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[140px] h-9">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value="pending">Pendentes</SelectItem>
-                <SelectItem value="approved">Aprovadas</SelectItem>
-                <SelectItem value="rejected">Rejeitadas</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Select
+                value={filters.sort}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({ ...prev, sort: value }))
+                }
+              >
+                <SelectTrigger className="w-full sm:w-[180px] h-9">
+                  <SelectValue placeholder="Ordenar por" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest-first">Mais recentes</SelectItem>
+                  <SelectItem value="oldest-first">Mais antigas</SelectItem>
+                  <SelectItem value="price-high-to-low">
+                    Maior orçamento
+                  </SelectItem>
+                  <SelectItem value="price-low-to-high">
+                    Menor orçamento
+                  </SelectItem>
+                  <SelectItem value="deadline-soonest">Prazo próximo</SelectItem>
+                  <SelectItem value="deadline-latest">Prazo distante</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                <SelectTrigger className="w-full sm:w-[140px] h-9">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="pending">Pendentes</SelectItem>
+                  <SelectItem value="approved">Aprovadas</SelectItem>
+                  <SelectItem value="rejected">Rejeitadas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
@@ -560,7 +571,7 @@ export default function Dashboard({
                           value={category.toLowerCase().replace(/\s+/g, "-")}
                         >
                           {category}
-                        </SelectItem>
+                        </SelectItem>   
                       ))}
                     </SelectContent>
                   </Select>
@@ -797,7 +808,7 @@ export default function Dashboard({
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {filteredAndSortedCampaigns
                   .filter((campaign: any) => {
                     if (statusFilter === "all") return true;
@@ -831,6 +842,7 @@ export default function Dashboard({
                           setComponent("Detalhes do Projeto");
                           setProjectId(campaignId);
                         }}
+                        onToggleFavorite={handleToggleFavorite}
                       />
                     );
                   })}

@@ -149,10 +149,10 @@ export const CreatorProfile = () => {
         setEditMode(false);
 
         // Use safe toast with longer delay to ensure all React updates are complete
-        safeToast.success("Profile updated successfully!", 300);
+        safeToast.success("Perfil atualizado com sucesso!", 300);
       } catch (error: any) {
         console.error("Profile update failed:", error);
-        safeToast.error(error?.message || error || "Failed to update profile");
+        safeToast.error(error?.message || error || "Falha ao atualizar perfil");
       } finally {
         setIsUpdating(false);
       }

@@ -4,13 +4,14 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Separator } from "../ui/separator";
-import { Eye, Clock, MapPin, DollarSign, Calendar, Users, Star } from "lucide-react";
+import { Eye, Clock, MapPin, DollarSign, Calendar, Users, Heart, User, Star } from "lucide-react";
 
 interface CampaignCardProps {
     campaign: any;
     userApplication?: any;
     onViewDetails: (campaignId: number) => void;
     onApply?: (campaignId: number) => void;
+    onToggleFavorite?: (campaignId: number) => void;
 }
 
 const statesColors = [
@@ -28,7 +29,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
     campaign,
     userApplication,
     onViewDetails,
-    onApply
+    onToggleFavorite
 }) => {
     // Format budget for display
     const formatBudget = (budget: number) => {
@@ -112,35 +113,42 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
     }
 
     return (
-        <Card className="overflow-hidden hover:shadow-lg">
+        <Card className="h-full flex flex-col hover:shadow-lg transition-shadow duration-200">
             <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <Avatar className="h-8 w-8">
-                            {campaign.logo && campaign.logo.trim() !== '' ? (
-                                <AvatarImage 
-                                    src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${campaign.logo}`} 
-                                    alt={campaign.title}
-                                    onError={(e) => {
-                                        // Hide the image if it fails to load, fallback will show
-                                        e.currentTarget.style.display = 'none';
-                                    }}
-                                />
-                            ) : null}
-                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
-                                {campaign.title?.charAt(0)?.toUpperCase() || 'C'}
-                            </AvatarFallback>
-                        </Avatar>
-                        <CardTitle className="text-base leading-tight line-clamp-2 group-hover:text-primary transition-colors">
-                            {campaign.title}
-                        </CardTitle>
+                <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-sm sm:text-base line-clamp-2 leading-tight">
+                                    {campaign.title}
+                                </h3>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                            <div className="flex items-center gap-1">
+                                <User className="h-3 w-3" />
+                                <span className="truncate">{campaign.brand?.name || 'Marca não informada'}</span>
+                            </div>
+                        </div>
                     </div>
-                    {badge}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        {onToggleFavorite && campaign.is_favorited && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-2 h-auto text-red-500"
+                                onClick={() => onToggleFavorite(campaign.id)}
+                            >
+                                <Heart className="h-4 w-4 fill-current" />
+                            </Button>
+                        )}
+                        {badge}
+                    </div>
                 </div>
             </CardHeader>
             
-            <CardContent className="pb-3">
-                <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
+            <CardContent className="pb-3 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 mb-3">
                     {campaign.description.length > 100 ? campaign.description.substring(0, 100) + '...' : campaign.description}
                 </p>
                 
@@ -202,18 +210,27 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                             </Badge>
                         )}
                     </div>
+                    
                 </div>
             </CardContent>
             
             <Separator />
             
-            <CardFooter className="pt-3">
-                <div className="w-full flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <CardFooter className="pt-3 flex-shrink-0">
+                <div className="w-full flex flex-col sm:justify-between sm:items-center gap-3">
                     <div className="flex items-center gap-1">
                         <DollarSign className="h-4 w-4 text-green-600" />
                         <span className="font-bold text-lg">{formatBudget(campaign.budget)}</span>
                     </div>
                     {button}
+                    {/* Contribute Button - Add to Favorites */}
+                    <Button  className="bg-green-600 hover:bg-green-700 text-white text-xs w-full"
+                            onClick={() => {
+                                onToggleFavorite && onToggleFavorite(campaign.id);
+                            }}
+                        >
+                            Contribuir
+                        </Button>
                 </div>
             </CardFooter>
         </Card>
