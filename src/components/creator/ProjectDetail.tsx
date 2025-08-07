@@ -5,6 +5,7 @@ import { useAppSelector, useAppDispatch } from "../../store/hooks";
 import { formatDate } from "date-fns";
 import { toast } from "../ui/sonner";
 import { fetchCreatorApplications } from "../../store/thunks/campaignThunks";
+import { fetchApprovedCampaigns } from "../../store/thunks/campaignThunks";
 
 interface ProjectDetailProps {
   setComponent?: (component: string) => void;
@@ -36,10 +37,11 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   // Find the campaign by projectId
   const campaign = Array.isArray(approvedCampaigns.data)
     ? approvedCampaigns.data.find(
-      (c: any) => String(c.id) === String(projectId)
-    )
+        (c: any) => String(c.id) === String(projectId)
+      )
     : null;
   const project = campaign;
+  
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -47,6 +49,13 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
       dispatch(fetchCreatorApplications());
     }
   }, [dispatch, user?.id, user?.role]);
+
+  // Fetch campaigns if not loaded
+  useEffect(() => {
+    if (!approvedCampaigns || approvedCampaigns.length === 0) {
+      dispatch(fetchApprovedCampaigns());
+    }
+  }, [dispatch, approvedCampaigns]);
 
   // Check if user is eligible to apply
   const isCreator = user?.role === "creator";
@@ -134,9 +143,11 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               </p>
             </div>
 
+            {/* Google Drive Link */}
+
             <div className="flex flex-wrap gap-2 mb-2">
-              {Array.isArray(campaign.target_states) && campaign.target_states.length > 0 &&
-                campaign.target_states.map((uf: string, i: number) => (
+              {Array.isArray(project.target_states) && project.target_states.length > 0 &&
+                project.target_states.map((uf: string, i: number) => (
                   <span
                     key={uf}
                     className={`px-2 py-1 rounded-full text-xs font-medium ${statesColors[i % statesColors.length]
@@ -204,17 +215,19 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                       );
                     return isImage ? (
                       <img
-                        src={`${import.meta.env.VITE_BACKEND_URL ||
-                          "https://nexacreators.com.br"
-                          }${file}`}
+                        src={`${
+                          import.meta.env.VITE_BACKEND_URL ||
+                          "http://localhost:8000"
+                        }${file}`}
                         alt="Anexo visual"
                         className="rounded-xl w-full h-full border border-border"
                       />
                     ) : (
                       <a
-                        href={`${import.meta.env.VITE_BACKEND_URL ||
-                          "https://nexacreators.com.br"
-                          }${file}`}
+                        href={`${
+                          import.meta.env.VITE_BACKEND_URL ||
+                          "http://localhost:8000"
+                        }${file}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 underline break-all"

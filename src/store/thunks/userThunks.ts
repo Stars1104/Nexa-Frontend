@@ -9,6 +9,8 @@ import {
 } from '../slices/userSlice';
 import { getProfile, profileUpdate, getUser } from '../../api/auth';
 import { handleApiError } from '../../lib/api-error-handler';
+import { RootState } from '../index';
+import { GetCreatorProfile } from '../../api/user';
 
 // Async thunk for fetching user profile
 export const fetchUserProfile = createAsyncThunk(
@@ -112,3 +114,34 @@ export const updateUserProfile = createAsyncThunk(
     }
   }
 ); 
+
+// Fetch creator profile for brands
+export const fetchCreatorProfile = createAsyncThunk<
+  any,
+  string,
+  { state: RootState; rejectValue: string }
+>('user/fetchCreatorProfile', async (creatorId, { getState, rejectWithValue }) => {
+  try {
+    const state = getState();
+    const token = state.auth.token;
+    
+    console.log('Fetching creator profile:', { creatorId, hasToken: !!token, isAuthenticated: state.auth.isAuthenticated });
+    
+    if (!token) {
+      throw new Error('User not authenticated');
+    }
+    
+    const response = await GetCreatorProfile(creatorId, token);
+    return response.data;
+  } catch (error: unknown) {
+    const apiError = handleApiError(error);
+    console.error('Error in fetchCreatorProfile:', { 
+      error, 
+      apiError, 
+      creatorId,
+      hasToken: !!getState().auth.token,
+      isAuthenticated: getState().auth.isAuthenticated 
+    });
+    return rejectWithValue(apiError.message);
+  }
+}); 

@@ -10,6 +10,9 @@ import {
   ApproveCampaign, 
   RejectCampaign, 
   ArchiveCampaign, 
+  ToggleFeaturedCampaign,
+  ToggleFavoriteCampaign,
+  GetFavoriteCampaigns,
   GetCampaignById, 
   UpdateCampaign, 
   DeleteCampaign, 
@@ -823,9 +826,95 @@ export const fetchApprovedCampaigns = createAsyncThunk<
     }
     
     const response = await GetCampaignsByStatus('approved', token);
-    return response;
+    
+    // Handle paginated response structure
+    if (response && typeof response === 'object' && 'data' in response) {
+      return response.data;
+    }
+    
+    // Handle direct array response
+    if (Array.isArray(response)) {
+      return response;
+    }
+    
+    console.error('Unexpected response structure:', response);
+    return [];
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch approved campaigns';
+    return rejectWithValue(errorMessage);
+  }
+});
+
+// Toggle featured status (admin only)
+export const toggleFeaturedCampaign = createAsyncThunk<
+  Campaign,
+  number,
+  { state: RootState; rejectValue: string }
+>('campaign/toggleFeatured', async (campaignId, { getState, rejectWithValue }) => {
+  try {
+    const state = getState();
+    const token = state.auth.token;
+    const user = state.auth.user;
+    
+    if (!token || !user) {
+      throw new Error('User not authenticated');
+    }
+    
+    if (user.role !== 'admin') {
+      throw new Error('Acesso negado. Apenas administradores podem alterar o status de destaque.');
+    }
+    
+    const response = await ToggleFeaturedCampaign(campaignId, token);
+    return response;
+  } catch (error: unknown) {
+    const apiError = handleApiError(error);
+    console.error('Error in toggleFeaturedCampaign:', apiError);
+    return rejectWithValue(apiError.message);
+  }
+});
+
+// Toggle favorite status (for creators)
+export const toggleFavoriteCampaign = createAsyncThunk<
+  { campaign_id: number; is_favorited: boolean },
+  number,
+  { state: RootState; rejectValue: string }
+>('campaign/toggleFavorite', async (campaignId, { getState, rejectWithValue }) => {
+  try {
+    const state = getState();
+    const token = state.auth.token;
+    const user = state.auth.user;
+    
+    if (!token || !user) {
+      throw new Error('User not authenticated');
+    }
+    
+    const response = await ToggleFavoriteCampaign(campaignId, token);
+    return response.data;
+  } catch (error: unknown) {
+    const apiError = handleApiError(error);
+    console.error('Error in toggleFavoriteCampaign:', apiError);
+    return rejectWithValue(apiError.message);
+  }
+});
+
+// Fetch favorite campaigns (for creators)
+export const fetchFavoriteCampaigns = createAsyncThunk<
+  Campaign[],
+  void,
+  { state: RootState; rejectValue: string }
+>('campaign/fetchFavoriteCampaigns', async (_, { getState, rejectWithValue }) => {
+  try {
+    const state = getState();
+    const token = state.auth.token;
+    
+    if (!token) {
+      throw new Error('User not authenticated');
+    }
+    
+    const response = await GetFavoriteCampaigns(token);
+    return response;
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch favorite campaigns';
     return rejectWithValue(errorMessage);
   }
 });

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { fetchCampaigns, approveCampaign, rejectCampaign } from "../../store/thunks/campaignThunks";
+import { fetchCampaigns, approveCampaign, rejectCampaign, toggleFeaturedCampaign } from "../../store/thunks/campaignThunks";
 import { clearError } from "../../store/slices/campaignSlice";
 import CampaignDetail from "./CampaignDetail";
 import { Campaign } from "../../store/slices/campaignSlice";
 import { toast } from "../ui/sonner";
+import { Star } from "lucide-react";
 
 const TABS = [
   { label: "Todas", value: "all" },
@@ -101,6 +102,15 @@ const CampaignList: React.FC = () => {
     }
   };
 
+  const handleToggleFeatured = async (campaignId: number) => {
+    try {
+      await dispatch(toggleFeaturedCampaign(campaignId)).unwrap();
+      toast.success("Status de destaque alterado com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao alterar status de destaque");
+    }
+  };
+
   // Format date for display
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -181,6 +191,7 @@ const CampaignList: React.FC = () => {
                     <th className="py-3 px-2 font-medium">Data de Criação</th>
                     <th className="py-3 px-2 font-medium">Marca</th>
                     <th className="py-3 px-2 font-medium">Criadores Aprovados</th>
+                    <th className="py-3 px-2 font-medium">Destaque</th>
                     <th className="py-3 px-2 font-medium">Ações</th>
                   </tr>
                 </thead>
@@ -202,6 +213,19 @@ const CampaignList: React.FC = () => {
                       <td className="py-4 px-2 text-sm text-center text-gray-700 dark:text-gray-300">
                         {c.approvedCreators}
                       </td>
+                      <td className="py-4 px-2 text-center">
+                        <button
+                          onClick={() => handleToggleFeatured(c.id)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            c.is_featured 
+                              ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200 dark:hover:bg-yellow-800' 
+                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                          }`}
+                          title={c.is_featured ? 'Remover destaque' : 'Adicionar destaque'}
+                        >
+                          <Star className={`h-4 w-4 ${c.is_featured ? 'fill-current' : ''}`} />
+                        </button>
+                      </td>
                       <td className="py-4 px-2">
                         <button
                           className="px-4 py-2 border border-[#E91E63] text-[#E91E63] rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors"
@@ -222,14 +246,30 @@ const CampaignList: React.FC = () => {
                 <div key={i} className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow p-4 flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-gray-900 dark:text-gray-100">{c.title}</span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[c.status]}`}>
-                      {STATUS_LABELS[c.status]}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleToggleFeatured(c.id)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          c.is_featured 
+                            ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200 dark:hover:bg-yellow-800' 
+                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                        }`}
+                        title={c.is_featured ? 'Remover destaque' : 'Adicionar destaque'}
+                      >
+                        <Star className={`h-4 w-4 ${c.is_featured ? 'fill-current' : ''}`} />
+                      </button>
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[c.status]}`}>
+                        {STATUS_LABELS[c.status]}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
                     <span>Data: <span className="text-gray-700 dark:text-gray-200">{formatDate(c.submissionDate)}</span></span>
                     <span>Marca: <span className="text-gray-700 dark:text-gray-200">{c.brand?.name || 'N/A'}</span></span>
                     <span>Criadores: <span className="text-gray-700 dark:text-gray-200">{c.approvedCreators}</span></span>
+                    {c.is_featured && (
+                      <span className="text-yellow-600 font-medium">⭐ Destaque</span>
+                    )}
                   </div>
                   <div className="mt-2">
                     <button

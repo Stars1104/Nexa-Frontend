@@ -71,6 +71,7 @@ export default function CreateCampaign() {
     setCreatorReq("");
     setCampaignType("");
     setAttachments([]);
+    setDriveLink("");
   }, []);
 
   // Cleanup timeouts on unmount
@@ -93,6 +94,7 @@ export default function CreateCampaign() {
   const [campaignType, setCampaignType] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [driveLink, setDriveLink] = useState("");
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const attachmentInputRef = useRef<HTMLInputElement>(null);
@@ -520,6 +522,7 @@ export default function CreateCampaign() {
                </div>
              )}
            </div>
+           
            <div className="w-full flex justify-end items-center pt-6">
            <Button
              type="submit"

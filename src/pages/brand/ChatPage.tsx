@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { ScrollArea } from "../../components/ui/scroll-area";
 import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
+import CampaignTimeline from "../../components/CampaignTimeline";
 import {
   Avatar,
   AvatarImage,
@@ -113,6 +114,9 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
   // Review modal state
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [contractToReview, setContractToReview] = useState<any>(null);
+
+  // Timeline state
+  const [showTimeline, setShowTimeline] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -2526,6 +2530,18 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {/* Timeline Button */}
+                  {activeContract && (
+                    <Button
+                      onClick={() => setShowTimeline(true)}
+                      variant="outline"
+                      className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700 hover:text-blue-800"
+                    >
+                      <Clock className="w-4 h-4 mr-2" />
+                      Linha do Tempo
+                    </Button>
+                  )}
+
                   {/* Send Offer Button */}
                   {canSendOffer && (
                     <>
@@ -2865,7 +2881,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                     value={input}
                     onChange={handleInputChange}
                     autoComplete="off"
-                    aria-label="Type a message"
+                    aria-label="Digite uma mensagem"
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
@@ -3153,6 +3169,15 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
             onReviewSubmitted={handleReviewSubmitted}
           />
         </div>
+      )}
+
+      {/* Campaign Timeline Modal */}
+      {showTimeline && activeContract && (
+        <CampaignTimeline
+          contractId={activeContract.id}
+          isOpen={showTimeline}
+          onClose={() => setShowTimeline(false)}
+        />
       )}
     </div>
   );

@@ -20,6 +20,7 @@ import BrandIndex from "./pages/brand/Index";
 import AdminIndex from "./pages/admin";
 import NotificationsPage from "./pages/Notifications";
 import BankRegistrationPage from "./pages/creator/BankRegistrationPage";
+import { useAppSelector } from "./store/hooks";
 
 const queryClient = new QueryClient();
 

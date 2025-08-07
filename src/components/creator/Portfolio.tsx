@@ -78,7 +78,7 @@ export default function Portfolio() {
     useEffect(() => {
         if (error) {
             toast({
-                title: "Error",
+                title: "Erro",
                 description: error,
                 variant: "destructive",
             });
@@ -141,7 +141,7 @@ export default function Portfolio() {
         try {
             const token = localStorage.getItem('token');
             if (!token) throw new Error('No authentication token found');
-
+            
             const formData = new FormData();
 
             // Ensure we have valid values
@@ -166,8 +166,9 @@ export default function Portfolio() {
 
             setIsEditDialogOpen(false);
             toast({
-                title: "Success",
-                description: "Profile updated successfully!",
+                title: "Sucesso!",
+                description: "Perfil atualizado com sucesso!",
+                duration: 3000,
             });
         } catch (error) {
             console.error('Profile update error:', error);
@@ -177,9 +178,9 @@ export default function Portfolio() {
                 status: error.status
             });
             toast({
-                title: "Error",
-                description: "Failed to update profile. Please try again.",
-                variant: "destructive",
+                title: "Erro",
+                description: "Falha ao atualizar perfil. Tente novamente.",
+                duration: 3000,
             });
         } finally {
             setIsSaving(false);
@@ -192,7 +193,7 @@ export default function Portfolio() {
         setIsSaving(true);
         try {
             const token = localStorage.getItem('token');
-            if (!token) throw new Error('No authentication token found');
+            if (!token) throw new Error('Token de autenticação não encontrado');
 
             // Upload new media files
             const files = media.map(item => item.file);
@@ -201,13 +202,14 @@ export default function Portfolio() {
             setMedia([]);
             setIsPortfolioEditDialogOpen(false);
             toast({
-                title: "Success",
-                description: "Portfolio items added successfully!",
+                title: "Sucesso!",
+                description: "Portfólio adicionado com sucesso!",
+                duration: 3000,
             });
         } catch (error) {
             toast({
-                title: "Error",
-                description: "Failed to add portfolio items. Please try again.",
+                title: "Erro",
+                description: "Falha ao adicionar portfólio. Tente novamente.",
                 variant: "destructive",
             });
         } finally {
@@ -220,17 +222,18 @@ export default function Portfolio() {
 
         try {
             const token = localStorage.getItem('token');
-            if (!token) throw new Error('No authentication token found');
+            if (!token) throw new Error('Token de autenticação não encontrado');
 
             await dispatch(deletePortfolioItem({ token, itemId })).unwrap();
             toast({
-                title: "Success",
-                description: "Portfolio item removed successfully!",
+                title: "Sucesso!",
+                description: "Portfólio removido com sucesso!",
+                duration: 3000,
             });
         } catch (error) {
             toast({
-                title: "Error",
-                description: "Failed to remove portfolio item. Please try again.",
+                title: "Erro",
+                description: "Falha ao remover portfólio. Tente novamente.",
                 variant: "destructive",
             });
         }
@@ -242,7 +245,7 @@ export default function Portfolio() {
         setIsSaving(true);
         try {
             const token = localStorage.getItem('token');
-            if (!token) throw new Error('No authentication token found');
+            if (!token) throw new Error('Token de autenticação não encontrado');
 
             const formData = new FormData();
             formData.append('title', profileTitle);
@@ -257,13 +260,14 @@ export default function Portfolio() {
             await dispatch(updatePortfolioProfile({ token, data: formData })).unwrap();
 
             toast({
-                title: "Success",
-                description: "Portfolio saved successfully!",
+                title: "Sucesso!",
+                description: "Portfólio salvo com sucesso!",
+                duration: 3000,
             });
         } catch (error) {
             toast({
-                title: "Error",
-                description: "Failed to save portfolio. Please try again.",
+                title: "Erro",
+                description: "Falha ao salvar portfólio. Tente novamente.",
                 variant: "destructive",
             });
         } finally {
@@ -305,7 +309,7 @@ export default function Portfolio() {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <Loader2 className="w-8 h-8 animate-spin" />
-                <span className="ml-2">Loading portfolio...</span>
+                <span className="ml-2">Carregando portfólio...</span>
             </div>
         );
     }

@@ -50,7 +50,7 @@ const ReduxExample: React.FC = () => {
     <div className="max-w-2xl mx-auto p-6 space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Redux State Management Example</CardTitle>
+          <CardTitle>Exemplo de Gerenciamento de Estado Redux</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Authentication Status */}
@@ -112,7 +112,7 @@ const ReduxExample: React.FC = () => {
               
               <div className="flex gap-2 flex-wrap">
                 <Button onClick={handleUpdateProfile}>
-                  Update Profile
+                  Atualizar Perfil
                 </Button>
                 <Button 
                   onClick={() => dispatch(togglePremium())} 
@@ -137,8 +137,8 @@ const ReduxExample: React.FC = () => {
                 Toggle Theme
               </Button>
             </div>
-            <p>Notifications: {preferences.notifications ? 'On' : 'Off'}</p>
-            <p>Email Updates: {preferences.emailUpdates ? 'On' : 'Off'}</p>
+            <p>Notificações: {preferences.notifications ? 'Ativado' : 'Desativado'}</p>
+            <p>Atualizações por Email: {preferences.emailUpdates ? 'Ativado' : 'Desativado'}</p>
           </div>
 
           {/* Profile Info */}

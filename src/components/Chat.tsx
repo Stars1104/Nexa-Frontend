@@ -6,6 +6,7 @@ import { Button } from "./ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { cn } from "../lib/utils";
+import CampaignTimeline from "./CampaignTimeline";
 import {
   SearchIcon,
   Send,
@@ -24,12 +25,7 @@ import {
   ZoomOut,
   RotateCw,
   Maximize2,
-  Minimize2,
-  Briefcase,
-  DollarSign,
-  Calendar,
-  AlertCircle,
-  FileText,
+  Minimize2
 } from "lucide-react";
 import { useSocket } from "../hooks/useSocket";
 import { chatService, ChatRoom, Message } from "../services/chatService";
@@ -63,6 +59,9 @@ export default function Chat() {
   // Review-related state
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [contractToReview, setContractToReview] = useState<any>(null);
+
+  // Timeline-related state
+  const [showTimeline, setShowTimeline] = useState(false);
 
   // Image viewer state
   const [imageViewer, setImageViewer] = useState<{
@@ -1657,6 +1656,11 @@ export default function Chat() {
     );
   };
 
+  // Find active contract for timeline
+  const activeContract = contracts.find(contract => 
+    contract.status === 'active' || contract.status === 'completed'
+  );
+
   const formatMessageTime = (dateString: string) => {
     const date = new Date(dateString);
     if (isToday(date)) {
@@ -2036,6 +2040,18 @@ export default function Chat() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {/* Timeline Button */}
+                  {activeContract && (
+                    <Button
+                      onClick={() => setShowTimeline(true)}
+                      variant="outline"
+                      className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700 hover:text-blue-800"
+                    >
+                      <Clock className="w-4 h-4 mr-2" />
+                      Linha do Tempo
+                    </Button>
+                  )}
+
                   {isConnected ? (
                     <div className="flex items-center gap-1 text-green-500">
                       <Wifi className="w-4 h-4" />
@@ -2181,7 +2197,7 @@ export default function Chat() {
                     value={input}
                     onChange={handleInputChange}
                     autoComplete="off"
-                    aria-label="Type a message"
+                    aria-label="Digite uma mensagem"
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
@@ -2269,6 +2285,15 @@ export default function Chat() {
             onReviewSubmitted={handleReviewSubmitted}
           />
         </div>
+      )}
+
+      {/* Campaign Timeline Modal */}
+      {showTimeline && activeContract && (
+        <CampaignTimeline
+          contractId={activeContract.id}
+          isOpen={showTimeline}
+          onClose={() => setShowTimeline(false)}
+        />
       )}
     </div>
   );

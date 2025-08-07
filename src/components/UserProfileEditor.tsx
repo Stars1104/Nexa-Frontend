@@ -64,11 +64,11 @@ export const UserProfileEditor: React.FC<UserProfileEditorProps> = ({
     
     try {
       await updateUser(formData);
-      toast.success('Profile updated successfully!');
+      toast.success('Perfil atualizado com sucesso!');
       setIsEditing(false);
       onSave?.(formData);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to update profile');
+      toast.error(error.message || 'Falha ao atualizar perfil');
     }
   };
 
@@ -97,7 +97,7 @@ export const UserProfileEditor: React.FC<UserProfileEditorProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-gray-500">Loading user profile...</div>
+        <div className="text-gray-500">Carregando perfil do usuário...</div>
       </div>
     );
   }
@@ -105,7 +105,7 @@ export const UserProfileEditor: React.FC<UserProfileEditorProps> = ({
   if (error) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-red-500">Error: {error}</div>
+        <div className="text-red-500">Erro: {error}</div>
       </div>
     );
   }
@@ -113,7 +113,7 @@ export const UserProfileEditor: React.FC<UserProfileEditorProps> = ({
   if (!user) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-gray-500">No user data available</div>
+        <div className="text-gray-500">Nenhum dado de usuário disponível</div>
       </div>
     );
   }
@@ -180,7 +180,7 @@ export const UserProfileEditor: React.FC<UserProfileEditorProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              State
+              Estado
             </label>
             <input
               type="text"
@@ -194,7 +194,7 @@ export const UserProfileEditor: React.FC<UserProfileEditorProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Gender
+              Gênero
             </label>
             <select
               name="gender"
@@ -203,16 +203,16 @@ export const UserProfileEditor: React.FC<UserProfileEditorProps> = ({
               disabled={!isEditing}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-700"
             >
-              <option value="">Select Gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
+              <option value="">Selecione o gênero</option>
+              <option value="male">Masculino</option>
+              <option value="female">Feminino</option>
+              <option value="other">Outro</option>
             </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Company Name
+              Nome da Empresa
             </label>
             <input
               type="text"
@@ -227,7 +227,7 @@ export const UserProfileEditor: React.FC<UserProfileEditorProps> = ({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Bio
+            Biografia
           </label>
           <textarea
             name="bio"

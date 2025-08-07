@@ -28,7 +28,7 @@ const PremiumContext = createContext<PremiumContextType | undefined>(undefined);
 export const usePremiumContext = () => {
   const context = useContext(PremiumContext);
   if (context === undefined) {
-    throw new Error("usePremiumContext must be used within a PremiumProvider");
+    throw new Error("usePremiumContext deve ser usado dentro de um PremiumProvider");
   }
   return context;
 };

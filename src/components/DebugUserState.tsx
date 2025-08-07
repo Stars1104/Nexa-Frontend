@@ -19,20 +19,20 @@ export const DebugUserState: React.FC = () => {
       zIndex: 9999,
       maxWidth: '300px'
     }}>
-      <h4>Debug User State</h4>
+      <h4>Estado de Debug do Usuário</h4>
       <div>
-        <strong>Auth State:</strong>
-        <div>Authenticated: {isAuthenticated ? 'Yes' : 'No'}</div>
-        <div>User ID: {user?.id || 'None'}</div>
-        <div>Role: {user?.role || 'None'}</div>
-        <div>Has Premium (Redux): {user?.has_premium ? 'Yes' : 'No'}</div>
-        <div>Premium Expires: {user?.premium_expires_at || 'None'}</div>
+        <strong>Estado de Autenticação:</strong>
+        <div>Autenticado: {isAuthenticated ? 'Sim' : 'Não'}</div>
+        <div>ID do Usuário: {user?.id || 'Nenhum'}</div>
+        <div>Função: {user?.role || 'Nenhuma'}</div>
+        <div>Tem Premium (Redux): {user?.has_premium ? 'Sim' : 'Não'}</div>
+        <div>Premium Expira: {user?.premium_expires_at || 'Nunca'}</div>
       </div>
       <div style={{ marginTop: '10px' }}>
-        <strong>Premium Context:</strong>
-        <div>Has Premium: {hasPremium ? 'Yes' : 'No'}</div>
-        <div>Is Premium Active: {isPremiumActive ? 'Yes' : 'No'}</div>
-        <div>Premium Status: {JSON.stringify(premiumStatus, null, 2)}</div>
+        <strong>Contexto Premium:</strong>
+        <div>Tem Premium: {hasPremium ? 'Sim' : 'Não'}</div>
+        <div>Premium Ativo: {isPremiumActive ? 'Sim' : 'Não'}</div>
+        <div>Status Premium: {JSON.stringify(premiumStatus, null, 2)}</div>
       </div>
       <button 
         onClick={() => window.location.reload()} 
@@ -46,7 +46,7 @@ export const DebugUserState: React.FC = () => {
           cursor: 'pointer'
         }}
       >
-        Reload Page
+        Recarregar Página
       </button>
     </div>
   );

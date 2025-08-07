@@ -35,7 +35,7 @@ const NotificationBell = () => {
             dispatch(fetchNotifications({ token, params: { per_page: 10 } }));
         }
     }, [dispatch, token]);
-
+    
     // Get recent notifications (last 5 for display)
     const recentNotifications = notifications.slice(0, 5);
 
@@ -107,7 +107,7 @@ const NotificationBell = () => {
             </PopoverTrigger>
             <PopoverContent className="w-80 p-0" align="end">
                 <div className="p-4 border-b">
-                    <h3 className="font-semibold text-white">Notifications</h3>
+                    <h3 className="font-semibold dark:text-white text-black">Notifications</h3>
                     <p className="text-sm text-muted-foreground">
                         {unreadCount > 0 ? `${unreadCount} unread` : 'No notifications'}
                     </p>
@@ -128,7 +128,7 @@ const NotificationBell = () => {
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-start justify-between gap-2">
                                                     <div className="flex-1">
-                                                        <h4 className="font-medium text-sm mb-1 text-white">
+                                                        <h4 className="font-medium text-sm mb-1 dark:text-white text-black">
                                                             {notification.title}
                                                         </h4>
                                                         <p className="text-xs text-muted-foreground mb-1 line-clamp-2">

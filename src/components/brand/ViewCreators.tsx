@@ -14,7 +14,7 @@ function getInitials(name?: string) {
 }
 
 interface ViewCreatorsProps {
-  setComponent?: (component: string | { name: string; campaign: any }) => void;
+  setComponent?: (component: string | { name: string; campaign?: any; creatorId?: string }) => void;
   campaignId: number;
   campaignTitle?: string;
 }
@@ -103,7 +103,26 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
                   </div>
                 )}
                 <div>
-                  <div className="font-semibold text-gray-900 dark:text-white text-base sm:text-lg">{creator.name}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="font-semibold text-gray-900 dark:text-white text-base sm:text-lg">{creator.name}</div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setComponent?.({
+                          name: "Perfil do Criador",
+                          creatorId: creator.id
+                        });
+                      }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+                    >
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <polyline points="15,3 21,3 21,9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <line x1="10" y1="14" x2="21" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Ver Perfil
+                    </button>
+                  </div>
                   <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-300">
                     {/* Follower count if available */}
                     {creator.followers && <span>{creator.followers} seguidores</span>}

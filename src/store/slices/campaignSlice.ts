@@ -25,6 +25,9 @@ import {
   fetchCampaignAnalytics,
   exportCampaigns,
   fetchApprovedCampaigns,
+  toggleFeaturedCampaign,
+  toggleFavoriteCampaign,
+  fetchFavoriteCampaigns,
   withdrawApplication,
   fetchAllApplications,
   fetchApplication,
@@ -55,6 +58,8 @@ export interface Campaign {
   approvedCreators: number;
   logo?: string;
   attachments?: string[];
+  is_featured?: boolean;
+  is_favorited?: boolean;
 }
 
 export interface CampaignFormData {
@@ -120,6 +125,7 @@ interface CampaignState {
   userCampaigns: Campaign[];
   availableCampaigns: Campaign[];
   approvedCampaigns: Campaign[];
+  favoriteCampaigns: Campaign[];
   searchResults: Campaign[];
   applications: Application[];
   creatorApplications: Application[];
@@ -140,6 +146,7 @@ const initialState: CampaignState = {
   userCampaigns: [],
   availableCampaigns: [],
   approvedCampaigns: [],
+  favoriteCampaigns: [],
   searchResults: [],
   applications: [],
   creatorApplications: [],
@@ -270,11 +277,138 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchApprovedCampaigns.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.approvedCampaigns = action.payload;
+        
+        // Ensure payload is an array
+        const payload = action.payload;
+        if (!Array.isArray(payload)) {
+          console.error('fetchApprovedCampaigns.fulfilled: payload is not an array:', payload);
+          state.approvedCampaigns = [];
+          return;
+        }
+        
+        // Preserve favorite status from existing campaigns
+        const newCampaigns = payload as Campaign[];
+        const existingCampaigns = Array.isArray(state.approvedCampaigns) ? state.approvedCampaigns : [];
+        
+        // Create a map of existing favorite status
+        const favoriteStatusMap = new Map();
+        existingCampaigns.forEach(campaign => {
+          if (campaign.is_favorited !== undefined) {
+            favoriteStatusMap.set(campaign.id, campaign.is_favorited);
+          }
+        });
+        
+        // Merge new campaigns with preserved favorite status
+        const mergedCampaigns = newCampaigns.map(campaign => ({
+          ...campaign,
+          is_favorited: favoriteStatusMap.has(campaign.id) 
+            ? favoriteStatusMap.get(campaign.id) 
+            : campaign.is_favorited
+        }));
+        
+        state.approvedCampaigns = mergedCampaigns;
       })
       .addCase(fetchApprovedCampaigns.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || 'Failed to fetch approved campaigns';
+      })
+      
+      // Toggle featured campaign
+      .addCase(toggleFeaturedCampaign.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(toggleFeaturedCampaign.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const updatedCampaign = action.payload;
+        
+        // Update campaign in all arrays
+        state.campaigns = state.campaigns.map(campaign =>
+          campaign.id === updatedCampaign.id ? updatedCampaign : campaign
+        );
+        state.pendingCampaigns = state.pendingCampaigns.map(campaign =>
+          campaign.id === updatedCampaign.id ? updatedCampaign : campaign
+        );
+        state.userCampaigns = state.userCampaigns.map(campaign =>
+          campaign.id === updatedCampaign.id ? updatedCampaign : campaign
+        );
+        state.availableCampaigns = state.availableCampaigns.map(campaign =>
+          campaign.id === updatedCampaign.id ? updatedCampaign : campaign
+        );
+        state.approvedCampaigns = state.approvedCampaigns.map(campaign =>
+          campaign.id === updatedCampaign.id ? updatedCampaign : campaign
+        );
+        
+        if (state.selectedCampaign?.id === updatedCampaign.id) {
+          state.selectedCampaign = updatedCampaign;
+        }
+      })
+      .addCase(toggleFeaturedCampaign.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to toggle featured status';
+      })
+      
+      // Toggle favorite campaign
+      .addCase(toggleFavoriteCampaign.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(toggleFavoriteCampaign.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const { campaign_id, is_favorited } = action.payload;
+        
+        // Safely update campaign in all arrays, ensuring they are arrays first
+        if (Array.isArray(state.campaigns)) {
+          state.campaigns = state.campaigns.map(campaign =>
+            campaign.id === campaign_id ? { ...campaign, is_favorited } : campaign
+          );
+        }
+        
+        if (Array.isArray(state.pendingCampaigns)) {
+          state.pendingCampaigns = state.pendingCampaigns.map(campaign =>
+            campaign.id === campaign_id ? { ...campaign, is_favorited } : campaign
+          );
+        }
+        
+        if (Array.isArray(state.userCampaigns)) {
+          state.userCampaigns = state.userCampaigns.map(campaign =>
+            campaign.id === campaign_id ? { ...campaign, is_favorited } : campaign
+          );
+        }
+        
+        if (Array.isArray(state.availableCampaigns)) {
+          state.availableCampaigns = state.availableCampaigns.map(campaign =>
+            campaign.id === campaign_id ? { ...campaign, is_favorited } : campaign
+          );
+        }
+        
+        if (Array.isArray(state.approvedCampaigns)) {
+          state.approvedCampaigns = state.approvedCampaigns.map(campaign =>
+            campaign.id === campaign_id ? { ...campaign, is_favorited } : campaign
+          );
+        }
+        
+        if (state.selectedCampaign?.id === campaign_id) {
+          state.selectedCampaign = { ...state.selectedCampaign, is_favorited };
+        }
+      })
+      .addCase(toggleFavoriteCampaign.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to toggle favorite status';
+      })
+      
+      // Fetch favorite campaigns
+      .addCase(fetchFavoriteCampaigns.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchFavoriteCampaigns.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.favoriteCampaigns = action.payload as unknown as Campaign[];
+      })
+      .addCase(fetchFavoriteCampaigns.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to fetch favorite campaigns';
       })
       
       // Fetch campaign stats
@@ -396,7 +530,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchCampaignApplications.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.applications = action.payload;
+        state.applications = action.payload as unknown as Application[];
       })
       .addCase(fetchCampaignApplications.rejected, (state, action) => {
         state.isLoading = false;
@@ -410,7 +544,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchCreatorApplications.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.creatorApplications = action.payload;
+        state.creatorApplications = action.payload as unknown as Application[];
       })
       .addCase(fetchCreatorApplications.rejected, (state, action) => {
         state.isLoading = false;
@@ -724,7 +858,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchAllApplications.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.applications = action.payload;
+        state.applications = action.payload as unknown as Application[];
       })
       .addCase(fetchAllApplications.rejected, (state, action) => {
         state.isLoading = false;
@@ -739,7 +873,7 @@ const campaignSlice = createSlice({
       .addCase(fetchApplication.fulfilled, (state, action) => {
         state.isLoading = false;
         // Update or add the application to the arrays
-        const application = action.payload;
+        const application = action.payload as unknown as Application;
         const existingIndex = state.applications.findIndex(app => app.id === application.id);
         if (existingIndex >= 0) {
           state.applications[existingIndex] = application;

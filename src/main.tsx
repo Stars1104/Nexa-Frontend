@@ -16,14 +16,14 @@ const Loading = () => (
 const setupGlobalErrorHandlers = () => {
   // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
-    console.warn('Unhandled promise rejection:', event.reason);
+    console.warn('Rejeição de promessa não tratada:', event.reason);
     // Prevent the default browser behavior (showing error in console)
     event.preventDefault();
   });
 
   // Handle global errors
   window.addEventListener('error', (event) => {
-    console.warn('Global error:', event.error);
+    console.warn('Erro global:', event.error);
     // Prevent the default browser behavior
     event.preventDefault();
   });
@@ -32,8 +32,8 @@ const setupGlobalErrorHandlers = () => {
   const originalConsoleError = console.error;
   console.error = (...args) => {
     // Check if this is a promise rejection error
-    if (args[0] && typeof args[0] === 'object' && args[0].name === 'i') {
-      console.warn('Handled promise rejection:', args[0]);
+    if (args[0] && typeof args[0] === 'string' && args[0].includes('UnhandledRejection')) {
+      console.warn('Rejeição de promessa tratada:', args[0]);
       return;
     }
     originalConsoleError.apply(console, args);
@@ -46,7 +46,7 @@ const initApp = () => {
     // Setup global error handlers
     const container = document.getElementById("root");
     if (!container) {
-      throw new Error("Root element not found");
+      throw new Error("Elemento raiz não encontrado");
     }
 
     const root = createRoot(container);
@@ -61,7 +61,7 @@ const initApp = () => {
 
     return root;
   } catch (error) {
-    console.error('Failed to initialize app:', error);
+    console.error('Falha ao inicializar o app:', error);
     // Show a fallback error message
     const container = document.getElementById("root");
     if (container) {
