@@ -49,7 +49,7 @@ interface AllowedCampaignsProps {
 const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => {
     const dispatch = useDispatch<AppDispatch>();
     const { userCampaigns, isLoading, error } = useSelector((state: RootState) => state.campaign);
-    
+
     const [currentPage, setCurrentPage] = useState(1);
     const campaignsPerPage = 9;
 
@@ -63,7 +63,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                 toast.error("Erro ao carregar campanhas");
             }
         };
-        
+
         fetchCampaigns();
     }, [dispatch]);
 
@@ -107,7 +107,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
     const generatePaginationItems = () => {
         const items = [];
         const maxVisiblePages = 5;
-        
+
         if (totalPages <= maxVisiblePages) {
             // Show all pages if total is small
             for (let i = 1; i <= totalPages; i++) {
@@ -149,7 +149,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
             // Show current page and neighbors
             const start = Math.max(2, currentPage - 1);
             const end = Math.min(totalPages - 1, currentPage + 1);
-            
+
             for (let i = start; i <= end; i++) {
                 items.push(
                     <PaginationItem key={i}>
@@ -188,7 +188,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                 );
             }
         }
-        
+
         return items;
     };
 
@@ -280,14 +280,14 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                        {currentCampaigns.map((campaign : any, index: number) => (
+                        {currentCampaigns.map((campaign: any, index: number) => (
                             <div
                                 key={index}
                                 className="bg-background rounded-xl shadow-sm border border-mute p-5 flex flex-col gap-3 hover:shadow-md transition-shadow"
                             >
                                 <div className="flex items-center gap-3">
                                     <img
-                                        src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${campaign.logo}`}
+                                        src={`${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${campaign.logo}`}
                                         alt="campaign"
                                         className="w-12 h-12 rounded-full object-cover border border-zinc-200 dark:border-zinc-700"
                                     />
@@ -301,9 +301,8 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                                 <div className="flex items-center justify-between">
                                     <div className="flex gap-2 flex-wrap">
                                         <span
-                                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                                tagColors[campaign.type] || "bg-gray-100 text-gray-600 dark:bg-gray-900 dark:text-gray-200"
-                                            }`}
+                                            className={`px-3 py-1 rounded-full text-xs font-medium ${tagColors[campaign.type] || "bg-gray-100 text-gray-600 dark:bg-gray-900 dark:text-gray-200"
+                                                }`}
                                         >
                                             {campaign.category}
                                         </span>
@@ -331,8 +330,8 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                                 </div>
 
                                 <div className="flex gap-3 mt-2 md:flex-row flex-col">
-                                    <button 
-                                        className="flex-1 border-2 border-[#E91E63] text-[#E91E63] rounded-lg py-2 transition hover:bg-[#E91E63] hover:text-white" 
+                                    <button
+                                        className="flex-1 border-2 border-[#E91E63] text-[#E91E63] rounded-lg py-2 transition hover:bg-[#E91E63] hover:text-white"
                                         onClick={() => setComponent?.({ name: "Ver aplicação", campaign })}
                                     >
                                         <svg className="inline mr-2" width="18" height="18" fill="none" viewBox="0 0 24 24">
@@ -342,10 +341,10 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                                         Ver aplicações
                                     </button>
                                     <button
-                                        className="flex-1 bg-[#E91E63] text-white font-medium rounded-lg py-2 transition hover:bg-[#E91E63]/90 flex justify-center items-center gap-2" 
+                                        className="flex-1 bg-[#E91E63] text-white font-medium rounded-lg py-2 transition hover:bg-[#E91E63]/90 flex justify-center items-center gap-2"
                                         onClick={() => setComponent?.({ name: "Ver criadores", campaign })}
                                     >
-                                        <User/>
+                                        <User />
                                         Ver criadores
                                     </button>
                                 </div>
@@ -364,9 +363,9 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                                             className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                                         />
                                     </PaginationItem>
-                                    
+
                                     {generatePaginationItems()}
-                                    
+
                                     <PaginationItem>
                                         <PaginationNext
                                             onClick={() => handlePageChange(currentPage + 1)}

@@ -32,12 +32,12 @@ interface CampaignDetailProps {
   onReject?: () => void;
 }
 
-const CampaignDetail = ({ 
-  campaign, 
-  open, 
+const CampaignDetail = ({
+  campaign,
+  open,
   path,
-  onOpenChange, 
-  onApprove, 
+  onOpenChange,
+  onApprove,
   onReject,
 }: CampaignDetailProps) => {
   // Helper function to get file type icon
@@ -109,8 +109,8 @@ const CampaignDetail = ({
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 border-b border-gray-200 dark:border-neutral-700 pb-4 mb-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg overflow-hidden border">
               {displayData.logo ? (
-                <img 
-                  src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${displayData.logo}`} 
+                <img
+                  src={`${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${displayData.logo}`}
                   alt={`${displayData.brand?.name || 'Campaign'} logo`}
                   className="w-full h-full object-cover"
                 />
@@ -180,7 +180,7 @@ const CampaignDetail = ({
           {hasAttachments && (
             <section>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Anexos</h3>
-              
+
               {Array.isArray(attachments) && attachments.length > 3 ? (
                 // Carousel for multiple files (more than 3)
                 <div className="relative overflow-x-hidden">
@@ -208,7 +208,7 @@ const CampaignDetail = ({
                                   size="sm"
                                   className="h-8 w-8 p-0"
                                   onClick={() => {
-                                    const url = attachment.url || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${attachment}`;
+                                    const url = attachment.url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${attachment}`;
                                     window.open(url, '_blank');
                                   }}
                                 >
@@ -219,7 +219,7 @@ const CampaignDetail = ({
                                   size="sm"
                                   className="h-8 w-8 p-0"
                                   onClick={() => {
-                                    const url = attachment.url || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${attachment}`;
+                                    const url = attachment.url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${attachment}`;
                                     const link = document.createElement('a');
                                     link.href = url;
                                     link.download = attachment.name || attachment;
@@ -269,7 +269,7 @@ const CampaignDetail = ({
                             size="sm"
                             className="h-8 w-8 p-0"
                             onClick={() => {
-                              const url = attachment.url || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${attachment}`;
+                              const url = attachment.url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${attachment}`;
                               window.open(url, '_blank');
                             }}
                           >
@@ -280,7 +280,7 @@ const CampaignDetail = ({
                             size="sm"
                             className="h-8 w-8 p-0"
                             onClick={() => {
-                              const url = attachment.url || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${attachment}`;
+                              const url = attachment.url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${attachment}`;
                               const link = document.createElement('a');
                               link.href = url;
                               link.download = attachment.name || attachment;
@@ -314,7 +314,7 @@ const CampaignDetail = ({
                           size="sm"
                           className="h-8 w-8 p-0"
                           onClick={() => {
-                            const url = `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${attachments}`;
+                            const url = `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${attachments}`;
                             window.open(url, '_blank');
                           }}
                         >
@@ -325,7 +325,7 @@ const CampaignDetail = ({
                           size="sm"
                           className="h-8 w-8 p-0"
                           onClick={() => {
-                            const url = `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${attachments}`;
+                            const url = `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${attachments}`;
                             const link = document.createElement('a');
                             link.href = url;
                             link.download = attachments;

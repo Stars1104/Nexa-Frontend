@@ -63,16 +63,16 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
     };
 
     const deadlineStatus = getDeadlineStatus(campaign.deadline);
-    
+
     // Determine badge and button based on application status
     let badge = null;
     let button = null;
-    
+
     if (userApplication) {
         if (userApplication.status === 'approved') {
             badge = <Badge variant="default" className="bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900 dark:text-green-200">Aprovado</Badge>;
             button = (
-                <Button 
+                <Button
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                     onClick={() => onViewDetails(campaign.id)}
                 >
@@ -90,7 +90,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
         } else {
             badge = <Badge variant="secondary">Aplicado</Badge>;
             button = (
-                <Button 
+                <Button
                     className="w-full bg-[#E91E63] hover:bg-[#E91E63]/80 text-white"
                     onClick={() => onViewDetails(campaign.id)}
                 >
@@ -101,7 +101,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
         }
     } else {
         button = (
-            <Button 
+            <Button
                 className="w-full bg-[#E91E63] hover:bg-[#E91E63]/80 text-white"
                 onClick={() => onViewDetails(campaign.id)}
             >
@@ -118,8 +118,8 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                         <Avatar className="h-8 w-8">
                             {campaign.logo && campaign.logo.trim() !== '' ? (
-                                <AvatarImage 
-                                    src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${campaign.logo}`} 
+                                <AvatarImage
+                                    src={`${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${campaign.logo}`}
                                     alt={campaign.title}
                                     onError={(e) => {
                                         // Hide the image if it fails to load, fallback will show
@@ -138,19 +138,19 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                     {badge}
                 </div>
             </CardHeader>
-            
+
             <CardContent className="pb-3">
                 <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
                     {campaign.description.length > 100 ? campaign.description.substring(0, 100) + '...' : campaign.description}
                 </p>
-                
+
                 {/* Category and Deadline */}
                 <div className="flex flex-wrap gap-2 mb-3">
                     <Badge variant="outline" className="text-xs">
                         {campaign.category || campaign.type || 'Geral'}
                     </Badge>
-                    <Badge 
-                        variant="outline" 
+                    <Badge
+                        variant="outline"
                         className={`text-xs ${deadlineStatus.color}`}
                     >
                         <Clock className="h-3 w-3 mr-1" />
@@ -183,30 +183,29 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                     <div className="flex items-center gap-2">
                         <Users className="h-3 w-3" />
                         <span className={campaign.bids && campaign.bids.length > 0 ? "text-blue-600 font-medium" : "text-muted-foreground"}>
-                            {campaign.bids && campaign.bids.length > 0 
+                            {campaign.bids && campaign.bids.length > 0
                                 ? `${campaign.bids.length} aplicação${campaign.bids.length !== 1 ? 'ões' : ''}`
                                 : 'Nenhuma aplicação ainda'
                             }
                         </span>
                         {campaign.bids && campaign.bids.length > 0 && (
-                            <Badge 
-                                variant="outline" 
-                                className={`text-xs ${
-                                    campaign.bids.length <= 3 ? 'text-green-600 bg-green-50 border-green-200' :
-                                    campaign.bids.length <= 7 ? 'text-yellow-600 bg-yellow-50 border-yellow-200' :
-                                    'text-red-600 bg-red-50 border-red-200'
-                                }`}
+                            <Badge
+                                variant="outline"
+                                className={`text-xs ${campaign.bids.length <= 3 ? 'text-green-600 bg-green-50 border-green-200' :
+                                        campaign.bids.length <= 7 ? 'text-yellow-600 bg-yellow-50 border-yellow-200' :
+                                            'text-red-600 bg-red-50 border-red-200'
+                                    }`}
                             >
-                                {campaign.bids.length <= 3 ? 'Baixa' : 
-                                 campaign.bids.length <= 7 ? 'Média' : 'Alta'} competição
+                                {campaign.bids.length <= 3 ? 'Baixa' :
+                                    campaign.bids.length <= 7 ? 'Média' : 'Alta'} competição
                             </Badge>
                         )}
                     </div>
                 </div>
             </CardContent>
-            
+
             <Separator />
-            
+
             <CardFooter className="pt-3">
                 <div className="w-full flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                     <div className="flex items-center gap-1">

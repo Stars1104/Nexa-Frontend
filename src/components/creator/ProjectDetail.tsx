@@ -36,8 +36,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   // Find the campaign by projectId
   const campaign = Array.isArray(approvedCampaigns.data)
     ? approvedCampaigns.data.find(
-        (c: any) => String(c.id) === String(projectId)
-      )
+      (c: any) => String(c.id) === String(projectId)
+    )
     : null;
   const project = campaign;
   const [open, setOpen] = useState(false);
@@ -102,10 +102,9 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               <div className="flex-shrink-0">
                 {project.logo ? (
                   <img
-                    src={`${
-                      import.meta.env.VITE_BACKEND_URL ||
-                      "http://localhost:8000"
-                    }${project.logo}`}
+                    src={`${import.meta.env.VITE_BACKEND_URL ||
+                      "https://nexacreators.com.br"
+                      }${project.logo}`}
                     alt={`${project.title} logo`}
                     className="w-16 h-16 rounded-xl object-cover border border-border"
                     onError={(e) => {
@@ -140,9 +139,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                 campaign.target_states.map((uf: string, i: number) => (
                   <span
                     key={uf}
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      statesColors[i % statesColors.length]
-                    }`}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${statesColors[i % statesColors.length]
+                      }`}
                   >
                     {uf}
                   </span>
@@ -206,19 +204,17 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                       );
                     return isImage ? (
                       <img
-                        src={`${
-                          import.meta.env.VITE_BACKEND_URL ||
-                          "http://localhost:8000"
-                        }${file}`}
+                        src={`${import.meta.env.VITE_BACKEND_URL ||
+                          "https://nexacreators.com.br"
+                          }${file}`}
                         alt="Anexo visual"
                         className="rounded-xl w-full h-full border border-border"
                       />
                     ) : (
                       <a
-                        href={`${
-                          import.meta.env.VITE_BACKEND_URL ||
-                          "http://localhost:8000"
-                        }${file}`}
+                        href={`${import.meta.env.VITE_BACKEND_URL ||
+                          "https://nexacreators.com.br"
+                          }${file}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 underline break-all"

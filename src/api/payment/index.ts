@@ -119,7 +119,7 @@ export const paymentApi = {
   processAccountPayment: async (data: AccountPaymentRequest): Promise<any> => {
     // Create a special axios instance for account_id authentication
     const accountPaymentClient = axios.create({
-      baseURL: import.meta.env.VITE_BACKEND_URL || "http://localhost:8000",
+      baseURL: import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br",
       headers: {
         'Content-Type': 'application/json',
         'X-PagarMe-Account-ID': data.account_id,
@@ -133,7 +133,7 @@ export const paymentApi = {
       account_id: data.account_id,
       email: data.email,
     });
-    
+
     return response.data;
   },
 

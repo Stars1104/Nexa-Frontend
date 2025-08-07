@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BackendURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+const BackendURL = import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br";
 
 // Create axios instance for notification API
 const NotificationAPI = axios.create({

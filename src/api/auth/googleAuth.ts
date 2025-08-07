@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BackendURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+const BackendURL = import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br";
 
 // Google OAuth API
 const GoogleAuthAPI = axios.create({
@@ -53,14 +53,14 @@ export const initiateGoogleOAuth = async (role?: 'creator' | 'brand') => {
     try {
         // Get the OAuth URL
         const { redirect_url } = await getGoogleOAuthURL();
-        
+
         // Store the role in sessionStorage for later use
         if (role) {
             sessionStorage.setItem('google_oauth_role', role);
         } else {
-        
+
         }
-        
+
         // Redirect to Google OAuth
         window.location.href = redirect_url;
     } catch (error) {
@@ -75,18 +75,18 @@ export const handleOAuthCallback = async () => {
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
         const error = urlParams.get('error');
-        
+
         if (error) {
             throw new Error(`OAuth error: ${error}`);
         }
-        
+
         if (!code) {
             throw new Error('No authorization code received');
         }
-        
+
         // Get the stored role
         const role = sessionStorage.getItem('google_oauth_role') as 'creator' | 'brand' | null;
-        
+
         let authData;
         if (role) {
             // Pass the role as a query parameter to the callback
@@ -96,7 +96,7 @@ export const handleOAuthCallback = async () => {
             // Use default callback (defaults to creator)
             authData = await handleGoogleCallback(code);
         }
-        
+
         return authData;
     } catch (error) {
         console.error('Error handling OAuth callback:', error);
@@ -104,4 +104,3 @@ export const handleOAuthCallback = async () => {
     }
 };
 
- 

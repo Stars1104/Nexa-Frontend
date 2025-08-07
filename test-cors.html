@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CORS Test</title>
 </head>
+
 <body>
     <h1>CORS Test</h1>
     <button onclick="testCors()">Test CORS API</button>
@@ -14,14 +16,14 @@
     <script>
         async function testCors() {
             try {
-                const response = await fetch('http://localhost:8000/test-cors', {
+                const response = await fetch('https://nexacreators.com.br/test-cors', {
                     method: 'GET',
                     mode: 'cors',
                     headers: {
                         'Accept': 'application/json',
                     }
                 });
-                
+
                 const data = await response.json();
                 document.getElementById('result').innerHTML = `<p>✅ CORS Test Success: ${JSON.stringify(data)}</p>`;
             } catch (error) {
@@ -32,8 +34,8 @@
         async function testImageDownload() {
             try {
                 // Use the new API endpoint
-                const imageUrl = 'http://localhost:8000/api/download/chat-files/1752870035_Screenshot%20from%202025-07-18%2015-54-01.png';
-                
+                const imageUrl = 'https://nexacreators.com.br/api/download/chat-files/1752870035_Screenshot%20from%202025-07-18%2015-54-01.png';
+
                 const response = await fetch(imageUrl, {
                     method: 'GET',
                     mode: 'cors',
@@ -41,7 +43,7 @@
                         'Accept': 'image/*',
                     }
                 });
-                
+
                 if (response.ok) {
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
@@ -50,7 +52,7 @@
                     link.download = 'test-image.png';
                     link.click();
                     window.URL.revokeObjectURL(url);
-                    
+
                     document.getElementById('result').innerHTML = `<p>✅ Image Download Test Success: File downloaded successfully (${blob.size} bytes)</p>`;
                 } else {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -61,4 +63,5 @@
         }
     </script>
 </body>
-</html> 
+
+</html>

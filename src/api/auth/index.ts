@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BackendURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+const BackendURL = import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br";
 
 // Auth API
 const AuthAPI = axios.create({
@@ -23,12 +23,12 @@ AuthAPI.interceptors.request.use(
                 config.headers.Authorization = `Bearer ${token}`;
             }
         }
-        
+
         // Handle FormData properly - don't set Content-Type for FormData
         if (config.data instanceof FormData) {
             delete config.headers['Content-Type'];
         }
-        
+
         return config;
     },
     (error) => {
@@ -45,12 +45,12 @@ AuthAPI.interceptors.response.use(
             // Clear localStorage
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            
+
             // Clear Redux persist state
             localStorage.removeItem('persist:auth');
-            
+
             // Redirect to login page
-            if (window.location.pathname !== '/login' && window.location.pathname !== '/signup' && 
+            if (window.location.pathname !== '/login' && window.location.pathname !== '/signup' &&
                 !window.location.pathname.includes('/auth')) {
                 window.location.href = '/auth';
             }
@@ -76,7 +76,7 @@ function getTokenFromStore(): string | null {
         if (directToken) {
             return directToken;
         }
-        
+
         // Fallback to Redux persist state
         const persistedState = localStorage.getItem('persist:auth');
         if (persistedState) {
@@ -123,10 +123,10 @@ export const signin = async (data: any) => {
             const debugResponse = await AuthAPI.post("/api/debug-login", data);
         } catch (debugError: any) {
         }
-        
+
         // Try with explicit JSON stringification
         const jsonData = JSON.stringify(data);
-        
+
         const response = await AuthAPI.post("/api/login", jsonData, {
             headers: {
                 'Content-Type': 'application/json',
@@ -154,21 +154,21 @@ export const signin = async (data: any) => {
 export const profileUpdate = async (data: any) => {
     try {
         const isFormData = data instanceof FormData;
-        
+
         const config = {
             headers: {
                 "Content-Type": isFormData ? "multipart/form-data" : "application/json",
             },
         };
-        
+
         // For FormData, let the browser set the Content-Type with boundary
         if (isFormData) {
             delete config.headers["Content-Type"];
         }
-        
-        
+
+
         const response = await AuthAPI.put("/api/profile", data, config);
-        
+
         if (!response.data.success) {
             throw new Error(response.data.message || 'Failed to update profile');
         }
@@ -213,7 +213,7 @@ export const getUser = async (userId?: string) => {
         if (response.data.success === false) {
             throw new Error(response.data.message || 'Failed to fetch user data');
         }
-        
+
         return {
             success: true,
             user: response.data.user || response.data,
@@ -245,4 +245,3 @@ export const logout = async () => {
     const response = await AuthAPI.post("/api/logout");
 };
 
- 

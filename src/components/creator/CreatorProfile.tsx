@@ -327,10 +327,9 @@ export const CreatorProfile = () => {
                 <div className="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-400 flex items-center justify-center text-2xl font-bold text-purple-600 dark:text-white mb-2">
                   {displayProfile.image ? (
                     <img
-                      src={`${
-                        import.meta.env.VITE_BACKEND_URL ||
-                        "http://localhost:8000"
-                      }${displayProfile.image}`}
+                      src={`${import.meta.env.VITE_BACKEND_URL ||
+                        "https://nexacreators.com.br"
+                        }${displayProfile.image}`}
                       alt="Profile"
                       className="w-16 h-16 rounded-full object-cover"
                     />
@@ -444,7 +443,7 @@ export const CreatorProfile = () => {
                   Gerencie seu saldo e solicite saques dos seus ganhos
                 </p>
               </div>
-              <Button 
+              <Button
                 onClick={() => setShowWithdrawalModal(true)}
                 className="flex items-center gap-2"
                 disabled={!balance || balance.balance.available_balance <= 0 || balanceLoading}

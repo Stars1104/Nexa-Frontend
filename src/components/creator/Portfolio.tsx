@@ -67,7 +67,7 @@ export default function Portfolio() {
     // Update local state when portfolio data is loaded
     useEffect(() => {
         if (portfolio) {
-            
+
             setBio(portfolio.bio || "");
             setProfileTitle(portfolio.title || "");
             setProfilePic(portfolio.profile_picture_url || null);
@@ -96,13 +96,13 @@ export default function Portfolio() {
         let validFiles = files.filter(
             (file) => ACCEPTED_TYPES.includes(file.type)
         );
-        
+
         const currentMediaCount = media.length + (portfolio?.items?.length || 0);
         if (currentMediaCount + validFiles.length > MAX_TOTAL_FILES) {
             validFiles = validFiles.slice(0, MAX_TOTAL_FILES - currentMediaCount);
         }
         validFiles = validFiles.slice(0, MAX_FILES_PER_UPLOAD);
-        
+
         const newMedia = validFiles.map((file) => ({
             file,
             url: URL.createObjectURL(file),
@@ -136,26 +136,26 @@ export default function Portfolio() {
 
     const handleSaveProfile = async () => {
         if (!user?.id) return;
-        
+
         setIsSaving(true);
         try {
             const token = localStorage.getItem('token');
             if (!token) throw new Error('No authentication token found');
-            
+
             const formData = new FormData();
-            
+
             // Ensure we have valid values
             const titleToSend = profileTitle?.trim() || '';
             const bioToSend = bio?.trim() || '';
-            
+
             formData.append('title', titleToSend);
             formData.append('bio', bioToSend);
-            
-            
-            
+
+
+
             // Additional debugging - check if values are actually strings
-            
-            
+
+
             if (profilePic && profilePic.startsWith('blob:')) {
                 const response = await fetch(profilePic);
                 const blob = await response.blob();
@@ -163,7 +163,7 @@ export default function Portfolio() {
             }
 
             const result = await dispatch(updatePortfolioProfile({ token, data: formData })).unwrap();
-            
+
             setIsEditDialogOpen(false);
             toast({
                 title: "Success",
@@ -188,7 +188,7 @@ export default function Portfolio() {
 
     const handleSavePortfolio = async () => {
         if (!user?.id || !portfolio) return;
-        
+
         setIsSaving(true);
         try {
             const token = localStorage.getItem('token');
@@ -197,7 +197,7 @@ export default function Portfolio() {
             // Upload new media files
             const files = media.map(item => item.file);
             await dispatch(uploadPortfolioMedia({ token, files })).unwrap();
-            
+
             setMedia([]);
             setIsPortfolioEditDialogOpen(false);
             toast({
@@ -217,7 +217,7 @@ export default function Portfolio() {
 
     const handleRemovePortfolioItem = async (itemId: number) => {
         if (!portfolio) return;
-        
+
         try {
             const token = localStorage.getItem('token');
             if (!token) throw new Error('No authentication token found');
@@ -238,7 +238,7 @@ export default function Portfolio() {
 
     const handleSavePortfolioComplete = async () => {
         if (!user?.id) return;
-        
+
         setIsSaving(true);
         try {
             const token = localStorage.getItem('token');
@@ -247,7 +247,7 @@ export default function Portfolio() {
             const formData = new FormData();
             formData.append('title', profileTitle);
             formData.append('bio', bio);
-            
+
             if (profilePic && profilePic.startsWith('blob:')) {
                 const response = await fetch(profilePic);
                 const blob = await response.blob();
@@ -255,7 +255,7 @@ export default function Portfolio() {
             }
 
             await dispatch(updatePortfolioProfile({ token, data: formData })).unwrap();
-            
+
             toast({
                 title: "Success",
                 description: "Portfolio saved successfully!",
@@ -385,14 +385,14 @@ export default function Portfolio() {
                                     </div>
                                 </div>
                                 <DialogFooter>
-                                    <Button 
-                                        variant="outline" 
+                                    <Button
+                                        variant="outline"
                                         onClick={() => setIsEditDialogOpen(false)}
                                         disabled={isSaving}
                                     >
                                         Cancelar
                                     </Button>
-                                    <Button 
+                                    <Button
                                         className="bg-[#E91E63] hover:bg-pink-600 text-white"
                                         onClick={handleSaveProfile}
                                         disabled={isSaving}
@@ -456,15 +456,15 @@ export default function Portfolio() {
                                     <h3 className="font-semibold text-base mb-2">Meu Trabalho ({getTotalMediaCount()}/{MAX_TOTAL_FILES})</h3>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                                         {/* Existing portfolio items */}
-                                        {portfolio?.items?.map((item : any) => (
+                                        {portfolio?.items?.map((item: any) => (
                                             <div key={`existing-${item.id}`} className="rounded-lg bg-background flex flex-col items-start justify-between aspect-[4/3] p-2 relative overflow-hidden group">
                                                 <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${item.media_type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.media_type === 'image' ? 'Foto' : 'Vídeo'}</span>
                                                 {item.media_type === 'image' ? (
-                                                    <img 
-                                                        src={item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/storage/${item.file_path}`} 
-                                                        alt={item.title} 
-                                                        className="object-cover w-full h-full rounded-md cursor-pointer" 
-                                                        onClick={() => handleImageClick(item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/storage/${item.file_path}`)}
+                                                    <img
+                                                        src={item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`}
+                                                        alt={item.title}
+                                                        className="object-cover w-full h-full rounded-md cursor-pointer"
+                                                        onClick={() => handleImageClick(item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`)}
                                                         onError={(e) => {
                                                             console.error('Image failed to load:', item.file_url || item.file_path);
                                                             e.currentTarget.style.display = 'none';
@@ -491,10 +491,10 @@ export default function Portfolio() {
                                             <div key={`new-${idx}`} className="rounded-lg bg-background flex flex-col items-start justify-between aspect-[4/3] p-2 relative overflow-hidden group">
                                                 <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${item.type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.type === 'image' ? 'Foto' : 'Vídeo'}</span>
                                                 {item.type === 'image' ? (
-                                                    <img 
-                                                        src={item.url} 
-                                                        alt="media" 
-                                                        className="object-cover w-full h-full rounded-md cursor-pointer" 
+                                                    <img
+                                                        src={item.url}
+                                                        alt="media"
+                                                        className="object-cover w-full h-full rounded-md cursor-pointer"
                                                         onClick={() => handleImageClick(item.url)}
                                                     />
                                                 ) : (
@@ -533,14 +533,14 @@ export default function Portfolio() {
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     onClick={() => setIsPortfolioEditDialogOpen(false)}
                                     disabled={isSaving}
                                 >
                                     Cancelar
                                 </Button>
-                                <Button 
+                                <Button
                                     className="bg-[#E91E63] hover:bg-pink-600 text-white"
                                     onClick={handleSavePortfolio}
                                     disabled={isSaving || media.length === 0}
@@ -564,15 +564,15 @@ export default function Portfolio() {
                     ) : (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                             {/* Existing portfolio items */}
-                            {portfolio?.items?.map((item : any) => (
+                            {portfolio?.items?.map((item: any) => (
                                 <div key={`existing-${item.id}`} className="rounded-lg bg-background flex flex-col items-start justify-between aspect-[4/3] p-2 relative overflow-hidden group">
                                     <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${item.media_type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.media_type === 'image' ? 'Foto' : 'Vídeo'}</span>
                                     {item.media_type === 'image' ? (
-                                        <img 
-                                            src={item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/storage/${item.file_path}`} 
-                                            alt={item.title} 
-                                            className="object-cover w-full h-full rounded-md cursor-pointer" 
-                                            onClick={() => handleImageClick(item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/storage/${item.file_path}`)}
+                                        <img
+                                            src={item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`}
+                                            alt={item.title}
+                                            className="object-cover w-full h-full rounded-md cursor-pointer"
+                                            onClick={() => handleImageClick(item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`)}
                                             onError={(e) => {
                                                 console.error('Image failed to load:', item.file_url || item.file_path);
                                                 e.currentTarget.style.display = 'none';
@@ -599,10 +599,10 @@ export default function Portfolio() {
                                 <div key={`new-${idx}`} className="rounded-lg bg-background flex flex-col items-start justify-between aspect-[4/3] p-2 relative overflow-hidden group">
                                     <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${item.type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.type === 'image' ? 'Foto' : 'Vídeo'}</span>
                                     {item.type === 'image' ? (
-                                        <img 
-                                            src={item.url} 
-                                            alt="media" 
-                                            className="object-cover w-full h-full rounded-md cursor-pointer" 
+                                        <img
+                                            src={item.url}
+                                            alt="media"
+                                            className="object-cover w-full h-full rounded-md cursor-pointer"
                                             onClick={() => handleImageClick(item.url)}
                                         />
                                     ) : (
@@ -633,7 +633,7 @@ export default function Portfolio() {
 
             {/* Save Button */}
             <div className="flex justify-end mt-6">
-                <Button 
+                <Button
                     className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-8 py-2 rounded-md text-base"
                     onClick={handleSavePortfolioComplete}
                     disabled={isSaving}
@@ -647,14 +647,14 @@ export default function Portfolio() {
             {isImageModalOpen && selectedImage && (
                 <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={handleCloseImageModal}>
                     <div className="relative max-w-full max-h-full p-4">
-                        <img 
-                            src={selectedImage} 
-                            alt="Portfolio Image" 
+                        <img
+                            src={selectedImage}
+                            alt="Portfolio Image"
                             className="max-w-full max-h-full object-contain"
                             onClick={(e) => e.stopPropagation()}
                         />
-                        <button 
-                            onClick={handleCloseImageModal} 
+                        <button
+                            onClick={handleCloseImageModal}
                             className="absolute top-2 right-2 text-white text-4xl hover:text-gray-300 transition-colors"
                         >
                             &times;

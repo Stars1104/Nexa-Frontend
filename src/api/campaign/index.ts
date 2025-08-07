@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BackendURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+const BackendURL = import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br";
 
 const CampaignAPI = axios.create({
     baseURL: `${BackendURL}`,
@@ -47,7 +47,7 @@ export const CreateNewCampaign = async (data: FormData, token: string) => {
             "Authorization": `Bearer ${token}`
         },
     });
-    
+
     try {
         const response = await FormDataAPI.post("/api/campaigns", data);
         return response.data;
@@ -57,7 +57,7 @@ export const CreateNewCampaign = async (data: FormData, token: string) => {
         console.error("Validation errors:", error.response?.data?.errors);
         console.error("Error status:", error.response?.status);
         console.error("Error headers:", error.response?.headers);
-        
+
         throw error;
     }
 };
@@ -113,13 +113,13 @@ export const GetAvailableCampaigns = async (token: string, filters?: {
 }) => {
     setAuthToken(token);
     const params = new URLSearchParams();
-    
+
     if (filters?.category) params.append('category', filters.category);
     if (filters?.minBudget) params.append('minBudget', filters.minBudget.toString());
     if (filters?.maxBudget) params.append('maxBudget', filters.maxBudget.toString());
     if (filters?.states) params.append('states', filters.states.join(','));
     if (filters?.type) params.append('type', filters.type);
-    
+
     const response = await CampaignAPI.get(`/api/campaigns/available?${params.toString()}`);
     return response.data;
 };
@@ -196,7 +196,7 @@ export const GetCampaignById = async (campaignId: number, token: string) => {
 // Update campaign
 export const UpdateCampaign = async (campaignId: number, data: FormData, token: string) => {
     setAuthToken(token);
-    
+
     // Create a new axios instance for form data
     const FormDataAPI = axios.create({
         baseURL: `${BackendURL}`,
@@ -205,7 +205,7 @@ export const UpdateCampaign = async (campaignId: number, data: FormData, token: 
             "Authorization": `Bearer ${token}`
         },
     });
-    
+
     const response = await FormDataAPI.patch(`/api/campaigns/${campaignId}`, data);
     return response.data;
 };
@@ -219,28 +219,28 @@ export const DeleteCampaign = async (campaignId: number, token: string) => {
 
 // Apply to campaign (for creators) - Updated to match backend API
 export const ApplyToCampaign = async (campaignId: number, applicationData: {
-  proposal: string;
-  portfolio_links?: string[];
-  estimated_delivery_days?: number;
-  proposed_budget?: number;
+    proposal: string;
+    portfolio_links?: string[];
+    estimated_delivery_days?: number;
+    proposed_budget?: number;
 }, token: string) => {
     setAuthToken(token);
-    
+
     const response = await CampaignAPI.post(`/api/campaigns/${campaignId}/applications`, applicationData);
     return response.data;
 };
 
 // Get all applications (role-based)
 export const GetAllApplications = async (token: string, filters?: {
-  status?: string;
-  campaign_id?: number;
+    status?: string;
+    campaign_id?: number;
 }) => {
     setAuthToken(token);
     const params = new URLSearchParams();
-    
+
     if (filters?.status) params.append('status', filters.status);
     if (filters?.campaign_id) params.append('campaign_id', filters.campaign_id.toString());
-    
+
     const response = await CampaignAPI.get(`/api/applications?${params.toString()}`);
     return response.data;
 };
@@ -307,14 +307,14 @@ export const SearchCampaigns = async (query: string, token: string, filters?: {
     setAuthToken(token);
     const params = new URLSearchParams();
     params.append('q', query);
-    
+
     if (filters?.category) params.append('category', filters.category);
     if (filters?.minBudget) params.append('minBudget', filters.minBudget.toString());
     if (filters?.maxBudget) params.append('maxBudget', filters.maxBudget.toString());
     if (filters?.states) params.append('states', filters.states.join(','));
     if (filters?.type) params.append('type', filters.type);
     if (filters?.status) params.append('status', filters.status);
-    
+
     const response = await CampaignAPI.get(`/api/campaigns/search?${params.toString()}`);
     return response.data;
 };
@@ -375,12 +375,12 @@ export const ExportCampaigns = async (token: string, format: 'csv' | 'excel' | '
     setAuthToken(token);
     const params = new URLSearchParams();
     params.append('format', format);
-    
+
     if (filters?.status) params.append('status', filters.status);
     if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
     if (filters?.dateTo) params.append('dateTo', filters.dateTo);
     if (filters?.brandId) params.append('brandId', filters.brandId);
-    
+
     const response = await CampaignAPI.get(`/api/campaigns/export?${params.toString()}`, {
         responseType: 'blob'
     });

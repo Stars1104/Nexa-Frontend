@@ -327,7 +327,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     const handleOfferCreated = (data: any) => {
       if (!isMountedRef.current) return;
       console.log('[ChatPage] Offer created via Socket.IO:', data);
-      
+
       if (data.roomId === selectedRoom?.room_id) {
         // Add new offer to the offers list
         setOffers((prev) => {
@@ -365,7 +365,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     const handleOfferAccepted = (data: any) => {
       if (!isMountedRef.current) return;
       console.log('[ChatPage] Offer accepted via Socket.IO:', data);
-      
+
       if (data.roomId === selectedRoom?.room_id) {
         // Update offer status
         setOffers((prev) =>
@@ -400,7 +400,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     const handleOfferRejected = (data: any) => {
       if (!isMountedRef.current) return;
       console.log('[ChatPage] Offer rejected via Socket.IO:', data);
-      
+
       if (data.roomId === selectedRoom?.room_id) {
         // Update offer status
         setOffers((prev) =>
@@ -420,7 +420,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     const handleOfferCancelled = (data: any) => {
       if (!isMountedRef.current) return;
       console.log('[ChatPage] Offer cancelled via Socket.IO:', data);
-      
+
       if (data.roomId === selectedRoom?.room_id) {
         // Update offer status
         setOffers((prev) =>
@@ -440,19 +440,19 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     const handleContractCompleted = (data: any) => {
       if (!isMountedRef.current) return;
       console.log('[ChatPage] Contract completed via Socket.IO:', data);
-      
+
       if (data.roomId === selectedRoom?.room_id) {
         // Update contract with complete data from server
         setContracts((prev) =>
           prev.map((contract) =>
             contract.id === data.contractData.id
-              ? { 
-                  ...contract, 
-                  ...data.contractData,
-                  status: 'completed',
-                  workflow_status: 'waiting_review',
-                  can_review: true,
-                }
+              ? {
+                ...contract,
+                ...data.contractData,
+                status: 'completed',
+                workflow_status: 'waiting_review',
+                can_review: true,
+              }
               : contract
           )
         );
@@ -472,18 +472,18 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     const handleContractTerminated = (data: any) => {
       if (!isMountedRef.current) return;
       console.log('[ChatPage] Contract terminated via Socket.IO:', data);
-      
+
       if (data.roomId === selectedRoom?.room_id) {
         // Update contract with complete data from server
         setContracts((prev) =>
           prev.map((contract) =>
             contract.id === data.contractData.id
-              ? { 
-                  ...contract, 
-                  ...data.contractData,
-                  status: 'terminated',
-                  workflow_status: 'terminated',
-                }
+              ? {
+                ...contract,
+                ...data.contractData,
+                status: 'terminated',
+                workflow_status: 'terminated',
+              }
               : contract
           )
         );
@@ -503,7 +503,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     const handleContractActivated = (data: any) => {
       if (!isMountedRef.current) return;
       console.log('[ChatPage] Contract activated via Socket.IO:', data);
-      
+
       if (data.roomId === selectedRoom?.room_id) {
         // Update contract with complete data from server
         setContracts((prev) => {
@@ -511,12 +511,12 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
           if (existingContract) {
             return prev.map((contract) =>
               contract.id === data.contractData.id
-                ? { 
-                    ...contract, 
-                    ...data.contractData,
-                    status: 'active',
-                    workflow_status: data.contractData.workflow_status,
-                  }
+                ? {
+                  ...contract,
+                  ...data.contractData,
+                  status: 'active',
+                  workflow_status: data.contractData.workflow_status,
+                }
                 : contract
             );
           } else {
@@ -730,7 +730,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
       console.log('[ChatPage] Loading messages for room:', roomId);
       const response = await chatService.getMessages(roomId);
       console.log('[ChatPage] Messages loaded:', response.messages.length, 'messages');
-      
+
       if (isMountedRef.current) {
         // Only deduplicate if there are actual duplicates (same message ID)
         const messageIds = new Set();
@@ -1185,7 +1185,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
   const handleEndContract = async (contractId: number) => {
     try {
       await hiringApi.completeContract(contractId);
-      
+
       toast({
         title: "Sucesso",
         description: "Contrato finalizado com sucesso!",
@@ -1215,8 +1215,8 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
 
     try {
       // Find the pending contract for this accepted offer
-      const pendingContract = contracts.find(contract => 
-        contract.status === 'pending' && 
+      const pendingContract = contracts.find(contract =>
+        contract.status === 'pending' &&
         contract.offer_id === acceptedOffer.id
       );
 
@@ -1231,7 +1231,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
 
       // Call the API to activate the contract
       const response = await hiringApi.activateContract(pendingContract.id);
-      
+
       if (response.success) {
         toast({
           title: "Sucesso",
@@ -1242,12 +1242,12 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         setContracts((prev) =>
           prev.map((contract) =>
             contract.id === pendingContract.id
-              ? { 
-                  ...contract, 
-                  status: 'active',
-                  workflow_status: 'active',
-                  can_be_completed: true,
-                }
+              ? {
+                ...contract,
+                status: 'active',
+                workflow_status: 'active',
+                can_be_completed: true,
+              }
               : contract
           )
         );
@@ -1267,7 +1267,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
   const handleTerminateContract = async (contractId: number) => {
     try {
       const response = await hiringApi.terminateContract(contractId);
-      
+
       if (response.success) {
         toast({
           title: "Sucesso",
@@ -1278,11 +1278,11 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         setContracts((prev) =>
           prev.map((contract) =>
             contract.id === contractId
-              ? { 
-                  ...contract, 
-                  status: 'terminated',
-                  workflow_status: 'terminated',
-                }
+              ? {
+                ...contract,
+                status: 'terminated',
+                workflow_status: 'terminated',
+              }
               : contract
           )
         );
@@ -1310,16 +1310,16 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
       setContracts((prev) =>
         prev.map((contract) =>
           contract.id === contractToReview.id
-            ? { 
-                ...contract, 
-                workflow_status: 'payment_available',
-                review: {
-                  id: Date.now(), // Temporary ID
-                  rating: 5,
-                  comment: "Review submitted",
-                  created_at: new Date().toISOString(),
-                },
-              }
+            ? {
+              ...contract,
+              workflow_status: 'payment_available',
+              review: {
+                id: Date.now(), // Temporary ID
+                rating: 5,
+                comment: "Review submitted",
+                created_at: new Date().toISOString(),
+              },
+            }
             : contract
         )
       );
@@ -1906,17 +1906,15 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         <button
           ref={buttonRef}
           onClick={toggleDropdown}
-          className={`p-2.5 rounded-xl transition-all duration-300 border-2 ${
-            isOpen
+          className={`p-2.5 rounded-xl transition-all duration-300 border-2 ${isOpen
               ? "bg-gradient-to-r from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30 border-pink-300 dark:border-pink-700 shadow-lg scale-105"
               : "hover:bg-gradient-to-r hover:from-slate-100 hover:to-gray-100 dark:hover:from-slate-700 dark:hover:to-gray-700 border-transparent hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md hover:scale-105"
-          }`}
+            }`}
           aria-label="File options"
         >
           <MoreVertical
-            className={`w-4 h-4 transition-colors duration-300 ${
-              isOpen ? "text-pink-600 dark:text-pink-400" : "text-slate-500"
-            }`}
+            className={`w-4 h-4 transition-colors duration-300 ${isOpen ? "text-pink-600 dark:text-pink-400" : "text-slate-500"
+              }`}
           />
         </button>
 
@@ -1990,8 +1988,8 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                       ? `Downloading ${downloadProgress}%`
                       : "Downloading..."
                     : message.message_type === "image"
-                    ? "Download Image"
-                    : "Download File"}
+                      ? "Download Image"
+                      : "Download File"}
                 </span>
                 {isDownloading && downloadProgress > 0 && (
                   <div
@@ -2449,10 +2447,9 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                   >
                     <Avatar className="w-12 h-12">
                       <AvatarImage
-                        src={`${
-                          import.meta.env.VITE_BACKEND_URL ||
-                          "http://localhost:8000"
-                        }${room.other_user.avatar}`}
+                        src={`${import.meta.env.VITE_BACKEND_URL ||
+                          "https://nexacreators.com.br"
+                          }${room.other_user.avatar}`}
                       />
                       <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400">
                         {room.other_user.name.charAt(0).toUpperCase()}
@@ -2500,10 +2497,9 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                 <div className="flex items-center gap-3">
                   <Avatar className="w-10 h-10">
                     <AvatarImage
-                      src={`${
-                        import.meta.env.VITE_BACKEND_URL ||
-                        "http://localhost:8000"
-                      }${selectedRoom.other_user.avatar}`}
+                      src={`${import.meta.env.VITE_BACKEND_URL ||
+                        "https://nexacreators.com.br"
+                        }${selectedRoom.other_user.avatar}`}
                     />
                     <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400">
                       {selectedRoom.other_user.name.charAt(0).toUpperCase()}
@@ -2717,18 +2713,17 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                         message.message_type === "system"
                           ? "justify-center"
                           : message.is_sender
-                          ? "justify-end"
-                          : "justify-start"
+                            ? "justify-end"
+                            : "justify-start"
                       )}
                     >
                       {!message.is_sender &&
                         message.message_type !== "system" && (
                           <Avatar className="w-8 h-8">
                             <AvatarImage
-                              src={`${
-                                import.meta.env.VITE_BACKEND_URL ||
-                                "http://localhost:8000"
-                              }${selectedRoom.other_user.avatar}`}
+                              src={`${import.meta.env.VITE_BACKEND_URL ||
+                                "https://nexacreators.com.br"
+                                }${selectedRoom.other_user.avatar}`}
                             />
                             <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400 text-xs">
                               {selectedRoom.other_user.name
@@ -2745,8 +2740,8 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                           message.message_type === "system"
                             ? ""
                             : message.is_sender
-                            ? "bg-pink-500 text-white"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300"
+                              ? "bg-pink-500 text-white"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300"
                         )}
                       >
                         {renderMessageContent(message)}
@@ -2903,8 +2898,8 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                           {Array.from(typingUsers).length === 1
                             ? `${Array.from(typingUsers)[0]} está digitando...`
                             : `${Array.from(typingUsers).join(
-                                ", "
-                              )} estão digitando...`}
+                              ", "
+                            )} estão digitando...`}
                         </span>
                       </div>
                     </div>
@@ -3098,7 +3093,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
               <AlertCircle className="w-5 h-5 text-orange-500" />
               Oferta Existente
             </h3>
-            
+
             {/* Show existing offer details */}
             {existingOfferId && (
               <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
@@ -3121,12 +3116,12 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                 })()}
               </div>
             )}
-            
+
             <p className="text-muted-foreground mb-6">
               Você já tem uma oferta pendente para este criador. Deseja cancelar
               a oferta existente e criar uma nova?
             </p>
-            
+
             <div className="flex gap-3 justify-end">
               <Button
                 variant="outline"

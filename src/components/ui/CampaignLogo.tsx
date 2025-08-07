@@ -7,9 +7,9 @@ interface CampaignLogoProps {
   className?: string;
 }
 
-const CampaignLogo: React.FC<CampaignLogoProps> = ({ 
-  logo, 
-  brandName = 'Brand', 
+const CampaignLogo: React.FC<CampaignLogoProps> = ({
+  logo,
+  brandName = 'Brand',
   size = 'md',
   className = ''
 }) => {
@@ -24,14 +24,14 @@ const CampaignLogo: React.FC<CampaignLogoProps> = ({
     if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
       return logoPath;
     }
-    
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
-    
+
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br';
+
     // If it starts with /, it's a relative path from the backend
     if (logoPath.startsWith('/')) {
       return `${backendUrl}${logoPath}`;
     }
-    
+
     // Otherwise, assume it's a relative path and prepend the backend URL
     return `${backendUrl}/${logoPath}`;
   };
@@ -48,7 +48,7 @@ const CampaignLogo: React.FC<CampaignLogoProps> = ({
   if (logo) {
     return (
       <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold overflow-hidden ${className}`}>
-        <img 
+        <img
           src={getLogoUrl(logo)}
           alt={`${brandName} logo`}
           className="w-full h-full object-cover"

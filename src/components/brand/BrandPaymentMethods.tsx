@@ -72,11 +72,11 @@ export default function BrandPaymentMethods() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Check if all required fields are filled
     const requiredFields = ['card_number', 'card_holder_name', 'card_expiration_date', 'card_cvv', 'cpf'];
     const missingFields = requiredFields.filter(field => !formData[field as keyof typeof formData]);
-    
+
 
     if (missingFields.length > 0) {
       toast({
@@ -86,7 +86,7 @@ export default function BrandPaymentMethods() {
       });
       return;
     }
-    
+
     setIsSubmitting(true);
 
     try {
@@ -141,7 +141,7 @@ export default function BrandPaymentMethods() {
       };
 
       const response = await brandPaymentApi.savePaymentMethod(paymentData);
-      
+
       if (response.success) {
         toast({
           title: 'Sucesso',
@@ -250,22 +250,22 @@ export default function BrandPaymentMethods() {
 
   const SavePaymentMethod = async () => {
     try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:8000/api/brand-payment/save-method', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-                card_hash: 'card_hash_test123',
-                card_holder_name: 'Test User',
-                cpf: '123.456.789-00'
-            })
-            });
-        } catch (error) {
-            console.error('Direct API call failed:', error);
-        }
+      const token = localStorage.getItem('token');
+      const response = await fetch('https://nexacreators.com.br/api/brand-payment/save-method', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          card_hash: 'card_hash_test123',
+          card_holder_name: 'Test User',
+          cpf: '123.456.789-00'
+        })
+      });
+    } catch (error) {
+      console.error('Direct API call failed:', error);
+    }
   };
 
   return (
@@ -290,7 +290,7 @@ export default function BrandPaymentMethods() {
                   Adicione um novo cartão para pagar contratos. Nenhum valor será cobrado até que um contrato seja iniciado.
                 </DialogDescription>
               </DialogHeader>
-              <form 
+              <form
                 onSubmit={(e) => {
                   handleSubmit(e);
                 }}

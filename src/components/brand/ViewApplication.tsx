@@ -40,11 +40,11 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
         <div className="flex flex-col sm:flex-row items-center justify-between sm:items-start gap-4 border-b border-gray-200 dark:border-neutral-700 pb-4 mb-4">
           <div className="flex justify-center items-center gap-4">
             <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gray-200 dark:bg-neutral-700 flex items-center justify-center text-3xl font-bold text-gray-400">
-            <img src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${campaign.logo}`} alt="Brand" className="w-16 h-16 rounded-full" />
-          </div>
-          <div className="flex-1 text-center sm:text-left">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">{campaign.title}</h2>
-          </div>
+              <img src={`${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${campaign.logo}`} alt="Brand" className="w-16 h-16 rounded-full" />
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{campaign.title}</h2>
+            </div>
           </div>
           <span className="px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 text-xs font-semibold">{campaign.category}</span>
         </div>
@@ -81,7 +81,7 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
                 className="px-2 py-1 rounded-full bg-pink-100 dark:bg-pink-900 text-pink-700 dark:text-pink-200 text-xs font-medium"
               >
                 {uf}
-              </span>           
+              </span>
             ))}
           </div>
         </section>

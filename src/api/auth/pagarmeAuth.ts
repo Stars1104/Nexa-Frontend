@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BackendURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+const BackendURL = import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br";
 
 // Pagar.me Auth API
 const PagarMeAuthAPI = axios.create({
@@ -19,7 +19,7 @@ PagarMeAuthAPI.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
-        
+
         return config;
     },
     (error) => {
@@ -36,9 +36,9 @@ PagarMeAuthAPI.interceptors.response.use(
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             localStorage.removeItem('persist:auth');
-            
+
             // Redirect to login page
-            if (window.location.pathname !== '/login' && window.location.pathname !== '/signup' && 
+            if (window.location.pathname !== '/login' && window.location.pathname !== '/signup' &&
                 !window.location.pathname.includes('/auth')) {
                 window.location.href = '/auth';
             }
