@@ -46,7 +46,6 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
   const [proposal, setProposal] = useState("");
   const [portfolioLinks, setPortfolioLinks] = useState<string[]>([""]);
   const [estimatedDeliveryDays, setEstimatedDeliveryDays] = useState<number | undefined>();
-  const [proposedBudget, setProposedBudget] = useState<number | undefined>();
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Add portfolio link field
@@ -99,14 +98,6 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
       }
     }
 
-    if (proposedBudget !== undefined) {
-      if (proposedBudget < 0) {
-        newErrors.proposedBudget = "O orçamento não pode ser negativo";
-      } else if (proposedBudget > 999999.99) {
-        newErrors.proposedBudget = "O orçamento não pode ser maior que R$ 999.999,99";
-      }
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -131,7 +122,6 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
         proposal: proposal.trim(),
         portfolio_links: filteredPortfolioLinks.length > 0 ? filteredPortfolioLinks : undefined,
         estimated_delivery_days: estimatedDeliveryDays,
-        proposed_budget: proposedBudget,
       })).unwrap();
       
       // Show success message
@@ -141,7 +131,6 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
       setProposal("");
       setPortfolioLinks([""]);
       setEstimatedDeliveryDays(undefined);
-      setProposedBudget(undefined);
       setErrors({});
       
       // Call the optional onConfirm callback
@@ -162,7 +151,6 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
     setProposal("");
     setPortfolioLinks([""]);
     setEstimatedDeliveryDays(undefined);
-    setProposedBudget(undefined);
     setErrors({});
     onOpenChange(false);
   };
@@ -205,8 +193,11 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
           <div className="space-y-2">
             <Label className="text-sm font-medium flex items-center gap-2">
               <Link className="w-4 h-4" />
-              Links do Portfólio <span className="text-gray-500">(opcional)</span>
+              Links do Portfólio
             </Label>
+            <p className="text-xs text-yellow-600 dark:text-yellow-400 font-semibold">
+              Criadores que adicionam um link de portfólio têm 70% mais chance de fechar uma parceria.
+            </p>
             <div className="space-y-3">
               {portfolioLinks.map((link, index) => (
                 <div key={index} className="flex gap-2">
@@ -266,33 +257,6 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
             )}
             <p className="text-xs text-gray-500">
               Quantos dias você estima para entregar o conteúdo? (1-365 dias)
-            </p>
-          </div>
-
-          {/* Proposed Budget */}
-          <div className="space-y-2">
-            <Label htmlFor="budget" className="text-sm font-medium">
-              Orçamento Proposto <span className="text-gray-500">(opcional)</span>
-            </Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">R$</span>
-              <Input
-                id="budget"
-                type="number"
-                placeholder="0,00"
-                value={proposedBudget || ""}
-                onChange={(e) => setProposedBudget(e.target.value ? parseFloat(e.target.value) : undefined)}
-                className={`pl-10 ${errors.proposedBudget ? 'border-red-500' : ''}`}
-                min="0"
-                max="999999.99"
-                step="0.01"
-              />
-            </div>
-            {errors.proposedBudget && (
-              <p className="text-sm text-red-500">{errors.proposedBudget}</p>
-            )}
-            <p className="text-xs text-gray-500">
-              Qual é o seu orçamento para este projeto? (máximo R$ 999.999,99)
             </p>
           </div>
         </div>

@@ -46,6 +46,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../ui/card";
+import { hiringApi } from "../../api/hiring";
 
 // Stats will be calculated dynamically based on approved campaigns
 
@@ -158,6 +159,9 @@ export default function Dashboard({
   // Ensure approvedCampaigns is always an array
   const campaigns = Array.isArray(approvedCampaigns) ? approvedCampaigns : [];
   
+  // Add state for completed campaigns and reviews
+  const [completedCampaigns, setCompletedCampaigns] = useState<number>(0);
+  const [reviewStats, setReviewStats] = useState<{ total: number; average: number }>({ total: 0, average: 0 });
 
   // Fetch approved campaigns on component mount
   useEffect(() => {
@@ -181,6 +185,35 @@ export default function Dashboard({
       }
     };
   }, [dispatch, error]);
+
+  // Fetch completed campaigns and reviews on mount (after user is loaded)
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user?.id) return;
+      // Fetch completed campaigns
+      try {
+        const workHistoryRes = await hiringApi.getCreatorWorkHistory();
+        const completed = Array.isArray(workHistoryRes.data.data)
+          ? workHistoryRes.data.data.filter((c: any) => c.status === "completed").length
+          : 0;
+        setCompletedCampaigns(completed);
+      } catch (e) {
+        setCompletedCampaigns(0);
+      }
+      // Fetch reviews
+      try {
+        const reviewsRes = await hiringApi.getReviews(user.id, undefined, true);
+        const stats = reviewsRes.data.stats || {};
+        setReviewStats({
+          total: stats.total_reviews || 0,
+          average: Number(stats.average_rating) || 0,
+        });
+      } catch (e) {
+        setReviewStats({ total: 0, average: 0 });
+      }
+    };
+    if (user?.id) fetchStats();
+  }, [user]);
 
   // Clear all filters
   const clearFilters = () => {
@@ -439,10 +472,11 @@ export default function Dashboard({
       <CampaignStats
         totalCampaigns={campaigns.length}
         myApplications={safeCreatorApplications.length}
-        activeOpportunities={activeOpportunities}
+        completedCampaigns={completedCampaigns}
+        reviewsCount={reviewStats.total}
+        reviewsAverage={reviewStats.average}
         totalEarnings={totalEarnings}
         averageBudget={averageBudget}
-        successRate={successRate}
       />
 
       {/* Search and Filters */}
