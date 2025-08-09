@@ -13,9 +13,6 @@ export const Pricing = () => {
         <div className="grid md:grid-cols-3 gap-6 md:gap-8">
 
           <Card className="p-6 md:p-8 hover:shadow-lg transition-shadow">
-            <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-pink-500">
-              Popular
-            </Badge>
             <CardContent className="space-y-6">
               <div>
                 <h3 className="text-xl md:text-2xl font-bold text-foreground">Acesso Mensal</h3>
