@@ -5,26 +5,26 @@ export const HowItWorks = () => {
   const steps = [
     {
       step: "1",
-      title: "Cadastre-se",
-      description: "Crie seu perfil gratuito na plataforma, destacando suas habilidades e experiências.",
+      title: "Cadastre-se na NEXA",
+      description: "Complete seu cadastro e crie seu perfil estratégico na plataforma, destacando suas habilidades e estilo único! ",
       icon: User
     },
     {
       step: "2",
-      title: "Encontre campanhas",
-      description: "Acesse oportunidades exclusivas com marcas nacionais e internacionais.",
+      title: "Encontre Campanhas Exclusivas ",
+      description: "Acesse oportunidades selecionadas com marcas nacionais e internacionais que pagam entre R$ 150 a R$ 2.500 por vídeo.",
       icon: Eye
     },
     {
       step: "3",
-      title: "Crie conteúdo autêntico",
-      description: "Produza conteúdo seguindo as diretrizes da marca, mas com seu próprio estilo único.",
+      title: "Produza conteúdos criativos ",
+      description: "Crie conteúdo autêntico seguindo diretrizes claras, mas mantendo sua personalidade e estilo únicos.",
       icon: Image
     },
     {
       step: "4",
-      title: "Receba pagamentos",
-      description: "Pagamentos seguros e transparentes diretamente na sua conta bancária.",
+      title: "Pagamentos Garantidos",
+      description: "Receba seus pagamentos de forma segura e pontual, diretamente em sua conta bancária, sem burocracias.",
       icon: DollarSign
     }
   ];
@@ -34,10 +34,10 @@ export const HowItWorks = () => {
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="text-center mb-12 md:mb-16">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-4">
-            Como o NEXA UGC funciona
+            Como a NEXA funciona
           </h2>
           <p className="text-base md:text-lg text-muted-foreground">
-            Um processo simples para transformar sua criatividade em renda
+            Um processo profissional para transformar sua criatividade em renda consistente
           </p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 mb-12">

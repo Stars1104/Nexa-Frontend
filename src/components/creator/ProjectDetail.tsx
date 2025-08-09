@@ -5,7 +5,7 @@ import { useAppSelector, useAppDispatch } from "../../store/hooks";
 import { formatDate } from "date-fns";
 import { toast } from "../ui/sonner";
 import { fetchCreatorApplications } from "../../store/thunks/campaignThunks";
-import { fetchApprovedCampaigns } from "../../store/thunks/campaignThunks";
+import { fetchApprovedCampaigns, fetchCampaignById } from "../../store/thunks/campaignThunks";
 
 interface ProjectDetailProps {
   setComponent?: (component: string) => void;
@@ -24,7 +24,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   setComponent,
   projectId,
 }) => {
-  const { approvedCampaigns, creatorApplications } = useAppSelector(
+  const { approvedCampaigns, creatorApplications, isLoading, selectedCampaign } = useAppSelector(
     (state) => state.campaign
   );
   const { user } = useAppSelector((state) => state.auth);
@@ -34,12 +34,20 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const safeCreatorApplications = Array.isArray(creatorApplications)
     ? creatorApplications
     : [];
+  
+  // Ensure approvedCampaigns is always an array
+  const safeApprovedCampaigns = Array.isArray(approvedCampaigns) ? approvedCampaigns : [];
+  
   // Find the campaign by projectId
-  const campaign = Array.isArray(approvedCampaigns.data)
-    ? approvedCampaigns.data.find(
-        (c: any) => String(c.id) === String(projectId)
-      )
-    : null;
+  let campaign = safeApprovedCampaigns.find(
+    (c: any) => String(c.id) === String(projectId)
+  );
+  
+  // Fallback to selectedCampaign if not found in approved campaigns
+  if (!campaign && selectedCampaign && String(selectedCampaign.id) === String(projectId)) {
+    campaign = selectedCampaign;
+  }
+  
   const project = campaign;
   
   const [open, setOpen] = useState(false);
@@ -50,12 +58,27 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
     }
   }, [dispatch, user?.id, user?.role]);
 
-  // Fetch campaigns if not loaded
+  // Fetch campaigns if not loaded or when projectId changes
   useEffect(() => {
-    if (!approvedCampaigns || approvedCampaigns.length === 0) {
-      dispatch(fetchApprovedCampaigns());
+    if (!safeApprovedCampaigns.length || !project) {
+      dispatch(fetchApprovedCampaigns()).catch((error) => {
+        console.error('Error fetching approved campaigns:', error);
+        // Fallback: try to fetch the specific campaign by ID
+        if (projectId) {
+          dispatch(fetchCampaignById(projectId)).catch((fallbackError) => {
+            console.error('Error fetching campaign by ID:', fallbackError);
+          });
+        }
+      });
     }
-  }, [dispatch, approvedCampaigns]);
+    
+    // If we have approved campaigns but the specific project is not found, try to fetch it by ID
+    if (safeApprovedCampaigns.length > 0 && !project && projectId) {
+      dispatch(fetchCampaignById(projectId)).catch((error) => {
+        console.error('Error fetching campaign by ID:', error);
+      });
+    }
+  }, [dispatch, safeApprovedCampaigns.length, project, projectId]);
 
   // Check if user is eligible to apply
   const isCreator = user?.role === "creator";
@@ -65,10 +88,31 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const canApply =
     isCreator && project && project.status === "approved" && !alreadyApplied;
 
+  if (isLoading) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+        Carregando detalhes da campanha...
+      </div>
+    );
+  }
+
   if (!project) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        Campanha não encontrada.
+        <div className="mb-4">
+          <svg className="w-12 h-12 text-muted-foreground mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.47-.881-6.08-2.33" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-semibold mb-2">Campanha não encontrada</h3>
+        <p className="text-sm mb-4">A campanha que você está procurando não foi encontrada ou pode ter sido removida.</p>
+        <button
+          className="text-primary hover:underline"
+          onClick={() => setComponent("Painel")}
+        >
+          Voltar para campanhas
+        </button>
       </div>
     );
   }

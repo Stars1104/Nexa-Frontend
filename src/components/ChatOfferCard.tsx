@@ -601,7 +601,7 @@ function ContractCard({
     }
   };
 
-  const handleComplete = async () => {
+  const handleComplete = () => {
     if (!contract.can_be_completed) {
       toast({
         title: "Erro",
@@ -811,12 +811,16 @@ function ContractCard({
                     variant={
                       contract.payment.status === "completed"
                         ? "default"
+                        : contract.payment.status === "pending_release"
+                        ? "outline"
                         : "secondary"
                     }
                     className="ml-1"
                   >
                     {contract.payment.status === "completed"
                       ? "Pago"
+                      : contract.payment.status === "pending_release"
+                      ? "Aguardando Review"
                       : "Pendente"}
                   </Badge>
                 </div>
@@ -884,7 +888,7 @@ function ContractCard({
                   className="flex-1 bg-green-600 hover:bg-green-700"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Finalizar Contrato
+                  Completed
                 </Button>
               )}
 

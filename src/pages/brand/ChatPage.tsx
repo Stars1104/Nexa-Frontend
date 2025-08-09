@@ -22,10 +22,6 @@ import {
   X,
   Check,
   Clock,
-  ArrowLeft,
-  User,
-  Mail,
-  Phone,
   Download,
   ExternalLink,
   MoreVertical,
@@ -39,20 +35,14 @@ import {
   Sparkles,
   Zap,
   Star,
-  Heart,
   Share2,
   Copy,
-  Play,
-  Pause,
-  Volume2,
   Maximize2,
   RotateCcw,
   ZoomIn,
   ZoomOut,
   Minimize2,
   Briefcase,
-  DollarSign,
-  Calendar,
   AlertCircle,
 } from "lucide-react";
 import { useSocket } from "../../hooks/useSocket";
@@ -64,6 +54,7 @@ import { hiringApi, Offer } from "../../api/hiring";
 import { useToast } from "../../hooks/use-toast";
 import ChatOfferMessage, { ChatOffer } from "../../components/ChatOfferMessage";
 import ReviewModal from "../../components/brand/ReviewModal";
+import CampaignFinalizationModal from "../../components/brand/CampaignFinalizationModal";
 
 interface ChatPageProps {
   setComponent?: (component: string) => void;
@@ -114,6 +105,10 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
   // Review modal state
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [contractToReview, setContractToReview] = useState<any>(null);
+
+  // Campaign finalization modal state
+  const [showCampaignFinalizationModal, setShowCampaignFinalizationModal] = useState(false);
+  const [contractToFinalize, setContractToFinalize] = useState<any>(null);
 
   // Timeline state
   const [showTimeline, setShowTimeline] = useState(false);
@@ -454,7 +449,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                 ...contract,
                 ...data.contractData,
                 status: 'completed',
-                workflow_status: 'waiting_review',
+                workflow_status: 'waiting_creator_review',
                 can_review: true,
               }
               : contract
@@ -718,6 +713,92 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
 
     // Load offers for the selected room
     await loadOffers(room.room_id);
+
+    // Add guide messages when user first enters chat (frontend-only approach)
+    try {
+      // Check if guide messages already exist
+      const existingGuideMessages = messages.filter(msg => 
+        msg.message_type === 'system' && 
+        msg.message.includes('Parabéns')
+      );
+      
+      if (existingGuideMessages.length === 0) {
+        // Create guide messages locally
+        const isBrand = user?.role === 'brand';
+        
+        let guideMessage = '';
+        if (isBrand) {
+          guideMessage = "🩷 Parabéns pela uma parceria iniciada com uma criadora da nossa plataforma!\n\n" +
+            "Para garantir o melhor resultado possível, é essencial que você oriente a criadora com detalhamento e clareza sobre como deseja que o conteúdo seja feito quanto mais específica for a comunicação, maior será a qualidade da entrega.\n\n" +
+            "Aqui estão os próximos passos importantes:\n\n" +
+            "• Insira o valor da campanha na aba \"Saldo\" da plataforma.\n" +
+            "• Assim que a criadora enviar o conteúdo pronto e editado, você poderá liberar o pagamento clicando em \"Finalizar Campanha\" e avaliando o trabalho entregue.\n" +
+            "• Reforce com a criadora os pontos principais do briefing para que o vídeo esteja alinhado com o objetivo da marca.\n" +
+            "• Caso o conteúdo não esteja de acordo com o solicitado, serão permitidos até dois pedidos de ajustes por vídeo.\n\n" +
+            "Regras importantes que garantem a segurança da campanha:\n\n" +
+            "✔ Toda comunicação deve ser feita exclusivamente pelo chat da NEXA.\n" +
+            "✘ Não é permitido compartilhar dados bancários, contatos pessoais ou números de WhatsApp com a criadora.\n" +
+            "⚠️ O descumprimento dos prazos ou das regras pode resultar em advertência ou bloqueio do perfil.\n" +
+            "🚫 Caso a campanha precise ser cancelada, o produto enviado deve ser solicitado de volta, e a criadora poderá ser penalizada conforme as diretrizes da plataforma.\n\n" +
+            "A NEXA está aqui para facilitar conexões seguras e profissionais. Conte conosco para apoiar o sucesso da sua campanha! 💼📢";
+        } else {
+          guideMessage = "🩷 Parabéns, você foi aprovada em mais uma campanha da NEXA!\n\n" +
+            "Estamos muito felizes em contar com você e esperamos que mostre toda sua criatividade, comprometimento e qualidade para representar bem a marca e a nossa plataforma.\n\n" +
+            "Antes de começar, fique atenta aos pontos abaixo para garantir uma parceria de sucesso:\n\n" +
+            "• Confirme seu endereço de envio o quanto antes, para que o produto possa ser encaminhado sem atrasos.\n" +
+            "• Você devera entregar o roteiro da campanha em até 5 dias úteis.\n" +
+            "• É essencial seguir todas as orientações da marca presentes no briefing.\n" +
+            "• Aguarde a aprovação do roteiro antes de gravar o conteúdo.\n" +
+            "• Após a aprovação do roteiro, o conteúdo final deve ser entregue em até 5 dias úteis.\n" +
+            "• O vídeo deve ser enviado com qualidade profissional, e poderá passar por até 2 solicitações de ajustes, caso não esteja conforme o briefing.\n" +
+            "• Pedimos que mantenha o retorno rápido nas mensagens dentro do chat da plataforma.\n\n" +
+            "Atenção para algumas regras importantes:\n\n" +
+            "✔ Toda a comunicação deve acontecer exclusivamente pelo chat da Anexa.\n" +
+            "✘ Não é permitido compartilhar dados bancários, e-mails ou número de WhatsApp dentro da plataforma.\n" +
+            "⚠️ O não cumprimento dos prazos ou regras pode acarretar em penalizações ou banimento.\n" +
+            "🚫 Caso a campanha seja cancelada, o produto deverá ser devolvido, e a criadora poderá ser punida.\n\n" +
+            "Estamos aqui para garantir a melhor experiência para criadoras e marcas. Boa campanha! 💼💡";
+        }
+        
+        const quoteMessage = "💼 **Detalhes da Campanha:**\n" +
+          "• **Status:** Conectado\n\n" +
+          "Você está agora conectado e pode começar a conversar. Por favor, use o chat para todas as comunicações e siga as diretrizes da plataforma.";
+        
+        // Create guide message
+        const guideMsg: Message = {
+          id: Date.now() * 1000 + Math.random(), // Generate unique ID
+          message: guideMessage,
+          message_type: 'system',
+          sender_id: user?.id || 0,
+          sender_name: user?.name || 'Sistema',
+          sender_avatar: user?.avatar_url,
+          is_sender: false,
+          is_read: false,
+          created_at: new Date().toISOString(),
+        };
+        
+        // Create quote message
+        const quoteMsg: Message = {
+          id: Date.now() * 1000 + Math.random() + 1, // Generate unique ID
+          message: quoteMessage,
+          message_type: 'system',
+          sender_id: user?.id || 0,
+          sender_name: user?.name || 'Sistema',
+          sender_avatar: user?.avatar_url,
+          is_sender: false,
+          is_read: false,
+          created_at: new Date().toISOString(),
+        };
+        
+        // Add messages to the beginning of the messages array
+        setMessages(prev => [guideMsg, quoteMsg, ...prev]);
+        console.log('[ChatPage] Guide messages added successfully');
+      } else {
+        console.log('[ChatPage] Guide messages already exist');
+      }
+    } catch (error) {
+      console.error('[ChatPage] Error adding guide messages:', error);
+    }
 
     // Focus input
     setTimeout(() => {
@@ -1185,31 +1266,21 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     }
   };
 
-  // Handle contract completion
-  const handleEndContract = async (contractId: number) => {
-    try {
-      await hiringApi.completeContract(contractId);
+  // Handle contract completion - show confirmation modal first
+  const handleEndContract = (contractId: number) => {
+    const contractToEnd = contracts.find((c) => c.id === contractId);
+    if (contractToEnd) {
+      setContractToFinalize(contractToEnd);
+      setShowCampaignFinalizationModal(true);
+    }
+  };
 
-      toast({
-        title: "Sucesso",
-        description: "Contrato finalizado com sucesso!",
-      });
-
-      // Socket.IO will handle real-time updates automatically
-      // Find the completed contract and show review modal
-      const completedContract = contracts.find((c) => c.id === contractId);
-      if (completedContract) {
-        setContractToReview(completedContract);
-        setShowReviewModal(true);
-      }
-    } catch (error: any) {
-      console.error("Error completing contract:", error);
-      toast({
-        title: "Erro",
-        description:
-          error.response?.data?.message || "Erro ao finalizar contrato",
-        variant: "destructive",
-      });
+  // Handle campaign finalization after confirmation
+  const handleCampaignFinalized = () => {
+    if (contractToFinalize) {
+      setContractToReview(contractToFinalize);
+      setShowReviewModal(true);
+      setContractToFinalize(null);
     }
   };
 
@@ -2200,11 +2271,11 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                   <Button
                     size="sm"
                     onClick={() => {
-                      // Try to find contract with waiting_review status first
+                      // Try to find contract with waiting_creator_review status first
                       let contractToReview = contracts.find(
                         (c) =>
                           c.status === "completed" &&
-                          c.workflow_status === "waiting_review"
+                          c.workflow_status === "waiting_creator_review"
                       );
 
                       // If not found, try to find any completed contract
@@ -2585,11 +2656,11 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                   {canReview && (
                     <Button
                       onClick={() => {
-                        // Try to find contract with waiting_review status first
+                        // Try to find contract with waiting_creator_review status first
                         let contractToReview = contracts.find(
                           (c) =>
                             c.status === "completed" &&
-                            c.workflow_status === "waiting_review"
+                            c.workflow_status === "waiting_creator_review"
                         );
 
                         // If not found, try to find any completed contract
@@ -2653,7 +2724,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                       }}
                       className="bg-orange-600 hover:bg-orange-700 text-white"
                     >
-                      Finalizar Contrato
+                      Completed
                     </Button>
                   )}
 
@@ -2676,7 +2747,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                         const contractToReview = contracts.find(
                           (c) =>
                             c.status === "completed" &&
-                            c.workflow_status === "waiting_review"
+                            c.workflow_status === "waiting_creator_review"
                         );
                         if (contractToReview) {
                           setContractToReview(contractToReview);
@@ -3169,6 +3240,19 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
             onReviewSubmitted={handleReviewSubmitted}
           />
         </div>
+      )}
+
+      {/* Campaign Finalization Modal */}
+      {showCampaignFinalizationModal && contractToFinalize && (
+        <CampaignFinalizationModal
+          isOpen={showCampaignFinalizationModal}
+          onClose={() => {
+            setShowCampaignFinalizationModal(false);
+            setContractToFinalize(null);
+          }}
+          contract={contractToFinalize}
+          onCampaignFinalized={handleCampaignFinalized}
+        />
       )}
 
       {/* Campaign Timeline Modal */}

@@ -221,20 +221,22 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
             <Separator />
             
             <CardFooter className="pt-3">
-                <div className="w-full flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                <div className="w-full flex flex-col sm:justify-start sm:items-start gap-3">
                     <div className="flex items-center gap-1">
                         <DollarSign className="h-4 w-4 text-green-600" />
                         <span className="font-bold text-lg">{formatBudget(campaign.budget)}</span>
                     </div>
-                    {button}
-                    {/* Contribute Button - Add to Favorites */}
-                    <Button  className="bg-green-600 hover:bg-green-700 text-white text-xs w-full"
+                    <div className='w-full flex justify-center items-center gap-2'>
+                        {button}
+                        {/* Contribute Button - Add to Favorites */}
+                        <Button  className="bg-green-600 hover:bg-green-700 text-white text-xs w-full"
                             onClick={() => {
                                 onToggleFavorite && onToggleFavorite(campaign.id);
                             }}
                         >
                             Contribuir
                         </Button>
+                    </div>
                 </div>
             </CardFooter>
         </Card>

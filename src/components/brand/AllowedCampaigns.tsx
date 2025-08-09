@@ -77,11 +77,12 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
     }, [dispatch, error]);
 
     // Calculate pagination
-    const totalCampaigns = userCampaigns?.length || 0;
+    const campaigns = Array.isArray(userCampaigns) ? userCampaigns : [];
+    const totalCampaigns = campaigns.length;
     const totalPages = Math.ceil(totalCampaigns / campaignsPerPage);
     const startIndex = (currentPage - 1) * campaignsPerPage;
     const endIndex = startIndex + campaignsPerPage;
-    const currentCampaigns = userCampaigns?.slice(startIndex, endIndex) || [];
+    const currentCampaigns = campaigns.slice(startIndex, endIndex);
 
     // Format date for display
     const formatDate = (dateString: string) => {

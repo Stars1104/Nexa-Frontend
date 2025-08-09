@@ -154,14 +154,6 @@ export default function ContractCard({
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
-
   const formatCurrency = (amount: string) => {
     // If the amount is already formatted (contains "R$"), return it as is
     if (amount && amount.includes('R$')) {
@@ -269,12 +261,16 @@ export default function ContractCard({
                     variant={
                       contract.payment.status === "completed"
                         ? "default"
+                        : contract.payment.status === "pending_release"
+                        ? "outline"
                         : "secondary"
                     }
                     className="ml-1"
                   >
                     {contract.payment.status === "completed"
                       ? "Pago"
+                      : contract.payment.status === "pending_release"
+                      ? "Aguardando Review"
                       : "Pendente"}
                   </Badge>
                 </div>
@@ -325,7 +321,7 @@ export default function ContractCard({
                 className="flex-1 bg-green-600 hover:bg-green-700"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Concluir e Pagar
+                Completed
               </Button>
             )}
 

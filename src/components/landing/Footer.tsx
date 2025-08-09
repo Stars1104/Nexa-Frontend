@@ -11,39 +11,42 @@ export const Footer = () => {
               <img src={LightLogo} alt="NEXA UGC" className="w-30 h-10 hidden dark:block" />
             </div>
             <p className="text-gray-400 text-sm">
-              Transformando criadores em profissionais do marketing digital através do poder do UGC.
+              Construindo o maior ecossistema de UGC da América Latina, uma parceria autêntica por vez.
             </p>
           </div>
           <div>
             <h4 className="font-semibold mb-4">Links Básicos</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li>Sobre o NEXA</li>
-              <li>Como funciona</li>
-              <li>Preços</li>
-              <li>Depoimentos</li>
+              <li className="cursor-pointer">Sobre a NEXA</li>
+              <li className="cursor-pointer">Como funciona</li>
+              <li className="cursor-pointer">Preços e planos</li>
+              <li className="cursor-pointer">Cases de sucesso</li>
+              <li className="cursor-pointer">Blog e recursos</li>
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold mb-4">Suporte</h4>
+            <h4 className="font-semibold mb-4">Suporte Profissional</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li>Central de ajuda</li>
-              <li>Contato</li>
-              <li>Status do sistema</li>
-              <li>Problema do repórter</li>
+              <li className="cursor-pointer">Central de atendimento</li>
+              <li className="cursor-pointer">Contato comercial</li>
+              <li className="cursor-pointer">Status da plataforma</li>
+              <li className="cursor-pointer">Reportar problemas</li>
+              <li className="cursor-pointer">Agendamento de calls</li>
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold mb-4">Jurídico</h4>
+            <h4 className="font-semibold mb-4">JCompliance e Segurança</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li>Termos de uso</li>
-              <li>Política de privacidade</li>
-              <li>Biscoitos</li>
-              <li>LGPD</li>
+              <li className="cursor-pointer">Termos de uso</li>
+              <li className="cursor-pointer">Política de privacidade</li>
+              <li className="cursor-pointer">Política de cookies</li>
+              <li className="cursor-pointer">LGPD</li>
+              <li className="cursor-pointer">Certificações</li>
             </ul>
           </div>
         </div>
         <div className="border-t border-gray-800 mt-6 md:mt-8 pt-6 md:pt-8 text-center text-sm text-gray-400">
-          © 2024 NEXA UGC. Todos os direitos reservados.
+          © 2025 NEXA. Todos os direitos reservados. | CNPJ: XX.XXX.XXX/0001-XX
         </div>
       </div>
     </footer>

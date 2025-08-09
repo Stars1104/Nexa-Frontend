@@ -12,19 +12,25 @@ export const WhyNexaSection = () => {
           </div>
           <div className="space-y-4 md:space-y-6 text-center lg:text-left">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
-              Por que criei o NEXA UGC
+              Por que criei a NEXA
             </h2>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-              Há 5 anos, comecei a criar conteúdo para marcas sem saber que isso se tornaria minha carreira. O que começou como um hobby se transformou em fonte de renda principal.
+              Há 5 anos, comecei a criar conteúdo para marcas sem saber que isso se tornaria minha carreira.
             </p>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-              Percebi que muitos criadores talentosos não sabiam como monetizar seu conteúdo ou conectar-se com as marcas certas. A falta de uma plataforma brasileira que entendesse nossa realidade era um problema real.
+              O que começou como um hobby se transformou em uma fonte de renda que mudou completamente minha vida financeira.
             </p>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-              Por isso criei o NEXA UGC: para conectar criadores brasileiros talentosos com marcas que valorizam conteúdo autêntico, garantindo pagamentos justos e proteção para ambos os lados.
+              Durante essa jornada, percebi que muitos creators talentosos não sabiam como monetizar adequadamente seu conteúdo ou como se conectar com marcas dispostas a pagar valores justos. 
             </p>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-              Minha missão é construir uma comunidade onde criadores possam prosperar, aprender e crescer juntos.
+               falta de uma plataforma brasileira que realmente entendesse nossa realidade e oferecesse oportunidades reais era um problema que eu mesmo enfrentei.
+            </p>
+            <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+               Foi então que criei a NEXA: para ser a ponte definitiva entre creators brasileiros autênticos e marcas que valorizam conteúdo genuíno, garantindo pagamentos justos, processos transparentes e proteção total para ambos os lados.
+            </p>
+            <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+               Minha missão é construir o maior ecossistema de UGC do Brasil, onde creators podem prosperar financeiramente, aprender continuamente e crescer em uma comunidade de alta performance.
             </p>
           </div>
         </div>

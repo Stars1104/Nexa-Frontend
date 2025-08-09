@@ -4,24 +4,45 @@ import { Card, CardContent } from "../ui/card";
 export const Community = () => {
   const testimonials = [
     {
-      name: "Sarah Chen",
-      location: "São Paulo, SP",
+      name: "Mariana",
+      location: "MC Mariana Costa São Paulo, SP",
       rating: 5,
-      text: "Antes do NEXA UGC, eu criava conteúdo como hobby. Hoje, trabalho com as marcas que sempre admirei e já consegui uma renda mensal estável que me permitiu largar meu emprego tradicional.",
+      text: "Antes da NEXA, eu criava conteúdo como hobby ganhando R$ 200-300 esporadicamente. Hoje, trabalho com marcas premium e minha renda mensal média é de R$ 6.800. Consegui sair do CLT e viver do que amo.",
       avatar: "/lovable-uploads/93d0f5fe-6290-46d0-b731-dc6b564a5bd8.png"
     },
     {
       name: "Alex Rivera",
-      location: "Rio de Janeiro, RJ",
+      location: "RS Ricardo Silva Rio de Janeiro, RJ",
       rating: 5,
-      text: "A plataforma facilitou meu contato com marcas internacionais que eu jamais imaginaria trabalhar. Em 3 meses, tripliquei meu faturamento e melhorei muito a qualidade do meu portfólio.",
+      text: "A NEXA me conectou com marcas internacionais que eu jamais imaginaria acessar. Em 4 meses, saí de R$ 800 para R$ 4.200 mensais. A estrutura profissional da plataforma fez toda a diferença.",
       avatar: "/lovable-uploads/93d0f5fe-6290-46d0-b731-dc6b564a5bd8.png"
     },
     {
       name: "Jamie Smith",
-      location: "Belo Horizonte, MG",
+      location: "JM Júlia Martins Belo Horizonte, MG",
       rating: 5,
-      text: "Como mãe solo, precisava de flexibilidade no trabalho. O NEXA UGC me deu isso e mais: uma comunidade de apoio, conhecimento e oportunidades que mudaram minha vida financeira.",
+      text: "Como mãe solo, precisava de flexibilidade e renda extra. A NEXA me proporcionou isso e muito mais: em 6 meses, já estava faturando R$ 3.500 mensais trabalhando apenas 3 horas por dia de casa.",
+      avatar: "/lovable-uploads/93d0f5fe-6290-46d0-b731-dc6b564a5bd8.png"
+    },
+    {
+      name: "James",
+      location: "S Thiago Santos Porto Alegre, RS",
+      rating: 5,
+      text: "Nunca pensei que poderia ganhar R$ 1.800 por um vídeo de 30 segundos. A NEXA abriu portas que eu nem sabia que existiam. Hoje tenho uma agenda de campanhas que me rende mais de R$ 5K por mês.",
+      avatar: "/lovable-uploads/93d0f5fe-6290-46d0-b731-dc6b564a5bd8.png"
+    },
+    {
+      name: "Anna",
+      location: "AL Ana Lucia Brasília, DF ",
+      rating: 5,
+      text: "Saí de zero na criação de UGC e em 3 meses já estava faturando R$ 2.800 mensais. A metodologia da NEXA e o suporte da comunidade foram fundamentais para meu sucesso.",
+      avatar: "/lovable-uploads/93d0f5fe-6290-46d0-b731-dc6b564a5bd8.png"
+    },
+    {
+      name: "Flex Henry",
+      location: "CF Carlos Ferreira Salvador, BA",
+      rating: 5,
+      text: "A NEXA não é só uma plataforma, é um ecossistema completo. Triplicou minha renda, expandiu minha rede de contatos e me posicionou como referência no meu nicho.",
       avatar: "/lovable-uploads/93d0f5fe-6290-46d0-b731-dc6b564a5bd8.png"
     }
   ];
@@ -34,7 +55,7 @@ export const Community = () => {
             Comunidade de Criadores
           </h2>
           <p className="text-base md:text-lg text-muted-foreground">
-            Veja como o NEXA UGC está transformando a vida de criadores brasileiros
+            Veja como a NEXA está transformando a vida de creators brasileiros.
           </p>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">

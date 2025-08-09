@@ -10,11 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { hiringApi } from "@/api/hiring";
 import {
-  CreditCard,
   DollarSign,
   CheckCircle,
   Clock,
@@ -74,24 +72,24 @@ export default function ContractCompletionModal({
 
       if (response.success) {
         toast({
-          title: "Contrato Finalizado",
+          title: "Campanha Finalizada",
           description:
-            "O contrato foi finalizado e o pagamento foi processado automaticamente!",
+            "A campanha foi finalizada com sucesso! O pagamento será processado após a avaliação.",
         });
 
         onContractCompleted();
         setShowReview(true);
       } else {
-        throw new Error(response.message || "Erro ao finalizar contrato");
+        throw new Error(response.message || "Erro ao finalizar campanha");
       }
     } catch (error: any) {
       console.error("Error completing contract:", error);
-      toast({
-        title: "Erro",
-        description:
-          error.response?.data?.message || "Erro ao finalizar contrato",
-        variant: "destructive",
-      });
+              toast({
+          title: "Erro",
+          description:
+            error.response?.data?.message || "Erro ao finalizar campanha",
+          variant: "destructive",
+        });
     } finally {
       setIsProcessing(false);
     }
@@ -349,10 +347,10 @@ export default function ContractCompletionModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5" />
-            Finalizar Contrato
+            Finalizar Campanha
           </DialogTitle>
           <DialogDescription>
-            Confirme a finalização do contrato com {contract.creator.name}
+            Confirme a finalização da campanha com {contract.creator.name}
           </DialogDescription>
         </DialogHeader>
 
@@ -471,7 +469,7 @@ export default function ContractCompletionModal({
             ) : (
               <>
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Finalizar e Pagar
+                Completed
               </>
             )}
           </Button>

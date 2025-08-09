@@ -22,13 +22,7 @@ import {
   Filter,
   X,
   Search,
-  Eye,
-  Clock,
-  MapPin,
-  DollarSign,
-  Users,
   Star,
-  TrendingUp,
   FileText,
   Briefcase,
 } from "lucide-react";
