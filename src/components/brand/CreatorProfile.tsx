@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAppSelector, useAppDispatch } from "../../store/hooks";
+import { useAppDispatch } from "../../store/hooks";
 import { fetchCreatorProfile } from "../../store/thunks/userThunks";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
@@ -9,20 +9,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Separator } from "../ui/separator";
 import { 
   ArrowLeft, 
-  User, 
   MapPin, 
   Calendar, 
   Star, 
-  Award, 
-  Users, 
-  Eye,
-  ExternalLink,
-  Instagram,
-  Youtube,
-  Twitter,
-  Facebook,
-  Globe,
-  MessageCircle,
   Play,
   Image
 } from "lucide-react";
