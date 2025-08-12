@@ -131,16 +131,21 @@ export default function BrandPaymentMethods() {
       }
 
       // Generate card hash for testing
-      const cardHash = await generateCardHash(formData);
+      const cardHash = await generateCardHash({
+          card_number: formData.card_number,
+          card_holder_name: formData.card_holder_name,
+          card_expiration_date: formData.card_expiration_date,
+          card_cvv: formData.card_cvv,
+      });
 
-      const paymentData: SavePaymentMethodRequest = {
-        card_hash: cardHash,
-        card_holder_name: formData.card_holder_name,
-        cpf: formData.cpf,
-        is_default: formData.is_default,
+      const requestData = {
+          card_hash: cardHash,
+          card_holder_name: formData.card_holder_name,
+          cpf: formData.cpf,
+          is_default: formData.is_default,
       };
 
-      const response = await brandPaymentApi.savePaymentMethod(paymentData);
+      const response = await brandPaymentApi.savePaymentMethod(requestData);
 
       if (response.success) {
         toast({

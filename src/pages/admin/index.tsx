@@ -17,6 +17,8 @@ import UserList from "@/components/admin/UserList";
 import WithdrawalVerification from "@/components/admin/WithdrawalVerification";
 import Setting from "@/components/admin/Setting";
 import Notification from "@/components/Notification";
+import NexaGuide from "@/components/admin/Guidelist";
+import GuideTest from "@/components/GuideTest";
 
 const AdminIndex = () => {
     const isMobile = useIsMobile();
@@ -51,8 +53,12 @@ const AdminIndex = () => {
                 return <UserList />;
             case "Verificação de Saques":
                 return <WithdrawalVerification />;
-            case "Configurações de Regras":
-                return <Setting />;
+            // case "Configurações de Regras":
+            //     return <Setting />;
+            case "Guia para":
+                return <NexaGuide />;
+            case "Guide Test":
+                return <GuideTest />;
             case "Notificações":
                 return <Notification />
             default:

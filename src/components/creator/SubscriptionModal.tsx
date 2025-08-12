@@ -182,7 +182,6 @@ export default function SubscriptionModal({
         card_expiration_date: formData.card_expiration_date.replace("/", ""),
         card_cvv: formData.card_cvv,
         cpf: formData.cpf,
-        test_mode: import.meta.env.DEV ? "true" : "false",
       };
 
       if (paymentData.card_number.length !== 16) {

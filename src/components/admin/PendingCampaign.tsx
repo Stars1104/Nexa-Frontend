@@ -12,6 +12,7 @@ import { clearError } from "../../store/slices/campaignSlice";
 import CampaignDetail from "@/components/admin/CampaignDetail";
 import { Campaign } from "../../store/slices/campaignSlice";
 import CampaignLogo from "../ui/CampaignLogo";
+import { Helmet } from "react-helmet-async";
 
 export default function PendingCampaign() {
     const dispatch = useDispatch<AppDispatch>();
@@ -191,153 +192,167 @@ export default function PendingCampaign() {
         );
     }
 
+    const canonical = typeof window !== "undefined" ? window.location.href : "";
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+    };
+
     return (
-        <div className="w-full px-2 sm:px-6 py-6 dark:bg-[#171717] min-h-[92vh]">
-            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Campanhas Pendentes</h1>
-                    <p className="text-muted-foreground text-sm mt-1">Aprove ou rejeite campanhas submetidas por marcas</p>
-                    {/* Removed Badge for mock data as it's no longer used */}
-                </div>
-                <Button
-                    onClick={handleRefresh}
-                    disabled={isLoading}
-                    variant="outline"
-                    className="w-full sm:w-auto"
-                >
-                    {isLoading ? "Atualizando..." : "Atualizar"}
-                </Button>
-            </div>
-
-            {/* Error message */}
-            {error && (
-                <Alert className="mb-6 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
-                    <AlertTitle className="text-red-800 dark:text-red-200">Erro</AlertTitle>
-                    <AlertDescription className="text-red-700 dark:text-red-300">
-                        {error}
-                    </AlertDescription>
-                </Alert>
-            )}
-
-            <div className="w-full flex flex-col gap-4 p-4 sm:p-6 bg-background rounded-lg border border-gray-200 dark:border-gray-800">
-                <div className="flex gap-2 mt-2 sm:mt-0 justify-between items-center">
-                    <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground text-sm">Total</span>
-                        <Badge variant="secondary" className="bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300">
-                            {campaignsToDisplay.length} campanhas
-                        </Badge>
+        <>
+            <Helmet>
+                <title>Nexa - Admin Campanhas Pendentes</title>
+                <meta name="description" content="Browse Nexa guides filtered by brand and creator. Watch embedded videos and manage guides." />
+                {canonical && <link rel="canonical" href={canonical} />}
+                <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
+            </Helmet>
+            <div className="w-full px-2 sm:px-6 py-6 dark:bg-[#171717] min-h-[92vh]">
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Campanhas Pendentes</h1>
+                        <p className="text-muted-foreground text-sm mt-1">Aprove ou rejeite campanhas submetidas por marcas</p>
+                        {/* Removed Badge for mock data as it's no longer used */}
                     </div>
-                    <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="hidden sm:inline-flex">
-                            Filtrar
-                        </Button>
-                        <Button variant="outline" size="sm" className="hidden sm:inline-flex">
-                            Ordenar
-                        </Button>
-                    </div>
+                    <Button
+                        onClick={handleRefresh}
+                        disabled={isLoading}
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                    >
+                        {isLoading ? "Atualizando..." : "Atualizar"}
+                    </Button>
                 </div>
 
-                <div className="space-y-6">
-                    {(!Array.isArray(campaignsToDisplay) || campaignsToDisplay.length === 0) && !isLoading && (
-                        <Alert className="mt-8">
-                            <AlertTitle>Nenhuma campanha pendente</AlertTitle>
-                            <AlertDescription>
-                                Não há campanhas aguardando aprovação no momento.
-                            </AlertDescription>
-                        </Alert>
-                    )}
+                {/* Error message */}
+                {error && (
+                    <Alert className="mb-6 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+                        <AlertTitle className="text-red-800 dark:text-red-200">Erro</AlertTitle>
+                        <AlertDescription className="text-red-700 dark:text-red-300">
+                            {error}
+                        </AlertDescription>
+                    </Alert>
+                )}
 
-                    {campaignsToDisplay.map((campaign : any) => (
-                        <Card key={`campaign-${campaign.id}-${campaign.status}-${processingIds.has(campaign.id)}`} className="p-0 border bg-background text-foreground shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex flex-col gap-2 sm:gap-0 sm:flex-row sm:items-center justify-between px-4 sm:px-6 pt-6">
-                                <div className="flex flex-col gap-1 w-full">
-                                    <div className="flex items-center gap-3">
-                                        <CampaignLogo 
-                                            logo={campaign.logo}
-                                            brandName={campaign.brand?.name || 'Brand'}
-                                            size="md"
-                                        />
+                <div className="w-full flex flex-col gap-4 p-4 sm:p-6 bg-background rounded-lg border border-gray-200 dark:border-gray-800">
+                    <div className="flex gap-2 mt-2 sm:mt-0 justify-between items-center">
+                        <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground text-sm">Total</span>
+                            <Badge variant="secondary" className="bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300">
+                                {campaignsToDisplay.length} campanhas
+                            </Badge>
+                        </div>
+                        <div className="flex gap-2">
+                            <Button variant="outline" size="sm" className="hidden sm:inline-flex">
+                                Filtrar
+                            </Button>
+                            <Button variant="outline" size="sm" className="hidden sm:inline-flex">
+                                Ordenar
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        {(!Array.isArray(campaignsToDisplay) || campaignsToDisplay.length === 0) && !isLoading && (
+                            <Alert className="mt-8">
+                                <AlertTitle>Nenhuma campanha pendente</AlertTitle>
+                                <AlertDescription>
+                                    Não há campanhas aguardando aprovação no momento.
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        {campaignsToDisplay.map((campaign : any) => (
+                            <Card key={`campaign-${campaign.id}-${campaign.status}-${processingIds.has(campaign.id)}`} className="p-0 border bg-background text-foreground shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex flex-col gap-2 sm:gap-0 sm:flex-row sm:items-center justify-between px-4 sm:px-6 pt-6">
+                                    <div className="flex flex-col gap-1 w-full">
+                                        <div className="flex items-center gap-3">
+                                            <CampaignLogo 
+                                                logo={campaign.logo}
+                                                brandName={campaign.brand?.name || 'Brand'}
+                                                size="md"
+                                            />
+                                            <div>
+                                                <CardTitle className="text-lg sm:text-xl text-foreground">{campaign.title}</CardTitle>
+                                                <p className="text-sm text-muted-foreground">{campaign.brand?.name || 'Marca não especificada'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-muted-foreground mt-2">
+                                            <div className="flex items-center gap-4">
+                                                <span>
+                                                    <span className="font-medium text-foreground">Valor:</span> R$ {campaign.budget?.toLocaleString("pt-BR") || campaign.value?.toLocaleString("pt-BR")}
+                                                </span>
+                                                <span>
+                                                    <span className="font-medium text-foreground">Prazo:</span> {campaign.created_at ? new Date(campaign.created_at).toLocaleDateString("pt-BR") : 'Prazo não definido'}
+                                                </span>
+                                                <span>
+                                                    <span className="font-medium text-foreground">Estados:</span> {campaign.deadline ? new Date(campaign.deadline).toLocaleDateString("pt-BR") : 'Prazo não definido'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 self-end sm:self-center mt-2 sm:mt-0">
+                                        <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                                            {campaign.category}
+                                        </Badge>
+                                        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">
+                                            Pendente
+                                        </Badge>
+                                    </div>
+                                </div>
+                                
+                                <CardContent className="pt-4 pb-2 px-4 sm:px-6">
+                                    <div className="space-y-2">
                                         <div>
-                                            <CardTitle className="text-lg sm:text-xl text-foreground">{campaign.title}</CardTitle>
-                                            <p className="text-sm text-muted-foreground">{campaign.brand?.name || 'Marca não especificada'}</p>
+                                            <span className="block text-sm font-medium text-foreground mb-1">Descrição</span>
+                                            <p className="text-sm text-muted-foreground">{campaign.description}</p>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-muted-foreground mt-2">
-                                        <div className="flex items-center gap-4">
-                                            <span>
-                                                <span className="font-medium text-foreground">Valor:</span> R$ {campaign.budget?.toLocaleString("pt-BR") || campaign.value?.toLocaleString("pt-BR")}
-                                            </span>
-                                            <span>
-                                                <span className="font-medium text-foreground">Prazo:</span> {campaign.created_at ? new Date(campaign.created_at).toLocaleDateString("pt-BR") : 'Prazo não definido'}
-                                            </span>
-                                            <span>
-                                                <span className="font-medium text-foreground">Estados:</span> {campaign.deadline ? new Date(campaign.deadline).toLocaleDateString("pt-BR") : 'Prazo não definido'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2 self-end sm:self-center mt-2 sm:mt-0">
-                                    <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                                        {campaign.category}
-                                    </Badge>
-                                    <Badge variant="outline" className="bg-yellow-50 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">
-                                        Pendente
-                                    </Badge>
-                                </div>
-                            </div>
-                            
-                            <CardContent className="pt-4 pb-2 px-4 sm:px-6">
-                                <div className="space-y-2">
-                                    <div>
-                                        <span className="block text-sm font-medium text-foreground mb-1">Descrição</span>
-                                        <p className="text-sm text-muted-foreground">{campaign.description}</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                            
-                            <CardFooter className="flex flex-col sm:flex-row sm:justify-end gap-2 px-4 sm:px-6 pb-4 mt-4">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleViewDetails(campaign)}
-                                    className="w-full sm:w-auto"
-                                >
-                                    Ver detalhes
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    onClick={() => handleReject(campaign.id)}
-                                    disabled={processingIds.has(campaign.id)}
-                                    variant="destructive"
-                                    className="w-full sm:w-auto"
-                                >
-                                    {processingIds.has(campaign.id) ? "Rejeitando..." : "Rejeitar"}
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    onClick={() => handleApprove(campaign.id)}
-                                    disabled={processingIds.has(campaign.id)}
-                                    className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
-                                >
-                                    {processingIds.has(campaign.id) ? "Aprovando..." : "Aprovar"}
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                    ))}
+                                </CardContent>
+                                
+                                <CardFooter className="flex flex-col sm:flex-row sm:justify-end gap-2 px-4 sm:px-6 pb-4 mt-4">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleViewDetails(campaign)}
+                                        className="w-full sm:w-auto"
+                                    >
+                                        Ver detalhes
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => handleReject(campaign.id)}
+                                        disabled={processingIds.has(campaign.id)}
+                                        variant="destructive"
+                                        className="w-full sm:w-auto"
+                                    >
+                                        {processingIds.has(campaign.id) ? "Rejeitando..." : "Rejeitar"}
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => handleApprove(campaign.id)}
+                                        disabled={processingIds.has(campaign.id)}
+                                        className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
+                                    >
+                                        {processingIds.has(campaign.id) ? "Aprovando..." : "Aprovar"}
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        ))}
+                    </div>
                 </div>
-            </div>
 
-            {/* Campaign Detail Modal */}
-            {selectedCampaign && (
-                <CampaignDetail
-                    campaign={selectedCampaign}
-                    open={detailOpen}
-                    onOpenChange={setDetailOpen}
-                    onApprove={() => handleApprove(selectedCampaign.id)}
-                    onReject={() => handleReject(selectedCampaign.id)}
-                    path="pending"
-                />
-            )}
-        </div>
+                {/* Campaign Detail Modal */}
+                {selectedCampaign && (
+                    <CampaignDetail
+                        campaign={selectedCampaign}
+                        open={detailOpen}
+                        onOpenChange={setDetailOpen}
+                        onApprove={() => handleApprove(selectedCampaign.id)}
+                        onReject={() => handleReject(selectedCampaign.id)}
+                        path="pending"
+                    />
+                )}
+            </div>
+        </>
     );
 }

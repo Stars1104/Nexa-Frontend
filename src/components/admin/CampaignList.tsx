@@ -6,6 +6,7 @@ import CampaignDetail from "./CampaignDetail";
 import { Campaign } from "../../store/slices/campaignSlice";
 import { toast } from "../ui/sonner";
 import { Star } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 const TABS = [
   { label: "Todas", value: "all" },
@@ -151,69 +152,115 @@ const CampaignList: React.FC = () => {
     );
   }
 
-  return (
-    <div className="w-full mx-auto px-2 sm:px-6 py-6 dark:bg-[#171717] min-h-[92vh]">
-      <h2 className="text-2xl sm:text-3xl font-bold mb-1 text-gray-900 dark:text-gray-100">Todas as Campanhas</h2>
-      <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm sm:text-base">Visualize e gerencie todas as campanhas da plataforma</p>
-      
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {TABS.map((t) => (
-          <button
-            key={t.value}
-            onClick={() => setTab(t.value)}
-            className={`px-5 py-2 rounded-lg font-medium border transition-colors duration-150
-              ${tab === t.value
-                ? "bg-[#E91E63] text-white border-[#E91E63]"
-                : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"}
-            `}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+  const canonical = typeof window !== "undefined" ? window.location.href : "";
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+  };
 
-      {/* Table for desktop, cards for mobile */}
-      <div className="bg-background rounded-xl shadow p-2 sm:p-6">
-        {filtered.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500 dark:text-gray-400">Nenhuma campanha encontrada</p>
-          </div>
-        ) : (
-          <>
-            {/* Desktop Table */}
-            <div className="hidden md:block">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="text-xs text-gray-500 dark:text-gray-400">
-                    <th className="py-3 px-2 font-medium">Nome</th>
-                    <th className="py-3 px-2 font-medium">Status</th>
-                    <th className="py-3 px-2 font-medium">Data de Criação</th>
-                    <th className="py-3 px-2 font-medium">Marca</th>
-                    <th className="py-3 px-2 font-medium">Criadores Aprovados</th>
-                    <th className="py-3 px-2 font-medium">Destaque</th>
-                    <th className="py-3 px-2 font-medium">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((c, i) => (
-                    <tr key={i} className="border-t border-gray-100 dark:border-gray-800">
-                      <td className="py-4 px-2 text-sm font-medium text-gray-900 dark:text-gray-100">{c.title}</td>
-                      <td className="py-4 px-2">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[c.status]}`}>
-                          {STATUS_LABELS[c.status]}
-                        </span>
-                      </td>
-                      <td className="py-4 px-2 text-sm text-gray-700 dark:text-gray-300">
-                        {formatDate(c.submissionDate)}
-                      </td>
-                      <td className="py-4 px-2 text-sm text-gray-700 dark:text-gray-300">
-                        {c.brand?.name || 'N/A'}
-                      </td>
-                      <td className="py-4 px-2 text-sm text-center text-gray-700 dark:text-gray-300">
-                        {c.approvedCreators}
-                      </td>
-                      <td className="py-4 px-2 text-center">
+  return (
+    <>
+      <Helmet>
+        <title>Nexa - Todas as Campanhas</title>
+        <meta name="description" content="Browse Nexa guides filtered by brand and creator. Watch embedded videos and manage guides." />
+        {canonical && <link rel="canonical" href={canonical} />}
+        <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
+      </Helmet>
+      <div className="w-full mx-auto px-2 sm:px-6 py-6 dark:bg-[#171717] min-h-[92vh]">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-1 text-gray-900 dark:text-gray-100">Todas as Campanhas</h2>
+        <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm sm:text-base">Visualize e gerencie todas as campanhas da plataforma</p>
+        
+        {/* Tabs */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {TABS.map((t) => (
+            <button
+              key={t.value}
+              onClick={() => setTab(t.value)}
+              className={`px-5 py-2 rounded-lg font-medium border transition-colors duration-150
+                ${tab === t.value
+                  ? "bg-[#E91E63] text-white border-[#E91E63]"
+                  : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"}
+              `}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Table for desktop, cards for mobile */}
+        <div className="bg-background rounded-xl shadow p-2 sm:p-6">
+          {filtered.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 dark:text-gray-400">Nenhuma campanha encontrada</p>
+            </div>
+          ) : (
+            <>
+              {/* Desktop Table */}
+              <div className="hidden md:block">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="text-xs text-gray-500 dark:text-gray-400">
+                      <th className="py-3 px-2 font-medium">Nome</th>
+                      <th className="py-3 px-2 font-medium">Status</th>
+                      <th className="py-3 px-2 font-medium">Data de Criação</th>
+                      <th className="py-3 px-2 font-medium">Marca</th>
+                      <th className="py-3 px-2 font-medium">Criadores Aprovados</th>
+                      <th className="py-3 px-2 font-medium">Destaque</th>
+                      <th className="py-3 px-2 font-medium">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((c, i) => (
+                      <tr key={i} className="border-t border-gray-100 dark:border-gray-800">
+                        <td className="py-4 px-2 text-sm font-medium text-gray-900 dark:text-gray-100">{c.title}</td>
+                        <td className="py-4 px-2">
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[c.status]}`}>
+                            {STATUS_LABELS[c.status]}
+                          </span>
+                        </td>
+                        <td className="py-4 px-2 text-sm text-gray-700 dark:text-gray-300">
+                          {formatDate(c.submissionDate)}
+                        </td>
+                        <td className="py-4 px-2 text-sm text-gray-700 dark:text-gray-300">
+                          {c.brand?.name || 'N/A'}
+                        </td>
+                        <td className="py-4 px-2 text-sm text-center text-gray-700 dark:text-gray-300">
+                          {c.approvedCreators}
+                        </td>
+                        <td className="py-4 px-2 text-center">
+                          <button
+                            onClick={() => handleToggleFeatured(c.id)}
+                            className={`p-2 rounded-lg transition-colors ${
+                              c.is_featured 
+                                ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200 dark:hover:bg-yellow-800' 
+                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                            }`}
+                            title={c.is_featured ? 'Remover destaque' : 'Adicionar destaque'}
+                          >
+                            <Star className={`h-4 w-4 ${c.is_featured ? 'fill-current' : ''}`} />
+                          </button>
+                        </td>
+                        <td className="py-4 px-2">
+                          <button
+                            className="px-4 py-2 border border-[#E91E63] text-[#E91E63] rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors"
+                            onClick={() => handleOpenModal(c)}
+                          >
+                            Ver detalhes
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="md:hidden flex flex-col gap-4">
+                {filtered.map((c, i) => (
+                  <div key={i} className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow p-4 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-gray-900 dark:text-gray-100">{c.title}</span>
+                      <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleToggleFeatured(c.id)}
                           className={`p-2 rounded-lg transition-colors ${
@@ -225,78 +272,46 @@ const CampaignList: React.FC = () => {
                         >
                           <Star className={`h-4 w-4 ${c.is_featured ? 'fill-current' : ''}`} />
                         </button>
-                      </td>
-                      <td className="py-4 px-2">
-                        <button
-                          className="px-4 py-2 border border-[#E91E63] text-[#E91E63] rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors"
-                          onClick={() => handleOpenModal(c)}
-                        >
-                          Ver detalhes
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile Cards */}
-            <div className="md:hidden flex flex-col gap-4">
-              {filtered.map((c, i) => (
-                <div key={i} className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow p-4 flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">{c.title}</span>
-                    <div className="flex items-center gap-2">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[c.status]}`}>
+                          {STATUS_LABELS[c.status]}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+                      <span>Data: <span className="text-gray-700 dark:text-gray-200">{formatDate(c.submissionDate)}</span></span>
+                      <span>Marca: <span className="text-gray-700 dark:text-gray-200">{c.brand?.name || 'N/A'}</span></span>
+                      <span>Criadores: <span className="text-gray-700 dark:text-gray-200">{c.approvedCreators}</span></span>
+                      {c.is_featured && (
+                        <span className="text-yellow-600 font-medium">⭐ Destaque</span>
+                      )}
+                    </div>
+                    <div className="mt-2">
                       <button
-                        onClick={() => handleToggleFeatured(c.id)}
-                        className={`p-2 rounded-lg transition-colors ${
-                          c.is_featured 
-                            ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200 dark:hover:bg-yellow-800' 
-                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                        }`}
-                        title={c.is_featured ? 'Remover destaque' : 'Adicionar destaque'}
+                        className="w-full px-4 py-2 border border-[#E91E63] text-[#E91E63] rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors"
+                        onClick={() => handleOpenModal(c)}
                       >
-                        <Star className={`h-4 w-4 ${c.is_featured ? 'fill-current' : ''}`} />
+                        Ver detalhes
                       </button>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[c.status]}`}>
-                        {STATUS_LABELS[c.status]}
-                      </span>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
-                    <span>Data: <span className="text-gray-700 dark:text-gray-200">{formatDate(c.submissionDate)}</span></span>
-                    <span>Marca: <span className="text-gray-700 dark:text-gray-200">{c.brand?.name || 'N/A'}</span></span>
-                    <span>Criadores: <span className="text-gray-700 dark:text-gray-200">{c.approvedCreators}</span></span>
-                    {c.is_featured && (
-                      <span className="text-yellow-600 font-medium">⭐ Destaque</span>
-                    )}
-                  </div>
-                  <div className="mt-2">
-                    <button
-                      className="w-full px-4 py-2 border border-[#E91E63] text-[#E91E63] rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors"
-                      onClick={() => handleOpenModal(c)}
-                    >
-                      Ver detalhes
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Campaign Detail Modal */}
+        {isModalOpen && selectedCampaign && (
+          <CampaignDetail
+            campaign={selectedCampaign}
+            open={isModalOpen}
+            onOpenChange={setIsModalOpen}
+            onApprove={() => handleApprove(selectedCampaign.id)}
+            onReject={() => handleReject(selectedCampaign.id)}
+          />
         )}
       </div>
-
-      {/* Campaign Detail Modal */}
-      {isModalOpen && selectedCampaign && (
-        <CampaignDetail
-          campaign={selectedCampaign}
-          open={isModalOpen}
-          onOpenChange={setIsModalOpen}
-          onApprove={() => handleApprove(selectedCampaign.id)}
-          onReject={() => handleReject(selectedCampaign.id)}
-        />
-      )}
-    </div>
+    </>
   );
 };
 

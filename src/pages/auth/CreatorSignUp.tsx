@@ -18,6 +18,7 @@ import { clearError } from "../../store/slices/authSlice";
 import { toast } from "sonner";
 import { useRoleNavigation } from "../../hooks/useRoleNavigation";
 import GoogleOAuthButton from "../../components/GoogleOAuthButton";
+import { Helmet } from "react-helmet-async";
 
 interface SignUpFormData {
   name: string;
@@ -84,8 +85,6 @@ const CreatorSignUp = () => {
       }
     }
   }, [isAuthenticated, user, role, navigateToRoleDashboard, navigateToStudentVerification, navigateToSubscription, location, isNewRegistration]);
-
-
 
   // Clear error when switching auth types
   useEffect(() => {
@@ -159,297 +158,312 @@ const CreatorSignUp = () => {
     }
   };
 
+  const canonical = typeof window !== "undefined" ? window.location.href : "";
+  const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted dark:bg-[#171717] transition-colors duration-300 relative">
-      <div className="absolute top-4 right-4">
-        <ThemeToggle />
-      </div>
-      <div className="bg-background rounded-2xl shadow-lg p-6 md:p-10 w-full max-w-lg flex flex-col items-center gap-6 border border-border relative">
-        <img
-          src={isDarkMode ? LightLogo : DarkLogo}
-          alt="Nexa logo"
-          className="w-28 mb-2 cursor-pointer"
-          onClick={() => navigate("/")}
-        />
-        <h1 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-1">
-          {authType === "signup" ? "Registrar" : "Entrar"}
-        </h1>
-        <p className="text-muted-foreground text-center text-base mb-2">
-          {authType === "signup" ? "Crie sua conta para começar" : "Entre na sua conta"}
-        </p>
 
-        {/* Error Alert */}
-        {error && (
-          <Alert className="w-full border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
-            <AlertDescription className="text-red-600 dark:text-red-400">
-              {error}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Account type toggle */}
-        <div className="flex w-full mb-2 border border-[#E2E2E2] p-1 rounded-full">
-          <button
-            className={`flex-1 py-2 rounded-full text-base font-semibold transition-colors ${authType === "signup" ? "bg-[#E91E63] text-white" : "bg-background text-foreground"}`}
-            onClick={() => handleAuthTypeChange("signup")}
-            type="button"
-            disabled={isSigningUp || isLoading}
-          >
-            Cadastrar
-          </button>
-          <button
-            className={`flex-1 py-2 rounded-full border-border text-base font-semibold transition-colors ${authType === "signin" ? "bg-[#E91E63] text-white" : "bg-background text-foreground"}`}
-            onClick={() => handleAuthTypeChange("signin")}
-            type="button"
-            disabled={isSigningUp || isLoading}
-          >
-            Entrar
-          </button>
+    <>
+      <Helmet>
+          <title>Nexa - Entrar</title>
+          <meta name="description" content="Browse Nexa guides filtered by brand and creator. Watch embedded videos and manage guides." />
+          {canonical && <link rel="canonical" href={canonical} />}
+          <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
+      </Helmet>
+      <div className="min-h-screen flex items-center justify-center bg-muted dark:bg-[#171717] transition-colors duration-300 relative">
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
         </div>
+        <div className="bg-background rounded-2xl shadow-lg p-6 md:p-10 w-full max-w-lg flex flex-col items-center gap-6 border border-border relative">
+          <img
+            src={isDarkMode ? LightLogo : DarkLogo}
+            alt="Nexa logo"
+            className="w-28 mb-2 cursor-pointer"
+            onClick={() => navigate("/")}
+          />
+          <h1 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-1">
+            {authType === "signup" ? "Registrar" : "Entrar"}
+          </h1>
+          <p className="text-muted-foreground text-center text-base mb-2">
+            {authType === "signup" ? "Crie sua conta para começar" : "Entre na sua conta"}
+          </p>
 
-        {authType === "signup" ? (
-          <>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSignUp)} className="w-full flex flex-col gap-3">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  rules={{
-                    required: "Nome é obrigatório",
-                    minLength: {
-                      value: 5,
-                      message: "Nome deve ter pelo menos 5 caracteres"
-                    },
-                    maxLength: {
-                      value: 30,
-                      message: "Nome deve ter menos de 15 caracteres"
-                    },
-                    pattern: {
-                      value: /\s/,
-                      message: "Nome deve conter pelo menos um espaço"
-                    }
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Seu nome" {...field} disabled={isSigningUp} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  rules={{
-                    required: "E-mail é obrigatório",
-                    pattern: {
-                      value: /@/,
-                      message: "E-mail deve conter o símbolo @"
-                    }
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>E-mail</FormLabel>
-                      <FormControl>
-                        <Input placeholder="seu@email.com" type="email" {...field} disabled={isSigningUp} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="whatsapp"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>WhatsApp</FormLabel>
-                      <FormControl>
-                        <Input placeholder="(00) 00000-0000" {...field} disabled={isSigningUp} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  rules={{
-                    required: "Senha é obrigatória",
-                    pattern: {
-                      value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]+$/,
-                      message: "Senha deve conter letras maiúsculas, minúsculas, números e caracteres especiais"
-                    }
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Senha</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Crie uma senha segura" type="password" {...field} disabled={isSigningUp} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="confirmPassword"
-                  rules={{
-                    required: "Por favor, confirme sua senha",
-                    validate: (value) => {
-                      const password = form.getValues("password");
-                      return value === password || "Senhas não coincidem";
-                    }
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirmar Senha</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Repita a senha" type="password" {...field} disabled={isSigningUp} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {role === "creator" && (
+          {/* Error Alert */}
+          {error && (
+            <Alert className="w-full border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+              <AlertDescription className="text-red-600 dark:text-red-400">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Account type toggle */}
+          <div className="flex w-full mb-2 border border-[#E2E2E2] p-1 rounded-full">
+            <button
+              className={`flex-1 py-2 rounded-full text-base font-semibold transition-colors ${authType === "signup" ? "bg-[#E91E63] text-white" : "bg-background text-foreground"}`}
+              onClick={() => handleAuthTypeChange("signup")}
+              type="button"
+              disabled={isSigningUp || isLoading}
+            >
+              Cadastrar
+            </button>
+            <button
+              className={`flex-1 py-2 rounded-full border-border text-base font-semibold transition-colors ${authType === "signin" ? "bg-[#E91E63] text-white" : "bg-background text-foreground"}`}
+              onClick={() => handleAuthTypeChange("signin")}
+              type="button"
+              disabled={isSigningUp || isLoading}
+            >
+              Entrar
+            </button>
+          </div>
+
+          {authType === "signup" ? (
+            <>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSignUp)} className="w-full flex flex-col gap-3">
                   <FormField
                     control={form.control}
-                    name="isStudent"
+                    name="name"
+                    rules={{
+                      required: "Nome é obrigatório",
+                      minLength: {
+                        value: 5,
+                        message: "Nome deve ter pelo menos 5 caracteres"
+                      },
+                      maxLength: {
+                        value: 30,
+                        message: "Nome deve ter menos de 15 caracteres"
+                      },
+                      pattern: {
+                        value: /\s/,
+                        message: "Nome deve conter pelo menos um espaço"
+                      }
+                    }}
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                      <FormItem>
+                        <FormLabel>Nome</FormLabel>
                         <FormControl>
-                          <Checkbox 
-                            checked={field.value} 
-                            onCheckedChange={field.onChange}
-                            disabled={isSigningUp}
-                          />
+                          <Input placeholder="Seu nome" {...field} disabled={isSigningUp} />
                         </FormControl>
-                        <FormLabel className="font-normal">
-                          Sou um estudante e quero verificar meu status
-                        </FormLabel>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
-                )}
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    rules={{
+                      required: "E-mail é obrigatório",
+                      pattern: {
+                        value: /@/,
+                        message: "E-mail deve conter o símbolo @"
+                      }
+                    }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>E-mail</FormLabel>
+                        <FormControl>
+                          <Input placeholder="seu@email.com" type="email" {...field} disabled={isSigningUp} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="whatsapp"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>WhatsApp</FormLabel>
+                        <FormControl>
+                          <Input placeholder="(00) 00000-0000" {...field} disabled={isSigningUp} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    rules={{
+                      required: "Senha é obrigatória",
+                      pattern: {
+                        value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]+$/,
+                        message: "Senha deve conter letras maiúsculas, minúsculas, números e caracteres especiais"
+                      }
+                    }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Senha</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Crie uma senha segura" type="password" {...field} disabled={isSigningUp} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    rules={{
+                      required: "Por favor, confirme sua senha",
+                      validate: (value) => {
+                        const password = form.getValues("password");
+                        return value === password || "Senhas não coincidem";
+                      }
+                    }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirmar Senha</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Repita a senha" type="password" {...field} disabled={isSigningUp} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {role === "creator" && (
+                    <FormField
+                      control={form.control}
+                      name="isStudent"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <Checkbox 
+                              checked={field.value} 
+                              onCheckedChange={field.onChange}
+                              disabled={isSigningUp}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Sou um estudante e quero verificar meu status
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  )}
 
-                <Button 
-                  type="submit" 
-                  className="w-full bg-[#E91E63] hover:bg-pink-600 text-white mt-2 rounded-full"
-                  disabled={isSigningUp}
-                >
-                  {isSigningUp ? "Criando conta..." : "Criar conta"}
-                </Button>
-              </form>
-            </Form>
-            <div className="flex items-center w-full gap-2 my-2">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-muted-foreground text-sm">ou</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-            <GoogleOAuthButton
-              role={role as 'creator' | 'brand'}
-              disabled={isSigningUp}
-              className="py-2 text-base font-medium rounded-full"
-            >
-              Continuar com o Google
-            </GoogleOAuthButton>
-            <div className="text-center w-full mt-2 flex justify-center gap-2">
-              <span className="text-muted-foreground">Já tem uma conta? </span>
-              <div 
-                onClick={() => handleAuthTypeChange("signin")} 
-                className="font-semibold text-pink-500 hover:underline cursor-pointer"
-              >
-                Entrar
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSignIn)} className="w-full flex flex-col gap-3">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  rules={{
-                    required: "E-mail é obrigatório",
-                    pattern: {
-                      value: /@/,
-                      message: "E-mail deve conter o símbolo @"
-                    }
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>E-mail</FormLabel>
-                      <FormControl>
-                        <Input placeholder="seu@email.com" type="email" {...field} disabled={isLoading} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  rules={{
-                    required: "Senha é obrigatória"
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Senha</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Digite sua senha" type="password" {...field} disabled={isLoading} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex justify-between items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <Checkbox disabled={isLoading} />
-                    <span className="text-muted-foreground text-sm">Lembrar-me</span>
-                  </div>
-                  <span 
-                    className="font-bold text-[#E91E63] dark:text-[#E91E63] hover:underline cursor-pointer text-sm" 
-                    onClick={() => navigate("/forgot-password")}
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-[#E91E63] hover:bg-pink-600 text-white mt-2 rounded-full"
+                    disabled={isSigningUp}
                   >
-                    Esqueceu a senha?
-                  </span>
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full bg-[#E91E63] hover:bg-pink-600 text-white mt-2 rounded-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Entrando..." : "Entrar"}
-                </Button>
-              </form>
-            </Form>
-            <div className="flex items-center w-full gap-2 my-2">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-muted-foreground text-sm">ou</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-            <GoogleOAuthButton
-              role={role as 'creator' | 'brand'}
-              disabled={isLoading}
-              className="py-2 text-base font-medium rounded-full"
-            >
-              Continuar com o Google
-            </GoogleOAuthButton>
-            <div className="text-center w-full mt-2 flex justify-center gap-2">
-              <span className="text-muted-foreground">Não tem uma conta? </span>
-              <div 
-                onClick={() => handleAuthTypeChange("signup")} 
-                className="font-semibold text-pink-500 hover:underline cursor-pointer"
-              >
-                Criar conta
+                    {isSigningUp ? "Criando conta..." : "Criar conta"}
+                  </Button>
+                </form>
+              </Form>
+              <div className="flex items-center w-full gap-2 my-2">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-muted-foreground text-sm">ou</span>
+                <div className="flex-1 h-px bg-border" />
               </div>
-            </div>
-          </>
-        )}
+              <GoogleOAuthButton
+                role={role as 'creator' | 'brand'}
+                disabled={isSigningUp}
+                className="py-2 text-base font-medium rounded-full"
+              >
+                Continuar com o Google
+              </GoogleOAuthButton>
+              <div className="text-center w-full mt-2 flex justify-center gap-2">
+                <span className="text-muted-foreground">Já tem uma conta? </span>
+                <div 
+                  onClick={() => handleAuthTypeChange("signin")} 
+                  className="font-semibold text-pink-500 hover:underline cursor-pointer"
+                >
+                  Entrar
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSignIn)} className="w-full flex flex-col gap-3">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    rules={{
+                      required: "E-mail é obrigatório",
+                      pattern: {
+                        value: /@/,
+                        message: "E-mail deve conter o símbolo @"
+                      }
+                    }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>E-mail</FormLabel>
+                        <FormControl>
+                          <Input placeholder="seu@email.com" type="email" {...field} disabled={isLoading} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    rules={{
+                      required: "Senha é obrigatória"
+                    }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Senha</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Digite sua senha" type="password" {...field} disabled={isLoading} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex justify-between items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <Checkbox disabled={isLoading} />
+                      <span className="text-muted-foreground text-sm">Lembrar-me</span>
+                    </div>
+                    <span 
+                      className="font-bold text-[#E91E63] dark:text-[#E91E63] hover:underline cursor-pointer text-sm" 
+                      onClick={() => navigate("/forgot-password")}
+                    >
+                      Esqueceu a senha?
+                    </span>
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-[#E91E63] hover:bg-pink-600 text-white mt-2 rounded-full"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Entrando..." : "Entrar"}
+                  </Button>
+                </form>
+              </Form>
+              <div className="flex items-center w-full gap-2 my-2">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-muted-foreground text-sm">ou</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              <GoogleOAuthButton
+                role={role as 'creator' | 'brand'}
+                disabled={isLoading}
+                className="py-2 text-base font-medium rounded-full"
+              >
+                Continuar com o Google
+              </GoogleOAuthButton>
+              <div className="text-center w-full mt-2 flex justify-center gap-2">
+                <span className="text-muted-foreground">Não tem uma conta? </span>
+                <div 
+                  onClick={() => handleAuthTypeChange("signup")} 
+                  className="font-semibold text-pink-500 hover:underline cursor-pointer"
+                >
+                  Criar conta
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

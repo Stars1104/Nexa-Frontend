@@ -166,7 +166,6 @@ export const profileUpdate = async (data: any) => {
             delete config.headers["Content-Type"];
         }
 
-
         const response = await AuthAPI.put("/api/profile", data, config);
 
         if (!response.data.success) {

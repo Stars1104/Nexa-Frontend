@@ -28,6 +28,9 @@ export const Navbar = () => {
                     <SheetDescription>Navigation options for mobile users</SheetDescription>
                 </VisuallyHidden>
                 <div className="flex flex-col gap-6 mt-8">
+                    <Button variant="ghost" className="justify-start" onClick={() => navigate("/guides")}>
+                        Guia para
+                    </Button>
                     <Button variant="ghost" className="justify-start" onClick={() => navigate("/auth/login")}>
                         Entrar
                     </Button>
@@ -42,18 +45,21 @@ export const Navbar = () => {
     return (
         <header className="relative z-0 p-4 md:p-6">
             <div className="max-w-7xl mx-auto flex justify-between items-center">
-                <div className="text-xl md:text-2xl font-bold text-foreground">
+                <div className="text-xl md:text-2xl font-bold text-foreground" onClick={() => navigate("/")}>
                     {
                         isDarkMode ? (
-                            <img src={LightLogo} alt="Logo" width={90} className="w-30" />
+                            <img src={LightLogo} alt="Logo" width={90} className="w-30 cursor-pointer" />
                         ) : (
-                            <img src={DarkLogo} alt="Logo" width={90} className="w-30" />
+                            <img src={DarkLogo} alt="Logo" width={90} className="w-30 cursor-pointer" />
                         )
                     }
                 </div>
 
                 {/* Desktop Navigation */}
                 <div className="hidden md:flex items-center gap-4">
+                    <Button variant="ghost" className="justify-start" onClick={() => navigate("/guides")}>
+                        Guia para
+                    </Button>
                     <Button variant="ghost" size="sm" onClick={() => navigate("/auth/login")}>
                         Entrar
                     </Button>

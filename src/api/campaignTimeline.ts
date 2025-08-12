@@ -11,6 +11,7 @@ export interface CampaignMilestone {
   status: 'pending' | 'approved' | 'delayed' | 'completed';
   comment?: string;
   file_path?: string;
+  
   file_name?: string;
   file_size?: string;
   file_type?: string;
