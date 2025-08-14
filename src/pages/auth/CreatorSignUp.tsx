@@ -124,6 +124,28 @@ const CreatorSignUp = () => {
       };
 
       const response = await dispatch(signupUser(signupData)).unwrap();
+      
+      // Check if email verification is required
+      if (response.requiresEmailVerification) {
+        toast.success("Conta criada com sucesso! Verifique seu email para ativar sua conta.");
+        // Show email verification pending screen
+        navigate('/email-verification-pending', { 
+          state: { 
+            userEmail: data.email,
+            userRole: role 
+          } 
+        });
+        return;
+      }
+      
+      // Check if email verification failed
+      if (response.emailVerificationFailed) {
+        toast.success("Conta criada com sucesso! Mas não foi possível enviar o email de verificação. Entre em contato com o suporte.");
+        // Redirect to login since email verification failed
+        navigate('/auth');
+        return;
+      }
+      
       if (response.user !== null) {
         toast.success("Conta criada com sucesso!");
         setIsNewRegistration(true); // Set flag for new registration

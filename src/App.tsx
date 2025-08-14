@@ -15,6 +15,8 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import Signup from "./pages/auth/CreatorSignUp";
 import StudentVerify from "./pages/auth/StudentVerify";
 import GoogleOAuthCallback from "./components/GoogleOAuthCallback";
+import EmailVerification from "./pages/EmailVerification";
+import EmailVerificationPending from "./pages/EmailVerificationPending";
 import CreatorIndex from "./pages/creator/Index";
 import BrandIndex from "./pages/brand/Index";
 import AdminIndex from "./pages/admin";
@@ -50,6 +52,8 @@ const App = () => {
                   <Route path="/signup/:role" element={<Signup />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />
+                  <Route path="/verify-email" element={<EmailVerification />} />
+                  <Route path="/email-verification-pending" element={<EmailVerificationPending />} />
                   <Route path="/student-verify" element={
                     <ProtectedRoute allowedRoles={['creator', 'student']}>
                       <StudentVerify />

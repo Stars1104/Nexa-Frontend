@@ -100,9 +100,9 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
 
     // Agency DV validation
     if (!safeBankInfo.agencia_dv.trim()) {
-      newErrors.agencia_dv = 'DV da agência é obrigatório';
+      newErrors.agencia_dv = 'Dígito da agência é obrigatório';
     } else if (!/^\d{1,2}$/.test(safeBankInfo.agencia_dv)) {
-      newErrors.agencia_dv = 'DV da agência deve ter 1 ou 2 dígitos';
+              newErrors.agencia_dv = 'Dígito da agência deve ter 1 ou 2 dígitos';
     }
 
     // Account validation
@@ -114,9 +114,9 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
 
     // Account DV validation
     if (!safeBankInfo.conta_dv.trim()) {
-      newErrors.conta_dv = 'DV da conta é obrigatório';
+      newErrors.conta_dv = 'Dígito da conta é obrigatório';
     } else if (!/^\d{1,2}$/.test(safeBankInfo.conta_dv)) {
-      newErrors.conta_dv = 'DV da conta deve ter 1 ou 2 dígitos';
+              newErrors.conta_dv = 'Dígito da conta deve ter 1 ou 2 dígitos';
     }
 
     // CPF validation
@@ -326,7 +326,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
                   <div className="space-y-2">
                     <Label htmlFor="agencia_dv" className="text-sm font-medium text-foreground">
                       <Hash className="inline w-4 h-4 mr-2" />
-                      DV
+                      Dígito
                     </Label>
                     <Input
                       id="agencia_dv"
@@ -392,7 +392,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
                   <div className="space-y-2">
                     <Label htmlFor="conta_dv" className="text-sm font-medium text-foreground">
                       <Hash className="inline w-4 h-4 mr-2" />
-                      DV
+                      Dígito
                     </Label>
                     <Input
                       id="conta_dv"

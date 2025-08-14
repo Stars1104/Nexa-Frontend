@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { loginStart, loginSuccess, loginFailure, signupStart, signupSuccess, signupFailure, logout } from '../slices/authSlice';
+import { loginStart, loginSuccess, loginFailure, signupStart, signupSuccess, signupFailure, logout, setEmailVerificationRequired } from '../slices/authSlice';
 import { signup, signin, logout as logoutAPI, updatePassword } from '../../api/auth';
 import { handleApiError } from '../../lib/api-error-handler';
 import { initiateGoogleOAuth, handleOAuthCallback } from '../../api/auth/googleAuth';
@@ -50,6 +50,17 @@ export const signupUser = createAsyncThunk(
       
       if (!response.success) {
         throw new Error(response.message || 'Sign up failed');
+      }
+
+      // Check if email verification is required
+      if (response.requires_email_verification) {
+        dispatch(setEmailVerificationRequired(true));
+        return { requiresEmailVerification: true, user: response.user };
+      }
+      
+      // Check if email verification failed
+      if (response.email_verification_failed) {
+        return { emailVerificationFailed: true, user: response.user };
       }
 
       const authData: AuthResponse = {

@@ -196,7 +196,7 @@ export default function Subscription() {
                                 <div className="text-sm text-muted-foreground mb-2">O plano ideal para criadores que querem se destacar</div>
                             </div>
                             <div className="flex flex-col items-end min-w-[110px]">
-                                <span className="text-2xl font-bold text-foreground leading-none">R$ 49,99</span>
+                                <span className="text-2xl font-bold text-foreground leading-none">R$ 29,99</span>
                                 <span className="text-xs text-muted-foreground leading-none">/ mês</span>
                             </div>
                         </div>
