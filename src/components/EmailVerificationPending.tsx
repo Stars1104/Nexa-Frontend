@@ -15,7 +15,7 @@ const EmailVerificationPending: React.FC<EmailVerificationPendingProps> = ({
   onGoToLogin,
 }) => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen flex items-center justify-center dark:bg-[#171717]">
       <Card className="w-full max-w-md mx-4">
         <CardHeader className="text-center">
           <Mail className="h-16 w-16 text-blue-500 mx-auto mb-4" />
@@ -37,8 +37,16 @@ const EmailVerificationPending: React.FC<EmailVerificationPendingProps> = ({
                   <li>Check your email inbox (and spam folder)</li>
                   <li>Click the verification link in the email</li>
                   <li>Complete your account setup</li>
+                  
                 </ol>
               </div>
+            </div>
+          </div>
+          <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <div className="text-green-800 dark:text-green-200">
+              <p className="font-semibold mb-2">🎉 Parabéns! Você tem a cara da marca e foi selecionada para uma parceria de sucesso!</p>
+              <p className="text-sm">Prepare-se para mostrar todo o seu talento e representar a NEXA com criatividade e profissionaspansmo. Estamos animados para ver o que você vai criar!</p>
+              <p className="text-sm font-medium mt-2">Abra o site da NEXA e verifique o seu Chat...</p>
             </div>
           </div>
           
