@@ -111,6 +111,36 @@ export interface RecentUsersResponse {
   data: RecentUser[];
 }
 
+export interface BrandRanking {
+  rank: number;
+  id: number;
+  name: string;
+  company_name: string | null;
+  display_name: string;
+  total_campaigns?: number;
+  total_contracts?: number;
+  total_paid?: number;
+  total_paid_formatted?: string;
+  avatar_url: string | null;
+  has_premium: boolean;
+  created_at: string;
+  score?: number;
+}
+
+export interface BrandRankingsResponse {
+  success: boolean;
+  data: {
+    mostPosted: BrandRanking[];
+    mostHired: BrandRanking[];
+    mostPaid: BrandRanking[];
+  };
+}
+
+export interface ComprehensiveRankingsResponse {
+  success: boolean;
+  data: BrandRanking[];
+}
+
 export interface CampaignActionResponse {
   success: boolean;
   message: string;
@@ -217,4 +247,20 @@ export const adminApi = {
     });
     return response.data;
   },
-}; 
+
+  /**
+   * Get brand rankings by different metrics
+   */
+  getBrandRankings: async (): Promise<BrandRankingsResponse> => {
+    const response = await apiClient.get('/admin/brand-rankings');
+    return response.data;
+  },
+
+  /**
+   * Get comprehensive brand rankings with all metrics
+   */
+  getComprehensiveRankings: async (): Promise<ComprehensiveRankingsResponse> => {
+    const response = await apiClient.get('/admin/brand-rankings/comprehensive');
+    return response.data;
+  },
+};

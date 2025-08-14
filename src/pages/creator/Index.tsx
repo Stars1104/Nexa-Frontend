@@ -19,6 +19,7 @@ import PremiumAccessGuard from "../../components/PremiumAccessGuard";
 import { usePremiumContext } from "../../contexts/PremiumContext";
 import { useAppSelector } from "../../store/hooks";
 import BankRegistrationDemo from "../BankRegistrationDemo";
+import GuideEmbedded from "@/components/GuideEmbedded";
 
 const Index = () => {
     const isMobile = useIsMobile();
@@ -83,6 +84,8 @@ const Index = () => {
                 return <TransactionHistory />;
             case "Cadastro Bancário":
                 return <BankRegistrationDemo />;
+            case "Guia da Plataforma":
+                return <GuideEmbedded />;
             default:
                 return <NotFound />;
         }

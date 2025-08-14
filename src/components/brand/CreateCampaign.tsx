@@ -6,7 +6,6 @@ import { Card } from "../ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
 import { toast } from "../ui/sonner";
-import { useIsMobile } from "../../hooks/use-mobile";
 import { cn } from "../../lib/utils";
 import { Calendar as CalendarIcon, UploadCloud, X, PlusCircle } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
@@ -16,7 +15,9 @@ import { clearError, CampaignFormData } from "../../store/slices/campaignSlice";
 
 // Campaign types
 const CAMPAIGN_TYPES = [
-  "Vídeo", "Foto", "Review", "Unboxing", "Tutorial", "Story", "Reels", "Post"
+  "Skincare", "Maquiagem", "beleza e bem-estar", "Moda feminina", "Moda fitness", "Moda praia", "Joias e bijuterias", "Sapatos e bolsas",
+  "Tecnologia e eletrônicos", "Smartphones e acessórios", "Casa e decoração", "Organização", "Limpeza", "Gastronomia e bebidas", "Alimentação saudável", "Doces e confeitaria",
+  "Maternidade e infantil", "Viagem e lazer", "Casa e decoração", "Turismo e experiências", "Pets",
 ];
 
 // Brazilian states
@@ -50,11 +51,6 @@ const BRAZILIAN_STATES = [
   "Tocantins"
 ];
 
-// Example states and requirements (should come from API in real app)
-const REQUIREMENTS = [
-  "Instagram", "TikTok", "YouTube", "+10k seguidores", "Portfólio", "Vídeo", "Foto"
-];
-
 export default function CreateCampaign() {
   const dispatch = useDispatch<AppDispatch>();
   const { isCreating, error } = useSelector((state: RootState) => state.campaign);
@@ -71,7 +67,6 @@ export default function CreateCampaign() {
     setCreatorReq("");
     setCampaignType("");
     setAttachments([]);
-    setDriveLink("");
   }, []);
 
   // Cleanup timeouts on unmount
@@ -94,7 +89,6 @@ export default function CreateCampaign() {
   const [campaignType, setCampaignType] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
-  const [driveLink, setDriveLink] = useState("");
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const attachmentInputRef = useRef<HTMLInputElement>(null);
@@ -128,6 +122,7 @@ export default function CreateCampaign() {
       setImagePreview(URL.createObjectURL(f));
     }
   };
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragActive(false);
@@ -145,10 +140,12 @@ export default function CreateCampaign() {
       setImagePreview(URL.createObjectURL(f));
     }
   };
+
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragActive(true);
   };
+  
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragActive(false);

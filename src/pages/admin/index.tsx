@@ -14,9 +14,10 @@ import Dashboard from "@/components/admin/Dashboard";
 import PendingCampaign from "@/components/admin/PendingCampaign";
 import CampaignList from "@/components/admin/CampaignList";
 import UserList from "@/components/admin/UserList";
+import BrandRankings from "@/components/admin/BrandRankings";
 import WithdrawalVerification from "@/components/admin/WithdrawalVerification";
-import Setting from "@/components/admin/Setting";
 import Notification from "@/components/Notification";
+import NexaGuide from "@/components/admin/Guidelist";
 
 const AdminIndex = () => {
     const isMobile = useIsMobile();
@@ -49,10 +50,12 @@ const AdminIndex = () => {
                 return <CampaignList />;
             case "Usuários":
                 return <UserList />;
+            case "Rankings das Marcas":
+                return <BrandRankings />;
             case "Verificação de Saques":
                 return <WithdrawalVerification />;
-            case "Configurações de Regras":
-                return <Setting />;
+            case "Guia para":
+                return <NexaGuide />;
             case "Notificações":
                 return <Notification />
             default:

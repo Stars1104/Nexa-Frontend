@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Clock, Users, Settings, ClipboardList, Loader2 } from "lucide-react";
 import { adminApi, DashboardMetrics, PendingCampaign, RecentUser } from "../../api/admin";
 import { useToast } from "../../hooks/use-toast";
+import { Helmet } from "react-helmet-async";
 
 export default function Dashboard() {
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -116,7 +117,20 @@ export default function Dashboard() {
         },
     ];
 
+    const canonical = typeof window !== "undefined" ? window.location.href : "";
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+    };
+
     return (
+        <>
+        <Helmet>
+            <title>Nexa - Admin Painel</title>
+            <meta name="description" content="Browse Nexa guides filtered by brand and creator. Watch embedded videos and manage guides." />
+            {canonical && <link rel="canonical" href={canonical} />}
+            <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
+        </Helmet>
         <div className="flex flex-col gap-6 px-2 sm:px-4 py-4 max-w-full mx-auto dark:bg-[#171717] min-h-[92vh]">
             {/* Header */}
             <div className="mb-2">
@@ -239,5 +253,6 @@ export default function Dashboard() {
                 </Card>
             </div>
         </div>
+        </>
     );
 }

@@ -97,6 +97,17 @@ export const signup = async (data: any) => {
     return response.data;
 };
 
+// Email verification functions
+export const verifyEmail = async (id: string, hash: string, signature: string, expires: string) => {
+    const response = await AuthAPI.get(`/api/verify-email/${id}/${hash}?signature=${signature}&expires=${expires}`);
+    return response.data;
+};
+
+export const resendVerificationEmail = async () => {
+    const response = await AuthAPI.post('/api/resend-verification');
+    return response.data;
+};
+
 // Health check function to test backend connectivity
 export const healthCheck = async () => {
     try {
@@ -165,7 +176,6 @@ export const profileUpdate = async (data: any) => {
         if (isFormData) {
             delete config.headers["Content-Type"];
         }
-
 
         const response = await AuthAPI.put("/api/profile", data, config);
 

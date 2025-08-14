@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { 
   BanknoteIcon, 
@@ -63,6 +64,25 @@ const BankRegistration: React.FC<BankRegistrationProps> = ({
     name: ''
   });
 
+  // Brazilian bank codes and names
+  const bankOptions = [
+    { code: '001', name: 'Banco do Brasil S.A.' },
+    { code: '104', name: 'Caixa Econômica Federal' },
+    { code: '237', name: 'Bradesco S.A.' },
+    { code: '341', name: 'Itaú Unibanco S.A.' },
+    { code: '033', name: 'Santander (Brasil) S.A.' },
+    { code: '422', name: 'Banco Safra S.A.' },
+    { code: '077', name: 'Banco Inter S.A.' },
+    { code: '212', name: 'Banco Original S.A.' },
+    { code: '336', name: 'Banco C6 S.A.' },
+    { code: '260', name: 'Nu Pagamentos S.A. (Nubank)' },
+    { code: '208', name: 'BTG Pactual S.A.' },
+    { code: '623', name: 'Banco PAN S.A.' },
+    { code: '041', name: 'Banrisul – State Bank of Rio Grande do Sul S.A.' },
+    { code: '748', name: 'Sicredi – Credit Union' },
+    { code: '756', name: 'Sicoob – Credit Union System' }
+  ];
+
   // CPF validation function
   const validateCPF = useCallback((cpf: string): boolean => {
     const cleanCPF = cpf.replace(/\D/g, '');
@@ -112,9 +132,9 @@ const BankRegistration: React.FC<BankRegistrationProps> = ({
 
     // Agency DV validation
     if (!bankInfo.agencia_dv.trim()) {
-      newErrors.agencia_dv = 'DV da agência é obrigatório';
+      newErrors.agencia_dv = 'Dígito da agência é obrigatório';
     } else if (!/^\d{1,2}$/.test(bankInfo.agencia_dv)) {
-      newErrors.agencia_dv = 'DV da agência deve ter 1 ou 2 dígitos';
+      newErrors.agencia_dv = 'Dígito da agência deve ter 1 ou 2 dígitos';
     }
 
     // Account validation
@@ -126,9 +146,9 @@ const BankRegistration: React.FC<BankRegistrationProps> = ({
 
     // Account DV validation
     if (!bankInfo.conta_dv.trim()) {
-      newErrors.conta_dv = 'DV da conta é obrigatório';
+      newErrors.conta_dv = 'Dígito da conta é obrigatório';
     } else if (!/^\d{1,2}$/.test(bankInfo.conta_dv)) {
-      newErrors.conta_dv = 'DV da conta deve ter 1 ou 2 dígitos';
+      newErrors.conta_dv = 'Dígito da conta deve ter 1 ou 2 dígitos';
     }
 
     // CPF validation
@@ -185,6 +205,21 @@ const BankRegistration: React.FC<BankRegistrationProps> = ({
       setErrors(prev => ({
         ...prev,
         [name]: ''
+      }));
+    }
+  };
+
+  const handleBankCodeChange = (value: string) => {
+    setBankInfo(prev => ({
+      ...prev,
+      bank_code: value
+    }));
+
+    // Clear error when user selects a bank
+    if (errors.bank_code) {
+      setErrors(prev => ({
+        ...prev,
+        bank_code: ''
       }));
     }
   };
@@ -417,21 +452,25 @@ const BankRegistration: React.FC<BankRegistrationProps> = ({
                       <Hash className="inline w-4 h-4 mr-2" />
                       Código do Banco
                     </Label>
-                    <Input
-                      id="bank_code"
-                      name="bank_code"
-                      type="text"
+                    <Select
                       value={bankInfo.bank_code}
-                      onChange={handleChange}
-                      placeholder="Ex: 001 (Banco do Brasil)"
-                      maxLength={4}
-                      pattern="[0-9]{3,4}"
-                      className={cn(
+                      onValueChange={handleBankCodeChange}
+                      disabled={isLoading}
+                    >
+                      <SelectTrigger className={cn(
                         "transition-all duration-200",
                         errors.bank_code && "border-destructive focus:border-destructive"
-                      )}
-                      disabled={isLoading}
-                    />
+                      )}>
+                        <SelectValue placeholder="Selecione o banco" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {bankOptions.map((bank) => (
+                          <SelectItem key={bank.code} value={bank.code}>
+                            {bank.code} - {bank.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     {errors.bank_code && (
                       <div className="flex items-center gap-1 text-sm text-destructive">
                         <AlertCircle className="w-4 h-4" />
@@ -469,7 +508,7 @@ const BankRegistration: React.FC<BankRegistrationProps> = ({
 
                   <div className="space-y-2">
                     <Label htmlFor="agencia_dv" className="text-sm font-medium text-foreground">
-                      DV da Agência
+                      Dígito da Agência
                     </Label>
                     <Input
                       id="agencia_dv"
@@ -523,7 +562,7 @@ const BankRegistration: React.FC<BankRegistrationProps> = ({
 
                   <div className="space-y-2">
                     <Label htmlFor="conta_dv" className="text-sm font-medium text-foreground">
-                      DV da Conta
+                      Dígito da Conta
                     </Label>
                     <Input
                       id="conta_dv"

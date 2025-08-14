@@ -182,7 +182,6 @@ export default function SubscriptionModal({
         card_expiration_date: formData.card_expiration_date.replace("/", ""),
         card_cvv: formData.card_cvv,
         cpf: formData.cpf,
-        test_mode: import.meta.env.DEV ? "true" : "false",
       };
 
       if (paymentData.card_number.length !== 16) {
@@ -389,7 +388,7 @@ export default function SubscriptionModal({
         <CardHeader>
           <CardTitle>Assinatura Premium</CardTitle>
           <CardDescription>
-            Tenha acesso a recursos premium por R$ 49,99/mês
+            Tenha acesso a recursos premium por R$ 29,99/mês
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -412,7 +411,7 @@ export default function SubscriptionModal({
               name="card_holder_name"
               placeholder="João da Silva"
               value={formData.card_holder_name}
-              onChange={handleInputChange}
+              onChange={handleChange}
             />
           </div>
 
@@ -436,7 +435,7 @@ export default function SubscriptionModal({
                 name="card_cvv"
                 placeholder="123"
                 value={formData.card_cvv}
-                onChange={handleInputChange}
+                onChange={handleChange}
                 maxLength={4}
               />
             </div>
@@ -469,7 +468,7 @@ export default function SubscriptionModal({
               Cancelar
             </Button>
             <Button onClick={handlePay} disabled={isLoading} className="flex-1">
-              {isLoading ? "Processando..." : "Pagar R$ 49,99"}
+              {isLoading ? "Processando..." : "Pagar R$ 29,99"}
             </Button>
           </div>
         </CardContent>

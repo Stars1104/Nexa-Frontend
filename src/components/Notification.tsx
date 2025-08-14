@@ -33,6 +33,7 @@ import {
     selectNotificationError
 } from "../store/slices/notificationSlice";
 import { toast } from "sonner";
+import { Helmet } from "react-helmet-async";
 
 interface NotificationItem {
     id: number;
@@ -200,155 +201,169 @@ const Notification = () => {
         toast.info('Funcionalidade em desenvolvimento');
     };
 
+    const canonical = typeof window !== "undefined" ? window.location.href : "";
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+    };
+
     return (
-        <div className="min-h-[92vh] dark:bg-[#171717] flex flex-col py-4 px-2 sm:px-10">
-            <div className="w-full mx-auto">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                    <div>
-                        <h1 className="text-2xl font-bold">Notificações</h1>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            {unreadCount} não lida{unreadCount !== 1 ? 's' : ''} • {notifications.length} total
-                        </p>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2">
-                        <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={handleMarkAllAsRead}
-                            disabled={unreadCount === 0}
-                            className="text-xs"
-                        >
-                            <Check className="w-4 h-4 mr-2" />
-                            Marcar todas como lidas
-                        </Button>
-                        <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={clearAllRead}
-                            className="text-xs"
-                        >
-                            <Archive className="w-4 h-4 mr-2" />
-                            Limpar lidas
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Filters */}
-                <Card className="mb-6">
-                    <CardContent className="p-4">
-                        <div className="flex flex-col sm:flex-row gap-4">
-                            <div className="flex items-center gap-2">
-                                <Filter className="w-4 h-4 text-muted-foreground" />
-                                <span className="text-sm font-medium">Filtros:</span>
-                            </div>
-                            
-                            <Select value={filter} onValueChange={setFilter}>
-                                <SelectTrigger className="w-full sm:w-[140px]">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Todas</SelectItem>
-                                    <SelectItem value="unread">Não lidas</SelectItem>
-                                    <SelectItem value="read">Lidas</SelectItem>
-                                </SelectContent>
-                            </Select>
-
-                            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                                <SelectTrigger className="w-full sm:w-[140px]">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Todas categorias</SelectItem>
-                                    <SelectItem value="campaign">Campanhas</SelectItem>
-                                    <SelectItem value="payment">Pagamentos</SelectItem>
-                                    <SelectItem value="application">Aplicações</SelectItem>
-                                    <SelectItem value="system">Sistema</SelectItem>
-                                </SelectContent>
-                            </Select>
+        <>
+            <Helmet>
+                <title>Nexa - Admin Notificações</title>
+                <meta name="description" content="Browse Nexa guides filtered by brand and creator. Watch embedded videos and manage guides." />
+                {canonical && <link rel="canonical" href={canonical} />}
+                <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
+            </Helmet>
+            <div className="min-h-[92vh] dark:bg-[#171717] flex flex-col py-4 px-2 sm:px-10">
+                <div className="w-full mx-auto">
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                        <div>
+                            <h1 className="text-2xl font-bold">Notificações</h1>
+                            <p className="text-sm text-muted-foreground mt-1">
+                                {unreadCount} não lida{unreadCount !== 1 ? 's' : ''} • {notifications.length} total
+                            </p>
                         </div>
-                    </CardContent>
-                </Card>
-
-                {/* Notifications List */}
-                <div className="space-y-3">
-                    {filteredNotifications.length === 0 ? (
-                        <Card>
-                            <CardContent className="p-8 text-center">
-                                <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                                <h3 className="text-lg font-semibold mb-2">Nenhuma notificação</h3>
-                                <p className="text-muted-foreground">
-                                    {filter === 'all' ? 'Você está em dia com suas notificações!' : 'Nenhuma notificação encontrada com os filtros selecionados.'}
-                                </p>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        filteredNotifications.map((notification, index) => (
-                            <Card 
-                                key={notification.id} 
-                                className={`transition-all duration-200 hover:shadow-md ${
-                                    notification.unread ? 'border-l-4 border-l-primary bg-accent/20' : ''
-                                }`}
+                        
+                        <div className="flex flex-wrap gap-2">
+                            <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={handleMarkAllAsRead}
+                                disabled={unreadCount === 0}
+                                className="text-xs"
                             >
-                                <CardContent className="p-4">
-                                    <div className="flex items-start gap-4">
-                                        <div className="flex-shrink-0 mt-1">
-                                            {getNotificationIcon(notification.type)}
-                                        </div>
-                                        
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-start justify-between gap-2">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <h3 className={`font-medium ${notification.unread ? 'text-foreground' : 'text-muted-foreground'}`}>
-                                                            {notification.title}
-                                                        </h3>
+                                <Check className="w-4 h-4 mr-2" />
+                                Marcar todas como lidas
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={clearAllRead}
+                                className="text-xs"
+                            >
+                                <Archive className="w-4 h-4 mr-2" />
+                                Limpar lidas
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Filters */}
+                    <Card className="mb-6">
+                        <CardContent className="p-4">
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <div className="flex items-center gap-2">
+                                    <Filter className="w-4 h-4 text-muted-foreground" />
+                                    <span className="text-sm font-medium">Filtros:</span>
+                                </div>
+                                
+                                <Select value={filter} onValueChange={setFilter}>
+                                    <SelectTrigger className="w-full sm:w-[140px]">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todas</SelectItem>
+                                        <SelectItem value="unread">Não lidas</SelectItem>
+                                        <SelectItem value="read">Lidas</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                                    <SelectTrigger className="w-full sm:w-[140px]">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todas categorias</SelectItem>
+                                        <SelectItem value="campaign">Campanhas</SelectItem>
+                                        <SelectItem value="payment">Pagamentos</SelectItem>
+                                        <SelectItem value="application">Aplicações</SelectItem>
+                                        <SelectItem value="system">Sistema</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Notifications List */}
+                    <div className="space-y-3">
+                        {filteredNotifications.length === 0 ? (
+                            <Card>
+                                <CardContent className="p-8 text-center">
+                                    <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                                    <h3 className="text-lg font-semibold mb-2">Nenhuma notificação</h3>
+                                    <p className="text-muted-foreground">
+                                        {filter === 'all' ? 'Você está em dia com suas notificações!' : 'Nenhuma notificação encontrada com os filtros selecionados.'}
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            filteredNotifications.map((notification, index) => (
+                                <Card 
+                                    key={notification.id} 
+                                    className={`transition-all duration-200 hover:shadow-md ${
+                                        notification.unread ? 'border-l-4 border-l-primary bg-accent/20' : ''
+                                    }`}
+                                >
+                                    <CardContent className="p-4">
+                                        <div className="flex items-start gap-4">
+                                            <div className="flex-shrink-0 mt-1">
+                                                {getNotificationIcon(notification.type)}
+                                            </div>
+                                            
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <h3 className={`font-medium ${notification.unread ? 'text-foreground' : 'text-muted-foreground'}`}>
+                                                                {notification.title}
+                                                            </h3>
+                                                            {notification.unread && (
+                                                                <div className="w-2 h-2 bg-primary rounded-full"></div>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-sm text-muted-foreground mb-2">
+                                                            {notification.message}
+                                                        </p>
+                                                        <div className="flex items-center gap-2">
+                                                            {getCategoryBadge(notification.category)}
+                                                            <span className="text-xs text-muted-foreground">
+                                                                {notification.time}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="flex items-center gap-1">
                                                         {notification.unread && (
-                                                            <div className="w-2 h-2 bg-primary rounded-full"></div>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleMarkAsRead(notification.id)}
+                                                                className="h-8 w-8 p-0"
+                                                            >
+                                                                <Check className="w-4 h-4" />
+                                                            </Button>
                                                         )}
-                                                    </div>
-                                                    <p className="text-sm text-muted-foreground mb-2">
-                                                        {notification.message}
-                                                    </p>
-                                                    <div className="flex items-center gap-2">
-                                                        {getCategoryBadge(notification.category)}
-                                                        <span className="text-xs text-muted-foreground">
-                                                            {notification.time}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="flex items-center gap-1">
-                                                    {notification.unread && (
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => handleMarkAsRead(notification.id)}
-                                                            className="h-8 w-8 p-0"
+                                                            onClick={() => handleDeleteNotification(notification.id)}
+                                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
                                                         >
-                                                            <Check className="w-4 h-4" />
+                                                            <Trash2 className="w-4 h-4" />
                                                         </Button>
-                                                    )}
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleDeleteNotification(notification.id)}
-                                                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))
-                    )}
+                                    </CardContent>
+                                </Card>
+                            ))
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 
