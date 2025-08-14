@@ -15,6 +15,7 @@ import BrandPaymentMethods from "@/components/brand/BrandPaymentMethods";
 import Notification from "@/components/Notification";
 import CreatorProfile from "@/components/brand/CreatorProfile";
 import GuideEmbedded from "@/components/GuideEmbedded";
+import { Helmet } from "react-helmet-async";
 
 const Index = () => {
     const isMobile = useIsMobile();
@@ -56,6 +57,10 @@ const Index = () => {
 
     return (
         <ThemeProvider>
+            <Helmet>
+                <title>{typeof component === "string" ? `${component} - Nexa Brand` : `${component?.name || 'Dashboard'} - Nexa Brand`}</title>
+                <meta name="description" content="Painel da marca na plataforma Nexa - Gerencie suas campanhas, criadores e pagamentos" />
+            </Helmet>
             <div className="flex h-screen bg-background text-foreground">
                 {!isMobile && <BrandSidebar setComponent={setComponent} component={component} />}
                 <div className="flex-1 flex flex-col min-w-0">

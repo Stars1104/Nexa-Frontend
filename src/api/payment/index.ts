@@ -34,6 +34,19 @@ export interface SubscriptionPaymentRequest {
   card_expiration_date: string; // MMYY format
   card_cvv: string;
   cpf: string; // Brazilian CPF in format XXX.XXX.XXX-XX
+  subscription_plan_id: number;
+}
+
+export interface SubscriptionPlan {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  duration_months: number;
+  monthly_price: number;
+  savings_percentage?: number;
+  features: string[];
+  sort_order: number;
 }
 
 export interface Transaction {
@@ -112,6 +125,24 @@ export const paymentApi = {
   // Process subscription payment for creators
   processSubscription: async (data: SubscriptionPaymentRequest): Promise<any> => {
     const response = await paymentClient.post('/payment/subscription', data);
+    return response.data;
+  },
+
+  // Get available subscription plans
+  getSubscriptionPlans: async (): Promise<SubscriptionPlan[]> => {
+    const response = await apiClient.get('/subscription/plans');
+    return response.data.data || [];
+  },
+
+  // Get subscription history
+  getSubscriptionHistory: async (): Promise<any> => {
+    const response = await apiClient.get('/subscription/history');
+    return response.data.data || [];
+  },
+
+  // Cancel subscription
+  cancelSubscription: async (): Promise<any> => {
+    const response = await apiClient.post('/subscription/cancel');
     return response.data;
   },
 

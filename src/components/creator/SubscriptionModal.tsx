@@ -18,6 +18,7 @@ import { apiClient } from "../../services/apiClient";
 
 interface SubscriptionModalProps {
   open?: boolean;
+  selectedPlan?: any;
   onOpenChange?: (open: boolean) => void;
   onClose?: () => void;
   onSuccess?: () => void;
@@ -25,6 +26,7 @@ interface SubscriptionModalProps {
 
 export default function SubscriptionModal({
   open,
+  selectedPlan,
   onOpenChange,
   onClose,
   onSuccess,
@@ -162,6 +164,15 @@ export default function SubscriptionModal({
       return;
     }
 
+    if (!selectedPlan) {
+      toast({
+        title: "Plano não selecionado",
+        description: "Por favor, selecione um plano de assinatura",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const errors = validateForm();
 
     if (errors.length > 0) {
@@ -182,6 +193,7 @@ export default function SubscriptionModal({
         card_expiration_date: formData.card_expiration_date.replace("/", ""),
         card_cvv: formData.card_cvv,
         cpf: formData.cpf,
+        subscription_plan_id: selectedPlan?.id,
       };
 
       if (paymentData.card_number.length !== 16) {
@@ -386,12 +398,60 @@ export default function SubscriptionModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <Card className="w-full max-w-md mx-4">
         <CardHeader>
-          <CardTitle>Assinatura Premium</CardTitle>
+          <CardTitle>Assinatura Premium - {selectedPlan?.name || 'Plano Selecionado'}</CardTitle>
           <CardDescription>
-            Tenha acesso a recursos premium por R$ 29,99/mês
+            {selectedPlan ? (
+              <div className="space-y-2">
+                <div>
+                  <span className="font-semibold text-lg">
+                    R$ {typeof selectedPlan.price === 'number' ? selectedPlan.price.toFixed(2).replace('.', ',') : '0,00'}
+                  </span>
+                  {selectedPlan.duration_months && selectedPlan.duration_months > 1 && (
+                    <span className="text-muted-foreground ml-2">
+                      por {selectedPlan.duration_months} meses
+                    </span>
+                  )}
+                </div>
+                {selectedPlan.duration_months && selectedPlan.duration_months > 1 && (
+                  <div className="text-sm text-muted-foreground">
+                    Equivale a R$ {typeof selectedPlan.monthly_price === 'number' ? selectedPlan.monthly_price.toFixed(2).replace('.', ',') : '0,00'} por mês
+                  </div>
+                )}
+                {selectedPlan.savings_percentage && typeof selectedPlan.savings_percentage === 'number' && (
+                  <div className="text-sm text-green-600 dark:text-green-400 font-medium">
+                    💰 Economia de {selectedPlan.savings_percentage}% comparado ao plano mensal
+                  </div>
+                )}
+              </div>
+            ) : (
+              'Selecione um plano para continuar'
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Plan Summary */}
+          {selectedPlan && (
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="font-semibold text-foreground">Resumo do Plano</div>
+                <div className="text-right">
+                                  <div className="text-lg font-bold text-foreground">
+                  R$ {typeof selectedPlan.price === 'number' ? selectedPlan.price.toFixed(2).replace('.', ',') : '0,00'}
+                </div>
+                  <div className="text-sm text-muted-foreground">
+                    {selectedPlan.duration_months === 1 
+                      ? '1 mês' 
+                      : `${selectedPlan.duration_months || 1} meses`
+                    }
+                  </div>
+                </div>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {selectedPlan.description || 'Descrição não disponível'}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="card_number">Número do Cartão</Label>
             <Input
@@ -467,8 +527,8 @@ export default function SubscriptionModal({
             >
               Cancelar
             </Button>
-            <Button onClick={handlePay} disabled={isLoading} className="flex-1">
-              {isLoading ? "Processando..." : "Pagar R$ 29,99"}
+            <Button onClick={handlePay} disabled={isLoading || !selectedPlan} className="flex-1">
+              {isLoading ? "Processando..." : selectedPlan ? `Pagar R$ ${selectedPlan.price.toFixed(2).replace('.', ',')}` : "Selecione um plano"}
             </Button>
           </div>
         </CardContent>
