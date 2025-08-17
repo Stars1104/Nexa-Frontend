@@ -55,6 +55,7 @@ import { useToast } from "../../hooks/use-toast";
 import ChatOfferMessage, { ChatOffer } from "../../components/ChatOfferMessage";
 import ReviewModal from "../../components/brand/ReviewModal";
 import CampaignFinalizationModal from "../../components/brand/CampaignFinalizationModal";
+import { Helmet } from "react-helmet-async";
 
 interface ChatPageProps {
   setComponent?: (component: string) => void;
@@ -2411,858 +2412,864 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
   };
 
   return (
-    <div className="flex h-full bg-background">
-      {/* Mobile Hamburger Button */}
-      <button
-        data-hamburger
-        className="md:hidden fixed top-4 left-16 z-50 p-2 rounded-xl bg-white dark:bg-slate-800 shadow-lg"
-        onClick={() => setSidebarOpen(true)}
-        aria-label="Open conversations"
-      >
-        <svg
-          width="20"
-          height="20"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+    <>
+      <Helmet>
+        <title>Chat - Nexa Brand</title>
+        <meta name="description" content="Gerencie suas conversas e comunicações com criadores na plataforma Nexa" />
+      </Helmet>
+      <div className="flex h-full bg-background">
+        {/* Mobile Hamburger Button */}
+        <button
+          data-hamburger
+          className="md:hidden fixed top-4 left-16 z-50 p-2 rounded-xl bg-white dark:bg-slate-800 shadow-lg"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open conversations"
         >
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <line x1="3" y1="18" x2="21" y2="18" />
-        </svg>
-      </button>
-
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <div
-          data-sidebar
-          className={cn(
-            "flex flex-col w-full max-w-sm border-r bg-background transition-all duration-300 ease-in-out",
-            "md:relative md:translate-x-0 md:shadow-none",
-            sidebarOpen
-              ? "fixed inset-0 z-40 translate-x-0 shadow-2xl"
-              : "fixed inset-0 z-40 -translate-x-full md:relative md:translate-x-0"
-          )}
-        >
-          {/* Sidebar Header */}
-          <div className="flex items-center justify-between gap-2 px-6 py-5 border-b bg-background">
-            <div className="flex flex-col">
-              <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
-                Conversas
-              </span>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {chatRooms.length} conversas
-                </span>
-                {connectionError && (
-                  <div className="flex items-center gap-1 text-red-500">
-                    <WifiOff className="w-3 h-3" />
-                    <span className="text-xs">Offline</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            {connectionError && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={reconnect}
-                className="p-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </Button>
-            )}
-            <button
-              className="md:hidden p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
-              onClick={() => setSidebarOpen(false)}
-              aria-label="Close conversations"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Search */}
-          <div className="p-4 pb-3">
-            <div className="relative">
-              <Input
-                placeholder="Buscar conversas..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-800 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200"
-              />
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-            </div>
-          </div>
-
-          {/* Conversation List */}
-          <ScrollArea className="flex-1">
-            <div className="p-2 w-[383px]">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : filteredRooms.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                  <div className="text-4xl mb-2">💬</div>
-                  <p className="text-sm">Nenhuma conversa encontrada</p>
-                </div>
-              ) : (
-                filteredRooms.map((room) => (
-                  <div
-                    key={room.id}
-                    onClick={() => setSelectedRoom(room)}
-                    className={cn(
-                      "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 mb-2",
-                      selectedRoom?.id === room.id
-                        ? "bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800"
-                        : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                    )}
-                  >
-                    <Avatar className="w-12 h-12">
-                      <AvatarImage
-                        src={`${import.meta.env.VITE_BACKEND_URL ||
-                          "https://nexacreators.com.br"
-                          }${room.other_user.avatar}`}
-                      />
-                      <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400">
-                        {room.other_user.name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-slate-900 dark:text-white truncate">
-                          {room.other_user.name}
-                        </h3>
-                        {room.last_message_at && (
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {formatMessageTime(room.last_message_at)}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-300 truncate">
-                        {room.campaign_title}
-                      </p>
-                      {room.last_message && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                          {room.last_message.is_sender ? "Você: " : ""}
-                          {room.last_message.message}
-                        </p>
-                      )}
-                    </div>
-                    {room.unread_count > 0 && (
-                      <Badge className="ml-auto bg-pink-500 text-white text-xs">
-                        {room.unread_count}
-                      </Badge>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </ScrollArea>
-        </div>
-
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
-          {selectedRoom ? (
-            <>
-              {/* Chat Header */}
-              <div className="flex items-center justify-between p-4 border-b bg-background">
-                <div className="flex items-center gap-3">
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage
-                      src={`${import.meta.env.VITE_BACKEND_URL ||
-                        "https://nexacreators.com.br"
-                        }${selectedRoom.other_user.avatar}`}
-                    />
-                    <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400">
-                      {selectedRoom.other_user.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h2 className="font-semibold text-slate-900 dark:text-white">
-                      {selectedRoom.other_user.name}
-                    </h2>
-                    <div className="flex items-center gap-2">
-                      {isConnected ? (
-                        <div className="flex items-center gap-1 text-green-500">
-                          <Wifi className="w-4 h-4" />
-                          <span className="text-xs">Online</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1 text-red-500">
-                          <WifiOff className="w-4 h-4" />
-                          <span className="text-xs">Offline</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {/* Timeline Button */}
-                  {activeContract && (
-                    <Button
-                      onClick={() => setShowTimeline(true)}
-                      variant="outline"
-                      className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700 hover:text-blue-800"
-                    >
-                      <Clock className="w-4 h-4 mr-2" />
-                      Linha do Tempo
-                    </Button>
-                  )}
-
-                  {/* Send Offer Button */}
-                  {canSendOffer && (
-                    <>
-                      {/* Check if there's already a pending offer */}
-                      {offers.some(offer => offer.status === 'pending') ? (
-                        <div className="flex items-center gap-2">
-                          <Button
-                            onClick={() => {
-                              const pendingOffer = offers.find(offer => offer.status === 'pending');
-                              if (pendingOffer) {
-                                handleExistingOffer(pendingOffer.id);
-                              }
-                            }}
-                            className="bg-orange-600 hover:bg-orange-700 text-white"
-                          >
-                            <AlertCircle className="w-4 h-4 mr-2" />
-                            Oferta Pendente
-                          </Button>
-                          <Button
-                            onClick={() => setShowOfferModal(true)}
-                            variant="outline"
-                            className="border-orange-600 text-orange-600 hover:bg-orange-50"
-                          >
-                            <Briefcase className="w-4 h-4 mr-2" />
-                            Nova Oferta
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button
-                          onClick={() => setShowOfferModal(true)}
-                          className="bg-purple-600 hover:bg-purple-700 text-white"
-                        >
-                          <Briefcase className="w-4 h-4 mr-2" />
-                          Enviar Oferta
-                        </Button>
-                      )}
-                    </>
-                  )}
-
-                  {/* Review Button for Completed Contracts */}
-                  {canReview && (
-                    <Button
-                      onClick={() => {
-                        // Try to find contract with waiting_creator_review status first
-                        let contractToReview = contracts.find(
-                          (c) =>
-                            c.status === "completed" &&
-                            c.workflow_status === "waiting_creator_review"
-                        );
-
-                        // If not found, try to find any completed contract
-                        if (!contractToReview) {
-                          contractToReview = contracts.find(
-                            (c) => c.status === "completed"
-                          );
-                        }
-
-                        // If still not found, try to find any contract
-                        if (!contractToReview && contracts.length > 0) {
-                          contractToReview = contracts[0];
-                        }
-
-                        if (contractToReview) {
-                          // Check if user can review this contract
-                          if (contractToReview.can_review === false) {
-                            toast({
-                              title: "Avaliação já realizada",
-                              description: "Você já avaliou este contrato",
-                              variant: "destructive",
-                            });
-                            return;
-                          }
-
-                          setContractToReview(contractToReview);
-                          setShowReviewModal(true);
-                        } else {
-                          toast({
-                            title: "Erro",
-                            description:
-                              "Nenhum contrato encontrado para avaliação",
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                    >
-                      <Star className="w-4 h-4 mr-2" />⚡ Avaliar Trabalho
-                    </Button>
-                  )}
-
-                  {/* Activate Contract Button */}
-                  {canActivateContract && (
-                    <Button
-                      onClick={handleActivateContract}
-                      className="bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      Ativar Contrato
-                    </Button>
-                  )}
-
-                  {/* End Contract Button */}
-                  {canEndContract && (
-                    <Button
-                      onClick={() => {
-                        const contractToEnd = activeContract;
-                        if (contractToEnd) {
-                          handleEndContract(contractToEnd.id);
-                        }
-                      }}
-                      className="bg-orange-600 hover:bg-orange-700 text-white"
-                    >
-                      Completed
-                    </Button>
-                  )}
-
-                  {/* Terminate Contract Button */}
-                </div>
-              </div>
-
-              {/* Review Notification Banner */}
-              {canReview && (
-                <div className="mx-4 mt-4 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-300 dark:border-yellow-600 rounded-lg shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Star className="w-4 h-4 text-yellow-600" />
-                      <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                        ⚡ Você tem contratos aguardando avaliação!
-                      </span>
-                    </div>
-                    <Button
-                      onClick={() => {
-                        const contractToReview = contracts.find(
-                          (c) =>
-                            c.status === "completed" &&
-                            c.workflow_status === "waiting_creator_review"
-                        );
-                        if (contractToReview) {
-                          setContractToReview(contractToReview);
-                          setShowReviewModal(true);
-                        }
-                      }}
-                      size="sm"
-                      className="bg-yellow-600 hover:bg-yellow-700 text-white"
-                    >
-                      Avaliar Agora
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Existing Offer Notification Banner */}
-              {user?.role === "brand" && selectedRoom && offers.some(offer => offer.status === 'pending') && (
-                <div className="mx-4 mt-4 p-3 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border border-orange-300 dark:border-orange-600 rounded-lg shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-orange-600" />
-                      <span className="text-sm font-medium text-orange-800 dark:text-orange-200">
-                        📋 Você tem uma oferta pendente para este criador
-                      </span>
-                    </div>
-                    <Button
-                      onClick={() => {
-                        const pendingOffer = offers.find(offer => offer.status === 'pending');
-                        if (pendingOffer) {
-                          handleExistingOffer(pendingOffer.id);
-                        }
-                      }}
-                      size="sm"
-                      className="bg-orange-600 hover:bg-orange-700 text-white"
-                    >
-                      Ver Oferta
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Messages */}
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4">
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={cn(
-                        "flex gap-3",
-                        message.message_type === "system"
-                          ? "justify-center"
-                          : message.is_sender
-                            ? "justify-end"
-                            : "justify-start"
-                      )}
-                    >
-                      {!message.is_sender &&
-                        message.message_type !== "system" && (
-                          <Avatar className="w-8 h-8">
-                            <AvatarImage
-                              src={`${import.meta.env.VITE_BACKEND_URL ||
-                                "https://nexacreators.com.br"
-                                }${selectedRoom.other_user.avatar}`}
-                            />
-                            <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400 text-xs">
-                              {selectedRoom.other_user.name
-                                .charAt(0)
-                                .toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                      <div
-                        className={cn(
-                          message.message_type === "system"
-                            ? "max-w-3xl px-4 py-2"
-                            : "max-w-md lg:max-w-2xl xl:max-w-3xl px-4 py-2 rounded-2xl",
-                          message.message_type === "system"
-                            ? ""
-                            : message.is_sender
-                              ? "bg-pink-500 text-white"
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300"
-                        )}
-                      >
-                        {renderMessageContent(message)}
-                        {message.message_type !== "system" && (
-                          <div className="flex items-center justify-between mt-1">
-                            <span className="text-xs opacity-70">
-                              {formatMessageTime(message.created_at)}
-                            </span>
-                            {message.is_sender && (
-                              <div className="flex items-center gap-1">
-                                {message.is_read ? (
-                                  <div className="flex items-center gap-0.5">
-                                    <Check className="w-3 h-3" />
-                                    <Check className="w-3 h-3 -ml-1" />
-                                  </div>
-                                ) : (
-                                  <Clock className="w-3 h-3" />
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  <div ref={messagesEndRef} />
-                </div>
-              </ScrollArea>
-
-              {/* Message Input */}
-              <form
-                className="flex items-end gap-3 px-4 py-4 border-t bg-background"
-                onSubmit={handleSendMessage}
-              >
-                {/* File attachment button */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-3 rounded-xl hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 dark:hover:from-pink-900/20 dark:hover:to-purple-900/20 transition-all duration-300 hover:shadow-md group"
-                  aria-label="Attach file"
-                >
-                  <Paperclip className="w-5 h-5 text-slate-500 group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors duration-300" />
-                </button>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  accept="image/*,.pdf,.doc,.docx,.txt,.zip,.rar,.mp3,.mp4,.wav,.flac,.avi,.mov,.wmv,.js,.ts,.jsx,.tsx,.html,.css,.json"
-                />
-
-                {/* Enhanced File preview */}
-                {selectedFile && (
-                  <div className="group relative overflow-hidden bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-2xl border border-pink-200 dark:border-pink-800 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] animate-in slide-in-from-bottom-2 duration-300">
-                    <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div className="relative flex items-center gap-4 p-4">
-                      {filePreview ? (
-                        <div className="relative">
-                          <img
-                            src={filePreview}
-                            alt="Preview"
-                            className="w-12 h-12 rounded-xl object-cover border-2 border-pink-200 dark:border-pink-700 shadow-md group-hover:scale-110 transition-transform duration-300"
-                          />
-                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center">
-                            <ImageIcon className="w-2.5 h-2.5 text-white" />
-                          </div>
-                        </div>
-                      ) : (
-                        <div
-                          className={`w-12 h-12 bg-gradient-to-br ${getFileColor(
-                            selectedFile.name,
-                            selectedFile.type.startsWith("image/")
-                              ? "image"
-                              : "file"
-                          )} rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300`}
-                        >
-                          {getFileIcon(
-                            selectedFile.name,
-                            selectedFile.type.startsWith("image/")
-                              ? "image"
-                              : "file"
-                          )}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors duration-300">
-                          {selectedFile.name}
-                        </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
-                          <span>{formatFileSize(selectedFile.size)}</span>
-                          <span className="w-1 h-1 bg-slate-300 dark:bg-slate-600 rounded-full" />
-                          <span className="capitalize">
-                            {getFileExtension(selectedFile.name)} file
-                          </span>
-                        </div>
-                        <div className="text-xs text-slate-400 dark:text-slate-500 mt-1 flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" />
-                          <span>Ready to send</span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedFile(null);
-                          setFilePreview(null);
-                        }}
-                        className="p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-all duration-300 hover:shadow-md group-hover:scale-110"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex-1 relative">
-                  <Input
-                    ref={inputRef}
-                    className="w-full bg-background border-slate-200 dark:border-slate-700 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200 resize-none rounded-2xl px-4 py-3"
-                    placeholder="Digite uma mensagem..."
-                    value={input}
-                    onChange={handleInputChange}
-                    autoComplete="off"
-                    aria-label="Digite uma mensagem"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage(e as any);
-                      }
-                    }}
-                    onKeyUp={handleKeyUp}
-                    onBlur={handleInputBlur}
-                  />
-
-                  {/* Typing Indicator */}
-                  {typingUsers.size > 0 && (
-                    <div className="absolute -top-8 left-0 right-0 flex items-center gap-2 px-4 py-2">
-                      <div className="flex items-center gap-2">
-                        <div className="flex space-x-1">
-                          <div
-                            className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
-                            style={{ animationDelay: "0ms" }}
-                          ></div>
-                          <div
-                            className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
-                            style={{ animationDelay: "150ms" }}
-                          ></div>
-                          <div
-                            className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
-                            style={{ animationDelay: "300ms" }}
-                          ></div>
-                        </div>
-                        <span className="text-sm text-slate-600 dark:text-slate-300">
-                          {Array.from(typingUsers).length === 1
-                            ? `${Array.from(typingUsers)[0]} está digitando...`
-                            : `${Array.from(typingUsers).join(
-                              ", "
-                            )} estão digitando...`}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={(!input.trim() && !selectedFile) || !selectedRoom}
-                  className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 h-12 rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 group"
-                >
-                  <Send className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
-                  <span className="hidden md:inline font-semibold ml-2">
-                    Enviar
-                  </span>
-                </Button>
-              </form>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center text-slate-500 dark:text-slate-400">
-                <div className="text-6xl mb-6">💬</div>
-                <p className="text-lg font-medium mb-2">
-                  Selecione uma conversa
-                </p>
-                <p className="text-sm">
-                  Escolha uma conversa da barra lateral para começar a conversar
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-30"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Image Viewer */}
-      {imageViewer.isOpen &&
-        createPortal(
-          <div
-            ref={imageViewerRef}
-            className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center"
-            onClick={() => {
-              setImageViewer({
-                isOpen: false,
-                imageUrl: "",
-                imageName: "",
-                imageSize: "",
-              });
-              setImageZoom(1);
-              setImageRotation(0);
-            }}
+          <svg
+            width="20"
+            height="20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            {/* Image Container */}
-            <div
-              className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <img
-                src={imageViewer.imageUrl}
-                alt={imageViewer.imageName}
-                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-                style={{
-                  transform: `scale(${imageZoom}) rotate(${imageRotation}deg)`,
-                  transition: "transform 0.3s ease-in-out",
-                }}
-                draggable={false}
-              />
-            </div>
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
 
-            {/* Controls */}
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-black/50 backdrop-blur-sm rounded-xl p-2 border border-white/20">
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar */}
+          <div
+            data-sidebar
+            className={cn(
+              "flex flex-col w-full max-w-sm border-r bg-background transition-all duration-300 ease-in-out",
+              "md:relative md:translate-x-0 md:shadow-none",
+              sidebarOpen
+                ? "fixed inset-0 z-40 translate-x-0 shadow-2xl"
+                : "fixed inset-0 z-40 -translate-x-full md:relative md:translate-x-0"
+            )}
+          >
+            {/* Sidebar Header */}
+            <div className="flex items-center justify-between gap-2 px-6 py-5 border-b bg-background">
+              <div className="flex flex-col">
+                <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
+                  Conversas
+                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    {chatRooms.length} conversas
+                  </span>
+                  {connectionError && (
+                    <div className="flex items-center gap-1 text-red-500">
+                      <WifiOff className="w-3 h-3" />
+                      <span className="text-xs">Offline</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {connectionError && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={reconnect}
+                  className="p-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
+              )}
               <button
-                onClick={() =>
-                  setImageZoom((prev) => Math.max(prev - 0.25, 0.25))
-                }
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
-                title="Zoom Out"
-              >
-                <ZoomOut className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setImageZoom((prev) => Math.min(prev + 0.25, 3))}
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
-                title="Zoom In"
-              >
-                <ZoomIn className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setImageRotation((prev) => (prev + 90) % 360)}
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
-                title="Rotate"
-              >
-                <RotateCcw className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => {
-                  setImageZoom(1);
-                  setImageRotation(0);
-                }}
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
-                title="Reset"
-              >
-                <Minimize2 className="w-5 h-5" />
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    await downloadImageToLocal(
-                      imageViewer.imageUrl,
-                      imageViewer.imageName
-                    );
-                  } catch (error) {
-                    console.error("Error downloading image:", error);
-                  }
-                }}
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
-                title="Download"
-              >
-                <Download className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => {
-                  setImageViewer({
-                    isOpen: false,
-                    imageUrl: "",
-                    imageName: "",
-                    imageSize: "",
-                  });
-                  setImageZoom(1);
-                  setImageRotation(0);
-                }}
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
-                title="Close"
+                className="md:hidden p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
+                onClick={() => setSidebarOpen(false)}
+                aria-label="Close conversations"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Image Info */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 backdrop-blur-sm rounded-xl p-3 border border-white/20">
-              <div className="text-white text-center">
-                <div className="font-medium">{imageViewer.imageName}</div>
-                {imageViewer.imageSize && (
-                  <div className="text-sm text-white/70">
-                    {imageViewer.imageSize}
+            {/* Search */}
+            <div className="p-4 pb-3">
+              <div className="relative">
+                <Input
+                  placeholder="Buscar conversas..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-800 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200"
+                />
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+              </div>
+            </div>
+
+            {/* Conversation List */}
+            <ScrollArea className="flex-1">
+              <div className="p-2 w-[383px]">
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : filteredRooms.length === 0 ? (
+                  <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                    <div className="text-4xl mb-2">💬</div>
+                    <p className="text-sm">Nenhuma conversa encontrada</p>
+                  </div>
+                ) : (
+                  filteredRooms.map((room) => (
+                    <div
+                      key={room.id}
+                      onClick={() => setSelectedRoom(room)}
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 mb-2",
+                        selectedRoom?.id === room.id
+                          ? "bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800"
+                          : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                      )}
+                    >
+                      <Avatar className="w-12 h-12">
+                        <AvatarImage
+                          src={`${import.meta.env.VITE_BACKEND_URL ||
+                            "https://nexacreators.com.br"
+                            }${room.other_user.avatar}`}
+                        />
+                        <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400">
+                          {room.other_user.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-semibold text-slate-900 dark:text-white truncate">
+                            {room.other_user.name}
+                          </h3>
+                          {room.last_message_at && (
+                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                              {formatMessageTime(room.last_message_at)}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-slate-600 dark:text-slate-300 truncate">
+                          {room.campaign_title}
+                        </p>
+                        {room.last_message && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            {room.last_message.is_sender ? "Você: " : ""}
+                            {room.last_message.message}
+                          </p>
+                        )}
+                      </div>
+                      {room.unread_count > 0 && (
+                        <Badge className="ml-auto bg-pink-500 text-white text-xs">
+                          {room.unread_count}
+                        </Badge>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+
+          {/* Chat Area */}
+          <div className="flex-1 flex flex-col">
+            {selectedRoom ? (
+              <>
+                {/* Chat Header */}
+                <div className="flex items-center justify-between p-4 border-b bg-background">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage
+                        src={`${import.meta.env.VITE_BACKEND_URL ||
+                          "https://nexacreators.com.br"
+                          }${selectedRoom.other_user.avatar}`}
+                      />
+                      <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400">
+                        {selectedRoom.other_user.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h2 className="font-semibold text-slate-900 dark:text-white">
+                        {selectedRoom.other_user.name}
+                      </h2>
+                      <div className="flex items-center gap-2">
+                        {isConnected ? (
+                          <div className="flex items-center gap-1 text-green-500">
+                            <Wifi className="w-4 h-4" />
+                            <span className="text-xs">Online</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 text-red-500">
+                            <WifiOff className="w-4 h-4" />
+                            <span className="text-xs">Offline</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {/* Timeline Button */}
+                    {activeContract && (
+                      <Button
+                        onClick={() => setShowTimeline(true)}
+                        variant="outline"
+                        className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700 hover:text-blue-800"
+                      >
+                        <Clock className="w-4 h-4 mr-2" />
+                        Linha do Tempo
+                      </Button>
+                    )}
+
+                    {/* Send Offer Button */}
+                    {canSendOffer && (
+                      <>
+                        {/* Check if there's already a pending offer */}
+                        {offers.some(offer => offer.status === 'pending') ? (
+                          <div className="flex items-center gap-2">
+                            <Button
+                              onClick={() => {
+                                const pendingOffer = offers.find(offer => offer.status === 'pending');
+                                if (pendingOffer) {
+                                  handleExistingOffer(pendingOffer.id);
+                                }
+                              }}
+                              className="bg-orange-600 hover:bg-orange-700 text-white"
+                            >
+                              <AlertCircle className="w-4 h-4 mr-2" />
+                              Oferta Pendente
+                            </Button>
+                            <Button
+                              onClick={() => setShowOfferModal(true)}
+                              variant="outline"
+                              className="border-orange-600 text-orange-600 hover:bg-orange-50"
+                            >
+                              <Briefcase className="w-4 h-4 mr-2" />
+                              Nova Oferta
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            onClick={() => setShowOfferModal(true)}
+                            className="bg-purple-600 hover:bg-purple-700 text-white"
+                          >
+                            <Briefcase className="w-4 h-4 mr-2" />
+                            Enviar Oferta
+                          </Button>
+                        )}
+                      </>
+                    )}
+
+                    {/* Review Button for Completed Contracts */}
+                    {canReview && (
+                      <Button
+                        onClick={() => {
+                          // Try to find contract with waiting_creator_review status first
+                          let contractToReview = contracts.find(
+                            (c) =>
+                              c.status === "completed" &&
+                              c.workflow_status === "waiting_creator_review"
+                          );
+
+                          // If not found, try to find any completed contract
+                          if (!contractToReview) {
+                            contractToReview = contracts.find(
+                              (c) => c.status === "completed"
+                            );
+                          }
+
+                          // If still not found, try to find any contract
+                          if (!contractToReview && contracts.length > 0) {
+                            contractToReview = contracts[0];
+                          }
+
+                          if (contractToReview) {
+                            // Check if user can review this contract
+                            if (contractToReview.can_review === false) {
+                              toast({
+                                title: "Avaliação já realizada",
+                                description: "Você já avaliou este contrato",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+
+                            setContractToReview(contractToReview);
+                            setShowReviewModal(true);
+                          } else {
+                            toast({
+                              title: "Erro",
+                              description:
+                                "Nenhum contrato encontrado para avaliação",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                      >
+                        <Star className="w-4 h-4 mr-2" />⚡ Avaliar Trabalho
+                      </Button>
+                    )}
+
+                    {/* Activate Contract Button */}
+                    {canActivateContract && (
+                      <Button
+                        onClick={handleActivateContract}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        Ativar Contrato
+                      </Button>
+                    )}
+
+                    {/* End Contract Button */}
+                    {canEndContract && (
+                      <Button
+                        onClick={() => {
+                          const contractToEnd = activeContract;
+                          if (contractToEnd) {
+                            handleEndContract(contractToEnd.id);
+                          }
+                        }}
+                        className="bg-orange-600 hover:bg-orange-700 text-white"
+                      >
+                        Completed
+                      </Button>
+                    )}
+
+                    {/* Terminate Contract Button */}
+                  </div>
+                </div>
+
+                {/* Review Notification Banner */}
+                {canReview && (
+                  <div className="mx-4 mt-4 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-300 dark:border-yellow-600 rounded-lg shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Star className="w-4 h-4 text-yellow-600" />
+                        <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                          ⚡ Você tem contratos aguardando avaliação!
+                        </span>
+                      </div>
+                      <Button
+                        onClick={() => {
+                          const contractToReview = contracts.find(
+                            (c) =>
+                              c.status === "completed" &&
+                              c.workflow_status === "waiting_creator_review"
+                          );
+                          if (contractToReview) {
+                            setContractToReview(contractToReview);
+                            setShowReviewModal(true);
+                          }
+                        }}
+                        size="sm"
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                      >
+                        Avaliar Agora
+                      </Button>
+                    </div>
                   </div>
                 )}
-                <div className="text-sm text-white/70">
-                  Zoom: {Math.round(imageZoom * 100)}% | Rotation:{" "}
-                  {imageRotation}°
-                </div>
-                <div className="text-xs text-white/50 mt-1">
-                  Press + / - to zoom, R to rotate, 0 to reset, D to download,
-                  ESC to close
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
 
-      {/* Offer Modal */}
-      {showOfferModal && selectedRoom && (
-        <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <CreateOffer
-            creatorId={selectedRoom.other_user.id}
-            creatorName={selectedRoom.other_user.name}
-            chatRoomId={selectedRoom.room_id}
-            onOfferCreated={handleOfferCreated}
-            onCancel={handleOfferCancel}
-            onExistingOffer={handleExistingOffer}
-            onReloadMessages={() =>
-              selectedRoom && loadMessages(selectedRoom.room_id)
-            }
-          />
-        </div>
-      )}
-
-      {/* Existing Offer Modal */}
-      {showExistingOfferModal && (
-        <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-background rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-orange-500" />
-              Oferta Existente
-            </h3>
-
-            {/* Show existing offer details */}
-            {existingOfferId && (
-              <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
-                <p className="text-sm text-orange-800 dark:text-orange-200 mb-2">
-                  <strong>Oferta Atual:</strong>
-                </p>
-                {(() => {
-                  const existingOffer = offers.find(offer => offer.id === existingOfferId);
-                  if (existingOffer) {
-                    return (
-                      <div className="text-sm">
-                        <p><strong>Valor:</strong> {existingOffer.budget}</p>
-                        <p><strong>Prazo:</strong> {existingOffer.estimated_days} dias</p>
-                        <p><strong>Status:</strong> {existingOffer.status === 'pending' ? 'Pendente' : existingOffer.status}</p>
-                        <p><strong>Expira em:</strong> {existingOffer.days_until_expiry} dias</p>
+                {/* Existing Offer Notification Banner */}
+                {user?.role === "brand" && selectedRoom && offers.some(offer => offer.status === 'pending') && (
+                  <div className="mx-4 mt-4 p-3 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border border-orange-300 dark:border-orange-600 rounded-lg shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-orange-600" />
+                        <span className="text-sm font-medium text-orange-800 dark:text-orange-200">
+                          📋 Você tem uma oferta pendente para este criador
+                        </span>
                       </div>
-                    );
-                  }
-                  return <p className="text-sm text-gray-600">Detalhes da oferta não disponíveis</p>;
-                })()}
+                      <Button
+                        onClick={() => {
+                          const pendingOffer = offers.find(offer => offer.status === 'pending');
+                          if (pendingOffer) {
+                            handleExistingOffer(pendingOffer.id);
+                          }
+                        }}
+                        size="sm"
+                        className="bg-orange-600 hover:bg-orange-700 text-white"
+                      >
+                        Ver Oferta
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Messages */}
+                <ScrollArea className="flex-1 p-4">
+                  <div className="space-y-4">
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={cn(
+                          "flex gap-3",
+                          message.message_type === "system"
+                            ? "justify-center"
+                            : message.is_sender
+                              ? "justify-end"
+                              : "justify-start"
+                        )}
+                      >
+                        {!message.is_sender &&
+                          message.message_type !== "system" && (
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage
+                                src={`${import.meta.env.VITE_BACKEND_URL ||
+                                  "https://nexacreators.com.br"
+                                  }${selectedRoom.other_user.avatar}`}
+                              />
+                              <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400 text-xs">
+                                {selectedRoom.other_user.name
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+                        <div
+                          className={cn(
+                            message.message_type === "system"
+                              ? "max-w-3xl px-4 py-2"
+                              : "max-w-md lg:max-w-2xl xl:max-w-3xl px-4 py-2 rounded-2xl",
+                            message.message_type === "system"
+                              ? ""
+                              : message.is_sender
+                                ? "bg-pink-500 text-white"
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300"
+                          )}
+                        >
+                          {renderMessageContent(message)}
+                          {message.message_type !== "system" && (
+                            <div className="flex items-center justify-between mt-1">
+                              <span className="text-xs opacity-70">
+                                {formatMessageTime(message.created_at)}
+                              </span>
+                              {message.is_sender && (
+                                <div className="flex items-center gap-1">
+                                  {message.is_read ? (
+                                    <div className="flex items-center gap-0.5">
+                                      <Check className="w-3 h-3" />
+                                      <Check className="w-3 h-3 -ml-1" />
+                                    </div>
+                                  ) : (
+                                    <Clock className="w-3 h-3" />
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </ScrollArea>
+
+                {/* Message Input */}
+                <form
+                  className="flex items-end gap-3 px-4 py-4 border-t bg-background"
+                  onSubmit={handleSendMessage}
+                >
+                  {/* File attachment button */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-3 rounded-xl hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 dark:hover:from-pink-900/20 dark:hover:to-purple-900/20 transition-all duration-300 hover:shadow-md group"
+                    aria-label="Attach file"
+                  >
+                    <Paperclip className="w-5 h-5 text-slate-500 group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors duration-300" />
+                  </button>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    accept="image/*,.pdf,.doc,.docx,.txt,.zip,.rar,.mp3,.mp4,.wav,.flac,.avi,.mov,.wmv,.js,.ts,.jsx,.tsx,.html,.css,.json"
+                  />
+
+                  {/* Enhanced File preview */}
+                  {selectedFile && (
+                    <div className="group relative overflow-hidden bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-2xl border border-pink-200 dark:border-pink-800 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] animate-in slide-in-from-bottom-2 duration-300">
+                      <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <div className="relative flex items-center gap-4 p-4">
+                        {filePreview ? (
+                          <div className="relative">
+                            <img
+                              src={filePreview}
+                              alt="Preview"
+                              className="w-12 h-12 rounded-xl object-cover border-2 border-pink-200 dark:border-pink-700 shadow-md group-hover:scale-110 transition-transform duration-300"
+                            />
+                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center">
+                              <ImageIcon className="w-2.5 h-2.5 text-white" />
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            className={`w-12 h-12 bg-gradient-to-br ${getFileColor(
+                              selectedFile.name,
+                              selectedFile.type.startsWith("image/")
+                                ? "image"
+                                : "file"
+                            )} rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300`}
+                          >
+                            {getFileIcon(
+                              selectedFile.name,
+                              selectedFile.type.startsWith("image/")
+                                ? "image"
+                                : "file"
+                            )}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors duration-300">
+                            {selectedFile.name}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+                            <span>{formatFileSize(selectedFile.size)}</span>
+                            <span className="w-1 h-1 bg-slate-300 dark:bg-slate-600 rounded-full" />
+                            <span className="capitalize">
+                              {getFileExtension(selectedFile.name)} file
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-400 dark:text-slate-500 mt-1 flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" />
+                            <span>Ready to send</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedFile(null);
+                            setFilePreview(null);
+                          }}
+                          className="p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-all duration-300 hover:shadow-md group-hover:scale-110"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex-1 relative">
+                    <Input
+                      ref={inputRef}
+                      className="w-full bg-background border-slate-200 dark:border-slate-700 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200 resize-none rounded-2xl px-4 py-3"
+                      placeholder="Digite uma mensagem..."
+                      value={input}
+                      onChange={handleInputChange}
+                      autoComplete="off"
+                      aria-label="Digite uma mensagem"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage(e as any);
+                        }
+                      }}
+                      onKeyUp={handleKeyUp}
+                      onBlur={handleInputBlur}
+                    />
+
+                    {/* Typing Indicator */}
+                    {typingUsers.size > 0 && (
+                      <div className="absolute -top-8 left-0 right-0 flex items-center gap-2 px-4 py-2">
+                        <div className="flex items-center gap-2">
+                          <div className="flex space-x-1">
+                            <div
+                              className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
+                              style={{ animationDelay: "0ms" }}
+                            ></div>
+                            <div
+                              className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
+                              style={{ animationDelay: "150ms" }}
+                            ></div>
+                            <div
+                              className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
+                              style={{ animationDelay: "300ms" }}
+                            ></div>
+                          </div>
+                          <span className="text-sm text-slate-600 dark:text-slate-300">
+                            {Array.from(typingUsers).length === 1
+                              ? `${Array.from(typingUsers)[0]} está digitando...`
+                              : `${Array.from(typingUsers).join(
+                                ", "
+                              )} estão digitando...`}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={(!input.trim() && !selectedFile) || !selectedRoom}
+                    className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 h-12 rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 group"
+                  >
+                    <Send className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
+                    <span className="hidden md:inline font-semibold ml-2">
+                      Enviar
+                    </span>
+                  </Button>
+                </form>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center text-slate-500 dark:text-slate-400">
+                  <div className="text-6xl mb-6">💬</div>
+                  <p className="text-lg font-medium mb-2">
+                    Selecione uma conversa
+                  </p>
+                  <p className="text-sm">
+                    Escolha uma conversa da barra lateral para começar a conversar
+                  </p>
+                </div>
               </div>
             )}
-
-            <p className="text-muted-foreground mb-6">
-              Você já tem uma oferta pendente para este criador. Deseja cancelar
-              a oferta existente e criar uma nova?
-            </p>
-
-            <div className="flex gap-3 justify-end">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowExistingOfferModal(false);
-                  setExistingOfferId(null);
-                }}
-              >
-                Manter Oferta
-              </Button>
-              <Button
-                onClick={handleCancelExistingOffer}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                Cancelar e Criar Nova
-              </Button>
-            </div>
           </div>
         </div>
-      )}
 
-      {/* Review Modal */}
-      {showReviewModal && contractToReview && (
-        <div className="w-full h-screen flex justify-center items-center bg-black/60 backdrop-blur-sm">
-          <ReviewModal
-            isOpen={showReviewModal}
-            onClose={handleReviewModalClose}
-            contract={contractToReview}
-            onReviewSubmitted={handleReviewSubmitted}
+        {/* Mobile Overlay */}
+        {sidebarOpen && (
+          <div
+            className="md:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-30"
+            onClick={() => setSidebarOpen(false)}
           />
-        </div>
-      )}
+        )}
 
-      {/* Campaign Finalization Modal */}
-      {showCampaignFinalizationModal && contractToFinalize && (
-        <CampaignFinalizationModal
-          isOpen={showCampaignFinalizationModal}
-          onClose={() => {
-            setShowCampaignFinalizationModal(false);
-            setContractToFinalize(null);
-          }}
-          contract={contractToFinalize}
-          onCampaignFinalized={handleCampaignFinalized}
-        />
-      )}
+        {/* Image Viewer */}
+        {imageViewer.isOpen &&
+          createPortal(
+            <div
+              ref={imageViewerRef}
+              className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center"
+              onClick={() => {
+                setImageViewer({
+                  isOpen: false,
+                  imageUrl: "",
+                  imageName: "",
+                  imageSize: "",
+                });
+                setImageZoom(1);
+                setImageRotation(0);
+              }}
+            >
+              {/* Image Container */}
+              <div
+                className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <img
+                  src={imageViewer.imageUrl}
+                  alt={imageViewer.imageName}
+                  className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                  style={{
+                    transform: `scale(${imageZoom}) rotate(${imageRotation}deg)`,
+                    transition: "transform 0.3s ease-in-out",
+                  }}
+                  draggable={false}
+                />
+              </div>
 
-      {/* Campaign Timeline Modal */}
-      {showTimeline && activeContract && (
-        <CampaignTimeline
-          contractId={activeContract.id}
-          isOpen={showTimeline}
-          onClose={() => setShowTimeline(false)}
-        />
-      )}
-    </div>
+              {/* Controls */}
+              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-black/50 backdrop-blur-sm rounded-xl p-2 border border-white/20">
+                <button
+                  onClick={() =>
+                    setImageZoom((prev) => Math.max(prev - 0.25, 0.25))
+                  }
+                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setImageZoom((prev) => Math.min(prev + 0.25, 3))}
+                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setImageRotation((prev) => (prev + 90) % 360)}
+                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
+                  title="Rotate"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => {
+                    setImageZoom(1);
+                    setImageRotation(0);
+                  }}
+                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
+                  title="Reset"
+                >
+                  <Minimize2 className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      await downloadImageToLocal(
+                        imageViewer.imageUrl,
+                        imageViewer.imageName
+                      );
+                    } catch (error) {
+                      console.error("Error downloading image:", error);
+                    }
+                  }}
+                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
+                  title="Download"
+                >
+                  <Download className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => {
+                    setImageViewer({
+                      isOpen: false,
+                      imageUrl: "",
+                      imageName: "",
+                      imageSize: "",
+                    });
+                    setImageZoom(1);
+                    setImageRotation(0);
+                  }}
+                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
+                  title="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Image Info */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 backdrop-blur-sm rounded-xl p-3 border border-white/20">
+                <div className="text-white text-center">
+                  <div className="font-medium">{imageViewer.imageName}</div>
+                  {imageViewer.imageSize && (
+                    <div className="text-sm text-white/70">
+                      {imageViewer.imageSize}
+                    </div>
+                  )}
+                  <div className="text-sm text-white/70">
+                    Zoom: {Math.round(imageZoom * 100)}% | Rotation:{" "}
+                    {imageRotation}°
+                  </div>
+                  <div className="text-xs text-white/50 mt-1">
+                    Press + / - to zoom, R to rotate, 0 to reset, D to download,
+                    ESC to close
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
+
+        {/* Offer Modal */}
+        {showOfferModal && selectedRoom && (
+          <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <CreateOffer
+              creatorId={selectedRoom.other_user.id}
+              creatorName={selectedRoom.other_user.name}
+              chatRoomId={selectedRoom.room_id}
+              onOfferCreated={handleOfferCreated}
+              onCancel={handleOfferCancel}
+              onExistingOffer={handleExistingOffer}
+              onReloadMessages={() =>
+                selectedRoom && loadMessages(selectedRoom.room_id)
+              }
+            />
+          </div>
+        )}
+
+        {/* Existing Offer Modal */}
+        {showExistingOfferModal && (
+          <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-background rounded-lg p-6 max-w-md w-full">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-orange-500" />
+                Oferta Existente
+              </h3>
+
+              {/* Show existing offer details */}
+              {existingOfferId && (
+                <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
+                  <p className="text-sm text-orange-800 dark:text-orange-200 mb-2">
+                    <strong>Oferta Atual:</strong>
+                  </p>
+                  {(() => {
+                    const existingOffer = offers.find(offer => offer.id === existingOfferId);
+                    if (existingOffer) {
+                      return (
+                        <div className="text-sm">
+                          <p><strong>Valor:</strong> {existingOffer.budget}</p>
+                          <p><strong>Prazo:</strong> {existingOffer.estimated_days} dias</p>
+                          <p><strong>Status:</strong> {existingOffer.status === 'pending' ? 'Pendente' : existingOffer.status}</p>
+                          <p><strong>Expira em:</strong> {existingOffer.days_until_expiry} dias</p>
+                        </div>
+                      );
+                    }
+                    return <p className="text-sm text-gray-600">Detalhes da oferta não disponíveis</p>;
+                  })()}
+                </div>
+              )}
+
+              <p className="text-muted-foreground mb-6">
+                Você já tem uma oferta pendente para este criador. Deseja cancelar
+                a oferta existente e criar uma nova?
+              </p>
+
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowExistingOfferModal(false);
+                    setExistingOfferId(null);
+                  }}
+                >
+                  Manter Oferta
+                </Button>
+                <Button
+                  onClick={handleCancelExistingOffer}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Cancelar e Criar Nova
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Review Modal */}
+        {showReviewModal && contractToReview && (
+          <div className="w-full h-screen flex justify-center items-center bg-black/60 backdrop-blur-sm">
+            <ReviewModal
+              isOpen={showReviewModal}
+              onClose={handleReviewModalClose}
+              contract={contractToReview}
+              onReviewSubmitted={handleReviewSubmitted}
+            />
+          </div>
+        )}
+
+        {/* Campaign Finalization Modal */}
+        {showCampaignFinalizationModal && contractToFinalize && (
+          <CampaignFinalizationModal
+            isOpen={showCampaignFinalizationModal}
+            onClose={() => {
+              setShowCampaignFinalizationModal(false);
+              setContractToFinalize(null);
+            }}
+            contract={contractToFinalize}
+            onCampaignFinalized={handleCampaignFinalized}
+          />
+        )}
+
+        {/* Campaign Timeline Modal */}
+        {showTimeline && activeContract && (
+          <CampaignTimeline
+            contractId={activeContract.id}
+            isOpen={showTimeline}
+            onClose={() => setShowTimeline(false)}
+          />
+        )}
+      </div>
+    </>
   );
 }

@@ -1,8 +1,8 @@
 import { Button } from "../ui/button";
-import { CheckCircle2, Calendar, Lightbulb, Crown, AlertCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, Calendar, Lightbulb, Crown, AlertCircle, Loader2, Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import SubscriptionModal from "./SubscriptionModal";
-import { paymentApi, SubscriptionStatus } from "../../api/payment";
+import { paymentApi, SubscriptionStatus, SubscriptionPlan } from "../../api/payment";
 import { useToast } from "../../hooks/use-toast";
 
 const benefits = [
@@ -17,12 +17,16 @@ export default function Subscription() {
     const { toast } = useToast();
     const [showCoupon, setShowCoupon] = useState(false);
     const [open, setOpen] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
     const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
+    const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
     const [loading, setLoading] = useState(true);
+    const [plansLoading, setPlansLoading] = useState(true);
     const [paymentProcessing, setPaymentProcessing] = useState(false);
 
     useEffect(() => {
         loadSubscriptionStatus();
+        loadSubscriptionPlans();
     }, []);
 
     // Refresh subscription status when modal closes
@@ -63,6 +67,50 @@ export default function Subscription() {
             });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadSubscriptionPlans = async () => {
+        try {
+            setPlansLoading(true);
+            const plans = await paymentApi.getSubscriptionPlans();
+            console.log('Loaded subscription plans:', plans);
+            
+            // Ensure plans is an array and has the expected structure
+            if (Array.isArray(plans) && plans.length > 0) {
+                // Validate and sanitize plan data
+                const validatedPlans = plans.map(plan => ({
+                    id: plan.id || 0,
+                    name: plan.name || 'Plano',
+                    description: plan.description || 'Descrição não disponível',
+                    price: typeof plan.price === 'number' ? plan.price : parseFloat(plan.price) || 0,
+                    duration_months: typeof plan.duration_months === 'number' ? plan.duration_months : parseInt(plan.duration_months) || 1,
+                    monthly_price: typeof plan.monthly_price === 'number' ? plan.monthly_price : parseFloat(plan.monthly_price) || 0,
+                    savings_percentage: typeof plan.savings_percentage === 'number' ? plan.savings_percentage : null,
+                    features: Array.isArray(plan.features) ? plan.features : [],
+                    sort_order: typeof plan.sort_order === 'number' ? plan.sort_order : parseInt(plan.sort_order) || 0
+                }));
+                
+                setSubscriptionPlans(validatedPlans);
+                
+                // Set default selected plan to monthly plan
+                setSelectedPlan(validatedPlans[0]);
+            } else {
+                console.warn('No subscription plans received or invalid data structure');
+                setSubscriptionPlans([]);
+                setSelectedPlan(null);
+            }
+        } catch (error) {
+            console.error('Error loading subscription plans:', error);
+            setSubscriptionPlans([]);
+            setSelectedPlan(null);
+            toast({
+                title: "Erro",
+                description: "Não foi possível carregar os planos de assinatura.",
+                variant: "destructive",
+            });
+        } finally {
+            setPlansLoading(false);
         }
     };
 
@@ -189,30 +237,133 @@ export default function Subscription() {
                 {/* Available Plans */}
                 <div className="flex flex-col gap-4">
                     <div className="font-bold text-lg text-foreground">Planos Disponíveis</div>
-                    <div className="rounded-xl border bg-background shadow-sm px-6 py-6 flex flex-col gap-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                            <div>
-                                <div className="font-bold text-xl text-foreground mb-0.5">PRO Creator</div>
-                                <div className="text-sm text-muted-foreground mb-2">O plano ideal para criadores que querem se destacar</div>
-                            </div>
-                            <div className="flex flex-col items-end min-w-[110px]">
-                                <span className="text-2xl font-bold text-foreground leading-none">R$ 29,99</span>
-                                <span className="text-xs text-muted-foreground leading-none">/ mês</span>
-                            </div>
+                    
+                    {plansLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            <span className="ml-2 text-muted-foreground">Carregando planos...</span>
                         </div>
-                        <div className="flex flex-col gap-2">
-                            <div className="font-semibold text-sm mb-1 text-foreground">Benefícios incluídos:</div>
-                            <ul className="flex flex-col gap-2">
-                                {benefits.map((b) => (
-                                    <li key={b} className="flex items-center gap-2 text-sm text-foreground">
-                                        <CheckCircle2 className="w-5 h-5 text-pink-500 dark:text-pink-300" />
-                                        {b}
-                                    </li>
+                    ) : !subscriptionPlans || subscriptionPlans.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                            <AlertCircle className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
+                            <div className="font-medium mb-1">Nenhum plano disponível</div>
+                            <div className="text-sm">Não foi possível carregar os planos de assinatura</div>
+                        </div>
+                    ) : (
+                        <div className="rounded-xl border bg-background shadow-sm p-6">
+                            {/* Plan Selection Bar */}
+                            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                                {subscriptionPlans.map((plan) => (
+                                    <div
+                                        key={plan.id}
+                                        className={`flex-1 rounded-lg border-2 p-4 cursor-pointer transition-all ${
+                                            selectedPlan?.id === plan.id
+                                                ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/20 ring-2 ring-pink-500/20'
+                                                : 'border-border hover:border-pink-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                        }`}
+                                        onClick={() => setSelectedPlan(plan)}
+                                    >
+                                        <div className="text-center">
+                                            <div className="font-bold text-lg text-foreground mb-1">
+                                                {plan.name || 'Plano'}
+                                            </div>
+                                            <div className="text-2xl font-bold text-pink-600 dark:text-pink-400 mb-1">
+                                                R$ {typeof plan.price === 'number' ? plan.price.toFixed(2).replace('.', ',') : '0,00'}
+                                            </div>
+                                            <div className="text-sm text-muted-foreground mb-2">
+                                                {plan.duration_months === 1 
+                                                    ? 'por mês' 
+                                                    : `por ${plan.duration_months || 1} meses`
+                                                }
+                                            </div>
+                                            {plan.savings_percentage && typeof plan.savings_percentage === 'number' && (
+                                                <div className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 text-xs font-medium rounded-full">
+                                                    <Star className="w-3 h-3" />
+                                                    {plan.savings_percentage}% OFF
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 ))}
-                            </ul>
+                            </div>
+
+                            {/* Selected Plan Details */}
+                            {selectedPlan && (
+                                <div className="border-t pt-6">
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                                        <div>
+                                            <div className="font-bold text-xl text-foreground mb-2">
+                                                {selectedPlan.name} - Detalhes
+                                            </div>
+                                                                                    <div className="text-sm text-muted-foreground">
+                                            {selectedPlan.description || 'Descrição não disponível'}
+                                        </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-3xl font-bold text-foreground">
+                                                R$ {typeof selectedPlan.price === 'number' ? selectedPlan.price.toFixed(2).replace('.', ',') : '0,00'}
+                                            </div>
+                                            <div className="text-sm text-muted-foreground">
+                                                {selectedPlan.duration_months === 1 
+                                                    ? 'por mês' 
+                                                    : `por ${selectedPlan.duration_months || 1} meses (R$ ${typeof selectedPlan.monthly_price === 'number' ? selectedPlan.monthly_price.toFixed(2).replace('.', ',') : '0,00'}/mês)`
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Features */}
+                                    <div className="mb-6">
+                                        <div className="font-semibold text-sm mb-3 text-foreground">
+                                            Benefícios incluídos:
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            {selectedPlan.features && Array.isArray(selectedPlan.features) ? (
+                                                selectedPlan.features.map((feature, index) => (
+                                                    <div key={index} className="flex items-center gap-2 text-sm text-foreground">
+                                                        <CheckCircle2 className="w-4 h-4 text-pink-500 dark:text-pink-300 flex-shrink-0" />
+                                                        <span>{feature}</span>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="text-muted-foreground text-sm">
+                                                    Nenhum benefício listado para este plano
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Subscribe Button */}
+                                    <div className="flex justify-center">
+                                        <Button
+                                            onClick={() => setOpen(true)}
+                                            className="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-8 py-3 text-lg w-full sm:w-auto"
+                                            disabled={subscriptionStatus?.is_premium_active || paymentProcessing}
+                                        >
+                                            {subscriptionStatus?.is_premium_active 
+                                                ? 'Assinatura Ativa' 
+                                                : `Assinar ${selectedPlan.name || 'Plano'} por R$ ${typeof selectedPlan.price === 'number' ? selectedPlan.price.toFixed(2).replace('.', ',') : '0,00'}`
+                                            }
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Plan Selection Instructions */}
+                            {!selectedPlan && (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    <Calendar className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
+                                    <div className="font-medium mb-1">Selecione um plano</div>
+                                    <div className="text-sm">Clique em um dos planos acima para ver os detalhes e assinar</div>
+                                </div>
+                            )}
                         </div>
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-2">
-                            <div className="flex-1 flex items-center">
+                    )}
+
+                    {/* Coupon Section */}
+                    {!plansLoading && (
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+                            <div className="flex items-center">
                                 {!showCoupon ? (
                                     <button
                                         className="text-pink-500 text-sm hover:underline"
@@ -229,24 +380,13 @@ export default function Subscription() {
                                     />
                                 )}
                             </div>
-                            <Button 
-                                onClick={() => setOpen(true)} 
-                                className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-8 py-2 text-base w-full sm:w-auto mt-2 sm:mt-0"
-                                disabled={subscriptionStatus?.is_premium_active || paymentProcessing}
-                            >
-                                {paymentProcessing ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        Processando...
-                                    </>
-                                ) : subscriptionStatus?.is_premium_active ? 'Assinatura Ativa' : 'Assinar agora'}
-                            </Button>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
             <SubscriptionModal 
               open={open} 
+              selectedPlan={selectedPlan}
               onOpenChange={(newOpen) => {
                 setOpen(newOpen);
                 if (!newOpen) {

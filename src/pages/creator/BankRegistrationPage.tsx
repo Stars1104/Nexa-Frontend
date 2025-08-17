@@ -2,6 +2,7 @@ import React, {useState, useCallback, useEffect} from 'react';
 import { Loader2 } from 'lucide-react';
 import { creatorPaymentApi } from '@/api/payment';
 import BankRegistration from '@/components/creator/BankRegistration';
+import { Helmet } from 'react-helmet-async';
 
 interface BankInfo {
   bank_code: string;
@@ -87,10 +88,16 @@ const BankRegistrationPage: React.FC = () => {
   }
 
   return (
-    <BankRegistration 
-      initialBankData={bankData}
-      onBankDataUpdate={handleBankDataUpdate}
-    />
+    <>
+      <Helmet>
+        <title>Cadastro Bancário - Nexa Creator</title>
+        <meta name="description" content="Configure suas informações bancárias para receber pagamentos na plataforma Nexa" />
+      </Helmet>
+      <BankRegistration 
+        initialBankData={bankData}
+        onBankDataUpdate={handleBankDataUpdate}
+      />
+    </>
   );
 };
 

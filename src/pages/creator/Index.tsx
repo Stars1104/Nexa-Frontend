@@ -20,6 +20,7 @@ import { usePremiumContext } from "../../contexts/PremiumContext";
 import { useAppSelector } from "../../store/hooks";
 import BankRegistrationDemo from "../BankRegistrationDemo";
 import GuideEmbedded from "@/components/GuideEmbedded";
+import { Helmet } from "react-helmet-async";
 
 const Index = () => {
     const isMobile = useIsMobile();
@@ -106,6 +107,10 @@ const Index = () => {
 
     return (
         <ThemeProvider>
+            <Helmet>
+                <title>{component ? `${component} - Nexa Creator` : 'Nexa Creator'}</title>
+                <meta name="description" content="Painel do criador da plataforma Nexa - Gerencie suas campanhas, portfólio e aplicações" />
+            </Helmet>
             <div className="flex h-screen bg-background text-foreground">
                 {!isMobile && <Sidebar setComponent={setComponent} component={component} />}
                 <div className="flex-1 flex flex-col min-w-0">
