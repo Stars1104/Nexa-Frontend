@@ -16,7 +16,7 @@ export const Pricing = () => {
             <CardContent className="space-y-6">
               <div>
                 <h3 className="text-xl md:text-2xl font-bold text-foreground">Acesso Mensal</h3>
-                <div className="text-2xl md:text-3xl font-bold text-foreground mt-2">R$ 29,90</div>
+                <div className="text-2xl md:text-3xl font-bold text-foreground mt-2">R$ 39,90</div>
               </div>
               <ul className="space-y-3">
                 <li className="flex items-center gap-3">
@@ -79,7 +79,7 @@ export const Pricing = () => {
             <CardContent className="space-y-6">
               <div>
                 <h3 className="text-xl md:text-2xl font-bold text-foreground">Acesso Semestral</h3>
-                <div className="text-2xl md:text-3xl font-bold text-foreground mt-2">R$ 24,90</div>
+                <div className="text-2xl md:text-3xl font-bold text-foreground mt-2">R$ 29,90</div>
               </div>
               <ul className="space-y-3">
                 <li className="flex items-center gap-3">
