@@ -515,9 +515,17 @@ export default function WithdrawalModal({
     return (parseFloat(amount) * selectedMethodData.fee) / 100;
   };
 
+  const calculateFixedFee = () => {
+    return 5.00; // R$5 fixed platform fee
+  };
+
+  const calculateTotalFees = () => {
+    return calculateFee() + calculateFixedFee();
+  };
+
   const calculateNetAmount = () => {
     if (!amount) return 0;
-    return parseFloat(amount) - calculateFee();
+    return parseFloat(amount) - calculateTotalFees();
   };
 
   return (
@@ -694,6 +702,14 @@ export default function WithdrawalModal({
                       -{formatCurrency(calculateFee())}
                     </span>
                   </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">
+                      Taxa Fixa:
+                    </span>
+                    <span className="text-red-600">
+                      -{formatCurrency(calculateFixedFee())}
+                    </span>
+                  </div>
                   <div className="border-t pt-3">
                     <div className="flex justify-between items-center">
                       <span className="font-semibold">Valor Líquido:</span>
@@ -718,7 +734,7 @@ export default function WithdrawalModal({
                   {selectedMethodData?.processing_time || "2-3 dias úteis"}
                   <br />
                   • Verifique se os dados estão corretos antes de confirmar
-                  <br />• Você receberá 95% do valor total do projeto
+                  <br />• Taxa da plataforma: 5% + R$5,00 fixo
                 </p>
               </div>
             </div>

@@ -106,7 +106,7 @@ export const FAQ = () => {
 
         <div className="mt-10 text-center">
           <h3 className="text-xl font-semibold mb-2">Pronto para Transformar sua Vida Financeira?</h3>
-          <p className="text-muted-foreground mb-6">unte-se a mais de 5.000 creators que já estão faturando consistentemente através da NEXA.</p>
+          <p className="text-muted-foreground mb-6">Junte-se a mais de 5.000 creators que já estão faturando consistentemente através da NEXA.</p>
           <a
             href="/signup"
             className="inline-block rounded-lg px-6 py-3 bg-primary text-primary-foreground font-medium shadow-md hover:shadow-lg transition"
