@@ -56,7 +56,8 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
             }
         }
 
-        const socket = io(`http://localhost:3001`, {
+        const socket = io(`${import.meta.env.VITE_BACKEND_URL}`, {
+            path: '/socket.io',
             transports: ['websocket', 'polling'],
             autoConnect: true,
             reconnection: true,
