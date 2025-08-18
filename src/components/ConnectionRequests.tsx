@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { chatService, ConnectionRequest } from '../services/chatService';
 import { format, isToday, isYesterday } from 'date-fns';
+import { useToast } from '../hooks/use-toast';
 
 interface ConnectionRequestsProps {
     onRequestAccepted?: (request: ConnectionRequest) => void;
@@ -29,6 +30,7 @@ export default function ConnectionRequests({ onRequestAccepted, className }: Con
     }>({ received: [], sent: [] });
     const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'received' | 'sent'>('received');
+    const { toast } = useToast();
 
     useEffect(() => {
         loadRequests();
@@ -49,6 +51,11 @@ export default function ConnectionRequests({ onRequestAccepted, className }: Con
             });
         } catch (error) {
             console.error('Error loading connection requests:', error);
+            toast({
+                title: "Erro",
+                description: "Falha ao carregar solicitações de conexão",
+                variant: "destructive",
+            });
         } finally {
             setIsLoading(false);
         }
@@ -73,6 +80,12 @@ export default function ConnectionRequests({ onRequestAccepted, className }: Con
             await loadRequests();
         } catch (error) {
             console.error(`Error ${action}ing connection request:`, error);
+            const actionText = action === 'accept' ? 'aceitar' : action === 'reject' ? 'rejeitar' : 'cancelar';
+            toast({
+                title: "Erro",
+                description: `Falha ao ${actionText} solicitação de conexão`,
+                variant: "destructive",
+            });
         }
     };
 

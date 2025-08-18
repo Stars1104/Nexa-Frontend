@@ -78,9 +78,9 @@ const BankRegistration: React.FC<BankRegistrationProps> = ({
     { code: '260', name: 'Nu Pagamentos S.A. (Nubank)' },
     { code: '208', name: 'BTG Pactual S.A.' },
     { code: '623', name: 'Banco PAN S.A.' },
-    { code: '041', name: 'Banrisul – State Bank of Rio Grande do Sul S.A.' },
-    { code: '748', name: 'Sicredi – Credit Union' },
-    { code: '756', name: 'Sicoob – Credit Union System' }
+    { code: '041', name: 'Banrisul – Banco do Estado do Rio Grande do Sul S.A.' },
+    { code: '748', name: 'Sicredi – Cooperativa de Crédito' },
+    { code: '756', name: 'Sicoob – Sistema de Cooperativas de Crédito' }
   ];
 
   // CPF validation function
@@ -508,7 +508,7 @@ const BankRegistration: React.FC<BankRegistrationProps> = ({
 
                   <div className="space-y-2">
                     <Label htmlFor="agencia_dv" className="text-sm font-medium text-foreground">
-                      Dígito da Agência
+                      Digito da Agência
                     </Label>
                     <Input
                       id="agencia_dv"
@@ -562,7 +562,7 @@ const BankRegistration: React.FC<BankRegistrationProps> = ({
 
                   <div className="space-y-2">
                     <Label htmlFor="conta_dv" className="text-sm font-medium text-foreground">
-                      Dígito da Conta
+                      Digito da Conta
                     </Label>
                     <Input
                       id="conta_dv"

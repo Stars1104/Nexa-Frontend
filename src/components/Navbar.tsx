@@ -18,7 +18,12 @@ export const Navbar = () => {
     const MobileMenu = () => (
         <Sheet>
             <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" className="md:hidden">
+                <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="md:hidden p-2 h-10 w-10 flex items-center justify-center"
+                    aria-label="Open mobile menu"
+                >
                     <Menu className="h-5 w-5" />
                 </Button>
             </SheetTrigger>
@@ -43,7 +48,7 @@ export const Navbar = () => {
     );
 
     return (
-        <header className="relative z-0 p-4 md:p-6">
+        <header className="relative z-50 p-4 md:p-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40">
             <div className="max-w-7xl mx-auto flex justify-between items-center">
                 <div className="text-xl md:text-2xl font-bold text-foreground" onClick={() => navigate("/")}>
                     {
@@ -70,7 +75,7 @@ export const Navbar = () => {
                 </div>
 
                 {/* Mobile Navigation */}
-                <div className="flex md:hidden items-center gap-2">
+                <div className="flex md:hidden items-center gap-3">
                     <ThemeToggle />
                     <MobileMenu />
                 </div>

@@ -295,8 +295,9 @@ export default function Chat() {
     if (!isMountedRef.current) return;
 
     try {
-      const roomsData = await chatService.getChatRooms();
+      const response = await chatService.getChatRooms();
       if (isMountedRef.current) {
+        const roomsData = response || [];
         setChatRooms(roomsData);
 
         // Auto-select first room if none selected and rooms exist
@@ -305,7 +306,11 @@ export default function Chat() {
         }
       }
     } catch (error) {
-      console.error("Error loading chat rooms:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar salas de chat",
+        variant: "destructive",
+      });
     }
   };
 
@@ -346,7 +351,11 @@ export default function Chat() {
         }
       }
     } catch (error) {
-      console.error("Error loading messages:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar mensagens",
+        variant: "destructive",
+      });
     } finally {
       if (isMountedRef.current) {
         setIsLoading(false);
@@ -375,10 +384,7 @@ export default function Chat() {
                 ...reviewStatusResponse.data,
               };
             } catch (error) {
-              console.error(
-                `Error fetching review status for contract ${contract.id}:`,
-                error
-              );
+              // Handle error silently for individual contract review status
               return contract;
             }
           })
@@ -387,7 +393,11 @@ export default function Chat() {
         setContracts(contractsWithReviewStatus);
       }
     } catch (error) {
-      console.error("Error loading contracts:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar contratos",
+        variant: "destructive",
+      });
     } finally {
       if (isMountedRef.current) {
         setIsLoadingContracts(false);
@@ -442,41 +452,44 @@ export default function Chat() {
         
         let guideMessage = '';
         if (isBrand) {
-          guideMessage = "🩷 Parabéns pela uma parceria iniciada com uma criadora da nossa plataforma!\n\n" +
-            "Para garantir o melhor resultado possível, é essencial que você oriente a criadora com detalhamento e clareza sobre como deseja que o conteúdo seja feito quanto mais específica for a comunicação, maior será a qualidade da entrega.\n\n" +
-            "Aqui estão os próximos passos importantes:\n\n" +
-            "• Insira o valor da campanha na aba \"Saldo\" da plataforma.\n" +
-            "• Assim que a criadora enviar o conteúdo pronto e editado, você poderá liberar o pagamento clicando em \"Finalizar Campanha\" e avaliando o trabalho entregue.\n" +
-            "• Reforce com a criadora os pontos principais do briefing para que o vídeo esteja alinhado com o objetivo da marca.\n" +
-            "• Caso o conteúdo não esteja de acordo com o solicitado, serão permitidos até dois pedidos de ajustes por vídeo.\n\n" +
-            "Regras importantes que garantem a segurança da campanha:\n\n" +
-            "✔ Toda comunicação deve ser feita exclusivamente pelo chat da NEXA.\n" +
-            "✘ Não é permitido compartilhar dados bancários, contatos pessoais ou números de WhatsApp com a criadora.\n" +
-            "⚠️ O descumprimento dos prazos ou das regras pode resultar em advertência ou bloqueio do perfil.\n" +
-            "🚫 Caso a campanha precise ser cancelada, o produto enviado deve ser solicitado de volta, e a criadora poderá ser penalizada conforme as diretrizes da plataforma.\n\n" +
-            "A NEXA está aqui para facilitar conexões seguras e profissionais. Conte conosco para apoiar o sucesso da sua campanha! 💼📢";
+          guideMessage = "🎉 **Parabéns pela parceria iniciada com uma criadora da nossa plataforma!**\n\n" +
+            "Para garantir o melhor resultado possível, é essencial que você oriente a criadora com detalhamento e clareza sobre como deseja que o conteúdo seja feito. **Quanto mais específica for a comunicação, maior será a qualidade da entrega.**\n\n" +
+            "**📋 Próximos Passos Importantes:**\n\n" +
+            "• **💰 Saldo da Campanha:** Insira o valor da campanha na aba \"Saldo\" da plataforma\n" +
+            "• **✅ Aprovação de Conteúdo:** Avalie o roteiro antes da gravação para garantir alinhamento\n" +
+            "• **🎬 Entrega Final:** Após receber o conteúdo pronto e editado, libere o pagamento\n" +
+            "• **⭐ Finalização:** Clique em \"Finalizar Campanha\" e avalie o trabalho entregue\n" +
+            "• **📝 Briefing:** Reforce os pontos principais com a criadora para alinhar com o objetivo da marca\n" +
+            "• **🔄 Ajustes:** Permita até 2 pedidos de ajustes por vídeo caso necessário\n\n" +
+            "**🔒 Regras de Segurança da Campanha:**\n\n" +
+            "✅ **Comunicação Exclusiva:** Toda comunicação deve ser feita pelo chat da NEXA\n" +
+            "❌ **Proteção de Dados:** Não compartilhe dados bancários, contatos pessoais ou WhatsApp\n" +
+            "⚠️ **Cumprimento de Prazos:** Descumprimento pode resultar em advertência ou bloqueio\n" +
+            "🚫 **Cancelamento:** Em caso de cancelamento, o produto deve ser solicitado de volta\n\n" +
+            "**💼 A NEXA está aqui para facilitar conexões seguras e profissionais!**\n" +
+            "Conte conosco para apoiar o sucesso da sua campanha! 📢✨";
         } else {
-          guideMessage = "🩷 Parabéns, você foi aprovada em mais uma campanha da NEXA!\n\n" +
+          guideMessage = "🩷 **Parabéns, você foi aprovada em mais uma campanha da NEXA!**\n\n" +
             "Estamos muito felizes em contar com você e esperamos que mostre toda sua criatividade, comprometimento e qualidade para representar bem a marca e a nossa plataforma.\n\n" +
-            "Antes de começar, fique atenta aos pontos abaixo para garantir uma parceria de sucesso:\n\n" +
-            "• Confirme seu endereço de envio o quanto antes, para que o produto possa ser encaminhado sem atrasos.\n" +
-            "• Você devera entregar o roteiro da campanha em até 5 dias úteis.\n" +
-            "• É essencial seguir todas as orientações da marca presentes no briefing.\n" +
-            "• Aguarde a aprovação do roteiro antes de gravar o conteúdo.\n" +
-            "• Após a aprovação do roteiro, o conteúdo final deve ser entregue em até 5 dias úteis.\n" +
-            "• O vídeo deve ser enviado com qualidade profissional, e poderá passar por até 2 solicitações de ajustes, caso não esteja conforme o briefing.\n" +
-            "• Pedimos que mantenha o retorno rápido nas mensagens dentro do chat da plataforma.\n\n" +
-            "Atenção para algumas regras importantes:\n\n" +
-            "✔ Toda a comunicação deve acontecer exclusivamente pelo chat da Anexa.\n" +
-            "✘ Não é permitido compartilhar dados bancários, e-mails ou número de WhatsApp dentro da plataforma.\n" +
-            "⚠️ O não cumprimento dos prazos ou regras pode acarretar em penalizações ou banimento.\n" +
-            "🚫 Caso a campanha seja cancelada, o produto deverá ser devolvido, e a criadora poderá ser punida.\n\n" +
-            "Estamos aqui para garantir a melhor experiência para criadoras e marcas. Boa campanha! 💼💡";
+            "**📋 Próximos Passos:**\n\n" +
+            "• **Confirme seu endereço de envio** o quanto antes, para que o produto possa ser encaminhado sem atrasos\n" +
+            "• **Entregue o roteiro da campanha** em até 5 dias úteis\n" +
+            "• **Siga todas as orientações** da marca presentes no briefing\n" +
+            "• **Aguarde a aprovação** do roteiro antes de gravar o conteúdo\n" +
+            "• **Entregue o conteúdo final** em até 5 dias úteis após aprovação do roteiro\n" +
+            "• **Envie o vídeo com qualidade profissional** - até 2 solicitações de ajustes serão permitidas\n" +
+            "• **Mantenha retorno rápido** nas mensagens dentro do chat da plataforma\n\n" +
+            "**⚠️ Regras Importantes:**\n\n" +
+            "✅ **Toda a comunicação** deve acontecer exclusivamente pelo chat da NEXA\n" +
+            "❌ **Não compartilhe** dados bancários, e-mails ou número de WhatsApp\n" +
+            "⚠️ **Descumprimento** dos prazos ou regras pode resultar em penalizações\n" +
+            "🚫 **Em caso de cancelamento**, o produto deve ser devolvido\n\n" +
+            "**Boa campanha!** 💼💡";
         }
         
-        const quoteMessage = "💼 **Detalhes da Campanha:**\n" +
-          "• **Status:** Conectado\n\n" +
-          "Você está agora conectado e pode começar a conversar. Por favor, use o chat para todas as comunicações e siga as diretrizes da plataforma.";
+        const quoteMessage = "💼 **Detalhes da Campanha:**\n\n" +
+          "**Status:** 🟢 Conectado\n\n" +
+          "Você está agora conectado e pode começar a conversar. **Use o chat para todas as comunicações** e siga as diretrizes da plataforma para uma parceria de sucesso.";
         
         // Create guide message
         const guideMsg: Message = {
@@ -762,7 +775,11 @@ export default function Chat() {
       try {
         await downloadImageToLocal(imageViewer.imageUrl, imageViewer.imageName);
       } catch (error) {
-        console.error("Error downloading image:", error);
+        toast({
+          title: "Erro",
+          description: "Falha ao baixar imagem",
+          variant: "destructive",
+        });
 
         // Try fallback method
         try {
@@ -779,7 +796,11 @@ export default function Chat() {
           link.click();
           document.body.removeChild(link);
         } catch (fallbackError) {
-          console.error("Fallback method also failed:", fallbackError);
+          toast({
+            title: "Erro",
+            description: "Método alternativo também falhou",
+            variant: "destructive",
+          });
         }
       }
     };
@@ -1183,7 +1204,11 @@ export default function Chat() {
             }
           }
         } catch (error) {
-          console.error("Error downloading file:", error);
+          toast({
+            title: "Erro",
+            description: "Falha ao baixar arquivo",
+            variant: "destructive",
+          });
 
           try {
             const downloadUrl = message.file_url.replace(
@@ -1192,7 +1217,11 @@ export default function Chat() {
             );
             window.open(downloadUrl, "_blank", "noopener,noreferrer");
           } catch (fallbackError) {
-            console.error("Fallback method also failed:", fallbackError);
+            toast({
+              title: "Erro",
+              description: "Método alternativo também falhou",
+              variant: "destructive",
+            });
           }
         } finally {
           setIsDownloading(false);
@@ -1483,7 +1512,7 @@ export default function Chat() {
                       {message.formatted_file_size ||
                         (message.file_size
                           ? formatFileSize(parseInt(message.file_size))
-                          : "Unknown size")}
+                          : "Tamanho desconhecido")}
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400 capitalize">
                       {message.message_type === "image"
@@ -1507,8 +1536,8 @@ export default function Chat() {
                   )}
                   <span className="font-medium">
                     {message.message_type === "image"
-                      ? "View Image"
-                      : "Open File"}
+                      ? "Ver Imagem"
+                      : "Abrir Arquivo"}
                   </span>
                 </button>
                 <button
@@ -1524,11 +1553,11 @@ export default function Chat() {
                   <span className="font-medium">
                     {isDownloading
                       ? downloadProgress > 0
-                        ? `Downloading ${downloadProgress}%`
-                        : "Downloading..."
+                        ? `Baixando ${downloadProgress}%`
+                        : "Baixando..."
                       : message.message_type === "image"
-                      ? "Download Image"
-                      : "Download File"}
+                      ? "Baixar Imagem"
+                      : "Baixar Arquivo"}
                   </span>
                   {isDownloading && downloadProgress > 0 && (
                     <div
@@ -1562,7 +1591,7 @@ export default function Chat() {
                   {message.formatted_file_size ||
                     (message.file_size
                       ? formatFileSize(parseInt(message.file_size))
-                      : "Unknown size")}
+                      : "Tamanho desconhecido")}
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 capitalize">
                   {getFileExtension(message.file_name || "")} file
@@ -1679,7 +1708,7 @@ export default function Chat() {
       );
     }
 
-    // Handle system messages (like contract completion messages)
+        // Handle system messages (like contract completion messages)
     if (message.message_type === "system") {
       // Check if this is a contract completion message and user can review
       const canReview = contracts.some(
@@ -1687,16 +1716,74 @@ export default function Chat() {
           contract.status === "completed" && contract.can_review === true
       );
 
+      // Format the message with better typography
+      const formatSystemMessage = (text: string) => {
+        return text
+          .split('\n')
+          .map((line, index) => {
+            if (line.trim() === '') return <br key={index} />;
+            
+            // Handle bold text
+            if (line.includes('**')) {
+              const parts = line.split(/(\*\*.*?\*\*)/g);
+              return (
+                <div key={index} className="mb-3">
+                  {parts.map((part, partIndex) => {
+                    if (part.startsWith('**') && part.endsWith('**')) {
+                      // Check if this is a section header (contains emojis like 📋 or ⚠️)
+                      if (part.includes('📋') || part.includes('⚠️') || part.includes('💼')) {
+                        return (
+                          <div key={partIndex} className="text-lg font-bold text-blue-800 dark:text-blue-200 bg-white/60 dark:bg-slate-800/40 px-3 py-2 rounded-lg border-l-4 border-blue-400">
+                            {part.slice(2, -2)}
+                          </div>
+                        );
+                      }
+                      return (
+                        <span key={partIndex} className="font-bold text-blue-800 dark:text-blue-200">
+                          {part.slice(2, -2)}
+                        </span>
+                      );
+                    }
+                    return <span key={partIndex}>{part}</span>;
+                  })}
+                </div>
+              );
+            }
+            
+            // Handle bullet points
+            if (line.trim().startsWith('•')) {
+              return (
+                <div key={index} className="flex items-start gap-3 mb-2">
+                  <span className="text-blue-600 dark:text-blue-400 mt-1 text-lg font-bold">•</span>
+                  <span className="flex-1">{line.trim().substring(1).trim()}</span>
+                </div>
+              );
+            }
+            
+            // Handle checkmarks and other symbols
+            if (line.includes('✅') || line.includes('❌') || line.includes('⚠️') || line.includes('🚫')) {
+              return (
+                <div key={index} className="flex items-start gap-3 mb-3 p-2 bg-white/50 dark:bg-slate-800/30 rounded-lg">
+                  <span className="text-xl flex-shrink-0">{line.match(/[✅❌⚠️🚫]/)?.[0]}</span>
+                  <span className="flex-1">{line.replace(/[✅❌⚠️🚫]/, '').trim()}</span>
+                </div>
+              );
+            }
+            
+            return <div key={index} className="mb-2">{line}</div>;
+          });
+      };
+
       return (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-3 shadow-sm">
-          <div className="flex items-start gap-2">
-            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-white text-xs">ℹ️</span>
+        <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-5 shadow-lg">
+          <div className="flex items-start gap-4">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1 shadow-sm">
+              <span className="text-white text-lg">ℹ️</span>
             </div>
             <div className="flex-1">
-              <p className="text-sm text-blue-900 dark:text-blue-100 font-medium leading-relaxed">
-                {message.message}
-              </p>
+              <div className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed space-y-2">
+                {formatSystemMessage(message.message)}
+              </div>
 
               {/* Review button for completed contracts */}
               {canReview && (
@@ -1766,20 +1853,22 @@ export default function Chat() {
   };
 
   // Handle offer actions from chat
-  const handleAcceptOffer = async (offerId: number) => {
+  const handleAcceptOffer = async (offer: any) => {
     try {
-      await hiringApi.acceptOffer(offerId);
-      toast({
-        title: "Sucesso",
-        description: "Oferta aceita com sucesso!",
-      });
-      // Reload all data to show updated status
-      if (selectedRoom) {
-        loadMessages(selectedRoom);
-        loadContracts(selectedRoom.room_id);
+      const response = await hiringApi.acceptOffer(offer.id);
+      if (response.success) {
+        toast({
+          title: "Sucesso",
+          description: "Oferta aceita com sucesso! Contrato criado.",
+        });
+        // Refresh contracts
+        if (selectedRoom) {
+          loadContracts(selectedRoom.room_id);
+        }
+      } else {
+        throw new Error(response.message || "Erro ao aceitar oferta");
       }
     } catch (error: any) {
-      console.error("Error accepting offer:", error);
       toast({
         title: "Erro",
         description: error.response?.data?.message || "Erro ao aceitar oferta",
@@ -1788,20 +1877,22 @@ export default function Chat() {
     }
   };
 
-  const handleRejectOffer = async (offerId: number) => {
+  const handleRejectOffer = async (offer: any) => {
     try {
-      await hiringApi.rejectOffer(offerId);
-      toast({
-        title: "Sucesso",
-        description: "Oferta rejeitada com sucesso!",
-      });
-      // Reload all data to show updated status
-      if (selectedRoom) {
-        loadMessages(selectedRoom);
-        loadContracts(selectedRoom.room_id);
+      const response = await hiringApi.rejectOffer(offer.id);
+      if (response.success) {
+        toast({
+          title: "Sucesso",
+          description: "Oferta rejeitada com sucesso",
+        });
+        // Refresh contracts
+        if (selectedRoom) {
+          loadContracts(selectedRoom.room_id);
+        }
+      } else {
+        throw new Error(response.message || "Erro ao rejeitar oferta");
       }
     } catch (error: any) {
-      console.error("Error rejecting offer:", error);
       toast({
         title: "Erro",
         description: error.response?.data?.message || "Erro ao rejeitar oferta",
@@ -1810,19 +1901,22 @@ export default function Chat() {
     }
   };
 
-  const handleCancelOffer = async (offerId: number) => {
+  const handleCancelOffer = async (offer: any) => {
     try {
-      await hiringApi.cancelOffer(offerId);
-      toast({
-        title: "Sucesso",
-        description: "Oferta cancelada com sucesso!",
-      });
-      // Reload messages to show updated offer status
-      if (selectedRoom) {
-        loadMessages(selectedRoom);
+      const response = await hiringApi.cancelOffer(offer.id);
+      if (response.success) {
+        toast({
+          title: "Sucesso",
+          description: "Oferta cancelada com sucesso",
+        });
+        // Refresh contracts
+        if (selectedRoom) {
+          loadContracts(selectedRoom.room_id);
+        }
+      } else {
+        throw new Error(response.message || "Erro ao cancelar oferta");
       }
     } catch (error: any) {
-      console.error("Error cancelling offer:", error);
       toast({
         title: "Erro",
         description: error.response?.data?.message || "Erro ao cancelar oferta",
@@ -1955,40 +2049,50 @@ export default function Chat() {
       room.campaign_title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Send guide messages when user first enters chat
+  const sendGuideMessages = async (roomId: string) => {
+    try {
+      await chatService.sendGuideMessages(roomId);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Falha ao enviar mensagens de guia",
+        variant: "destructive",
+      });
+    }
+  };
+
+
+
   return (
     <div className="flex h-full bg-background">
-      {/* Mobile Hamburger Button */}
-      <button
-        data-hamburger
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-xl bg-white dark:bg-slate-800 shadow-lg"
-        onClick={() => setSidebarOpen(true)}
-        aria-label="Open conversations"
-      >
-        <svg
-          width="20"
-          height="20"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <line x1="3" y1="18" x2="21" y2="18" />
-        </svg>
-      </button>
-
+      <style>{`
+        .shadow-3xl {
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+        .animate-pulse {
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.8;
+          }
+        }
+      `}</style>
+      
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <div
           data-sidebar
           className={cn(
-            "flex flex-col w-full max-w-sm border-r bg-background transition-all duration-300 ease-in-out",
+            "flex flex-col w-full max-w-sm border-r bg-background transition-all duration-500 ease-out",
             "md:relative md:translate-x-0 md:shadow-none",
             sidebarOpen
-              ? "fixed inset-0 z-40 translate-x-0 shadow-2xl"
-              : "fixed inset-0 z-40 -translate-x-full md:relative md:translate-x-0"
+              ? "fixed inset-0 z-50 translate-x-0 shadow-2xl border-r border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm scale-100 opacity-100"
+              : "fixed inset-0 z-50 -translate-x-full md:relative md:translate-x-0 scale-95 opacity-0 md:scale-100 md:opacity-100"
           )}
         >
           {/* Sidebar Header */}
@@ -2020,16 +2124,16 @@ export default function Chat() {
               </Button>
             )}
             <button
-              className="md:hidden p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
+              className="md:hidden p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:scale-105 hover:shadow-lg"
               onClick={() => setSidebarOpen(false)}
               aria-label="Close conversations"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 text-slate-700 dark:text-slate-300" />
             </button>
           </div>
 
           {/* Search */}
-          <div className="p-4 pb-3">
+          <div className="p-4 pb-3 bg-background">
             <div className="relative">
               <Input
                 placeholder="Buscar conversas..."
@@ -2042,11 +2146,11 @@ export default function Chat() {
           </div>
 
           {/* Conversation List */}
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 bg-background">
             <div className="p-2 w-[383px]">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin " />
+                  <div className="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : filteredRooms.length === 0 ? (
                 <div className="text-center py-8 text-slate-500 dark:text-slate-400">
@@ -2059,7 +2163,7 @@ export default function Chat() {
                     key={room.id}
                     onClick={() => handleConversationSelect(room)}
                     className={cn(
-                      "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 mb-2",
+                      "w-[350px] ml-1 flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 mb-2",
                       selectedRoom?.id === room.id
                         ? "bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800"
                         : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
@@ -2127,6 +2231,32 @@ export default function Chat() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {/* Mobile Hamburger Button */}
+                  <button
+                    data-hamburger
+                    className={cn(
+                      "md:hidden p-2 rounded-xl bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm shadow-lg border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800 hover:shadow-xl transition-all duration-300 hover:scale-105",
+                      !sidebarOpen && "animate-pulse"
+                    )}
+                    onClick={() => setSidebarOpen(true)}
+                    aria-label="Open conversations"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-slate-700 dark:text-slate-300"
+                    >
+                      <line x1="3" y1="12" x2="21" y2="12" />
+                      <line x1="3" y1="6" x2="21" y2="6" />
+                      <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                  </button>
+
                   {/* Timeline Button */}
                   {activeContract && (
                     <Button
@@ -2354,7 +2484,7 @@ export default function Chat() {
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-30"
+          className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
           onClick={() => setSidebarOpen(false)}
         />
       )}

@@ -33,7 +33,7 @@ export const fetchPortfolio = createAsyncThunk<
     const response = await portfolioAPI.getPortfolio(token);
     return response;
   } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || 'Failed to fetch portfolio');
+    return rejectWithValue(error.response?.data?.message || 'Falha ao buscar portfólio');
   }
 });
 
@@ -46,7 +46,7 @@ export const updatePortfolioProfile = createAsyncThunk<
     const response = await portfolioAPI.updatePortfolioProfile(token, data);
     return response;
   } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || 'Failed to update portfolio profile');
+    return rejectWithValue(error.response?.data?.message || 'Falha ao atualizar perfil do portfólio');
   }
 });
 
@@ -59,7 +59,7 @@ export const uploadPortfolioMedia = createAsyncThunk<
     const response = await portfolioAPI.uploadPortfolioMedia(token, files);
     return response;
   } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || 'Failed to upload media');
+    return rejectWithValue(error.response?.data?.message || 'Falha ao fazer upload de mídia');
   }
 });
 
@@ -72,7 +72,7 @@ export const updatePortfolioItem = createAsyncThunk<
     const response = await portfolioAPI.updatePortfolioItem(token, itemId, data);
     return response;
   } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || 'Failed to update portfolio item');
+    return rejectWithValue(error.response?.data?.message || 'Falha ao atualizar item do portfólio');
   }
 });
 
@@ -85,7 +85,7 @@ export const deletePortfolioItem = createAsyncThunk<
     await portfolioAPI.deletePortfolioItem(token, itemId);
     return itemId;
   } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || 'Failed to delete portfolio item');
+    return rejectWithValue(error.response?.data?.message || 'Falha ao excluir item do portfólio');
   }
 });
 
@@ -97,7 +97,7 @@ export const reorderPortfolioItems = createAsyncThunk<
   try {
     await portfolioAPI.reorderPortfolioItems(token, data);
   } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || 'Failed to reorder portfolio items');
+    return rejectWithValue(error.response?.data?.message || 'Falha ao reordenar itens do portfólio');
   }
 });
 
@@ -110,7 +110,7 @@ export const fetchPortfolioStats = createAsyncThunk<
     const response = await portfolioAPI.getPortfolioStats(token);
     return response;
   } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || 'Failed to fetch portfolio stats');
+    return rejectWithValue(error.response?.data?.message || 'Falha ao buscar estatísticas do portfólio');
   }
 });
 
@@ -174,7 +174,7 @@ const portfolioSlice = createSlice({
       })
       .addCase(fetchPortfolio.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch portfolio';
+        state.error = action.payload || 'Falha ao buscar portfólio';
       });
 
     // Update profile
@@ -191,7 +191,7 @@ const portfolioSlice = createSlice({
       })
       .addCase(updatePortfolioProfile.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to update portfolio profile';
+        state.error = action.payload || 'Falha ao atualizar perfil do portfólio';
       });
 
     // Upload media
@@ -215,7 +215,7 @@ const portfolioSlice = createSlice({
       .addCase(uploadPortfolioMedia.rejected, (state, action) => {
         state.isUploading = false;
         state.uploadProgress = 0;
-        state.error = action.payload || 'Failed to upload media';
+        state.error = action.payload || 'Falha ao fazer upload de mídia';
       });
 
     // Update item
@@ -229,7 +229,7 @@ const portfolioSlice = createSlice({
         }
       })
       .addCase(updatePortfolioItem.rejected, (state, action) => {
-        state.error = action.payload || 'Failed to update portfolio item';
+        state.error = action.payload || 'Falha ao atualizar item do portfólio';
       });
 
     // Delete item
@@ -243,7 +243,7 @@ const portfolioSlice = createSlice({
         }
       })
       .addCase(deletePortfolioItem.rejected, (state, action) => {
-        state.error = action.payload || 'Failed to delete portfolio item';
+        state.error = action.payload || 'Falha ao excluir item do portfólio';
       });
 
     // Fetch stats
@@ -252,7 +252,7 @@ const portfolioSlice = createSlice({
         state.stats = action.payload;
       })
       .addCase(fetchPortfolioStats.rejected, (state, action) => {
-        state.error = action.payload || 'Failed to fetch portfolio stats';
+        state.error = action.payload || 'Falha ao buscar estatísticas do portfólio';
       });
   },
 });

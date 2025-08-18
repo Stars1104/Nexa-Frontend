@@ -140,16 +140,16 @@ export default function PremiumAccessGuard({
   const handleSubscribeClick = () => {
     // Update URL immediately for better UX
     // window.history.pushState({}, "", "/creator/subscription");
-    setComponent("Subscrição");
+    setComponent("Assinatura");
 
     try {
       // Try React Router navigation
       // navigate("/creator/subscription", { replace: true });
-      setComponent("Subscrição");
+      setComponent("Assinatura");
     } catch (error) {
       console.error("React Router navigation error:", error);
       // Fallback to direct navigation
-      setComponent("Subscrição");
+      setComponent("Assinatura");
       // window.location.href = "/creator/subscription";
     }
   };

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
@@ -7,6 +7,7 @@ import { MessageCircle, User, Calendar } from 'lucide-react';
 import { chatService } from '../services/chatService';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
+import { useToast } from '../hooks/use-toast';
 
 interface Application {
     id: number;
@@ -35,6 +36,7 @@ export default function ChatRoomCreator({ application, onChatCreated, className 
     const [isCreating, setIsCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
+    const { toast } = useToast();
 
     const handleCreateChat = async () => {
         try {
@@ -61,6 +63,11 @@ export default function ChatRoomCreator({ application, onChatCreated, className 
         } catch (error: any) {
             console.error('Error creating chat room:', error);
             setError(error.response?.data?.message || 'Failed to create chat room');
+            toast({
+                title: "Erro",
+                description: "Falha ao criar sala de chat",
+                variant: "destructive",
+            });
         } finally {
             setIsCreating(false);
         }

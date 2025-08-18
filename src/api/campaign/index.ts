@@ -52,12 +52,6 @@ export const CreateNewCampaign = async (data: FormData, token: string) => {
         const response = await FormDataAPI.post("/api/campaigns", data);
         return response.data;
     } catch (error: any) {
-        console.error("Campaign creation error:", error);
-        console.error("Error response:", error.response?.data);
-        console.error("Validation errors:", error.response?.data?.errors);
-        console.error("Error status:", error.response?.status);
-        console.error("Error headers:", error.response?.headers);
-
         throw error;
     }
 };
@@ -76,16 +70,7 @@ export const GetPendingCampaigns = async (token: string) => {
         const response = await CampaignAPI.get("/api/campaigns/pending");
         return response.data;
     } catch (error: any) {
-        console.error("Error fetching pending campaigns:", error);
-        if (error.response?.status === 403) {
-            throw new Error("Acesso negado. Você não tem permissão para acessar campanhas pendentes.");
-        } else if (error.response?.status === 401) {
-            throw new Error("Sessão expirada. Por favor, faça login novamente.");
-        } else if (error.response?.status >= 500) {
-            throw new Error("Erro do servidor. Tente novamente mais tarde.");
-        } else {
-            throw new Error(error.response?.data?.message || "Erro ao carregar campanhas pendentes");
-        }
+        throw error;
     }
 };
 
@@ -139,20 +124,7 @@ export const ApproveCampaign = async (campaignId: number, token: string) => {
         const response = await CampaignAPI.patch(`/api/campaigns/${campaignId}/approve`, {});
         return response.data;
     } catch (error: any) {
-        console.error("Error approving campaign:", error);
-        console.error("Error response data:", error.response?.data);
-        console.error("Error response status:", error.response?.status);
-        if (error.response?.status === 403) {
-            throw new Error("Acesso negado. Você não tem permissão para aprovar campanhas.");
-        } else if (error.response?.status === 401) {
-            throw new Error("Sessão expirada. Por favor, faça login novamente.");
-        } else if (error.response?.status === 404) {
-            throw new Error("Campanha não encontrada.");
-        } else if (error.response?.status >= 500) {
-            throw new Error("Erro do servidor. Tente novamente mais tarde.");
-        } else {
-            throw new Error(error.response?.data?.message || "Erro ao aprovar campanha");
-        }
+        throw error;
     }
 };
 
@@ -164,18 +136,7 @@ export const RejectCampaign = async (campaignId: number, token: string, reason?:
         const response = await CampaignAPI.patch(`/api/campaigns/${campaignId}/reject`, data);
         return response.data;
     } catch (error: any) {
-        console.error("Error rejecting campaign:", error);
-        if (error.response?.status === 403) {
-            throw new Error("Acesso negado. Você não tem permissão para rejeitar campanhas.");
-        } else if (error.response?.status === 401) {
-            throw new Error("Sessão expirada. Por favor, faça login novamente.");
-        } else if (error.response?.status === 404) {
-            throw new Error("Campanha não encontrada.");
-        } else if (error.response?.status >= 500) {
-            throw new Error("Erro do servidor. Tente novamente mais tarde.");
-        } else {
-            throw new Error(error.response?.data?.message || "Erro ao rejeitar campanha");
-        }
+        throw error;
     }
 };
 
@@ -193,18 +154,7 @@ export const ToggleFeaturedCampaign = async (campaignId: number, token: string) 
         const response = await CampaignAPI.patch(`/api/campaigns/${campaignId}/toggle-featured`);
         return response.data;
     } catch (error: any) {
-        console.error("Error toggling featured status:", error);
-        if (error.response?.status === 403) {
-            throw new Error("Acesso negado. Você não tem permissão para alterar o status de destaque.");
-        } else if (error.response?.status === 401) {
-            throw new Error("Sessão expirada. Por favor, faça login novamente.");
-        } else if (error.response?.status === 404) {
-            throw new Error("Campanha não encontrada.");
-        } else if (error.response?.status >= 500) {
-            throw new Error("Erro do servidor. Tente novamente mais tarde.");
-        } else {
-            throw new Error(error.response?.data?.message || "Erro ao alterar status de destaque");
-        }
+        throw error;
     }
 };
 
@@ -215,18 +165,7 @@ export const ToggleFavoriteCampaign = async (campaignId: number, token: string) 
         const response = await CampaignAPI.post(`/api/campaigns/${campaignId}/toggle-favorite`);
         return response.data;
     } catch (error: any) {
-        console.error("Error toggling favorite status:", error);
-        if (error.response?.status === 403) {
-            throw new Error("Acesso negado. Você não tem permissão para favoritar campanhas.");
-        } else if (error.response?.status === 401) {
-            throw new Error("Sessão expirada. Por favor, faça login novamente.");
-        } else if (error.response?.status === 404) {
-            throw new Error("Campanha não encontrada.");
-        } else if (error.response?.status >= 500) {
-            throw new Error("Erro do servidor. Tente novamente mais tarde.");
-        } else {
-            throw new Error(error.response?.data?.message || "Erro ao favoritar campanha");
-        }
+        throw error;
     }
 };
 
@@ -237,16 +176,7 @@ export const GetFavoriteCampaigns = async (token: string) => {
         const response = await CampaignAPI.get("/api/campaigns/favorites");
         return response.data;
     } catch (error: any) {
-        console.error("Error fetching favorite campaigns:", error);
-        if (error.response?.status === 403) {
-            throw new Error("Acesso negado. Você não tem permissão para acessar favoritos.");
-        } else if (error.response?.status === 401) {
-            throw new Error("Sessão expirada. Por favor, faça login novamente.");
-        } else if (error.response?.status >= 500) {
-            throw new Error("Erro do servidor. Tente novamente mais tarde.");
-        } else {
-            throw new Error(error.response?.data?.message || "Erro ao carregar campanhas favoritas");
-        }
+        throw error;
     }
 };
 

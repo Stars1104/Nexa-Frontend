@@ -48,39 +48,16 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
 
   const checkPremiumStatus = useCallback(async () => {
     try {
-      // Prevent rapid successive calls
-      const now = Date.now();
-      if (now - lastCheck < 2000) {
-        return null;
-      }
-
       setLoading(true);
-      setLastCheck(now);
-
-      // Check if user is authenticated
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setPremiumStatus(null);
-        return null;
-      }
-
-      const response = await apiClient.get("/payment/subscription-status");
-      const status = response.data;
-      setPremiumStatus(status);
-      return status;
+      const response = await apiClient.get('/payment/subscription-status');
+      setPremiumStatus(response.data);
     } catch (error) {
-      console.error("PremiumContext: Error checking premium status:", error);
-
-      // If it's a 401 error, clear the status
-      if (error.response?.status === 401) {
-        setPremiumStatus(null);
-      }
-
-      return null;
+      // Handle error silently or let components handle it
+      setPremiumStatus(null);
     } finally {
       setLoading(false);
     }
-  }, [lastCheck]);
+  }, []);
 
   const refreshPremiumStatus = useCallback(async () => {
     await checkPremiumStatus();

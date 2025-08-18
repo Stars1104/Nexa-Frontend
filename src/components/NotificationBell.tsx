@@ -107,9 +107,9 @@ const NotificationBell = () => {
             </PopoverTrigger>
             <PopoverContent className="w-80 p-0" align="end">
                 <div className="p-4 border-b">
-                    <h3 className="font-semibold dark:text-white text-black">Notifications</h3>
+                    <h3 className="font-semibold dark:text-white text-black">Notificações</h3>
                     <p className="text-sm text-muted-foreground">
-                        {unreadCount > 0 ? `${unreadCount} unread` : 'No notifications'}
+                        {unreadCount > 0 ? `${unreadCount} não lidas` : 'Nenhuma notificação'}
                     </p>
                 </div>
                 
@@ -117,7 +117,7 @@ const NotificationBell = () => {
                     {recentNotifications.length === 0 ? (
                         <div className="p-4 text-center text-muted-foreground">
                             <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                            <p>No notifications</p>
+                            <p>Nenhuma notificação</p>
                         </div>
                     ) : (
                         <div className="space-y-0">
@@ -181,7 +181,7 @@ const NotificationBell = () => {
                             className="w-full"
                             onClick={handleMarkAllAsRead}
                         >
-                            Mark all as read
+                            Marcar todas como lidas
                         </Button>
                     </div>
                 )}

@@ -78,7 +78,6 @@ class ChatService {
             const response = await apiClient.get('/chat/rooms');
             return response.data.data;
         } catch (error) {
-            console.error('Error fetching chat rooms:', error);
             throw error;
         }
     }

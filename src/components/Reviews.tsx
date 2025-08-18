@@ -5,6 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { Star, MessageCircle, Calendar } from "lucide-react";
 import { hiringApi, Review } from "../api/hiring";
 import { cn } from "../lib/utils";
+import { useToast } from '../hooks/use-toast';
 
 interface ReviewsProps {
   userId: number;
@@ -29,6 +30,7 @@ export default function Reviews({
   const [stats, setStats] = useState<ReviewStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     loadReviews();
@@ -50,6 +52,11 @@ export default function Reviews({
     } catch (error: any) {
       console.error("Error loading reviews:", error);
       setError(error.response?.data?.message || "Failed to load reviews");
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar avaliações",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }

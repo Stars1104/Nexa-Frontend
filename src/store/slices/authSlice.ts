@@ -63,10 +63,10 @@ export const checkAuthStatus = createAsyncThunk(
           // Token is invalid, clear localStorage
           localStorage.removeItem('token');
           localStorage.removeItem('user');
-          throw new Error('Invalid token');
+          throw new Error('Token inválido');
         }
       }
-      throw new Error('No valid authentication found');
+      throw new Error('Nenhuma autenticação válida encontrada');
     }
     
     // If token exists in state, validate it
@@ -81,7 +81,7 @@ export const checkAuthStatus = createAsyncThunk(
     } catch (error) {
       // Token is invalid, clear state
       dispatch(logout());
-      throw new Error('Invalid token');
+      throw new Error('Token inválido');
     }
   }
 );
@@ -163,12 +163,7 @@ const authSlice = createSlice({
     // Update user data (useful for refreshing user data after subscription)
     updateUser: (state, action: PayloadAction<Partial<User>>) => {
       if (state.user) {
-        const oldUser = { ...state.user };
         state.user = { ...state.user, ...action.payload };
-        // Also update localStorage
-        localStorage.setItem('user', JSON.stringify(state.user));
-      } else {
-        console.error('AuthSlice updateUser - no user in state');
       }
     },
   },
@@ -189,7 +184,7 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.user = null;
         state.token = null;
-        state.error = action.error.message || 'Authentication check failed';
+        state.error = action.error.message || 'Falha na verificação de autenticação';
       });
   },
 });

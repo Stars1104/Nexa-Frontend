@@ -34,7 +34,7 @@ const Index = () => {
     // Handle subscription route
     useEffect(() => {
         if (location.pathname === '/creator/subscription') {
-            setComponent("Subscrição");
+            setComponent("Assinatura");
         } else if (location.pathname === '/creator' && !component) {
             // Set default component if on main creator page
             setComponent("Painel");
@@ -79,7 +79,7 @@ const Index = () => {
                 return <BalanceAndWithdrawals />;
             case "Notificações":
                 return <Notification />;
-            case "Subscrição":
+            case "Assinatura":
                 return <Subscription />;
             case "Histórico de Pagamentos":
                 return <TransactionHistory />;

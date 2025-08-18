@@ -41,6 +41,7 @@ import {
   CardTitle,
 } from "../ui/card";
 import { hiringApi } from "../../api/hiring";
+import { useSafeToast } from "../../hooks/useSafeToast";
 
 // Stats will be calculated dynamically based on approved campaigns
 
@@ -128,6 +129,7 @@ export default function Dashboard({
   );
   const { creatorApplications } = useAppSelector((state) => state.campaign);
   const { user } = useAppSelector((state) => state.auth);
+  const safeToast = useSafeToast();
 
   // Ensure creatorApplications is always an array
   const safeCreatorApplications = Array.isArray(creatorApplications)
@@ -242,6 +244,7 @@ export default function Dashboard({
       const result = await dispatch(toggleFavoriteCampaign(campaignId)).unwrap();
     } catch (error) {
       console.error('❌ Error in handleToggleFavorite:', error);
+      safeToast.error("Falha ao favoritar/desfavoritar campanha");
     }
   };
 

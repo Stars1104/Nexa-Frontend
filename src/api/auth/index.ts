@@ -114,12 +114,6 @@ export const healthCheck = async () => {
         const response = await AuthAPI.get("/api/health");
         return response.data;
     } catch (error: any) {
-        console.error('Health check failed:', {
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            data: error.response?.data,
-            message: error.message
-        });
         throw error;
     }
 };
@@ -145,18 +139,6 @@ export const signin = async (data: any) => {
         });
         return response.data;
     } catch (error: any) {
-        console.error('Login error details:', {
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            data: error.response?.data,
-            message: error.message,
-            config: {
-                url: error.config?.url,
-                method: error.config?.method,
-                headers: error.config?.headers,
-                data: error.config?.data
-            }
-        });
         throw error;
     }
 };
@@ -180,17 +162,10 @@ export const profileUpdate = async (data: any) => {
         const response = await AuthAPI.put("/api/profile", data, config);
 
         if (!response.data.success) {
-            throw new Error(response.data.message || 'Failed to update profile');
+            throw new Error(response.data.message || 'Falha ao atualizar perfil');
         }
         return response.data;
     } catch (error: any) {
-        console.error('[API] Profile update error:', {
-            status: error?.response?.status,
-            statusText: error?.response?.statusText,
-            data: error?.response?.data,
-            message: error?.message,
-            validationErrors: error?.response?.data?.errors
-        });
         throw error;
     }
 };
@@ -200,16 +175,10 @@ export const getProfile = async () => {
     try {
         const response = await AuthAPI.get("/api/profile");
         if (!response.data.success) {
-            throw new Error(response.data.message || 'Failed to fetch profile');
+            throw new Error(response.data.message || 'Falha ao buscar perfil');
         }
         return response.data;
     } catch (error: any) {
-        console.error('[API] Profile fetch error:', {
-            status: error?.response?.status,
-            statusText: error?.response?.statusText,
-            data: error?.response?.data,
-            message: error?.message
-        });
         throw error;
     }
 };
@@ -221,7 +190,7 @@ export const getUser = async (userId?: string) => {
         const response = await AuthAPI.get(endpoint);
         // Ensure consistent response format
         if (response.data.success === false) {
-            throw new Error(response.data.message || 'Failed to fetch user data');
+            throw new Error(response.data.message || 'Falha ao buscar dados do usuário');
         }
 
         return {
@@ -230,7 +199,6 @@ export const getUser = async (userId?: string) => {
             message: response.data.message || 'User data retrieved successfully'
         };
     } catch (error: any) {
-        console.error('Get user error:', error);
         throw error;
     }
 };

@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { ScrollArea } from "../../components/ui/scroll-area";
+
 import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import CampaignTimeline from "../../components/CampaignTimeline";
@@ -62,6 +62,24 @@ interface ChatPageProps {
 }
 
 export default function ChatPage({ setComponent }: ChatPageProps) {
+  // Custom CSS to hide scrollbars
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
   const { user } = useAppSelector((state) => state.auth);
   const { toast } = useToast();
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
@@ -671,15 +689,22 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
 
     try {
       setIsLoading(true);
-      const rooms = await chatService.getChatRooms();
+      const response = await chatService.getChatRooms();
       if (isMountedRef.current) {
-        setChatRooms(rooms);
-        if (rooms.length > 0 && !selectedRoom) {
-          setSelectedRoom(rooms[0]);
+        const roomsData = response || [];
+        setChatRooms(roomsData);
+
+        // Auto-select first room if none selected and rooms exist
+        if (!selectedRoom && roomsData.length > 0) {
+          handleConversationSelect(roomsData[0]);
         }
       }
     } catch (error) {
-      console.error("Error loading chat rooms:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar salas de chat",
+        variant: "destructive",
+      });
     } finally {
       if (isMountedRef.current) {
         setIsLoading(false);
@@ -729,19 +754,22 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         
         let guideMessage = '';
         if (isBrand) {
-          guideMessage = "🩷 Parabéns pela uma parceria iniciada com uma criadora da nossa plataforma!\n\n" +
-            "Para garantir o melhor resultado possível, é essencial que você oriente a criadora com detalhamento e clareza sobre como deseja que o conteúdo seja feito quanto mais específica for a comunicação, maior será a qualidade da entrega.\n\n" +
-            "Aqui estão os próximos passos importantes:\n\n" +
-            "• Insira o valor da campanha na aba \"Saldo\" da plataforma.\n" +
-            "• Assim que a criadora enviar o conteúdo pronto e editado, você poderá liberar o pagamento clicando em \"Finalizar Campanha\" e avaliando o trabalho entregue.\n" +
-            "• Reforce com a criadora os pontos principais do briefing para que o vídeo esteja alinhado com o objetivo da marca.\n" +
-            "• Caso o conteúdo não esteja de acordo com o solicitado, serão permitidos até dois pedidos de ajustes por vídeo.\n\n" +
-            "Regras importantes que garantem a segurança da campanha:\n\n" +
-            "✔ Toda comunicação deve ser feita exclusivamente pelo chat da NEXA.\n" +
-            "✘ Não é permitido compartilhar dados bancários, contatos pessoais ou números de WhatsApp com a criadora.\n" +
-            "⚠️ O descumprimento dos prazos ou das regras pode resultar em advertência ou bloqueio do perfil.\n" +
-            "🚫 Caso a campanha precise ser cancelada, o produto enviado deve ser solicitado de volta, e a criadora poderá ser penalizada conforme as diretrizes da plataforma.\n\n" +
-            "A NEXA está aqui para facilitar conexões seguras e profissionais. Conte conosco para apoiar o sucesso da sua campanha! 💼📢";
+          guideMessage = "🎉 Parabéns pela parceria iniciada com uma criadora da nossa plataforma!\n\n" +
+            "Para garantir o melhor resultado possível, é essencial que você oriente a criadora com detalhamento e clareza sobre como deseja que o conteúdo seja feito. Quanto mais específica for a comunicação, maior será a qualidade da entrega.\n\n" +
+            "📋 Próximos Passos Importantes:\n\n" +
+            "• 💰 Saldo da Campanha: Insira o valor da campanha na aba \"Saldo\" da plataforma\n" +
+            "• ✅ Aprovação de Conteúdo: Avalie o roteiro antes da gravação para garantir alinhamento\n" +
+            "• 🎬 Entrega Final: Após receber o conteúdo pronto e editado, libere o pagamento\n" +
+            "• ⭐ Finalização: Clique em \"Finalizar Campanha\" e avalie o trabalho entregue\n" +
+            "• 📝 Briefing: Reforce os pontos principais com a criadora para alinhar com o objetivo da marca\n" +
+            "• 🔄 Ajustes: Permita até 2 pedidos de ajustes por vídeo caso necessário\n\n" +
+            "🔒 Regras de Segurança da Campanha:\n\n" +
+            "✅ Comunicação Exclusiva: Toda comunicação deve ser feita pelo chat da NEXA\n" +
+            "❌ Proteção de Dados: Não compartilhe dados bancários, contatos pessoais ou WhatsApp\n" +
+            "⚠️ Cumprimento de Prazos: Descumprimento pode resultar em advertência ou bloqueio\n" +
+            "🚫 Cancelamento: Em caso de cancelamento, o produto deve ser solicitado de volta\n\n" +
+            "💼 A NEXA está aqui para facilitar conexões seguras e profissionais!\n" +
+            "Conte conosco para apoiar o sucesso da sua campanha! 📢✨";
         } else {
           guideMessage = "🩷 Parabéns, você foi aprovada em mais uma campanha da NEXA!\n\n" +
             "Estamos muito felizes em contar com você e esperamos que mostre toda sua criatividade, comprometimento e qualidade para representar bem a marca e a nossa plataforma.\n\n" +
@@ -761,9 +789,9 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
             "Estamos aqui para garantir a melhor experiência para criadoras e marcas. Boa campanha! 💼💡";
         }
         
-        const quoteMessage = "💼 **Detalhes da Campanha:**\n" +
-          "• **Status:** Conectado\n\n" +
-          "Você está agora conectado e pode começar a conversar. Por favor, use o chat para todas as comunicações e siga as diretrizes da plataforma.";
+        const quoteMessage = "💼 Detalhes da Campanha:\n\n" +
+          "Status: 🟢 Conectado\n\n" +
+          "Você está agora conectado e pode começar a conversar. Use o chat para todas as comunicações e siga as diretrizes da plataforma para uma parceria de sucesso.";
         
         // Create guide message
         const guideMsg: Message = {
@@ -809,14 +837,13 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     }, 100);
   };
 
+  // Load messages for a specific room
   const loadMessages = async (roomId: string) => {
     if (!isMountedRef.current) return;
 
     try {
-      console.log('[ChatPage] Loading messages for room:', roomId);
+      setIsLoading(true);
       const response = await chatService.getMessages(roomId);
-      console.log('[ChatPage] Messages loaded:', response.messages.length, 'messages');
-
       if (isMountedRef.current) {
         // Only deduplicate if there are actual duplicates (same message ID)
         const messageIds = new Set();
@@ -828,22 +855,33 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
           return true;
         });
 
-        // Log offer messages for debugging
-        const offerMessages = deduplicatedMessages.filter(msg => msg.message_type === 'offer');
-        console.log('[ChatPage] Offer messages found:', offerMessages.length);
-        offerMessages.forEach(msg => {
-          console.log('[ChatPage] Offer message:', {
-            id: msg.id,
-            offer_id: msg.offer_data?.offer_id,
-            status: msg.offer_data?.status,
-            can_be_accepted: msg.offer_data?.status === "pending"
-          });
-        });
-
         setMessages(deduplicatedMessages);
+
+        // Join the room for real-time updates
+        joinRoom(roomId);
+
+        // Mark all unread messages from other users as read
+        const unreadMessages = deduplicatedMessages.filter(
+          (msg) => !msg.is_sender && !msg.is_read
+        );
+
+        if (unreadMessages.length > 0) {
+          markMessagesAsRead(
+            roomId,
+            unreadMessages.map((msg) => msg.id)
+          );
+        }
       }
     } catch (error) {
-      console.error("[ChatPage] Error loading messages:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar mensagens",
+        variant: "destructive",
+      });
+    } finally {
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -868,10 +906,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                 ...reviewStatusResponse.data,
               };
             } catch (error) {
-              console.error(
-                `Error fetching review status for contract ${contract.id}:`,
-                error
-              );
+              // Handle error silently for individual contract review status
               return contract;
             }
           })
@@ -880,7 +915,11 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         setContracts(contractsWithReviewStatus);
       }
     } catch (error) {
-      console.error("Error loading contracts:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar contratos",
+        variant: "destructive",
+      });
     } finally {
       if (isMountedRef.current) {
         setIsLoadingContracts(false);
@@ -895,11 +934,17 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     try {
       setIsLoadingOffers(true);
       const response = await hiringApi.getOffersForChatRoom(roomId);
+      const offersData = response.data;
+
       if (isMountedRef.current) {
-        setOffers(response.data);
+        setOffers(offersData);
       }
     } catch (error) {
-      console.error("Error loading offers:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar ofertas",
+        variant: "destructive",
+      });
     } finally {
       if (isMountedRef.current) {
         setIsLoadingOffers(false);
@@ -1829,7 +1874,11 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
             await downloadFileToLocal(message);
           }
         } catch (error) {
-          console.error("Error downloading file:", error);
+          toast({
+            title: "Erro",
+            description: "Falha ao baixar arquivo",
+            variant: "destructive",
+          });
 
           // Try alternative download method
           try {
@@ -1840,7 +1889,11 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
             );
             triggerDownload(link);
           } catch (altError) {
-            console.error("Alternative download also failed:", altError);
+            toast({
+              title: "Erro",
+              description: "Método alternativo também falhou",
+              variant: "destructive",
+            });
           }
         } finally {
           setIsDownloading(false);
@@ -2103,6 +2156,82 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     );
   };
 
+  // Helper function to format guide messages with proper styling
+  const formatGuideMessage = (text: string) => {
+    // Split the message into lines
+    const lines = text.split('\n');
+    
+    return (
+      <div className="space-y-4">
+        {lines.map((line, index) => {
+          // Skip empty lines
+          if (!line.trim()) return null;
+          
+          // Handle main title (first line with emoji)
+          if (index === 0 && line.includes('🎉')) {
+            return (
+              <div key={index} className="text-center">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+                  {line.replace('🎉 ', '')}
+                </h2>
+              </div>
+            );
+          }
+          
+          // Handle section headers (lines starting with **)
+          if (line.startsWith('**') && line.endsWith('**')) {
+            const headerText = line.replace(/\*\*/g, '');
+            return (
+              <div key={index} className="flex items-center gap-3 pt-2">
+                <div className="w-2 h-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex-shrink-0"></div>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                  {headerText}
+                </h3>
+              </div>
+            );
+          }
+          
+          // Handle bullet points
+          if (line.startsWith('•')) {
+            return (
+              <div key={index} className="flex items-start gap-3 pl-4">
+                <div className="w-1.5 h-1.5 bg-pink-500 rounded-full mt-2 flex-shrink-0"></div>
+                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                  {line.replace('• ', '')}
+                </p>
+              </div>
+            );
+          }
+          
+          // Handle bold text within lines
+          if (line.includes('**')) {
+            const parts = line.split('**');
+            return (
+              <p key={index} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                {parts.map((part, partIndex) => 
+                  partIndex % 2 === 1 ? (
+                    <strong key={partIndex} className="font-semibold text-slate-900 dark:text-slate-100">
+                      {part}
+                    </strong>
+                  ) : (
+                    part
+                  )
+                )}
+              </p>
+            );
+          }
+          
+          // Handle regular text
+          return (
+            <p key={index} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+              {line}
+            </p>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderMessageContent = (message: Message) => {
     if (message.message_type === "file") {
       return (
@@ -2243,13 +2372,33 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         message.message?.includes("review") ||
         message.message?.includes("avaliação");
 
+      // Check if this is a guide message (contains "Parabéns" or campaign guidance)
+      const isGuideMessage = message.message?.includes("Parabéns") || 
+                           message.message?.includes("parceria iniciada") ||
+                           message.message?.includes("Detalhes da Campanha");
+
+      if (isGuideMessage) {
+        return (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-2xl p-6 shadow-lg">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-lg">📋</span>
+              </div>
+              <div className="flex-1">
+                {formatGuideMessage(message.message || '')}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div
           className={cn(
             "border rounded-xl p-3 shadow-sm",
             isReviewMessage
               ? "bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-yellow-300 dark:border-yellow-600"
-              : "bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800"
+              : "bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-orange-900/20 border-blue-200 dark:border-blue-800"
           )}
         >
           <div className="flex items-start gap-2">
@@ -2412,33 +2561,8 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
   };
 
   return (
-    <>
-      <Helmet>
-        <title>Chat - Nexa Brand</title>
-        <meta name="description" content="Gerencie suas conversas e comunicações com criadores na plataforma Nexa" />
-      </Helmet>
-      <div className="flex h-full bg-background">
-        {/* Mobile Hamburger Button */}
-        <button
-          data-hamburger
-          className="md:hidden fixed top-4 left-16 z-50 p-2 rounded-xl bg-white dark:bg-slate-800 shadow-lg"
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Open conversations"
-        >
-          <svg
-            width="20"
-            height="20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
+    <div className="flex h-full bg-background">
+        {/* Mobile Hamburger Button - Moved to chat header */}
 
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar */}
@@ -2503,7 +2627,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
             </div>
 
             {/* Conversation List */}
-            <ScrollArea className="flex-1">
+            <div className="flex-1 overflow-y-auto scrollbar-hide">
               <div className="p-2 w-[383px]">
                 {isLoading ? (
                   <div className="flex items-center justify-center py-8">
@@ -2566,7 +2690,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                   ))
                 )}
               </div>
-            </ScrollArea>
+            </div>
           </div>
 
           {/* Chat Area */}
@@ -2576,6 +2700,29 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                 {/* Chat Header */}
                 <div className="flex items-center justify-between p-4 border-b bg-background">
                   <div className="flex items-center gap-3">
+                    {/* Mobile Hamburger Button - Moved here next to avatar */}
+                    <button
+                      data-hamburger
+                      className="md:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
+                      onClick={() => setSidebarOpen(true)}
+                      aria-label="Open conversations"
+                    >
+                      <svg
+                        width="20"
+                        height="20"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-slate-600 dark:text-slate-400"
+                      >
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                      </svg>
+                    </button>
+                    
                     <Avatar className="w-10 h-10">
                       <AvatarImage
                         src={`${import.meta.env.VITE_BACKEND_URL ||
@@ -2796,7 +2943,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                 )}
 
                 {/* Messages */}
-                <ScrollArea className="flex-1 p-4">
+                <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
                   <div className="space-y-4">
                     {messages.map((message) => (
                       <div
@@ -2862,7 +3009,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                     ))}
                     <div ref={messagesEndRef} />
                   </div>
-                </ScrollArea>
+                </div>
 
                 {/* Message Input */}
                 <form
@@ -3112,7 +3259,11 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                         imageViewer.imageName
                       );
                     } catch (error) {
-                      console.error("Error downloading image:", error);
+                      toast({
+                        title: "Erro",
+                        description: "Falha ao baixar imagem",
+                        variant: "destructive",
+                      });
                     }
                   }}
                   className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
@@ -3270,6 +3421,5 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
           />
         )}
       </div>
-    </>
   );
 }

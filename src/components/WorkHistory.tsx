@@ -56,8 +56,8 @@ export const WorkHistory: React.FC<WorkHistoryProps> = ({ userId, type }) => {
     } catch (error) {
       console.error('Error loading work history:', error);
       toast({
-        title: "Error",
-        description: "Failed to load work history",
+        title: "Erro",
+        description: "Falha ao carregar histórico de trabalho",
         variant: "destructive",
       });
     } finally {
@@ -83,17 +83,17 @@ export const WorkHistory: React.FC<WorkHistoryProps> = ({ userId, type }) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Award className="h-5 w-5 text-blue-600" />
-            Work History
+            Histórico de Trabalho
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
             <Award className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Work History</h3>
+            <h3 className="text-lg font-semibold mb-2">Nenhum Histórico de Trabalho</h3>
             <p className="text-muted-foreground">
               {type === 'creator' 
-                ? "You haven't completed any contracts yet."
-                : "You haven't completed any projects with creators yet."
+                ? "Você ainda não completou nenhum contrato."
+                : "Você ainda não completou nenhum projeto com criadores."
               }
             </p>
           </div>
@@ -111,28 +111,28 @@ export const WorkHistory: React.FC<WorkHistoryProps> = ({ userId, type }) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-blue-600" />
-            Work Statistics
+            Estatísticas de Trabalho
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{stats.total_contracts}</div>
-              <div className="text-sm text-muted-foreground">Total Projects</div>
+              <div className="text-sm text-muted-foreground">Total de Projetos</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">{stats.total_earnings}</div>
               <div className="text-sm text-muted-foreground">
-                {type === 'creator' ? 'Total Earned' : 'Total Spent'}
+                {type === 'creator' ? 'Total Ganho' : 'Total Gasto'}
               </div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-yellow-600">{stats.average_rating}</div>
-              <div className="text-sm text-muted-foreground">Avg. Rating</div>
+              <div className="text-sm text-muted-foreground">Avaliação Média</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-600">{stats.total_reviews}</div>
-              <div className="text-sm text-muted-foreground">Reviews</div>
+              <div className="text-sm text-muted-foreground">Avaliações</div>
             </div>
           </div>
         </CardContent>
@@ -143,7 +143,7 @@ export const WorkHistory: React.FC<WorkHistoryProps> = ({ userId, type }) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-gray-600" />
-            Completed Projects ({workHistory.contracts.total})
+            Projetos Concluídos ({workHistory.contracts.total})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -174,8 +174,8 @@ export const WorkHistory: React.FC<WorkHistoryProps> = ({ userId, type }) => {
                         <h4 className="font-semibold">{contract.title}</h4>
                         <p className="text-sm text-muted-foreground">
                           {type === 'creator' 
-                            ? `Brand: ${contract.brand?.name}`
-                            : `Creator: ${contract.creator.name}`
+                            ? `Marca: ${contract.brand?.name}`
+                            : `Criador: ${contract.creator.name}`
                           }
                         </p>
                       </div>
@@ -192,11 +192,11 @@ export const WorkHistory: React.FC<WorkHistoryProps> = ({ userId, type }) => {
                       </div>
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4 text-blue-600" />
-                        <span>{contract.duration_days} days</span>
+                        <span>{contract.estimated_days} dias</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="h-4 w-4 text-purple-600" />
-                        <span>Completed {new Date(contract.completed_at!).toLocaleDateString()}</span>
+                        <span>Concluído em {new Date(contract.completed_at!).toLocaleDateString()}</span>
                       </div>
                     </div>
 
@@ -215,11 +215,11 @@ export const WorkHistory: React.FC<WorkHistoryProps> = ({ userId, type }) => {
                   
                   <div className="flex flex-col items-end gap-2">
                     <Badge variant="outline" className="text-green-600 border-green-600">
-                      Completed
+                      Concluído
                     </Badge>
                     {type === 'creator' && contract.payment && (
                       <div className="text-right text-sm">
-                        <div className="text-muted-foreground">Earned</div>
+                        <div className="text-muted-foreground">Ganho</div>
                         <div className="font-medium text-green-600">
                           {contract.payment.creator_amount}
                         </div>

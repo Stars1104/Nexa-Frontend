@@ -30,12 +30,10 @@ const addAuthToken = (config: any) => {
 };
 
 apiClient.interceptors.request.use(addAuthToken, (error) => {
-    console.error('API Request Error:', error);
     return Promise.reject(error);
 });
 
 paymentClient.interceptors.request.use(addAuthToken, (error) => {
-    console.error('Payment API Request Error:', error);
     return Promise.reject(error);
 });
 
@@ -45,15 +43,6 @@ const handleResponse = (response: any) => {
 };
 
 const handleError = async (error: any) => {
-    console.error('API Error:', {
-        url: error.config?.url,
-        method: error.config?.method,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        headers: error.response?.headers
-    });
-
     // Handle 401 Unauthorized
     if (error.response?.status === 401) {
         // Don't automatically clear token, let the auth hook handle it
@@ -76,7 +65,7 @@ const handleError = async (error: any) => {
             return apiClient.request(originalRequest);
         } catch (refreshError) {
             // If refresh fails, suggest user to refresh the page
-            error.message = 'Session expired. Please refresh the page and try again.';
+            error.message = 'Sessão expirada. Por favor, atualize a página e tente novamente.';
         }
     }
 

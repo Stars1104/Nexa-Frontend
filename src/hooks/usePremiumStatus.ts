@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { apiClient } from '@/services/apiClient'
+import { useToast } from '../hooks/use-toast'
 
 interface PremiumStatus {
   has_premium: boolean
@@ -11,6 +12,7 @@ interface PremiumStatus {
 export const usePremiumStatus = () => {
   const [premiumStatus, setPremiumStatus] = useState<PremiumStatus | null>(null)
   const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
 
   const checkPremiumStatus = useCallback(async () => {
     try {
@@ -21,11 +23,16 @@ export const usePremiumStatus = () => {
       return status
     } catch (error) {
       console.error('Error checking premium status:', error)
+      toast({
+        title: "Erro",
+        description: "Falha ao verificar status premium",
+        variant: "destructive",
+      })
       return null
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [toast])
 
   const refreshPremiumStatus = useCallback(async () => {
     return await checkPremiumStatus()

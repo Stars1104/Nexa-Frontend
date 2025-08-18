@@ -13,7 +13,7 @@ const campaigns = {
       tags: ["Photo", "Video"],
       term: "15/12/2023",
       creators: "12/5 creators",
-      actions: ["View Applications", "Chat"],
+      actions: ["Ver Aplicações", "Chat"],
     },
     {
       id: 2,
@@ -23,7 +23,7 @@ const campaigns = {
       tags: ["Review", "Video"],
       term: "20/12/2023",
       creators: "8/3 creators",
-      actions: ["View Applications", "Chat"],
+      actions: ["Ver Aplicações", "Chat"],
     },
     {
       id: 3,
@@ -33,7 +33,7 @@ const campaigns = {
       tags: ["Review", "Video", "Photo"],
       term: "20/12/2023",
       creators: "8/3 creators",
-      actions: ["View Applications", "Chat"],
+      actions: ["Ver Aplicações", "Chat"],
     },
   ],
   previous: [
@@ -45,7 +45,7 @@ const campaigns = {
       tags: ["Photo", "Video", "Review"],
       term: "20/11/2023",
       creators: "8 creators",
-      actions: ["View Conversations"],
+      actions: ["Ver Conversas"],
     },
   ],
 };

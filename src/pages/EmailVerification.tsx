@@ -25,7 +25,7 @@ const EmailVerification: React.FC = () => {
 
         if (!id || !hash || !signature || !expires) {
           setVerificationStatus('error');
-          setMessage('Invalid verification link. Please check your email and try again.');
+          setMessage('Link de verificação inválido. Por favor, verifique seu email e tente novamente.');
           setIsLoading(false);
           return;
         }
@@ -33,7 +33,7 @@ const EmailVerification: React.FC = () => {
         // Check if link has expired
         if (Date.now() > parseInt(expires) * 1000) {
           setVerificationStatus('error');
-          setMessage('Verification link has expired. Please request a new one.');
+          setMessage('Link de verificação expirou. Por favor, solicite um novo.');
           setIsLoading(false);
           return;
         }
@@ -45,7 +45,7 @@ const EmailVerification: React.FC = () => {
 
         if (response.status === 200 && data.success) {
           setVerificationStatus('success');
-          setMessage('Email verified successfully! You can now log in to your account.');
+          setMessage('Email verificado com sucesso! Você pode agora fazer login em sua conta.');
           
           // Store the user data and token
           dispatch(loginSuccess({
@@ -69,12 +69,12 @@ const EmailVerification: React.FC = () => {
           }, 3000);
         } else {
           setVerificationStatus('error');
-          setMessage(data.message || 'Verification failed. Please try again or contact support.');
+          setMessage(data.message || 'Verificação falhou. Tente novamente ou entre em contato com o suporte.');
         }
       } catch (error) {
         console.error('Email verification error:', error);
         setVerificationStatus('error');
-        setMessage('An error occurred during verification. Please try again or contact support.');
+        setMessage('Ocorreu um erro durante a verificação. Tente novamente ou entre em contato com o suporte.');
       } finally {
         setIsLoading(false);
       }
@@ -101,7 +101,7 @@ const EmailVerification: React.FC = () => {
             <div className="flex flex-col items-center space-y-4">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
               <p className="text-center text-gray-600 dark:text-gray-300">
-                Verifying your email...
+                Verificando seu email...
               </p>
             </div>
           </CardContent>
@@ -120,7 +120,7 @@ const EmailVerification: React.FC = () => {
             <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
           )}
           <CardTitle className="text-2xl font-bold">
-            {verificationStatus === 'success' ? 'Email Verified!' : 'Verification Failed'}
+            {verificationStatus === 'success' ? 'Email Verificado!' : 'Verificação Falhou'}
           </CardTitle>
           <CardDescription className="text-gray-600 dark:text-gray-300">
             {message}
@@ -130,14 +130,14 @@ const EmailVerification: React.FC = () => {
           {verificationStatus === 'success' ? (
             <div className="text-center">
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                Redirecting you to your dashboard...
+                Redirecionando você para seu painel...
               </p>
               <Button 
                 onClick={handleGoToLogin}
                 className="w-full"
                 variant="outline"
               >
-                Go to Login
+                Ir para Login
               </Button>
             </div>
           ) : (
@@ -147,13 +147,13 @@ const EmailVerification: React.FC = () => {
                 className="w-full"
                 variant="outline"
               >
-                Resend Verification Email
+                Reenviar Email de Verificação
               </Button>
               <Button 
                 onClick={handleGoToLogin}
                 className="w-full"
               >
-                Go to Login
+                Ir para Login
               </Button>
             </div>
           )}

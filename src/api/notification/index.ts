@@ -30,7 +30,6 @@ export const getNotifications = async (token: string, params?: {
         const response = await NotificationAPI.get('/api/notifications', { params });
         return response.data;
     } catch (error: any) {
-        console.error('Error fetching notifications:', error);
         throw error;
     }
 };
@@ -42,7 +41,6 @@ export const getUnreadCount = async (token: string) => {
         const response = await NotificationAPI.get('/api/notifications/unread-count');
         return response.data;
     } catch (error: any) {
-        console.error('Error fetching unread count:', error);
         throw error;
     }
 };
@@ -54,7 +52,6 @@ export const markAsRead = async (notificationId: number, token: string) => {
         const response = await NotificationAPI.post(`/api/notifications/${notificationId}/mark-read`);
         return response.data;
     } catch (error: any) {
-        console.error('Error marking notification as read:', error);
         throw error;
     }
 };
@@ -66,7 +63,6 @@ export const markAllAsRead = async (token: string) => {
         const response = await NotificationAPI.post('/api/notifications/mark-all-read');
         return response.data;
     } catch (error: any) {
-        console.error('Error marking all notifications as read:', error);
         throw error;
     }
 };
@@ -78,7 +74,6 @@ export const deleteNotification = async (notificationId: number, token: string) 
         const response = await NotificationAPI.delete(`/api/notifications/${notificationId}`);
         return response.data;
     } catch (error: any) {
-        console.error('Error deleting notification:', error);
         throw error;
     }
 };
@@ -90,7 +85,6 @@ export const getNotificationStatistics = async (token: string) => {
         const response = await NotificationAPI.get('/api/notifications/statistics');
         return response.data;
     } catch (error: any) {
-        console.error('Error fetching notification statistics:', error);
         throw error;
     }
 }; 

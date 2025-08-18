@@ -26,7 +26,6 @@ export const GuideCreate = async (formData: FormData) => {
         console.log("GuideCreate response:", res);
         return res.data;
     } catch (error: any) {
-        console.error("Guide creation error:", error);
         throw error;
     }
 };

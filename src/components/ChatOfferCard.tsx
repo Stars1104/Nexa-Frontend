@@ -888,7 +888,7 @@ function ContractCard({
                   className="flex-1 bg-green-600 hover:bg-green-700"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Completed
+                  Concluído
                 </Button>
               )}
 

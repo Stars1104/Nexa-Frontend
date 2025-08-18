@@ -17,8 +17,7 @@ export const getGoogleOAuthURL = async () => {
         const response = await GoogleAuthAPI.get("/api/google/redirect");
         return response.data;
     } catch (error: any) {
-        console.error('Error getting Google OAuth URL:', error);
-        throw new Error(error.response?.data?.message || 'Failed to get Google OAuth URL');
+        throw new Error(error.response?.data?.message || 'Falha ao obter URL do Google OAuth');
     }
 };
 
@@ -32,8 +31,7 @@ export const handleGoogleCallback = async (code: string, role?: 'creator' | 'bra
         const response = await GoogleAuthAPI.get(`/api/google/callback?${params.toString()}`);
         return response.data;
     } catch (error: any) {
-        console.error('Error handling Google callback:', error);
-        throw new Error(error.response?.data?.message || 'Failed to authenticate with Google');
+        throw new Error(error.response?.data?.message || 'Falha na autenticação com Google');
     }
 };
 
@@ -43,8 +41,7 @@ export const handleGoogleAuthWithRole = async (role: 'creator' | 'brand') => {
         const response = await GoogleAuthAPI.post("/api/google/auth", { role });
         return response.data;
     } catch (error: any) {
-        console.error('Error handling Google auth with role:', error);
-        throw new Error(error.response?.data?.message || 'Failed to authenticate with Google');
+        throw new Error(error.response?.data?.message || 'Falha na autenticação com Google');
     }
 };
 
@@ -64,7 +61,6 @@ export const initiateGoogleOAuth = async (role?: 'creator' | 'brand') => {
         // Redirect to Google OAuth
         window.location.href = redirect_url;
     } catch (error) {
-        console.error('Error initiating Google OAuth:', error);
         throw error;
     }
 };
@@ -81,7 +77,7 @@ export const handleOAuthCallback = async () => {
         }
 
         if (!code) {
-            throw new Error('No authorization code received');
+            throw new Error('Nenhum código de autorização recebido');
         }
 
         // Get the stored role
@@ -99,7 +95,6 @@ export const handleOAuthCallback = async () => {
 
         return authData;
     } catch (error) {
-        console.error('Error handling OAuth callback:', error);
         throw error;
     }
 };

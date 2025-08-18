@@ -26,13 +26,13 @@ const getInitials = (name: string) => {
 
 // Fallback profile data if no user data is available
 const defaultProfile = {
-  name: "User",
-  email: "user@example.com",
-  state: "Not specified",
-  role: "Influencer",
-  languages: ["English"],
-  gender: "Not specified",
-  categories: ["General"],
+  name: "Usuário",
+  email: "usuario@exemplo.com",
+  state: "Não especificado",
+  role: "Influenciador",
+  languages: ["Português"],
+  gender: "Não especificado",
+  categories: ["Geral"],
   image: null,
   balance: 0,
 };
@@ -163,7 +163,7 @@ export const CreatorProfile = () => {
   const handleUpdatePassword = useCallback(
     async (passwordData: { currentPassword: string; newPassword: string }) => {
       if (!user?.id) {
-        safeToast.error("User not authenticated");
+        safeToast.error("Usuário não autenticado");
         return;
       }
 
@@ -178,10 +178,10 @@ export const CreatorProfile = () => {
         setShowPasswordModal(false);
 
         // Use safe toast with longer delay to ensure the modal has finished closing
-        safeToast.success("Password updated successfully!", 300);
+        safeToast.success("Senha atualizada com sucesso!", 300);
       } catch (error: any) {
         console.error("Password update failed:", error);
-        safeToast.error(error?.message || error || "Failed to update password");
+        safeToast.error(error?.message || error || "Falha ao atualizar senha");
       } finally {
         setIsPasswordLoading(false);
       }

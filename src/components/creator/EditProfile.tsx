@@ -54,10 +54,10 @@ const defaultProfile = {
     name: "Andrii Kerrn",
     email: "andriikerrn@gmail.com",
     state: "São Paulo",
-    role: "UGC e Influencer",
-    languages: ["Portuguese", "English"],
-    gender: "Feminine",
-    categories: ["Fashion", "Lifestyle", "Beauty"],
+    role: "UGC e Influenciador",
+    languages: ["Português", "Inglês"],
+    gender: "Feminino",
+    categories: ["Moda", "Estilo de Vida", "Beleza"],
     image: null as File | null,
 };
 

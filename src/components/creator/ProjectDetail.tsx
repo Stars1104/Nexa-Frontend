@@ -207,7 +207,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
           <div className="w-full md:w-[340px] flex flex-col gap-6 flex-shrink-0">
             <div className="bg-muted dark:bg-[#232326] rounded-xl p-5 flex flex-col gap-4 border border-border">
               <div className="flex items-center gap-3">
-                <DollarSign className="text-[#E91E63]" />
+                {/* <DollarSign className="text-[#E91E63]" /> */}
+                <span className="text-[#E91E63] text-ellipsis text-2xl">R$</span>
                 <div>
                   <div className="text-xs text-muted-foreground">Pagamento</div>
                   <div className="font-bold text-base text-foreground">

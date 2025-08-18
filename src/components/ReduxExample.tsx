@@ -57,7 +57,7 @@ const ReduxExample: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className="font-medium">Status:</span>
             <Badge variant={isAuthenticated ? 'default' : 'secondary'}>
-              {isAuthenticated ? 'Authenticated' : 'Not Authenticated'}
+              {isAuthenticated ? 'Autenticado' : 'Não Autenticado'}
             </Badge>
           </div>
 
@@ -83,7 +83,7 @@ const ReduxExample: React.FC = () => {
                 />
               </div>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Logging in...' : 'Login'}
+                {isLoading ? 'Fazendo login...' : 'Login'}
               </Button>
               {error && <p className="text-red-500 text-sm">{error}</p>}
             </form>
@@ -93,9 +93,9 @@ const ReduxExample: React.FC = () => {
           {isAuthenticated && user && (
             <div className="space-y-4">
               <div>
-                <h3 className="font-medium">User Information:</h3>
+                <h3 className="font-medium">Informações do Usuário:</h3>
                 <div className="flex items-center gap-2">
-                  <span>Name: {user.name}</span>
+                  <span>Nome: {user.name}</span>
                   {user.isPremium && (
                     <div className="flex items-center gap-1">
                       <Crown className="w-4 h-4 text-yellow-500" />
@@ -106,8 +106,8 @@ const ReduxExample: React.FC = () => {
                   )}
                 </div>
                 <p>Email: {user.email}</p>
-                <p>Role: {user.role}</p>
-                <p>Premium: {user.isPremium ? 'Yes' : 'No'}</p>
+                <p>Função: {user.role}</p>
+                <p>Premium: {user.isPremium ? 'Sim' : 'Não'}</p>
               </div>
               
               <div className="flex gap-2 flex-wrap">
@@ -119,7 +119,7 @@ const ReduxExample: React.FC = () => {
                   variant="outline"
                   className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
                 >
-                  {user.isPremium ? 'Remove Premium' : 'Add Premium'}
+                  {user.isPremium ? 'Remover Premium' : 'Adicionar Premium'}
                 </Button>
                 <Button onClick={handleLogout} variant="outline">
                   Logout
@@ -130,11 +130,11 @@ const ReduxExample: React.FC = () => {
 
           {/* User Preferences */}
           <div>
-            <h3 className="font-medium mb-2">User Preferences:</h3>
+            <h3 className="font-medium mb-2">Preferências do Usuário:</h3>
             <div className="flex items-center gap-2">
-              <span>Theme: {preferences.theme}</span>
+              <span>Tema: {preferences.theme}</span>
               <Button onClick={handleToggleTheme} size="sm">
-                Toggle Theme
+                Alternar Tema
               </Button>
             </div>
             <p>Notificações: {preferences.notifications ? 'Ativado' : 'Desativado'}</p>
@@ -144,10 +144,10 @@ const ReduxExample: React.FC = () => {
           {/* Profile Info */}
           {profile && (
             <div>
-              <h3 className="font-medium mb-2">Profile Information:</h3>
-              <p>Bio: {profile.bio || 'No bio set'}</p>
-              <p>Location: {profile.location || 'No location set'}</p>
-              <p>Website: {profile.website || 'No website set'}</p>
+              <h3 className="font-medium mb-2">Informações do Perfil:</h3>
+              <p>Biografia: {profile.bio || 'Nenhuma biografia definida'}</p>
+              <p>Localização: {profile.location || 'Nenhuma localização definida'}</p>
+              <p>Website: {profile.website || 'Nenhum website definido'}</p>
             </div>
           )}
         </CardContent>

@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import React, { useState, useEffect, useMemo } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Separator } from "@/components/ui/separator";
-import { GetGuide } from "@/api/admin/guide";
-import { Button } from "@/components/ui/button";
-import { Loader2, Play, AlertCircle, BookOpen, Users, Target, TrendingUp } from "lucide-react";
+import { Separator } from '@/components/ui/separator';
+import { GetGuide } from '../api/admin/guide';
+import { Button } from '@/components/ui/button';
+import { AlertCircle, BookOpen, Target, Users, Loader2, TrendingUp } from 'lucide-react';
+import { useToast } from '../hooks/use-toast';
 
 interface Step {
   id: number;
@@ -100,6 +101,7 @@ export default function GuideEmbedded() {
   const [guides, setGuides] = useState<Guide[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const defaultTab = useMemo(() => "brands", []);
 
@@ -113,13 +115,18 @@ export default function GuideEmbedded() {
       } catch (err: any) {
         setError(err.message || "Failed to fetch guides");
         console.error("Error fetching guides:", err);
+        toast({
+          title: "Erro",
+          description: "Falha ao carregar guias da plataforma",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchGuides();
-  }, []);
+  }, [toast]);
 
   const brandGuide = guides.find(g => g.audience === 'Brand');
   const creatorGuide = guides.find(g => g.audience === 'Creator');

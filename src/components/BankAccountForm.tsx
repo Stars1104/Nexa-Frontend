@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { BanknoteIcon, CreditCard, User, Building2, Hash, Shield, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,25 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
     cpf: '',
     name: ''
   });
+
+  // Brazilian bank codes and names
+  const bankOptions = [
+    { code: '001', name: 'Banco do Brasil S.A.' },
+    { code: '104', name: 'Caixa Econômica Federal' },
+    { code: '237', name: 'Bradesco S.A.' },
+    { code: '341', name: 'Itaú Unibanco S.A.' },
+    { code: '033', name: 'Santander (Brasil) S.A.' },
+    { code: '422', name: 'Banco Safra S.A.' },
+    { code: '077', name: 'Banco Inter S.A.' },
+    { code: '212', name: 'Banco Original S.A.' },
+    { code: '336', name: 'Banco C6 S.A.' },
+    { code: '260', name: 'Nu Pagamentos S.A. (Nubank)' },
+    { code: '208', name: 'BTG Pactual S.A.' },
+    { code: '623', name: 'Banco PAN S.A.' },
+    { code: '041', name: 'Banrisul – Banco do Estado do Rio Grande do Sul S.A.' },
+    { code: '748', name: 'Sicredi – Cooperativa de Crédito' },
+    { code: '756', name: 'Sicoob – Sistema de Cooperativas de Crédito' }
+  ];
 
   // Ensure bankInfo is never undefined
   const safeBankInfo = bankInfo || {
@@ -152,6 +172,21 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
       setBankInfo(prev => ({ ...prev, [name]: formattedValue }));
     } else {
       setBankInfo(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleBankCodeChange = (value: string) => {
+    setBankInfo(prev => ({
+      ...prev,
+      bank_code: value
+    }));
+
+    // Clear error when user selects a bank
+    if (errors.bank_code) {
+      setErrors(prev => ({
+        ...prev,
+        bank_code: ''
+      }));
     }
   };
 
@@ -271,22 +306,20 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
                 <div className="space-y-2">
                   <Label htmlFor="bank_code" className="text-sm font-medium text-foreground">
                     <Hash className="inline w-4 h-4 mr-2" />
-                    Código do Banco
+                    Banco
                   </Label>
-                  <Input
-                    id="bank_code"
-                    name="bank_code"
-                    type="text"
-                    value={safeBankInfo.bank_code}
-                    onChange={handleChange}
-                    placeholder="Ex: 001 (Banco do Brasil)"
-                    maxLength={4}
-                    pattern="[0-9]{3,4}"
-                    className={cn(
-                      "transition-all duration-200"
-                    )}
-                    disabled={isLoading}
-                  />
+                  <Select onValueChange={handleBankCodeChange} value={safeBankInfo.bank_code} defaultValue={safeBankInfo.bank_code}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecione o banco" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {bankOptions.map((bank) => (
+                        <SelectItem key={bank.code} value={bank.code}>
+                          {bank.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {errors.bank_code && (
                     <div className="flex items-center gap-1 text-sm text-destructive">
                       <AlertCircle className="w-4 h-4" />
@@ -326,7 +359,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
                   <div className="space-y-2">
                     <Label htmlFor="agencia_dv" className="text-sm font-medium text-foreground">
                       <Hash className="inline w-4 h-4 mr-2" />
-                      Dígito
+                      Digito da Agência
                     </Label>
                     <Input
                       id="agencia_dv"
@@ -392,7 +425,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
                   <div className="space-y-2">
                     <Label htmlFor="conta_dv" className="text-sm font-medium text-foreground">
                       <Hash className="inline w-4 h-4 mr-2" />
-                      Dígito
+                      Digito da Conta
                     </Label>
                     <Input
                       id="conta_dv"

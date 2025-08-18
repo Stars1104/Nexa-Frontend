@@ -57,7 +57,7 @@ const GoogleOAuthCallback: React.FC = () => {
           const isNewUser = !result.user.has_premium && result.user.role === 'creator';
           setIsNewRegistration(isNewUser);
           
-          toast.success(isNewUser ? 'Account created successfully!' : 'Successfully signed in with Google!');
+          toast.success(isNewUser ? 'Conta criada com sucesso!' : 'Login realizado com sucesso com Google!');
           
           // Clean up URL parameters
           window.history.replaceState({}, document.title, window.location.pathname);
@@ -73,12 +73,12 @@ const GoogleOAuthCallback: React.FC = () => {
             }
           }, 1000);
         } else {
-          throw new Error('Authentication failed');
+          throw new Error('Falha na autenticação');
         }
       } catch (error: any) {
         setStatus('error');
-        setError(error.message || 'Authentication failed');
-        toast.error(error.message || 'Failed to sign in with Google');
+        setError(error.message || 'Falha na autenticação');
+        toast.error(error.message || 'Falha ao fazer login com Google');
         
         // Redirect to auth page after error
         setTimeout(() => {
@@ -105,9 +105,9 @@ const GoogleOAuthCallback: React.FC = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">
-            {status === 'loading' && 'Signing you in...'}
-            {status === 'success' && 'Success!'}
-            {status === 'error' && 'Authentication Failed'}
+            {status === 'loading' && 'Fazendo seu login...'}
+            {status === 'success' && 'Sucesso!'}
+            {status === 'error' && 'Falha na Autenticação'}
           </CardTitle>
         </CardHeader>
         <CardContent className="text-center space-y-4">
@@ -115,7 +115,7 @@ const GoogleOAuthCallback: React.FC = () => {
             <div className="flex flex-col items-center space-y-4">
               <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
               <p className="text-gray-600 dark:text-gray-400">
-                Please wait while we complete your sign-in...
+                Aguarde enquanto completamos seu login...
               </p>
             </div>
           )}
@@ -124,10 +124,10 @@ const GoogleOAuthCallback: React.FC = () => {
             <div className="flex flex-col items-center space-y-4">
               <CheckCircle className="h-12 w-12 text-green-500" />
               <p className="text-gray-600 dark:text-gray-400">
-                Successfully signed in with Google!
+                Login realizado com sucesso com Google!
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-500">
-                Redirecting to your dashboard...
+                Redirecionando para seu painel...
               </p>
             </div>
           )}
@@ -140,10 +140,10 @@ const GoogleOAuthCallback: React.FC = () => {
               </p>
               <div className="flex space-x-2">
                 <Button onClick={handleRetry} variant="outline">
-                  Try Again
+                  Tentar Novamente
                 </Button>
                 <Button onClick={handleGoHome}>
-                  Go Home
+                  Ir para Início
                 </Button>
               </div>
             </div>

@@ -85,7 +85,7 @@ export const createCampaign = createAsyncThunk<
     const token = state.auth.token;
     
     if (!user || !token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
 
     // Create FormData for file upload
@@ -97,12 +97,12 @@ export const createCampaign = createAsyncThunk<
     // Ensure budget is a valid number
     const budgetValue = parseFloat(campaignData.budget);
     if (isNaN(budgetValue) || budgetValue <= 0) {
-      throw new Error('Budget must be a valid positive number');
+      throw new Error('Orçamento deve ser um número válido e positivo');
     }
     formData.append('budget', budgetValue.toString());
     // Ensure deadline is a valid date
     if (!campaignData.deadline || isNaN(campaignData.deadline.getTime())) {
-      throw new Error('Deadline must be a valid date');
+      throw new Error('Prazo deve ser uma data válida');
     }
     formData.append('deadline', campaignData.deadline.toISOString().split('T')[0]); // Send only the date part
     
@@ -129,7 +129,7 @@ export const createCampaign = createAsyncThunk<
     const response = await CreateNewCampaign(formData, token);
     return response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to create campaign';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao criar campanha';
     return rejectWithValue(errorMessage);
   }
 });
@@ -145,18 +145,18 @@ export const fetchCampaigns = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await GetAllCampaigns(token);
     return response.data;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch campaigns';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar campanhas';
     return rejectWithValue(errorMessage);
   }
 });
 
-// Fetch pending campaigns (for admin)
+// Fetch pending campaigns (admin only)
 export const fetchPendingCampaigns = createAsyncThunk<
   Campaign[],
   void,
@@ -167,11 +167,11 @@ export const fetchPendingCampaigns = createAsyncThunk<
     const token = state.auth.token;
     const user = state.auth.user;
     
-    if (!token) {
-      throw new Error('User not authenticated');
+    if (!token || !user) {
+      throw new Error('Usuário não autenticado');
     }
-
-    if (!user || user.role !== 'admin') {
+    
+    if (user.role !== 'admin') {
       throw new Error('Acesso negado. Apenas administradores podem acessar campanhas pendentes.');
     }
 
@@ -179,7 +179,6 @@ export const fetchPendingCampaigns = createAsyncThunk<
     return (response.data);
   } catch (error: unknown) {
     const apiError = handleApiError(error);
-    console.error('Error in fetchPendingCampaigns:', apiError);
     return rejectWithValue(apiError.message);
   }
 });
@@ -196,13 +195,13 @@ export const fetchUserCampaigns = createAsyncThunk<
     const user = state.auth.user;
     
     if (!token || !user) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await GetUserCampaigns(user.id, token);
     return response.data || response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch user campaigns';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar campanhas do usuário';
     return rejectWithValue(errorMessage);
   }
 });
@@ -224,13 +223,13 @@ export const fetchAvailableCampaigns = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await GetAvailableCampaigns(token, filters);
     return response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch available campaigns';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar campanhas disponíveis';
     return rejectWithValue(errorMessage);
   }
 });
@@ -246,13 +245,13 @@ export const fetchCampaignStats = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await GetCampaignStats(token);
     return response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch campaign statistics';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar estatísticas da campanha';
     return rejectWithValue(errorMessage);
   }
 });
@@ -268,13 +267,13 @@ export const fetchCampaignById = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await GetCampaignById(campaignId, token);
     return response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch campaign';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar campanha';
     return rejectWithValue(errorMessage);
   }
 });
@@ -290,7 +289,7 @@ export const updateCampaign = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     // Create FormData for file upload
@@ -321,7 +320,7 @@ export const updateCampaign = createAsyncThunk<
     const response = await UpdateCampaign(campaignId, formData, token);
     return response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to update campaign';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao atualizar campanha';
     return rejectWithValue(errorMessage);
   }
 });
@@ -337,13 +336,13 @@ export const deleteCampaign = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     await DeleteCampaign(campaignId, token);
     return { campaignId };
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to delete campaign';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao deletar campanha';
     return rejectWithValue(errorMessage);
   }
 });
@@ -365,14 +364,14 @@ export const applyToCampaign = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const { campaignId, ...applicationFormData } = applicationData;
     const response = await ApplyToCampaign(campaignId, applicationFormData, token);
     return response.data;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to apply to campaign';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao se candidatar à campanha';
     return rejectWithValue(errorMessage);
   }
 });
@@ -388,13 +387,13 @@ export const fetchCampaignApplications = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await GetCampaignApplications(campaignId, token);
     return response.data?.data || response.data || response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch applications';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar candidaturas';
     return rejectWithValue(errorMessage);
   }
 });
@@ -410,13 +409,13 @@ export const fetchCreatorApplications = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await GetCreatorApplications(token);
     return response.data?.data || response.data || response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch applications';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar candidaturas';
     return rejectWithValue(errorMessage);
   }
 });
@@ -432,13 +431,13 @@ export const approveApplication = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     await ApproveApplication(applicationId, token);
     return { campaignId, applicationId };
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to approve application';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao aprovar candidatura';
     return rejectWithValue(errorMessage);
   }
 });
@@ -454,13 +453,13 @@ export const rejectApplication = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     await RejectApplication(applicationId, token, reason);
     return { campaignId, applicationId };
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to reject application';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao rejeitar candidatura';
     return rejectWithValue(errorMessage);
   }
 });
@@ -476,13 +475,13 @@ export const withdrawApplication = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     await WithdrawApplication(applicationId, token);
     return applicationId;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to withdraw application';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao retirar candidatura';
     return rejectWithValue(errorMessage);
   }
 });
@@ -498,13 +497,13 @@ export const fetchAllApplications = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await GetAllApplications(token, filters);
     return response.data?.data || response.data || response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch applications';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar candidaturas';
     return rejectWithValue(errorMessage);
   }
 });
@@ -520,13 +519,13 @@ export const fetchApplication = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await GetApplication(applicationId, token);
     return response.data?.data || response.data || response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch application';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar candidatura';
     return rejectWithValue(errorMessage);
   }
 });
@@ -542,13 +541,13 @@ export const fetchApplicationStatistics = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await GetApplicationStatistics(token);
     return response.data?.data || response.data || response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch application statistics';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar estatísticas da candidatura';
     return rejectWithValue(errorMessage);
   }
 });
@@ -572,7 +571,7 @@ export const searchCampaigns = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await SearchCampaigns(searchParams.query, token, {
@@ -585,7 +584,7 @@ export const searchCampaigns = createAsyncThunk<
     });
     return response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to search campaigns';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar campanhas';
     return rejectWithValue(errorMessage);
   }
 });
@@ -601,13 +600,13 @@ export const fetchCampaignCategories = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await GetCampaignCategories(token);
     return response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch categories';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar categorias';
     return rejectWithValue(errorMessage);
   }
 });
@@ -623,13 +622,13 @@ export const fetchCampaignTypes = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await GetCampaignTypes(token);
     return response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch types';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar tipos';
     return rejectWithValue(errorMessage);
   }
 });
@@ -645,13 +644,13 @@ export const duplicateCampaign = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await DuplicateCampaign(campaignId, token);
     return response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to duplicate campaign';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao duplicar campanha';
     return rejectWithValue(errorMessage);
   }
 });
@@ -667,13 +666,13 @@ export const extendCampaignDeadline = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await ExtendCampaignDeadline(campaignId, newDeadline, token);
     return response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to extend deadline';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao estender prazo';
     return rejectWithValue(errorMessage);
   }
 });
@@ -689,13 +688,13 @@ export const updateCampaignBudget = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await UpdateCampaignBudget(campaignId, newBudget, token);
     return response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to update budget';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao atualizar orçamento';
     return rejectWithValue(errorMessage);
   }
 });
@@ -711,13 +710,13 @@ export const fetchCampaignAnalytics = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await GetCampaignAnalytics(campaignId, token);
     return response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch analytics';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar estatísticas da campanha';
     return rejectWithValue(errorMessage);
   }
 });
@@ -739,7 +738,7 @@ export const exportCampaigns = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await ExportCampaigns(token, exportParams.format, {
@@ -750,7 +749,7 @@ export const exportCampaigns = createAsyncThunk<
     });
     return response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to export campaigns';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao exportar campanhas';
     return rejectWithValue(errorMessage);
   }
 });
@@ -767,7 +766,7 @@ export const approveCampaign = createAsyncThunk<
     const user = state.auth.user;
     
     if (!token || !user) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     if (user.role !== 'admin') {
@@ -778,7 +777,6 @@ export const approveCampaign = createAsyncThunk<
     return response;
   } catch (error: unknown) {
     const apiError = handleApiError(error);
-    console.error('Error in approveCampaign:', apiError);
     return rejectWithValue(apiError.message);
   }
 });
@@ -795,7 +793,7 @@ export const rejectCampaign = createAsyncThunk<
     const user = state.auth.user;
     
     if (!token || !user) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     if (user.role !== 'admin') {
@@ -806,7 +804,6 @@ export const rejectCampaign = createAsyncThunk<
     return response;
   } catch (error: unknown) {
     const apiError = handleApiError(error);
-    console.error('Error in rejectCampaign:', apiError);
     return rejectWithValue(apiError.message);
   }
 });
@@ -822,7 +819,7 @@ export const fetchApprovedCampaigns = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await GetCampaignsByStatus('approved', token);
@@ -837,10 +834,9 @@ export const fetchApprovedCampaigns = createAsyncThunk<
       return response;
     }
     
-    console.error('Unexpected response structure:', response);
     return [];
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch approved campaigns';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar campanhas aprovadas';
     return rejectWithValue(errorMessage);
   }
 });
@@ -857,7 +853,7 @@ export const toggleFeaturedCampaign = createAsyncThunk<
     const user = state.auth.user;
     
     if (!token || !user) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     if (user.role !== 'admin') {
@@ -868,7 +864,6 @@ export const toggleFeaturedCampaign = createAsyncThunk<
     return response;
   } catch (error: unknown) {
     const apiError = handleApiError(error);
-    console.error('Error in toggleFeaturedCampaign:', apiError);
     return rejectWithValue(apiError.message);
   }
 });
@@ -885,14 +880,13 @@ export const toggleFavoriteCampaign = createAsyncThunk<
     const user = state.auth.user;
     
     if (!token || !user) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await ToggleFavoriteCampaign(campaignId, token);
     return response.data;
   } catch (error: unknown) {
     const apiError = handleApiError(error);
-    console.error('Error in toggleFavoriteCampaign:', apiError);
     return rejectWithValue(apiError.message);
   }
 });
@@ -908,13 +902,13 @@ export const fetchFavoriteCampaigns = createAsyncThunk<
     const token = state.auth.token;
     
     if (!token) {
-      throw new Error('User not authenticated');
+      throw new Error('Usuário não autenticado');
     }
     
     const response = await GetFavoriteCampaigns(token);
     return response;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch favorite campaigns';
+    const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar campanhas favoritas';
     return rejectWithValue(errorMessage);
   }
 });

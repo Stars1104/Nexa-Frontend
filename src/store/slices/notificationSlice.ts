@@ -45,7 +45,7 @@ export const fetchNotifications = createAsyncThunk<
         const response = await notificationAPI.getNotifications(token, params);
         return response;
     } catch (error: any) {
-        return rejectWithValue(error.response?.data?.message || 'Failed to fetch notifications');
+        return rejectWithValue(error.response?.data?.message || 'Falha ao buscar notificações');
     }
 });
 
@@ -58,7 +58,7 @@ export const fetchUnreadCount = createAsyncThunk<
         const response = await notificationAPI.getUnreadCount(token);
         return response.count;
     } catch (error: any) {
-        return rejectWithValue(error.response?.data?.message || 'Failed to fetch unread count');
+        return rejectWithValue(error.response?.data?.message || 'Falha ao buscar contagem de não lidas');
     }
 });
 
@@ -71,7 +71,7 @@ export const markNotificationAsRead = createAsyncThunk<
         await notificationAPI.markAsRead(notificationId, token);
         return notificationId;
     } catch (error: any) {
-        return rejectWithValue(error.response?.data?.message || 'Failed to mark notification as read');
+        return rejectWithValue(error.response?.data?.message || 'Falha ao marcar notificação como lida');
     }
 });
 
@@ -83,7 +83,7 @@ export const markAllNotificationsAsRead = createAsyncThunk<
     try {
         await notificationAPI.markAllAsRead(token);
     } catch (error: any) {
-        return rejectWithValue(error.response?.data?.message || 'Failed to mark all notifications as read');
+        return rejectWithValue(error.response?.data?.message || 'Falha ao marcar todas as notificações como lidas');
     }
 });
 
@@ -96,7 +96,7 @@ export const deleteNotification = createAsyncThunk<
         await notificationAPI.deleteNotification(notificationId, token);
         return notificationId;
     } catch (error: any) {
-        return rejectWithValue(error.response?.data?.message || 'Failed to delete notification');
+        return rejectWithValue(error.response?.data?.message || 'Falha ao excluir notificação');
     }
 });
 
@@ -109,7 +109,7 @@ export const fetchNotificationStatistics = createAsyncThunk<
         const response = await notificationAPI.getNotificationStatistics(token);
         return response.data;
     } catch (error: any) {
-        return rejectWithValue(error.response?.data?.message || 'Failed to fetch notification statistics');
+        return rejectWithValue(error.response?.data?.message || 'Falha ao buscar estatísticas de notificação');
     }
 });
 
@@ -172,7 +172,7 @@ const notificationSlice = createSlice({
             })
             .addCase(fetchNotifications.rejected, (state, action) => {
                 state.isLoading = false;
-                state.error = action.payload || 'Failed to fetch notifications';
+                state.error = action.payload || 'Falha ao buscar notificações';
             });
 
         // Fetch unread count
@@ -181,7 +181,7 @@ const notificationSlice = createSlice({
                 state.unreadCount = action.payload;
             })
             .addCase(fetchUnreadCount.rejected, (state, action) => {
-                state.error = action.payload || 'Failed to fetch unread count';
+                state.error = action.payload || 'Falha ao buscar contagem de não lidas';
             });
 
         // Mark as read
@@ -194,7 +194,7 @@ const notificationSlice = createSlice({
                 }
             })
             .addCase(markNotificationAsRead.rejected, (state, action) => {
-                state.error = action.payload || 'Failed to mark notification as read';
+                state.error = action.payload || 'Falha ao marcar notificação como lida';
             });
 
         // Mark all as read
@@ -206,7 +206,7 @@ const notificationSlice = createSlice({
                 state.unreadCount = 0;
             })
             .addCase(markAllNotificationsAsRead.rejected, (state, action) => {
-                state.error = action.payload || 'Failed to mark all notifications as read';
+                state.error = action.payload || 'Falha ao marcar todas as notificações como lidas';
             });
 
         // Delete notification
@@ -219,7 +219,7 @@ const notificationSlice = createSlice({
                 state.notifications = state.notifications.filter(n => n.id !== action.payload);
             })
             .addCase(deleteNotification.rejected, (state, action) => {
-                state.error = action.payload || 'Failed to delete notification';
+                state.error = action.payload || 'Falha ao excluir notificação';
             });
 
         // Fetch statistics
@@ -228,7 +228,7 @@ const notificationSlice = createSlice({
                 state.statistics = action.payload;
             })
             .addCase(fetchNotificationStatistics.rejected, (state, action) => {
-                state.error = action.payload || 'Failed to fetch notification statistics';
+                state.error = action.payload || 'Falha ao buscar estatísticas de notificação';
             });
     },
 });

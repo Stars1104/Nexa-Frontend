@@ -13,7 +13,7 @@ const navLinks = [
     { label: "Meu Portfólio", icon: Briefcase, key: "Portfólio" },
     { label: "Saldo e Saques", icon: Wallet, key: "Saldo e Saques" },
     { label: "Notificações", icon: Bell, key: "Notificações" },
-    { label: "Subscrição", icon: CreditCard, key: "Subscrição" },
+    { label: "Assinatura", icon: CreditCard, key: "Assinatura" },
     { label: "Histórico de Pagamentos", icon: Receipt, key: "Histórico de Pagamentos" },
     { label: "Cadastro Bancário", icon: BanknoteIcon, key: "Cadastro Bancário" },
     { label: "Guia da Plataforma", icon: BookOpen, key: "Guia da Plataforma" },

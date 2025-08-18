@@ -211,7 +211,7 @@ const campaignSlice = createSlice({
       })
       .addCase(createCampaign.rejected, (state, action) => {
         state.isCreating = false;
-        state.error = action.payload || 'Failed to create campaign';
+        state.error = action.payload || 'Falha ao criar campanha';
       })
       
       // Fetch all campaigns
@@ -225,7 +225,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchCampaigns.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch campaigns';
+        state.error = action.payload || 'Falha ao buscar campanhas';
       })
       
       // Fetch pending campaigns
@@ -239,7 +239,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchPendingCampaigns.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch pending campaigns';
+        state.error = action.payload || 'Falha ao buscar campanhas pendentes';
       })
       
       // Fetch user campaigns
@@ -253,7 +253,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchUserCampaigns.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch user campaigns';
+        state.error = action.payload || 'Falha ao buscar campanhas do usuário';
       })
       
       // Fetch available campaigns
@@ -267,7 +267,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchAvailableCampaigns.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch available campaigns';
+        state.error = action.payload || 'Falha ao buscar campanhas disponíveis';
       })
       
       // Fetch approved campaigns
@@ -276,41 +276,13 @@ const campaignSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchApprovedCampaigns.fulfilled, (state, action) => {
+        state.approvedCampaigns = action.payload;
         state.isLoading = false;
-        
-        // Ensure payload is an array
-        const payload = action.payload;
-        if (!Array.isArray(payload)) {
-          console.error('fetchApprovedCampaigns.fulfilled: payload is not an array:', payload);
-          state.approvedCampaigns = [];
-          return;
-        }
-        
-        // Preserve favorite status from existing campaigns
-        const newCampaigns = payload as Campaign[];
-        const existingCampaigns = Array.isArray(state.approvedCampaigns) ? state.approvedCampaigns : [];
-        
-        // Create a map of existing favorite status
-        const favoriteStatusMap = new Map();
-        existingCampaigns.forEach(campaign => {
-          if (campaign.is_favorited !== undefined) {
-            favoriteStatusMap.set(campaign.id, campaign.is_favorited);
-          }
-        });
-        
-        // Merge new campaigns with preserved favorite status
-        const mergedCampaigns = newCampaigns.map(campaign => ({
-          ...campaign,
-          is_favorited: favoriteStatusMap.has(campaign.id) 
-            ? favoriteStatusMap.get(campaign.id) 
-            : campaign.is_favorited
-        }));
-        
-        state.approvedCampaigns = mergedCampaigns;
+        state.error = null;
       })
       .addCase(fetchApprovedCampaigns.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch approved campaigns';
+        state.error = action.payload || 'Falha ao buscar campanhas aprovadas';
       })
       
       // Toggle featured campaign
@@ -345,7 +317,7 @@ const campaignSlice = createSlice({
       })
       .addCase(toggleFeaturedCampaign.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to toggle featured status';
+        state.error = action.payload || 'Falha ao alternar status de destaque';
       })
       
       // Toggle favorite campaign
@@ -394,7 +366,7 @@ const campaignSlice = createSlice({
       })
       .addCase(toggleFavoriteCampaign.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to toggle favorite status';
+        state.error = action.payload || 'Falha ao alternar status de favorito';
       })
       
       // Fetch favorite campaigns
@@ -408,7 +380,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchFavoriteCampaigns.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch favorite campaigns';
+        state.error = action.payload || 'Falha ao buscar campanhas favoritas';
       })
       
       // Fetch campaign stats
@@ -422,7 +394,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchCampaignStats.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch campaign statistics';
+        state.error = action.payload || 'Falha ao buscar estatísticas da campanha';
       })
       
       // Fetch campaign by ID
@@ -436,7 +408,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchCampaignById.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch campaign';
+        state.error = action.payload || 'Falha ao buscar campanha';
       })
       
       // Update campaign
@@ -476,7 +448,7 @@ const campaignSlice = createSlice({
       })
       .addCase(updateCampaign.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to update campaign';
+        state.error = action.payload || 'Falha ao atualizar campanha';
       })
       
       // Delete campaign
@@ -506,7 +478,7 @@ const campaignSlice = createSlice({
       })
       .addCase(deleteCampaign.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to delete campaign';
+        state.error = action.payload || 'Falha ao deletar campanha';
       })
       
       // Apply to campaign
@@ -520,7 +492,7 @@ const campaignSlice = createSlice({
       })
       .addCase(applyToCampaign.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to apply to campaign';
+        state.error = action.payload || 'Falha ao aplicar para campanha';
       })
       
       // Fetch campaign applications
@@ -534,7 +506,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchCampaignApplications.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch applications';
+        state.error = action.payload || 'Falha ao buscar aplicações';
       })
       
       // Fetch creator applications
@@ -548,7 +520,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchCreatorApplications.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch applications';
+        state.error = action.payload || 'Falha ao buscar aplicações';
       })
       
       // Approve application
@@ -578,7 +550,7 @@ const campaignSlice = createSlice({
       })
       .addCase(approveApplication.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to approve application';
+        state.error = action.payload || 'Falha ao aprovar aplicação';
       })
       
       // Reject application
@@ -608,7 +580,7 @@ const campaignSlice = createSlice({
       })
       .addCase(rejectApplication.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to reject application';
+        state.error = action.payload || 'Falha ao rejeitar aplicação';
       })
       
       // Search campaigns
@@ -622,7 +594,7 @@ const campaignSlice = createSlice({
       })
       .addCase(searchCampaigns.rejected, (state, action) => {
         state.isSearching = false;
-        state.error = action.payload || 'Failed to search campaigns';
+        state.error = action.payload || 'Falha ao buscar campanhas';
       })
       
       // Fetch categories
@@ -636,7 +608,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchCampaignCategories.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch categories';
+        state.error = action.payload || 'Falha ao buscar categorias';
       })
       
       // Fetch types
@@ -650,7 +622,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchCampaignTypes.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch types';
+        state.error = action.payload || 'Falha ao buscar tipos';
       })
       
       // Duplicate campaign
@@ -666,7 +638,7 @@ const campaignSlice = createSlice({
       })
       .addCase(duplicateCampaign.rejected, (state, action) => {
         state.isCreating = false;
-        state.error = action.payload || 'Failed to duplicate campaign';
+        state.error = action.payload || 'Falha ao duplicar campanha';
       })
       
       // Extend deadline
@@ -703,7 +675,7 @@ const campaignSlice = createSlice({
       })
       .addCase(extendCampaignDeadline.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to extend deadline';
+        state.error = action.payload || 'Falha ao estender prazo';
       })
       
       // Update budget
@@ -740,7 +712,7 @@ const campaignSlice = createSlice({
       })
       .addCase(updateCampaignBudget.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to update budget';
+        state.error = action.payload || 'Falha ao atualizar orçamento';
       })
       
       // Fetch analytics
@@ -754,7 +726,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchCampaignAnalytics.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch analytics';
+        state.error = action.payload || 'Falha ao buscar estatísticas';
       })
       
       // Export campaigns
@@ -768,7 +740,7 @@ const campaignSlice = createSlice({
       })
       .addCase(exportCampaigns.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to export campaigns';
+        state.error = action.payload || 'Falha ao exportar campanhas';
       })
       
       // Approve campaign (admin only)
@@ -799,7 +771,7 @@ const campaignSlice = createSlice({
       })
       .addCase(approveCampaign.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to approve campaign';
+        state.error = action.payload || 'Falha ao aprovar campanha';
       })
       
       // Reject campaign (admin only)
@@ -830,7 +802,7 @@ const campaignSlice = createSlice({
       })
       .addCase(rejectCampaign.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to reject campaign';
+        state.error = action.payload || 'Falha ao rejeitar campanha';
       })
       
       // Withdraw application
@@ -848,7 +820,7 @@ const campaignSlice = createSlice({
       })
       .addCase(withdrawApplication.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to withdraw application';
+        state.error = action.payload || 'Falha ao retirar aplicação';
       })
       
       // Fetch all applications
@@ -862,7 +834,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchAllApplications.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch applications';
+        state.error = action.payload || 'Falha ao buscar aplicações';
       })
       
       // Fetch specific application
@@ -883,7 +855,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchApplication.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch application';
+        state.error = action.payload || 'Falha ao buscar aplicação';
       })
       
       // Fetch application statistics
@@ -898,7 +870,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchApplicationStatistics.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Failed to fetch application statistics';
+        state.error = action.payload || 'Falha ao buscar estatísticas da aplicação';
       });
   },
 });

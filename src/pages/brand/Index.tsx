@@ -65,7 +65,7 @@ const Index = () => {
                 {!isMobile && <BrandSidebar setComponent={setComponent} component={component} />}
                 <div className="flex-1 flex flex-col min-w-0">
                     <ComponentNavbar title={typeof component === "string" ? component : component?.name || "Dashboard"} />
-                    <main className={`flex-1 overflow-y-auto bg-muted/50 ${isMobile ? 'pb-20' : ''}`}>
+                    <main className={`flex-1 overflow-y-auto bg-muted/50`}>
                         <CreatorComponent />
                     </main>
                 </div>

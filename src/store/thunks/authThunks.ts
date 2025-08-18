@@ -49,7 +49,7 @@ export const signupUser = createAsyncThunk(
       const response = await signup(credentials);
       
       if (!response.success) {
-        throw new Error(response.message || 'Sign up failed');
+        throw new Error(response.message || 'Falha no cadastro');
       }
 
       // Check if email verification is required
@@ -87,7 +87,7 @@ export const loginUser = createAsyncThunk(
       const response = await signin(credentials);
       
       if (!response.success) {
-        throw new Error(response.message || 'Login failed');
+        throw new Error(response.message || 'Falha no login');
       }
 
       const authData: AuthResponse = {
@@ -114,7 +114,6 @@ export const logoutUser = createAsyncThunk(
       await logoutAPI();
     } catch (error) {
       // Log the error but don't throw - we still want to clear local state
-      console.error('Logout API error:', error);
       // If it's a 401, the token was already invalid, so clearing state is correct
       // If it's another error, we still want to log the user out locally
     } finally {
@@ -133,10 +132,10 @@ export const updateUserPassword = createAsyncThunk(
       const response = await updatePassword(credentials.userId, credentials.newPassword, credentials.currentPassword);
       
       if (!response.success) {
-        throw new Error(response.message || 'Password update failed');
+        throw new Error(response.message || 'Falha na atualização da senha');
       }
 
-      return response.message || 'Password updated successfully';
+      return response.message || 'Senha atualizada com sucesso';
     } catch (error: unknown) {
       const apiError = handleApiError(error);
       return rejectWithValue(apiError.message);
@@ -167,7 +166,7 @@ export const handleGoogleOAuthCallback = createAsyncThunk(
       const response = await handleOAuthCallback();
       
       if (!response.success) {
-        throw new Error(response.message || 'Google OAuth failed');
+        throw new Error(response.message || 'Falha na autenticação Google OAuth');
       }
 
       const authData: AuthResponse = {
