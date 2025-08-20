@@ -44,12 +44,10 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
         return;
       }
       
-      console.log('Loading creator profile for ID:', creatorProfileId);
       setIsLoading(true);
       dispatch(fetchCreatorProfile(creatorProfileId))
         .unwrap()
         .then((data) => {
-          console.log('Creator profile loaded successfully:', data);
           setCreatorData(data);
         })
         .catch((error) => {

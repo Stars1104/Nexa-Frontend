@@ -619,5 +619,4 @@ function WithdrawalForm({ availableBalance, withdrawalMethods, onSuccess }: With
 
 async function handleCancelWithdrawal(withdrawalId: number) {
   // Implementation for canceling withdrawal
-  console.log('Cancel withdrawal:', withdrawalId);
 } 

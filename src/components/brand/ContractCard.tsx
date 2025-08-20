@@ -39,7 +39,7 @@ interface Contract {
   platform_fee: string;
   estimated_days: number;
   requirements: string[];
-  status: "active" | "completed" | "cancelled" | "disputed";
+  status: "pending" | "active" | "completed" | "cancelled" | "disputed" | "terminated" | "payment_failed";
   started_at: string;
   expected_completion_at: string;
   completed_at?: string;
@@ -101,6 +101,12 @@ export default function ContractCard({
         return "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200";
       case "disputed":
         return "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-200";
+      case "pending":
+        return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200";
+      case "terminated":
+        return "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-200";
+      case "payment_failed":
+        return "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200";
       default:
         return "text-gray-600";
     }
@@ -116,6 +122,12 @@ export default function ContractCard({
         return "Cancelado";
       case "disputed":
         return "Em Disputa";
+      case "pending":
+        return "Pendente";
+      case "terminated":
+        return "Terminado";
+      case "payment_failed":
+        return "Falha no Pagamento";
       default:
         return "Desconhecido";
     }

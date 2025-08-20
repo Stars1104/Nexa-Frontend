@@ -6,7 +6,7 @@ import { Button } from "./ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { cn } from "../lib/utils";
-import CampaignTimeline from "./CampaignTimeline";
+import CampaignTimelineSidebar from "./CampaignTimelineSidebar";
 import {
   SearchIcon,
   Send,
@@ -66,7 +66,7 @@ export default function Chat() {
   const [contractToFinalize, setContractToFinalize] = useState<any>(null);
 
   // Timeline-related state
-  const [showTimeline, setShowTimeline] = useState(false);
+  const [showTimelineSidebar, setShowTimelineSidebar] = useState(false);
 
   // Image viewer state
   const [imageViewer, setImageViewer] = useState<{
@@ -438,8 +438,6 @@ export default function Chat() {
 
     // Add guide messages when user first enters chat (frontend-only approach)
     try {
-      console.log('[Chat] Adding guide messages for room:', room.room_id);
-      
       // Check if guide messages already exist
       const existingGuideMessages = messages.filter(msg => 
         msg.message_type === 'system' && 
@@ -513,15 +511,12 @@ export default function Chat() {
           sender_name: user?.name || 'Sistema',
           sender_avatar: user?.avatar_url,
           is_sender: false,
-          is_read: false,
+          is_read: false, // Add this missing property
           created_at: new Date().toISOString(),
         };
         
         // Add messages to the beginning of the messages array
         setMessages(prev => [guideMsg, quoteMsg, ...prev]);
-        console.log('[Chat] Guide messages added successfully');
-      } else {
-        console.log('[Chat] Guide messages already exist');
       }
     } catch (error) {
       console.error('[Chat] Error adding guide messages:', error);
@@ -1664,6 +1659,35 @@ export default function Chat() {
         </div>
       );
     } else if (message.message_type === "offer" && message.offer_data) {
+      // Debug logging for offer data
+      console.log('Processing offer message:', {
+        message_id: message.id,
+        offer_data: message.offer_data,
+        offer_id: message.offer_data.offer_id,
+        offer_id_type: typeof message.offer_data.offer_id,
+        has_offer_id: !!message.offer_data.offer_id
+      });
+
+      // Safety check for offer ID
+      if (!message.offer_data.offer_id || message.offer_data.offer_id <= 0 || isNaN(message.offer_data.offer_id)) {
+        console.error('Invalid offer ID in message:', {
+          message_id: message.id,
+          offer_id: message.offer_data.offer_id,
+          offer_data: message.offer_data
+        });
+        
+        // Return a fallback message instead of crashing
+        return (
+          <div className="flex gap-3 max-w-2xl">
+            <div className="max-w-sm lg:max-w-lg xl:max-w-xl px-4 py-2 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white">
+              <p className="text-sm text-slate-700 dark:text-slate-300">
+                Oferta não disponível - ID inválido
+              </p>
+            </div>
+          </div>
+        );
+      }
+
       // Convert message to ChatOffer format
       const chatOffer: ChatOffer = {
         id: message.offer_data.offer_id,
@@ -1853,9 +1877,22 @@ export default function Chat() {
   };
 
   // Handle offer actions from chat
-  const handleAcceptOffer = async (offer: any) => {
+  const handleAcceptOffer = async (offerId: number) => {
+    // Additional validation
+    if (!offerId || offerId <= 0 || isNaN(offerId)) {
+      console.error('Invalid offerId in handleAcceptOffer:', offerId);
+      toast({
+        title: "Erro",
+        description: "ID da oferta inválido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('handleAcceptOffer called with offerId:', offerId, typeof offerId);
+
     try {
-      const response = await hiringApi.acceptOffer(offer.id);
+      const response = await hiringApi.acceptOffer(offerId);
       if (response.success) {
         toast({
           title: "Sucesso",
@@ -1869,6 +1906,7 @@ export default function Chat() {
         throw new Error(response.message || "Erro ao aceitar oferta");
       }
     } catch (error: any) {
+      console.error('Error in handleAcceptOffer:', error);
       toast({
         title: "Erro",
         description: error.response?.data?.message || "Erro ao aceitar oferta",
@@ -1877,9 +1915,22 @@ export default function Chat() {
     }
   };
 
-  const handleRejectOffer = async (offer: any) => {
+  const handleRejectOffer = async (offerId: number) => {
+    // Additional validation
+    if (!offerId || offerId <= 0 || isNaN(offerId)) {
+      console.error('Invalid offerId in handleRejectOffer:', offerId);
+      toast({
+        title: "Erro",
+        description: "ID da oferta inválido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('handleRejectOffer called with offerId:', offerId, typeof offerId);
+
     try {
-      const response = await hiringApi.rejectOffer(offer.id);
+      const response = await hiringApi.rejectOffer(offerId);
       if (response.success) {
         toast({
           title: "Sucesso",
@@ -1893,6 +1944,7 @@ export default function Chat() {
         throw new Error(response.message || "Erro ao rejeitar oferta");
       }
     } catch (error: any) {
+      console.error('Error in handleRejectOffer:', error);
       toast({
         title: "Erro",
         description: error.response?.data?.message || "Erro ao rejeitar oferta",
@@ -1901,9 +1953,22 @@ export default function Chat() {
     }
   };
 
-  const handleCancelOffer = async (offer: any) => {
+  const handleCancelOffer = async (offerId: number) => {
+    // Additional validation
+    if (!offerId || offerId <= 0 || isNaN(offerId)) {
+      console.error('Invalid offerId in handleCancelOffer:', offerId);
+      toast({
+        title: "Erro",
+        description: "ID da oferta inválido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('handleCancelOffer called with offerId:', offerId, typeof offerId);
+
     try {
-      const response = await hiringApi.cancelOffer(offer.id);
+      const response = await hiringApi.cancelOffer(offerId);
       if (response.success) {
         toast({
           title: "Sucesso",
@@ -1917,6 +1982,7 @@ export default function Chat() {
         throw new Error(response.message || "Erro ao cancelar oferta");
       }
     } catch (error: any) {
+      console.error('Error in handleCancelOffer:', error);
       toast({
         title: "Erro",
         description: error.response?.data?.message || "Erro ao cancelar oferta",
@@ -2049,18 +2115,7 @@ export default function Chat() {
       room.campaign_title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Send guide messages when user first enters chat
-  const sendGuideMessages = async (roomId: string) => {
-    try {
-      await chatService.sendGuideMessages(roomId);
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Falha ao enviar mensagens de guia",
-        variant: "destructive",
-      });
-    }
-  };
+
 
 
 
@@ -2257,17 +2312,17 @@ export default function Chat() {
                     </svg>
                   </button>
 
-                  {/* Timeline Button */}
-                  {activeContract && (
-                    <Button
-                      onClick={() => setShowTimeline(true)}
-                      variant="outline"
-                      className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700 hover:text-blue-800"
-                    >
-                      <Clock className="w-4 h-4 mr-2" />
-                      Linha do Tempo
-                    </Button>
-                  )}
+                                      {/* Timeline Button */}
+                    {activeContract && (
+                      <Button
+                        onClick={() => setShowTimelineSidebar(true)}
+                        variant="outline"
+                        className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700 hover:text-blue-800"
+                      >
+                        <Clock className="w-4 h-4 mr-2" />
+                        Linha do Tempo
+                      </Button>
+                    )}
 
                   {isConnected ? (
                     <div className="flex items-center gap-1 text-green-500">
@@ -2517,12 +2572,12 @@ export default function Chat() {
         />
       )}
 
-      {/* Campaign Timeline Modal */}
-      {showTimeline && activeContract && (
-        <CampaignTimeline
+      {/* Campaign Timeline Sidebar */}
+      {showTimelineSidebar && activeContract && (
+        <CampaignTimelineSidebar
           contractId={activeContract.id}
-          isOpen={showTimeline}
-          onClose={() => setShowTimeline(false)}
+          isOpen={showTimelineSidebar}
+          onClose={() => setShowTimelineSidebar(false)}
         />
       )}
     </div>

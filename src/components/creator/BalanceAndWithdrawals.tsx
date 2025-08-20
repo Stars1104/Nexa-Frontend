@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Wallet, TrendingUp, Clock } from 'lucide-react';
 import { hiringApi, CreatorBalance as CreatorBalanceType } from '@/api/hiring';
 import { useSafeToast } from '@/hooks/useSafeToast';
+import { useAppSelector } from '@/store/hooks';
+import { useAppDispatch } from '@/store/hooks';
+import { checkAuthStatus } from '@/store/slices/authSlice';
 
 // Interface that matches WithdrawalModal's expected CreatorBalance
 interface WithdrawalModalBalance {
@@ -52,11 +55,65 @@ export default function BalanceAndWithdrawals() {
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [balance, setBalance] = useState<CreatorBalanceType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [persistReady, setPersistReady] = useState(false);
   const safeToast = useSafeToast();
+  const { token, isAuthenticated, user } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+
+  // Check if Redux persist is ready
+  useEffect(() => {
+    const checkPersist = () => {
+      try {
+        const persistRoot = localStorage.getItem('persist:root');
+        if (persistRoot) {
+          const parsed = JSON.parse(persistRoot);
+          if (parsed.auth) {
+            setPersistReady(true);
+          }
+        }
+      } catch (e) {
+      }
+    };
+    
+    // Check immediately
+    checkPersist();
+    
+    // Also check after a short delay to ensure persist is complete
+    const timer = setTimeout(checkPersist, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Check auth status if we have a token but Redux state is not set
+  useEffect(() => {
+    if (persistReady && !isAuthenticated && !token && localStorage.getItem('token')) {
+      dispatch(checkAuthStatus());
+    }
+  }, [persistReady, isAuthenticated, token, dispatch]);
+
+  // Function to check and fix token mismatch
+  const checkAndFixToken = () => {
+    const localStorageToken = localStorage.getItem('token');
+    const reduxToken = token;
+    
+    // If there's a mismatch, try to use localStorage token
+    if (localStorageToken && !reduxToken) {
+      return localStorageToken;
+    }
+    
+    return reduxToken || localStorageToken;
+  };
 
   const loadBalance = async () => {
     try {
       setLoading(true);
+      
+      // Check for token mismatch and fix if needed
+      const currentToken = checkAndFixToken();
+      if (!currentToken) {
+        window.location.href = '/auth';
+        return;
+      }
+      
       const response = await hiringApi.getCreatorBalance();
       setBalance(response.data);
     } catch (error) {
@@ -68,8 +125,12 @@ export default function BalanceAndWithdrawals() {
   };
 
   useEffect(() => {
-    loadBalance();
-  }, []);
+    // Only load balance if we have authentication and persist is ready
+    if (persistReady && (isAuthenticated || localStorage.getItem('token'))) {
+      loadBalance();
+    } else {
+    }
+  }, [token, isAuthenticated, user, persistReady]);
 
   const handleWithdrawalCreated = () => {
     // Refresh balance data after withdrawal
@@ -118,6 +179,7 @@ export default function BalanceAndWithdrawals() {
 
   return (
     <div className="w-full p-6 space-y-6 dark:bg-[#171717]">
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

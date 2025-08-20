@@ -37,11 +37,8 @@ PagarMeAuthAPI.interceptors.response.use(
             localStorage.removeItem('user');
             localStorage.removeItem('persist:auth');
 
-            // Redirect to login page
-            if (window.location.pathname !== '/login' && window.location.pathname !== '/signup' &&
-                !window.location.pathname.includes('/auth')) {
-                window.location.href = '/auth';
-            }
+            // Don't redirect here - let the components handle navigation
+            console.warn('PagarMe authentication failed - token expired or invalid');
         }
         return Promise.reject(error);
     }

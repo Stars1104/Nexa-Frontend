@@ -25,8 +25,14 @@ export default function Subscription() {
     const [paymentProcessing, setPaymentProcessing] = useState(false);
 
     useEffect(() => {
-        loadSubscriptionStatus();
+        // Load subscription plans first (public endpoint)
         loadSubscriptionPlans();
+        
+        // Load subscription status only if user is authenticated
+        const token = localStorage.getItem('token');
+        if (token) {
+            loadSubscriptionStatus();
+        }
     }, []);
 
     // Refresh subscription status when modal closes
@@ -42,6 +48,14 @@ export default function Subscription() {
     }, [open]);
 
     const loadSubscriptionStatus = async () => {
+        // Check if user is authenticated before making API call
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setSubscriptionStatus(null);
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
             const status = await paymentApi.getSubscriptionStatus();
@@ -59,12 +73,17 @@ export default function Subscription() {
                     description: "Sua assinatura premium foi ativada com sucesso!",
                 });
             }
-        } catch (error) {
-            toast({
-                title: "Erro",
-                description: "Não foi possível carregar o status da assinatura.",
-                variant: "destructive",
-            });
+        } catch (error: any) {
+            // Handle 401 errors specifically - user is not authenticated
+            if (error.response?.status === 401) {
+                setSubscriptionStatus(null);
+            } else {
+                toast({
+                    title: "Erro",
+                    description: "Não foi possível carregar o status da assinatura.",
+                    variant: "destructive",
+                });
+            }
         } finally {
             setLoading(false);
         }
@@ -74,7 +93,6 @@ export default function Subscription() {
         try {
             setPlansLoading(true);
             const plans = await paymentApi.getSubscriptionPlans();
-            console.log('Loaded subscription plans:', plans);
             
             // Ensure plans is an array and has the expected structure
             if (Array.isArray(plans) && plans.length > 0) {

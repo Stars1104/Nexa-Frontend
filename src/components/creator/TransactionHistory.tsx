@@ -3,7 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { apiClient } from '@/services/apiClient';
+import { createAuthenticatedClient } from '@/services/apiClient';
+import { useAppSelector } from '@/store/hooks';
+import axios from 'axios';
 import { 
   CreditCard, 
   Calendar, 
@@ -48,27 +50,202 @@ export default function TransactionHistory() {
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState<any>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
   const { toast } = useToast();
+  const { isAuthenticated, token, user } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
-    loadTransactions();
-  }, []);
+    const persistedState = localStorage.getItem('persist:auth');
+    if (persistedState) {
+      try {
+        const parsedState = JSON.parse(persistedState);
+      } catch (error) {               
+      }
+    }
+    
+
+  });
+
+  useEffect(() => {
+
+    // Only load transactions if user is authenticated and we haven't attempted to load yet
+    if (isAuthenticated && token && user && !hasAttemptedLoad) {
+      setHasAttemptedLoad(true);
+      loadTransactions();
+    } else if (!isAuthenticated && !token && hasAttemptedLoad) {
+      // If not authenticated and we've already attempted to load, stop loading
+      setLoading(false);
+    }
+  }, [isAuthenticated, token, user, hasAttemptedLoad]);
+
+  // Show loading while authentication is being checked
+  if (isAuthenticated === undefined || token === undefined || user === undefined) {
+    return (
+      <div className="space-y-6 p-6 dark:bg-[#171717] min-h-[calc(100vh-90px)]">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Verificando autenticação...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const loadTransactions = async () => {
-    try {
-      setLoading(true);
-      const response = await apiClient.get<TransactionHistoryResponse>('/payment/transactions');
-      setTransactions(response.data.transactions);
-      setPagination(response.data.pagination);
-    } catch (error) {
-      console.error('Error loading transactions:', error);
+    // Double-check authentication before making the API call
+    if (!isAuthenticated || !token || !user) {
+      console.warn('User not authenticated, skipping transaction load');
+      setLoading(false);
+      return;
+    }
+
+    // Validate token format and clean it if needed
+    let cleanToken = token;
+    if (token.startsWith('Bearer ')) {
+      cleanToken = token.substring(7); // Remove 'Bearer ' prefix if present
+    }
+    
+    if (!cleanToken.includes('.')) {
+      console.error('TransactionHistory: Invalid token format after cleaning:', cleanToken);
       toast({
-        title: "Erro",
-        description: "Falha ao carregar histórico de transações",
+        title: "Erro de Token",
+        description: "Formato de token inválido. Por favor, faça login novamente.",
         variant: "destructive",
       });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // First, test if the token is valid by calling the /user endpoint
+      const testClient = createAuthenticatedClient(cleanToken);
+      try {
+        const testResponse = await testClient.get('/user');
+      } catch (testError: any) {
+        console.error('TransactionHistory: Token validation failed:', testError.response?.status, testError.response?.data);
+        if (testError.response?.status === 401) {
+          // Try with the original token to see if there's a format issue
+          try {
+            const originalTestClient = createAuthenticatedClient(token);
+            const originalTestResponse = await originalTestClient.get('/user');
+
+            // Use the original token for the main request
+            cleanToken = token;
+          } catch (originalTestError: any) {
+            console.error('TransactionHistory: Original token format also failed:', originalTestError.response?.status);
+            
+            // Try with regular axios to see if the issue is with our custom client
+            try {
+              const baseURL = import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br';
+              
+              const axiosResponse = await axios.get(`${baseURL}/api/user`, {
+                headers: {
+                  'Authorization': `Bearer ${cleanToken}`,
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json'
+                }
+              });
+              // Use regular axios for the main request
+              const transactionsResponse = await axios.get(`${baseURL}/api/payment/transactions`, {
+                headers: {
+                  'Authorization': `Bearer ${cleanToken}`,
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json'
+                }
+              });
+              setTransactions(transactionsResponse.data.transactions);
+              setPagination(transactionsResponse.data.pagination);
+              setLoading(false);
+              return;
+            } catch (axiosError: any) {
+              console.error('TransactionHistory: Regular axios also failed:', axiosError.response?.status, axiosError.response?.data);
+              
+              // Try with localhost as fallback
+              const baseURL = import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br';
+              if (baseURL !== 'http://localhost:8000') {
+                try {
+                  const localhostResponse = await axios.get('http://localhost:8000/api/user', {
+                    headers: {
+                      'Authorization': `Bearer ${cleanToken}`,
+                      'Content-Type': 'application/json',
+                      'Accept': 'application/json'
+                    }
+                  });
+                  
+                  const localhostTransactionsResponse = await axios.get('http://localhost:8000/api/payment/transactions', {
+                    headers: {
+                      'Authorization': `Bearer ${cleanToken}`,
+                      'Content-Type': 'application/json',
+                      'Accept': 'application/json'
+                    }
+                  });
+                  setTransactions(localhostTransactionsResponse.data.transactions);
+                  setPagination(localhostTransactionsResponse.data.pagination);
+                  setLoading(false);
+                  return;
+                } catch (localhostError: any) {
+                  console.error('TransactionHistory: Localhost also failed:', localhostError.response?.status, localhostError.response?.data);
+                }
+              }
+            }
+            
+            toast({
+              title: "Erro de Autenticação",
+              description: "Seu token não é válido. Por favor, faça login novamente.",
+              variant: "destructive",
+            });
+            setHasAttemptedLoad(false);
+            setLoading(false);
+            return;
+          }
+        }
+      }
+      
+      // Now load transactions
+      const authenticatedClient = createAuthenticatedClient(cleanToken);
+      const response = await authenticatedClient.get<TransactionHistoryResponse>('/payment/transactions');
+      
+      setTransactions(response.data.transactions);
+      setPagination(response.data.pagination);
+    } catch (error: any) {
+      console.error('TransactionHistory: API call failed:', error);
+      console.error('TransactionHistory: Error response:', error.response);
+      console.error('TransactionHistory: Error status:', error.response?.status);
+      console.error('TransactionHistory: Error data:', error.response?.data);
+      
+      // Handle authentication errors specifically
+      if (error.response?.status === 401) {
+        toast({
+          title: "Erro de Autenticação",
+          description: "Sua sessão expirou. Por favor, faça login novamente.",
+          variant: "destructive",
+        });
+        // Reset the attempt flag so we can try again if auth is restored
+        setHasAttemptedLoad(false);
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao carregar histórico de transações",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    if (isAuthenticated && token && user) {
+      loadTransactions();
+    } else {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar autenticado para atualizar as transações",
+        variant: "destructive",
+      });
     }
   };
 
@@ -181,6 +358,38 @@ Obrigado pela sua assinatura!
     );
   }
 
+  // Show message if user is not authenticated
+  if (!isAuthenticated || !token || !user) {
+    return (
+      <div className="space-y-6 p-6 dark:bg-[#171717] min-h-[calc(100vh-90px)]">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Histórico de Transações</h1>
+            <p className="text-muted-foreground">
+              Visualize todas as suas transações de pagamento e histórico de assinatura
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-foreground mb-2">
+              Autenticação Necessária
+            </h2>
+            <p className="text-muted-foreground mb-4">
+              Você precisa estar logado para visualizar seu histórico de transações.
+            </p>
+            <Button onClick={() => window.location.href = '/auth'} variant="default">
+              Fazer Login
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 p-6 dark:bg-[#171717] min-h-[calc(100vh-90px)]">
       {/* Header */}
@@ -191,7 +400,7 @@ Obrigado pela sua assinatura!
             Visualize todas as suas transações de pagamento e histórico de assinatura
           </p>
         </div>
-        <Button onClick={loadTransactions} variant="outline" size="sm">
+        <Button onClick={handleRefresh} variant="outline" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />
           Atualizar
         </Button>

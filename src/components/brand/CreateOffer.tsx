@@ -124,15 +124,15 @@ export default function CreateOffer({
         }
       }
 
-      // Check if it's a payment method error
-      if (error.response?.data?.error_code === 'NO_PAYMENT_METHOD') {
-        toast({
-          title: "Método de Pagamento Necessário",
-          description: "Você precisa cadastrar um cartão de crédito antes de enviar ofertas. Acesse as configurações de pagamento.",
-          variant: "destructive",
-        });
-        return;
-      }
+      // Check if it's a payment method error - TEMPORARILY DISABLED due to Pagar.me API issues
+      // if (error.response?.data?.error_code === 'NO_PAYMENT_METHOD') {
+      //   toast({
+      //     title: "Método de Pagamento Necessário",
+      //     description: "Você precisa cadastrar um cartão de crédito antes de enviar ofertas. Acesse as configurações de pagamento.",
+      //     variant: "destructive",
+      //   });
+      //   return;
+      // }
 
       // Show generic error for other cases
       toast({

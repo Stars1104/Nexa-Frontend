@@ -36,8 +36,8 @@ export interface Contract {
   platform_fee: string;
   estimated_days: number;
   requirements: string[];
-  status: 'pending' | 'active' | 'completed' | 'cancelled' | 'disputed' | 'terminated';
-  workflow_status?: 'active' | 'waiting_review' | 'payment_pending' | 'payment_available' | 'payment_withdrawn' | 'terminated';
+  status: 'pending' | 'active' | 'completed' | 'cancelled' | 'disputed' | 'terminated' | 'payment_failed';
+  workflow_status?: 'active' | 'waiting_review' | 'payment_pending' | 'payment_failed' | 'payment_available' | 'payment_withdrawn' | 'terminated';
   started_at: string;
   expected_completion_at: string;
   completed_at?: string;

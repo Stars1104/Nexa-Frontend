@@ -33,6 +33,7 @@ import {
   CampaignMilestone, 
   TimelineStatistics 
 } from '../api/campaignTimeline';
+import { deliveryMaterialsApi, DeliveryMaterial } from '../api/deliveryMaterials';
 import { format, isPast, isToday, isTomorrow, differenceInDays } from 'date-fns';
 
 interface CampaignTimelineProps {
@@ -44,6 +45,13 @@ interface CampaignTimelineProps {
 export default function CampaignTimeline({ contractId, isOpen, onClose }: CampaignTimelineProps) {
   const { user } = useAppSelector((state) => state.auth);
   const { toast } = useToast();
+  
+  // Debug logging
+  console.log('CampaignTimeline component rendered:', { 
+    contractId, 
+    isOpen, 
+    user: user ? { id: user.id, role: user.role } : null
+  });
   
   const [milestones, setMilestones] = useState<CampaignMilestone[]>([]);
   const [statistics, setStatistics] = useState<TimelineStatistics | null>(null);
@@ -60,31 +68,143 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [expandedMilestones, setExpandedMilestones] = useState<Set<number>>(new Set());
+  const [showMaterialDetails, setShowMaterialDetails] = useState<number | null>(null);
+  const [materialDescription, setMaterialDescription] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Handle material approval/rejection
+  const handleMaterialApproval = async (materialId: number, comment?: string) => {
+    try {
+      await deliveryMaterialsApi.approveDeliveryMaterial(materialId, { comment });
+      toast({
+        title: "Sucesso",
+        description: "Material aprovado com sucesso!",
+      });
+      loadTimeline(); // Reload to get updated data
+    } catch (error: any) {
+      console.error('Error approving material:', error);
+      toast({
+        title: "Erro",
+        description: error.response?.data?.message || "Erro ao aprovar material",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleMaterialRejection = async (materialId: number, rejectionReason: string, comment?: string) => {
+    try {
+      await deliveryMaterialsApi.rejectDeliveryMaterial(materialId, { rejection_reason: rejectionReason, comment });
+      toast({
+        title: "Sucesso",
+        description: "Material rejeitado com sucesso!",
+      });
+      loadTimeline(); // Reload to get updated data
+    } catch (error: any) {
+      console.error('Error rejecting material:', error);
+      toast({
+        title: "Erro",
+        description: error.response?.data?.message || "Erro ao rejeitar material",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Helper function to get materials for a specific milestone
+  const getMilestoneMaterials = (milestoneId: number) => {
+    const milestone = milestones.find(m => m.id === milestoneId);
+    return milestone?.deliveryMaterials || [];
+  };
+
+  // Handle delivery material upload
+  const handleDeliveryMaterialUpload = async () => {
+    if (!selectedFile || !selectedMilestone) return;
+
+    try {
+      setIsUploading(true);
+      await deliveryMaterialsApi.submitDeliveryMaterial({
+        contract_id: contractId,
+        milestone_id: selectedMilestone.id,
+        file: selectedFile,
+        title: comment.trim() || undefined,
+        description: materialDescription.trim() || undefined,
+      });
+      
+      toast({
+        title: "Sucesso",
+        description: "Material enviado com sucesso!",
+      });
+      
+      setShowUploadDialog(false);
+      setSelectedFile(null);
+      setComment('');
+      setMaterialDescription('');
+      setSelectedMilestone(null);
+      loadTimeline(); // Reload to show new material
+    } catch (error: any) {
+      console.error('Error uploading delivery material:', error);
+      toast({
+        title: "Erro",
+        description: error.response?.data?.message || "Erro ao enviar material",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // Load timeline data
   useEffect(() => {
-    if (isOpen && contractId) {
+    console.log('CampaignTimeline useEffect triggered:', { isOpen, contractId, user });
+    
+    if (isOpen && contractId && user) {
+      console.log('Loading timeline for contract:', contractId);
       loadTimeline();
+    } else {
+      console.log('Not loading timeline:', { isOpen, contractId, hasUser: !!user });
+      if (!user) {
+        console.warn('User not authenticated, cannot load timeline');
+      }
     }
-  }, [isOpen, contractId]);
+  }, [isOpen, contractId, user]);
 
   const loadTimeline = async () => {
     try {
       setIsLoading(true);
+      console.log('Loading timeline for contract:', contractId);
+      console.log('User role:', user?.role);
+      
+      // Check if user has access to this contract
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+      
+      if (user.role !== 'brand' && user.role !== 'creator') {
+        throw new Error('Usuário não tem permissão para acessar este contrato');
+      }
+      
       const [timelineData, statsData] = await Promise.all([
         campaignTimelineApi.getTimeline(contractId),
         campaignTimelineApi.getStatistics(contractId)
       ]);
       
+      console.log('Timeline data received:', timelineData);
+      console.log('Stats data received:', statsData);
+      
       setMilestones(timelineData);
       setStatistics(statsData);
+      // Materials are now loaded with the timeline, so we don't need to load them separately
     } catch (error: any) {
       console.error('Error loading timeline:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
       toast({
         title: "Erro",
-        description: error.response?.data?.message || "Erro ao carregar timeline",
+        description: error.response?.data?.message || error.message || "Erro ao carregar timeline",
         variant: "destructive",
       });
     } finally {
@@ -95,6 +215,8 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
   const createMilestones = async () => {
     try {
       setIsLoading(true);
+      console.log('Creating milestones for contract:', contractId);
+      
       const newMilestones = await campaignTimelineApi.createMilestones(contractId);
       setMilestones(newMilestones);
       toast({
@@ -103,9 +225,32 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
       });
     } catch (error: any) {
       console.error('Error creating milestones:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      let errorMessage = "Erro ao criar milestones";
+      
+      // Handle specific error cases
+      if (error.response?.status === 400) {
+        if (error.response?.data?.error === 'Timeline already exists for this contract') {
+          errorMessage = "Timeline já existe para este contrato. Recarregando...";
+          // Reload the timeline since it already exists
+          loadTimeline();
+        } else {
+          errorMessage = error.response?.data?.message || errorMessage;
+        }
+      } else if (error.response?.status === 403) {
+        errorMessage = "Você não tem permissão para criar milestones para este contrato";
+      } else if (error.response?.status === 422) {
+        errorMessage = "Dados inválidos. Verifique as informações do contrato";
+      }
+      
       toast({
         title: "Erro",
-        description: error.response?.data?.message || "Erro ao criar milestones",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -309,8 +454,8 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
   };
 
   const hasOverdueMilestones = milestones.some(m => m.is_overdue);
-  const isBrand = user?.role === 'brand';
-  const isCreator = user?.role === 'creator';
+
+
 
   return (
     <>
@@ -354,8 +499,8 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
               <AlertTriangle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-800 dark:text-red-200">
                 <strong>⚠️ REGRA DE PUNIÇÃO AUTOMÁTICA:</strong> Criadores que ultrapassem prazos sem justificativa receberão advertência automática e podem ser suspensos por 7 dias de novos convites. 
-                {isBrand && " Use o botão 'Justificar Atraso' para evitar penalidades injustas."}
-                {isCreator && " Entre em contato com a marca para justificar os atrasos."}
+                {user?.role === 'brand' && " Use o botão 'Justificar Atraso' para evitar penalidades injustas."}
+                {user?.role === 'creator' && " Entre em contato com a marca para justificar os atrasos."}
               </AlertDescription>
             </Alert>
           )}
@@ -393,13 +538,60 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
             </Card>
           )}
 
+          {/* Delivery Materials Summary */}
+          {user?.role === 'brand' && (() => {
+            const allMaterials = milestones.flatMap(m => m.deliveryMaterials || []);
+            if (allMaterials.length === 0) return null;
+            
+            return (
+              <Card className="mx-4 mt-4">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      📦 Materiais de Entrega
+                    </h3>
+                    <span className="text-sm text-muted-foreground">
+                      {allMaterials.length} material{allMaterials.length !== 1 ? 'is' : ''} enviado{allMaterials.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-sm">
+                    <div className="flex items-center gap-1">
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                      <span>Pendente: {allMaterials.filter(m => m.status === 'pending').length}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span>Aprovado: {allMaterials.filter(m => m.status === 'approved').length}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                      <span>Rejeitado: {allMaterials.filter(m => m.status === 'rejected').length}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
+
           {/* Create Milestones Button */}
-          {milestones.length === 0 && isBrand && (
+          {milestones.length === 0 && user?.role === 'brand' && !isLoading && (
             <div className="mx-4 mt-4">
               <Button onClick={createMilestones} disabled={isLoading} className="w-full">
                 <Plus className="w-4 h-4 mr-2" />
                 Criar Timeline
               </Button>
+            </div>
+          )}
+
+          {/* Show message if timeline already exists */}
+          {milestones.length > 0 && user?.role === 'brand' && (
+            <div className="mx-4 mt-4">
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  Timeline já existe para este contrato. Você pode visualizar e gerenciar os milestones abaixo.
+                </AlertDescription>
+              </Alert>
             </div>
           )}
 
@@ -414,7 +606,8 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                 <div className="text-center py-8 text-muted-foreground">
                   <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>Nenhum milestone criado ainda.</p>
-                  {isBrand && <p className="text-sm">Clique em "Criar Timeline" para começar.</p>}
+                  {user?.role === 'brand' && !isLoading && <p className="text-sm">Clique em "Criar Timeline" para começar.</p>}
+                  {isLoading && <p className="text-sm">Carregando timeline...</p>}
                 </div>
               ) : (
                 milestones.map((milestone, index) => (
@@ -526,10 +719,148 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                                   </div>
                                 )}
 
+                                {/* Delivery Materials Section */}
+                                <div className="mt-4">
+                                  <h5 className="font-medium text-sm mb-2 flex items-center gap-2">
+                                    📦 Materiais de Entrega
+                                  </h5>
+                                  
+                                  {/* Creator Submission Section */}
+                                  {user?.role === 'creator' && milestone.can_upload_file && (
+                                    <div className="mb-4 p-3 border-2 border-dashed border-muted rounded-lg">
+                                      <div className="text-center">
+                                        <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                                        <p className="text-sm font-medium mb-2">Enviar Material para Aprovação</p>
+                                        <p className="text-xs text-muted-foreground mb-3">
+                                          Envie fotos, vídeos ou documentos para este milestone
+                                        </p>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            setSelectedMilestone(milestone);
+                                            setShowUploadDialog(true);
+                                          }}
+                                        >
+                                          <Upload className="w-4 h-4 mr-1" />
+                                          Enviar Material
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Display Submitted Materials */}
+                                  {(() => {
+                                    const milestoneMaterials = getMilestoneMaterials(milestone.id);
+                                    
+                                    if (milestoneMaterials.length === 0) {
+                                      return (
+                                        <div className="text-center py-4 text-muted-foreground text-sm">
+                                          <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                          <p>Nenhum material enviado para este milestone.</p>
+                                        </div>
+                                      );
+                                    }
+                                    
+                                    return (
+                                      <div className="space-y-2">
+                                        {milestoneMaterials.map((material) => (
+                                          <div
+                                            key={material.id}
+                                            className="p-3 border rounded-lg bg-background"
+                                          >
+                                            <div className="flex items-start justify-between mb-2">
+                                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                                                  {material.media_type === 'image' ? '🖼️' : 
+                                                   material.media_type === 'video' ? '🎥' : 
+                                                   material.media_type === 'document' ? '📄' : '📎'}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                  <p className="font-medium text-sm truncate">
+                                                    {material.title || material.file_name}
+                                                  </p>
+                                                  <p className="text-xs text-muted-foreground">
+                                                    Enviado por {material.creator?.name || 'Criador'}
+                                                  </p>
+                                                </div>
+                                              </div>
+                                              <Badge
+                                                variant={
+                                                  material.status === 'approved' ? 'default' : 
+                                                  material.status === 'rejected' ? 'destructive' : 'secondary'
+                                                }
+                                              >
+                                                {material.status === 'approved' ? 'Aprovado' :
+                                                 material.status === 'rejected' ? 'Rejeitado' : 'Pendente'}
+                                              </Badge>
+                                            </div>
+                                            
+                                            {material.description && (
+                                              <p className="text-sm text-muted-foreground mb-2">
+                                                {material.description}
+                                              </p>
+                                            )}
+                                            
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                                              <span>{material.formatted_file_size}</span>
+                                              <span>•</span>
+                                              <span>{format(new Date(material.submitted_at), 'dd/MM/yyyy HH:mm')}</span>
+                                            </div>
+                                            
+                                            <div className="flex gap-2">
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                  // Download functionality
+                                                  const link = document.createElement('a');
+                                                  link.href = material.file_url || '';
+                                                  link.download = material.file_name;
+                                                  link.click();
+                                                }}
+                                              >
+                                                <Download className="w-4 h-4 mr-1" />
+                                                Baixar
+                                              </Button>
+                                              
+                                              {material.status === 'pending' && (
+                                                <>
+                                                  <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="text-green-600 border-green-600 hover:bg-green-50"
+                                                    onClick={() => handleMaterialApproval(material.id)}
+                                                  >
+                                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                                    Aprovar
+                                                  </Button>
+                                                  
+                                                  <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="text-red-600 border-red-600 hover:bg-red-50"
+                                                    onClick={() => {
+                                                      setShowMaterialDetails(material.id);
+                                                    }}
+                                                  >
+                                                    <XCircle className="w-4 h-4 mr-1" />
+                                                    Rejeitar
+                                                  </Button>
+                                                </>
+                                              )}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+
                                 {/* Action buttons */}
                                 <div className="flex flex-wrap gap-2">
                                   {/* Upload File Button */}
-                                  {milestone.can_upload_file && isCreator && (
+                                  {milestone.can_upload_file && user?.role === 'creator' && (
                                     <Button
                                       variant="outline"
                                       size="sm"
@@ -544,7 +875,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                                   )}
 
                                   {/* Request Approval Button */}
-                                  {milestone.can_request_approval && isCreator && (
+                                  {milestone.can_request_approval && user?.role === 'creator' && (
                                     <Button
                                       variant="outline"
                                       size="sm"
@@ -559,7 +890,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                                   )}
 
                                   {/* Approve Button */}
-                                  {milestone.can_be_approved && isBrand && (
+                                  {milestone.can_be_approved && user?.role === 'brand' && (
                                     <Button
                                       size="sm"
                                       onClick={() => {
@@ -572,35 +903,35 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                                     </Button>
                                   )}
 
-                                                                  {/* Justify Delay Button */}
-                                {milestone.can_justify_delay && isBrand && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      setSelectedMilestone(milestone);
-                                      setShowJustificationDialog(true);
-                                    }}
-                                  >
-                                    <AlertCircle className="w-4 h-4 mr-1" />
-                                    Justificar Atraso
-                                  </Button>
-                                )}
+                                  {/* Justify Delay Button */}
+                                  {milestone.can_justify_delay && user?.role === 'brand' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedMilestone(milestone);
+                                        setShowJustificationDialog(true);
+                                      }}
+                                    >
+                                      <AlertCircle className="w-4 h-4 mr-1" />
+                                      Justificar Atraso
+                                    </Button>
+                                  )}
 
-                                {/* Extend Timeline Button */}
-                                {milestone.can_be_extended && isBrand && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      setSelectedMilestone(milestone);
-                                      setShowExtensionDialog(true);
-                                    }}
-                                  >
-                                    <Clock className="w-4 h-4 mr-1" />
-                                    Estender Timeline
-                                  </Button>
-                                )}
+                                  {/* Extend Timeline Button */}
+                                  {milestone.can_be_extended && user?.role === 'brand' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedMilestone(milestone);
+                                        setShowExtensionDialog(true);
+                                      }}
+                                    >
+                                      <Clock className="w-4 h-4 mr-1" />
+                                      Estender Timeline
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                             )}
@@ -620,7 +951,9 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
       {showUploadDialog && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
           <div className="bg-background rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Enviar Arquivo</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              {selectedMilestone?.can_upload_file ? 'Enviar Material de Entrega' : 'Enviar Arquivo'}
+            </h3>
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium">Arquivo</label>
@@ -631,6 +964,30 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                   accept=".pdf,.doc,.docx,.txt,.mp4,.mov,.avi,.jpg,.jpeg,.png"
                 />
               </div>
+              
+              {/* Additional fields for delivery materials */}
+              {selectedMilestone?.can_upload_file && (
+                <>
+                  <div>
+                    <label className="text-sm font-medium">Título (opcional)</label>
+                    <Input
+                      placeholder="Ex: Vídeo final da campanha"
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Descrição (opcional)</label>
+                    <Textarea
+                      placeholder="Descreva o material enviado..."
+                      rows={2}
+                      value={materialDescription}
+                      onChange={(e) => setMaterialDescription(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+              
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -640,7 +997,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                   Cancelar
                 </Button>
                 <Button
-                  onClick={handleFileUpload}
+                  onClick={selectedMilestone?.can_upload_file ? handleDeliveryMaterialUpload : handleFileUpload}
                   disabled={!selectedFile || isUploading}
                 >
                   {isUploading ? 'Enviando...' : 'Enviar'}
@@ -756,6 +1113,53 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                   disabled={!extensionReason.trim() || extensionDays < 1}
                 >
                   Estender Timeline
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Material Rejection Dialog */}
+      {showMaterialDetails !== null && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold mb-4">Rejeitar Material</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Motivo da Rejeição *</label>
+                <Textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Explique o motivo da rejeição..."
+                  rows={3}
+                  required
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowMaterialDetails(null)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (comment.trim()) {
+                      const material = milestones
+                        .flatMap(m => m.deliveryMaterials || [])
+                        .find(m => m.id === showMaterialDetails);
+                      if (material) {
+                        handleMaterialRejection(material.id, comment.trim());
+                        setShowMaterialDetails(null);
+                        setComment('');
+                      }
+                    }
+                  }}
+                  disabled={!comment.trim()}
+                >
+                  Rejeitar Material
                 </Button>
               </div>
             </div>

@@ -60,6 +60,18 @@ export default function ChatOfferMessage({
   onEndContract,
   isCreator = false,
 }: ChatOfferMessageProps) {
+  
+  // Debug logging
+  console.log('ChatOfferMessage rendered with offer:', {
+    id: offer.id,
+    title: offer.title,
+    status: offer.status,
+    can_be_accepted: offer.can_be_accepted,
+    has_onAccept: !!onAccept,
+    id_type: typeof offer.id,
+    id_valid: offer.id && offer.id > 0 && !isNaN(offer.id)
+  });
+  
   // Check if offer is expired
   const isExpired = offer.status === "expired" || offer.days_until_expiry < 0;
 
@@ -70,7 +82,8 @@ export default function ChatOfferMessage({
       : offer.status;
 
   // Safety check for incomplete offer data
-  if (!offer || !offer.sender) {
+  if (!offer || !offer.sender || !offer.id || offer.id <= 0 || isNaN(offer.id)) {
+    console.error('Invalid offer data in ChatOfferMessage:', offer);
     return (
       <div className="flex gap-3 max-w-2xl">
         <Avatar className="w-8 h-8 flex-shrink-0">
@@ -81,6 +94,14 @@ export default function ChatOfferMessage({
             <p className="text-sm text-slate-500 dark:text-slate-400">
               Oferta não disponível
             </p>
+            {offer && (
+              <div className="mt-2 p-2 bg-red-100 dark:bg-red-900/30 rounded text-xs">
+                <p><strong>Debug Info:</strong></p>
+                <p>Offer ID: {offer.id}</p>
+                <p>Has sender: {!!offer.sender}</p>
+                <p>Valid ID: {offer.id && offer.id > 0 && !isNaN(offer.id) ? 'Yes' : 'No'}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -268,10 +289,20 @@ export default function ChatOfferMessage({
                 isCreator ? "justify-center" : "justify-start"
               )}
             >
-              {isCreator && offer.can_be_accepted && onAccept && (
+              {isCreator && offer.can_be_accepted && onAccept && offer.id && offer.id > 0 && !isNaN(offer.id) && (
                 <Button
                   size="sm"
-                  onClick={() => onAccept(offer.id)}
+                  onClick={() => {
+                    console.log('Accept button clicked with offer ID:', offer.id);
+                    console.log('Offer object at click time:', offer);
+                    console.log('onAccept function:', onAccept);
+                    
+                    try {
+                      onAccept(offer.id);
+                    } catch (error) {
+                      console.error('Error calling onAccept:', error);
+                    }
+                  }}
                   className="bg-green-600 hover:bg-green-700 text-white min-w-[100px] shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   <Check className="w-4 h-4 mr-1" />
@@ -279,11 +310,18 @@ export default function ChatOfferMessage({
                 </Button>
               )}
 
-              {isCreator && offer.can_be_rejected && onReject && (
+              {isCreator && offer.can_be_rejected && onReject && offer.id && offer.id > 0 && !isNaN(offer.id) && (
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onReject(offer.id)}
+                  onClick={() => {
+                    // Additional validation before calling callback
+                    if (offer.id && offer.id > 0 && !isNaN(offer.id)) {
+                      onReject(offer.id);
+                    } else {
+                      console.error('Invalid offer ID in ChatOfferMessage:', offer.id);
+                    }
+                  }}
                   className="border-red-300 text-red-700 hover:bg-red-50 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-900/20 min-w-[100px] shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   <X className="w-4 h-4 mr-1" />
@@ -291,11 +329,18 @@ export default function ChatOfferMessage({
                 </Button>
               )}
 
-              {!isCreator && offer.can_be_cancelled && onCancel && (
+              {!isCreator && offer.can_be_cancelled && onCancel && offer.id && offer.id > 0 && !isNaN(offer.id) && (
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onCancel(offer.id)}
+                  onClick={() => {
+                    // Additional validation before calling callback
+                    if (offer.id && offer.id > 0 && !isNaN(offer.id)) {
+                      onCancel(offer.id);
+                    } else {
+                      console.error('Invalid offer ID in ChatOfferMessage:', offer.id);
+                    }
+                  }}
                   className="border-red-300 text-red-700 hover:bg-red-50 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-900/20"
                 >
                   <X className="w-4 h-4 mr-1" />
@@ -308,13 +353,21 @@ export default function ChatOfferMessage({
           {/* Contract Actions */}
           {displayStatus === "accepted" &&
             offer.contract_id &&
+            offer.contract_id > 0 &&
+            !isNaN(offer.contract_id) &&
             offer.contract_status === "active" &&
             offer.can_be_completed &&
             onEndContract && (
               <div className="flex gap-2">
                 <Button
                   size="sm"
-                  onClick={() => onEndContract(offer.contract_id!)}
+                  onClick={() => {
+                    if (offer.contract_id && offer.contract_id > 0 && !isNaN(offer.contract_id)) {
+                      onEndContract(offer.contract_id);
+                    } else {
+                      console.error('Invalid contract ID in ChatOfferMessage:', offer.contract_id);
+                    }
+                  }}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <FileText className="w-4 h-4 mr-1" />
@@ -329,6 +382,16 @@ export default function ChatOfferMessage({
               <div className="flex items-center gap-2 text-xs text-red-800 dark:text-red-300">
                 <AlertCircle className="w-3 h-3" />
                 <span>Oferta expirada</span>
+              </div>
+            </div>
+          )}
+
+          {/* Show warning when offer ID is invalid */}
+          {(!offer.id || offer.id <= 0 || isNaN(offer.id)) && (
+            <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg border border-yellow-200 dark:border-yellow-700">
+              <div className="flex items-center gap-2 text-xs text-yellow-800 dark:text-yellow-300">
+                <AlertCircle className="w-3 h-3" />
+                <span>Ação indisponível - ID da oferta inválido</span>
               </div>
             </div>
           )}

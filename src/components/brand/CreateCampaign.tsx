@@ -17,7 +17,7 @@ import { clearError, CampaignFormData } from "../../store/slices/campaignSlice";
 const CAMPAIGN_TYPES = [
   "Skincare", "Maquiagem", "beleza e bem-estar", "Moda feminina", "Moda fitness", "Moda praia", "Joias e bijuterias", "Sapatos e bolsas",
   "Tecnologia e eletrônicos", "Smartphones e acessórios", "Casa e decoração", "Organização", "Limpeza", "Gastronomia e bebidas", "Alimentação saudável", "Doces e confeitaria",
-  "Maternidade e infantil", "Viagem e lazer", "Casa e decoração", "Turismo e experiências", "Pets",
+  "Maternidade e infantil", "Viagem e lazer", "Turismo e experiências", "Pets",
 ];
 
 // Brazilian states

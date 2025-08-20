@@ -43,17 +43,15 @@ export default function PremiumAccessGuard({
     checkUserAndPremiumStatus();
   }, []);
 
-  // Re-check premium status when user data changes or when navigating
+  // Only refresh premium status when user changes, not on every location change
   useEffect(() => {
     if (user && user.role === "creator" && !premiumLoading) {
-      refreshPremiumStatus();
+      // Only refresh if we don't have premium status yet
+      if (!hasPremium) {
+        refreshPremiumStatus();
+      }
     }
-  }, [
-    user?.has_premium,
-    location.pathname,
-    premiumLoading,
-    refreshPremiumStatus,
-  ]);
+  }, [user?.id, user?.role, hasPremium, premiumLoading, refreshPremiumStatus]);
 
   // Listen for premium status updates and refresh premium status
   useEffect(() => {

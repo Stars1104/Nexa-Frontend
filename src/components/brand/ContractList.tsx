@@ -28,6 +28,7 @@ import {
 import ContractCard from "./ContractCard";
 import PaymentModal from "./PaymentModal";
 import ReviewModal from "./ReviewModal";
+import DeliveryMaterials from "./DeliveryMaterials";
 
 export default function ContractList() {
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -192,7 +193,7 @@ export default function ContractList() {
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="all" className="flex items-center gap-2">
                 Todos
                 <Badge variant="secondary" className="ml-1">
@@ -232,6 +233,10 @@ export default function ContractList() {
                 <Badge variant="secondary" className="ml-1">
                   {statusCounts.disputed}
                 </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="delivery" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Materiais
               </TabsTrigger>
             </TabsList>
 
@@ -376,6 +381,59 @@ export default function ContractList() {
                       />
                     ))
                 )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="delivery" className="mt-6">
+              <div className="space-y-6">
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    Gerenciar Materiais de Entrega
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    Selecione um contrato ativo para visualizar e gerenciar os materiais de entrega.
+                  </p>
+                  
+                  <div className="grid gap-4 max-w-2xl mx-auto">
+                    {filteredContracts
+                      .filter((c) => c.status === "active")
+                      .map((contract) => (
+                        <div
+                          key={contract.id}
+                          className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                          onClick={() => {
+                            // This will be handled by the parent component
+                            // For now, just show a message
+                            toast({
+                              title: "Funcionalidade em Desenvolvimento",
+                              description: "A gestão de materiais de entrega será implementada em breve.",
+                            });
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-medium">{contract.title}</h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Criador: {contract.other_user?.name || 'N/A'}
+                              </p>
+                            </div>
+                            <Button variant="outline" size="sm">
+                              Gerenciar Materiais
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    
+                    {filteredContracts.filter((c) => c.status === "active").length === 0 && (
+                      <div className="text-center py-4">
+                        <p className="text-gray-500 dark:text-gray-400">
+                          Você não tem contratos ativos para gerenciar materiais.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </TabsContent>
           </Tabs>

@@ -6,6 +6,7 @@ export interface ApiError {
   message: string;
   status?: number;
   code?: string;
+  retry_after?: number;
 }
 
 /**
@@ -64,10 +65,29 @@ export const handleApiError = (error: any): ApiError => {
         };
       
       case 429:
+        // Enhanced rate limiting error handling
+        const retryAfter = data?.retry_after || 60;
+        let message = 'Muitas requisições. Tente novamente em alguns instantes.';
+        
+        // Check if it's an authentication-related rate limit
+        if (error.config?.url?.includes('/login') || error.config?.url?.includes('/register')) {
+          if (error.config?.url?.includes('/register')) {
+            message = `Muitas tentativas de registro. Tente novamente em ${Math.ceil(retryAfter / 60)} minuto(s).`;
+          } else {
+            message = `Muitas tentativas de login. Tente novamente em ${Math.ceil(retryAfter / 60)} minuto(s).`;
+          }
+        }
+        
+        // Check for new user flow rate limiting
+        if (data?.error_type === 'new_user_flow_rate_limited') {
+          message = `Muitas tentativas de criação de conta. Tente novamente em ${Math.ceil(retryAfter / 60)} minuto(s).`;
+        }
+        
         return {
-          message: 'Muitas requisições. Tente novamente em alguns instantes.',
+          message,
           status,
-          code: 'RATE_LIMITED'
+          code: 'RATE_LIMITED',
+          retry_after: retryAfter
         };
       
       case 500:
@@ -79,7 +99,7 @@ export const handleApiError = (error: any): ApiError => {
       
       default:
         return {
-          message: data?.message || 'Erro inesperado. Tente novamente.',
+          message: data?.message || `Erro inesperado (${status}). Tente novamente.`,
           status,
           code: 'UNKNOWN_ERROR'
         };
@@ -109,10 +129,20 @@ export const isHttpError = (error: any, status: number): boolean => {
 };
 
 /**
- * Check if an error is a network error
+ * Check if an error is a rate limiting error
  */
-export const isNetworkError = (error: any): boolean => {
-  return !error.response && error.request;
+export const isRateLimitError = (error: any): boolean => {
+  return error.response?.status === 429;
+};
+
+/**
+ * Get retry after time from rate limit error
+ */
+export const getRetryAfterTime = (error: any): number => {
+  if (isRateLimitError(error)) {
+    return error.response?.data?.retry_after || 60;
+  }
+  return 0;
 };
 
 /**

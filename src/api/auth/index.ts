@@ -49,17 +49,29 @@ AuthAPI.interceptors.response.use(
             // Clear Redux persist state
             localStorage.removeItem('persist:auth');
 
-            // Redirect to login page
-            if (window.location.pathname !== '/login' && window.location.pathname !== '/signup' &&
-                !window.location.pathname.includes('/auth')) {
-                window.location.href = '/auth';
-            }
+            // Don't redirect here - let the components handle navigation
+            // This prevents conflicts with React Router navigation
+            console.warn('Authentication failed - token expired or invalid');
         } else if (error.response?.status === 403) {
             // Forbidden - user doesn't have permission
             console.warn('Access forbidden - user may not have required permissions');
         } else if (error.response?.status === 404) {
             // Not found
             console.warn('Resource not found');
+        } else if (error.response?.status === 429) {
+            // Rate limited - provide specific message for auth endpoints
+            const isAuthEndpoint = error.config?.url?.includes('/login') || error.config?.url?.includes('/register');
+            if (isAuthEndpoint) {
+                const retryAfter = error.response?.data?.retry_after || 60;
+                const minutes = Math.ceil(retryAfter / 60);
+                
+                if (error.config?.url?.includes('/register')) {
+                    error.message = `Muitas tentativas de registro. Tente novamente em ${minutes} minuto(s).`;
+                } else {
+                    error.message = `Muitas tentativas de login. Tente novamente em ${minutes} minuto(s).`;
+                }
+            }
+            console.warn('Rate limited:', error.message);
         } else if (error.response?.status >= 500) {
             // Server error
             console.error('Server error:', error.response?.status, error.response?.statusText);
@@ -123,16 +135,7 @@ export const healthCheck = async () => {
 // Signin Function
 export const signin = async (data: any) => {
     try {
-        // First try the debug endpoint to see what's being sent
-        try {
-            const debugResponse = await AuthAPI.post("/api/debug-login", data);
-        } catch (debugError: any) {
-        }
-
-        // Try with explicit JSON stringification
-        const jsonData = JSON.stringify(data);
-
-        const response = await AuthAPI.post("/api/login", jsonData, {
+        const response = await AuthAPI.post("/api/login", data, {
             headers: {
                 'Content-Type': 'application/json',
             }

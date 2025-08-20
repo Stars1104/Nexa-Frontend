@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 
 import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
-import CampaignTimeline from "../../components/CampaignTimeline";
+import CampaignTimelineSidebar from "../../components/CampaignTimelineSidebar";
 import {
   Avatar,
   AvatarImage,
@@ -99,6 +99,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [isLoadingOffers, setIsLoadingOffers] = useState(false);
+  const [offersReady, setOffersReady] = useState(false);
   const [existingOfferId, setExistingOfferId] = useState<number | null>(null);
   const [showExistingOfferModal, setShowExistingOfferModal] = useState(false);
 
@@ -129,8 +130,8 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
   const [showCampaignFinalizationModal, setShowCampaignFinalizationModal] = useState(false);
   const [contractToFinalize, setContractToFinalize] = useState<any>(null);
 
-  // Timeline state
-  const [showTimeline, setShowTimeline] = useState(false);
+  // Timeline sidebar state
+  const [showTimelineSidebar, setShowTimelineSidebar] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -236,9 +237,27 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
 
     if (selectedRoom) {
       joinRoom(selectedRoom.room_id);
-      loadMessages(selectedRoom.room_id);
-      loadContracts(selectedRoom.room_id);
-      loadOffers(selectedRoom.room_id);
+      
+      // Reset offers ready state when changing rooms
+      setOffersReady(false);
+      
+      // Load data in sequence to avoid race conditions
+      const loadRoomData = async () => {
+        try {
+          // First load offers and contracts
+          await Promise.all([
+            loadOffers(selectedRoom.room_id),
+            loadContracts(selectedRoom.room_id)
+          ]);
+          
+          // Then load messages (which may contain offer messages that need the offers data)
+          await loadMessages(selectedRoom.room_id);
+        } catch (error) {
+          console.error('Error loading room data:', error);
+        }
+      };
+      
+      loadRoomData();
 
       return () => {
         if (isMountedRef.current) {
@@ -344,7 +363,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     // Listen for offer created events
     const handleOfferCreated = (data: any) => {
       if (!isMountedRef.current) return;
-      console.log('[ChatPage] Offer created via Socket.IO:', data);
 
       if (data.roomId === selectedRoom?.room_id) {
         // Add new offer to the offers list
@@ -382,7 +400,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     // Listen for offer accepted events
     const handleOfferAccepted = (data: any) => {
       if (!isMountedRef.current) return;
-      console.log('[ChatPage] Offer accepted via Socket.IO:', data);
 
       if (data.roomId === selectedRoom?.room_id) {
         // Update offer status
@@ -417,7 +434,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     // Listen for offer rejected events
     const handleOfferRejected = (data: any) => {
       if (!isMountedRef.current) return;
-      console.log('[ChatPage] Offer rejected via Socket.IO:', data);
 
       if (data.roomId === selectedRoom?.room_id) {
         // Update offer status
@@ -437,7 +453,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     // Listen for offer cancelled events
     const handleOfferCancelled = (data: any) => {
       if (!isMountedRef.current) return;
-      console.log('[ChatPage] Offer cancelled via Socket.IO:', data);
 
       if (data.roomId === selectedRoom?.room_id) {
         // Update offer status
@@ -457,7 +472,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     // Listen for contract completed events
     const handleContractCompleted = (data: any) => {
       if (!isMountedRef.current) return;
-      console.log('[ChatPage] Contract completed via Socket.IO:', data);
 
       if (data.roomId === selectedRoom?.room_id) {
         // Update contract with complete data from server
@@ -489,7 +503,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     // Listen for contract terminated events
     const handleContractTerminated = (data: any) => {
       if (!isMountedRef.current) return;
-      console.log('[ChatPage] Contract terminated via Socket.IO:', data);
 
       if (data.roomId === selectedRoom?.room_id) {
         // Update contract with complete data from server
@@ -520,7 +533,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     // Listen for contract activated events
     const handleContractActivated = (data: any) => {
       if (!isMountedRef.current) return;
-      console.log('[ChatPage] Contract activated via Socket.IO:', data);
 
       if (data.roomId === selectedRoom?.room_id) {
         // Update contract with complete data from server
@@ -821,9 +833,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         
         // Add messages to the beginning of the messages array
         setMessages(prev => [guideMsg, quoteMsg, ...prev]);
-        console.log('[ChatPage] Guide messages added successfully');
       } else {
-        console.log('[ChatPage] Guide messages already exist');
       }
     } catch (error) {
       console.error('[ChatPage] Error adding guide messages:', error);
@@ -855,6 +865,10 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
           return true;
         });
 
+        // Debug logging for messages
+        console.log('Loaded messages:', deduplicatedMessages);
+        console.log('Offer messages:', deduplicatedMessages.filter(msg => msg.message_type === 'offer'));
+        
         setMessages(deduplicatedMessages);
 
         // Join the room for real-time updates
@@ -886,7 +900,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
   };
 
   // Load contracts for the selected room
-  const loadContracts = async (roomId: string) => {
+  const loadContracts = async (roomId: string): Promise<void> => {
     if (!isMountedRef.current) return;
 
     try {
@@ -928,7 +942,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
   };
 
   // Load offers for the selected room
-  const loadOffers = async (roomId: string) => {
+  const loadOffers = async (roomId: string): Promise<void> => {
     if (!isMountedRef.current) return;
 
     try {
@@ -938,6 +952,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
 
       if (isMountedRef.current) {
         setOffers(offersData);
+        setOffersReady(true);
       }
     } catch (error) {
       toast({
@@ -1230,40 +1245,99 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
   };
 
   // Handle offer actions from chat
-  const handleAcceptOffer = async (offerId: number) => {
+  const handleAcceptOfferById = useCallback(async (offerId: number) => {
+    console.log('ChatPage.tsx handleAcceptOfferById called with offerId:', offerId, typeof offerId);
+    console.log('ChatPage.tsx handleAcceptOfferById function context:', {
+      selectedRoom: selectedRoom?.room_id,
+      offers: offers.map(o => ({ id: o.id, title: o.title })),
+      user: user?.role
+    });
+    
+    // Basic validation
+    if (!offerId || offerId <= 0 || isNaN(offerId)) {
+      console.error('Invalid offerId:', offerId);
+      toast({
+        title: "Erro",
+        description: "ID da oferta inválido",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      console.log('Making API call to accept offer:', offerId);
+
       toast({
         title: "Processando...",
         description: "Aceitando oferta...",
       });
 
-      await hiringApi.acceptOffer(offerId);
+      const response = await hiringApi.acceptOffer(offerId);
 
-      toast({
-        title: "Sucesso",
-        description: "Oferta aceita com sucesso!",
-      });
+      if (response.success) {
+        toast({
+          title: "Sucesso",
+          description: "Oferta aceita com sucesso!",
+        });
+
+        // Reload data to show updated status
+        if (selectedRoom) {
+          await Promise.all([
+            loadMessages(selectedRoom.room_id),
+            loadOffers(selectedRoom.room_id),
+            loadContracts(selectedRoom.room_id)
+          ]);
+        }
+      } else {
+        throw new Error(response.message || "Erro ao aceitar oferta");
+      }
 
       // Socket.IO will handle real-time updates automatically
     } catch (error: any) {
       console.error("Error accepting offer:", error);
+      
+      const errorMessage = error.response?.data?.message || 
+                          error.message || 
+                          "Erro ao aceitar oferta";
+      
       toast({
         title: "Erro",
-        description: error.response?.data?.message || "Erro ao aceitar oferta",
+        description: errorMessage,
         variant: "destructive",
       });
 
       // Reload data on error to show current status
       if (selectedRoom) {
-        loadMessages(selectedRoom.room_id);
-        loadOffers(selectedRoom.room_id);
-        loadContracts(selectedRoom.room_id);
+        await Promise.all([
+          loadMessages(selectedRoom.room_id),
+          loadOffers(selectedRoom.room_id),
+          loadContracts(selectedRoom.room_id)
+        ]);
       }
     }
-  };
+  }, [selectedRoom, offers, user?.role, toast, hiringApi, loadMessages, loadOffers, loadContracts]);
 
-  const handleRejectOffer = async (offerId: number) => {
+  const handleRejectOffer = useCallback(async (offerId: number) => {
+    // Add validation to ensure offerId is valid
+    if (!offerId || offerId === undefined || offerId === null || offerId <= 0 || isNaN(offerId)) {
+      console.error('Invalid offerId:', offerId);
+      toast({
+        title: "Erro",
+        description: "ID da oferta inválido",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      // Final validation before API call
+      if (!offerId || offerId <= 0 || isNaN(offerId)) {
+        console.error('Final validation failed for offer ID:', offerId);
+        throw new Error(`Invalid offer ID: ${offerId}`);
+      }
+
+      console.log('Making API call to reject offer:', offerId);
+
       toast({
         title: "Processando...",
         description: "Rejeitando oferta...",
@@ -1292,10 +1366,29 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         loadContracts(selectedRoom.room_id);
       }
     }
-  };
+  }, [selectedRoom, offers, user?.role, toast, hiringApi, loadMessages, loadOffers, loadContracts]);
 
-  const handleCancelOffer = async (offerId: number) => {
+  const handleCancelOffer = useCallback(async (offerId: number) => {
+    // Add validation to ensure offerId is valid
+    if (!offerId || offerId === undefined || offerId === null || offerId <= 0 || isNaN(offerId)) {
+      console.error('Invalid offerId:', offerId);
+      toast({
+        title: "Erro",
+        description: "ID da oferta inválido",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      // Final validation before API call
+      if (!offerId || offerId <= 0 || isNaN(offerId)) {
+        console.error('Final validation failed for offer ID:', offerId);
+        throw new Error(`Invalid offer ID: ${offerId}`);
+      }
+
+      console.log('Making API call to cancel offer:', offerId);
+
       await hiringApi.cancelOffer(offerId);
       toast({
         title: "Sucesso",
@@ -1310,7 +1403,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         variant: "destructive",
       });
     }
-  };
+  }, [toast, hiringApi]);
 
   // Handle contract completion - show confirmation modal first
   const handleEndContract = (contractId: number) => {
@@ -2322,9 +2415,132 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         </div>
       );
     } else if (message.message_type === "offer" && message.offer_data) {
+      // Debug logging to see what's in the offer_data
+      console.log('Processing offer message:', {
+        message_id: message.id,
+        offer_data: message.offer_data,
+        offer_id: message.offer_data.offer_id,
+        has_offer_id: !!message.offer_data.offer_id,
+        offer_id_type: typeof message.offer_data.offer_id,
+        offers_available: offers.length,
+        offers_ids: offers.map(o => o.id),
+        isLoadingOffers
+      });
+      
+      // If offers are still loading or not ready, show a loading state
+      if (isLoadingOffers || !offersReady) {
+        return (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-3">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                {isLoadingOffers ? 'Carregando detalhes da oferta...' : 'Aguardando dados da oferta...'}
+              </p>
+            </div>
+          </div>
+        );
+      }
+      
+      // Try to find the actual offer ID from multiple sources
+      let actualOfferId: number | null = null;
+      
+      // First, try to get the offer ID from the message data
+      if (message.offer_data.offer_id && typeof message.offer_data.offer_id === 'number' && message.offer_data.offer_id > 0) {
+        actualOfferId = message.offer_data.offer_id;
+        console.log('Using offer_id from message data:', actualOfferId);
+      }
+      
+      // If no valid offer ID from message, try to find a matching offer from the offers list
+      if (!actualOfferId && offers.length > 0) {
+        console.log('Attempting to find matching offer from offers list:', {
+          offers_count: offers.length,
+          offers_ids: offers.map(o => o.id),
+          message_budget: message.offer_data.budget,
+          message_days: message.offer_data.estimated_days,
+          message_title: message.offer_data.title
+        });
+        
+        // Try to find the offer by matching multiple properties for better accuracy
+        const matchingOffer = offers.find(offer => {
+          // Match by budget (handle both string and number formats)
+          const budgetMatch = offer.budget === message.offer_data.budget || 
+                             offer.budget === `R$ ${message.offer_data.budget},00` ||
+                             offer.budget === message.offer_data.formatted_budget;
+          
+          // Match by estimated days
+          const daysMatch = offer.estimated_days === message.offer_data.estimated_days;
+          
+          // Match by title if available
+          const titleMatch = !message.offer_data.title || offer.title === message.offer_data.title;
+          
+          // Match by status if available
+          const statusMatch = !message.offer_data.status || offer.status === message.offer_data.status;
+          
+          const isMatch = budgetMatch && daysMatch && titleMatch && statusMatch;
+          
+          if (isMatch) {
+            console.log('Found matching offer:', {
+              offer_id: offer.id,
+              offer_budget: offer.budget,
+              offer_days: offer.estimated_days,
+              message_budget: message.offer_data.budget,
+              message_days: message.offer_data.estimated_days
+            });
+          }
+          
+          return isMatch;
+        });
+        
+        if (matchingOffer) {
+          actualOfferId = matchingOffer.id;
+          console.log('Found matching offer by properties:', matchingOffer);
+        } else {
+          console.log('No matching offer found in offers list');
+        }
+      } else if (!actualOfferId) {
+        console.log('No offers available to search through:', {
+          offers_count: offers.length,
+          actualOfferId
+        });
+      }
+      
+      // Final check - if we still don't have a valid offer ID, show an error
+      if (!actualOfferId || actualOfferId <= 0) {
+        console.error('Could not determine valid offer ID for message:', {
+          message_id: message.id,
+          offer_data: message.offer_data,
+          actualOfferId,
+          offers_count: offers.length
+        });
+        
+        // Try to reload offers as a last resort
+        if (selectedRoom && offers.length === 0) {
+          console.log('Attempting to reload offers for room:', selectedRoom.room_id);
+          loadOffers(selectedRoom.room_id);
+        }
+        
+        return (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl p-3">
+            <p className="text-sm text-red-700 dark:text-red-300">
+              Erro: Não foi possível identificar a oferta
+            </p>
+            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+              Recarregue a página ou entre em contato com o suporte
+            </p>
+            <div className="mt-2 p-2 bg-red-100 dark:bg-red-900/30 rounded text-xs">
+              <p><strong>Debug Info:</strong></p>
+              <p>Message ID: {message.id}</p>
+              <p>Offer ID from message: {message.offer_data.offer_id}</p>
+              <p>Available offers: {offers.length}</p>
+              <p>Selected room: {selectedRoom?.room_id}</p>
+            </div>
+          </div>
+        );
+      }
+
       // Convert message to ChatOffer format
       const chatOffer: ChatOffer = {
-        id: message.offer_data.offer_id,
+        id: actualOfferId!, // We know this is valid at this point due to the check above
         title: message.offer_data.title || "Oferta de Projeto",
         description:
           message.offer_data.description || "Oferta enviada via chat",
@@ -2353,17 +2569,55 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         can_be_completed: message.offer_data.can_be_completed,
       };
 
-      return (
-        <ChatOfferMessage
-          offer={chatOffer}
-          isSender={message.is_sender}
-          onAccept={handleAcceptOffer}
-          onReject={handleRejectOffer}
-          onCancel={handleCancelOffer}
-          onEndContract={handleEndContract}
-          isCreator={user?.role === "creator"}
-        />
-      );
+      // Additional validation before rendering
+      if (!chatOffer.id || chatOffer.id <= 0) {
+        console.error('ChatOffer created with invalid ID:', chatOffer);
+        return (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl p-3">
+            <p className="text-sm text-red-700 dark:text-red-300">
+              Erro: ID da oferta inválido
+            </p>
+          </div>
+        );
+      }
+
+      // Final validation before rendering
+      if (!chatOffer.id || chatOffer.id <= 0 || isNaN(chatOffer.id)) {
+        console.error('ChatOffer created with invalid ID:', chatOffer);
+        return (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl p-3">
+            <p className="text-sm text-red-700 dark:text-red-300">
+              Erro: ID da oferta inválido
+            </p>
+            <div className="mt-2 p-2 bg-red-100 dark:bg-red-900/30 rounded text-xs">
+              <p><strong>Debug Info:</strong></p>
+              <p>ChatOffer ID: {chatOffer.id}</p>
+              <p>Actual Offer ID: {actualOfferId}</p>
+              <p>Message Offer ID: {message.offer_data.offer_id}</p>
+            </div>
+          </div>
+        );
+      }
+
+      // Debug: Log the function references being passed
+      console.log('Passing functions to ChatOfferMessage:', {
+        onAccept: handleAcceptOfferById,
+        onAccept_name: handleAcceptOfferById.name,
+        onAccept_toString: handleAcceptOfferById.toString().substring(0, 100),
+        chatOffer_id: chatOffer.id
+      });
+
+              return (
+          <ChatOfferMessage
+            offer={chatOffer}
+            isSender={message.is_sender}
+            onAccept={handleAcceptOfferById}
+            onReject={handleRejectOffer}
+            onCancel={handleCancelOffer}
+            onEndContract={handleEndContract}
+            isCreator={user?.role === "creator"}
+          />
+        );
     }
 
     // Handle system messages (like contract completion messages)
@@ -2757,7 +3011,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                     {/* Timeline Button */}
                     {activeContract && (
                       <Button
-                        onClick={() => setShowTimeline(true)}
+                        onClick={() => setShowTimelineSidebar(true)}
                         variant="outline"
                         className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700 hover:text-blue-800"
                       >
@@ -3412,12 +3666,12 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
           />
         )}
 
-        {/* Campaign Timeline Modal */}
-        {showTimeline && activeContract && (
-          <CampaignTimeline
+        {/* Campaign Timeline Sidebar */}
+        {showTimelineSidebar && activeContract && (
+          <CampaignTimelineSidebar
             contractId={activeContract.id}
-            isOpen={showTimeline}
-            onClose={() => setShowTimeline(false)}
+            isOpen={showTimelineSidebar}
+            onClose={() => setShowTimelineSidebar(false)}
           />
         )}
       </div>

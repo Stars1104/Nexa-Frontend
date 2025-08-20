@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { useRoleNavigation } from "../../hooks/useRoleNavigation";
 import GoogleOAuthButton from "../../components/GoogleOAuthButton";
 import { Helmet } from "react-helmet-async";
+import { loginSuccess } from "../../store/slices/authSlice";
 
 interface SignUpFormData {
   name: string;
@@ -68,21 +69,26 @@ const CreatorSignUp = () => {
   // Effect to handle successful authentication
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Handle student verification flow
-      if (user.isStudent && user.role === 'creator') {
-        navigateToStudentVerification();
-      } else if (isNewRegistration && user.role === 'creator') {
-        // Redirect new Creator registrations to subscription page
-        navigateToSubscription();
-      } else {
-        // Check if there's a redirect location from ProtectedRoute
-        const from = location.state?.from?.pathname;
-        if (from) {
-          navigate(from, { replace: true });
+      // Prevent multiple navigation calls
+      const timeoutId = setTimeout(() => {
+        // Handle student verification flow
+        if (user.isStudent && user.role === 'creator') {
+          navigateToStudentVerification();
+        } else if (isNewRegistration && user.role === 'creator') {
+          // Redirect new Creator registrations to subscription page
+          navigateToSubscription();
         } else {
-          navigateToRoleDashboard(user.role);
+          // Check if there's a redirect location from ProtectedRoute
+          const from = location.state?.from?.pathname;
+          if (from) {
+            navigate(from, { replace: true });
+          } else {
+            navigateToRoleDashboard(user.role);
+          }
         }
-      }
+      }, 100); // Small delay to prevent race conditions
+
+      return () => clearTimeout(timeoutId);
     }
   }, [isAuthenticated, user, role, navigateToRoleDashboard, navigateToStudentVerification, navigateToSubscription, location, isNewRegistration]);
 
@@ -113,6 +119,11 @@ const CreatorSignUp = () => {
   // Sign up Function
   const onSignUp = async (data: SignUpFormData) => {
     try {
+      // Prevent multiple submissions
+      if (isSigningUp) {
+        return;
+      }
+
       const signupData = {
         name: data.name,
         email: data.email,
@@ -149,12 +160,30 @@ const CreatorSignUp = () => {
       if (response.user !== null) {
         toast.success("Conta criada com sucesso!");
         setIsNewRegistration(true); // Set flag for new registration
+        
+        // For new users, automatically log them in after successful registration
+        // This prevents the need for a separate login call
+        if (response.token) {
+          // Dispatch login success directly
+          dispatch(loginSuccess({
+            user: response.user,
+            token: response.token
+          }));
+        }
       }
       // Navigation will be handled by useEffect after successful signup
     } catch (error: any) {
-      // Display specific error message in toast
-      const errorMessage = error || "Erro ao criar conta. Tente novamente.";
-      toast.error(errorMessage);
+      // Handle rate limiting errors specifically
+      if (error.response?.status === 429) {
+        const retryAfter = error.response?.data?.retry_after || 60;
+        const minutes = Math.ceil(retryAfter / 60);
+        const errorMessage = `Muitas tentativas de registro. Tente novamente em ${minutes} minuto(s).`;
+        toast.error(errorMessage);
+      } else {
+        // Display other error messages
+        const errorMessage = error || "Erro ao criar conta. Tente novamente.";
+        toast.error(errorMessage);
+      }
       console.error('Sign up error:', error);
     }
   };
@@ -173,9 +202,17 @@ const CreatorSignUp = () => {
         // Navigation will be handled by useEffect after successful login
       }
     } catch (error: any) {
-      // Display specific error message in toast
-      const errorMessage = error || "Erro ao fazer login. Tente novamente.";
-      toast.error(errorMessage);
+      // Handle rate limiting errors specifically
+      if (error.response?.status === 429) {
+        const retryAfter = error.response?.data?.retry_after || 60;
+        const minutes = Math.ceil(retryAfter / 60);
+        const errorMessage = `Muitas tentativas de login. Tente novamente em ${minutes} minuto(s).`;
+        toast.error(errorMessage);
+      } else {
+        // Display other error messages
+        const errorMessage = error || "Erro ao fazer login. Tente novamente.";
+        toast.error(errorMessage);
+      }
       console.error('Sign in error:', error);
     }
   };

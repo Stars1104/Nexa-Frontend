@@ -4,7 +4,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -80,47 +79,46 @@ export default function CampaignFinalizationModal({
             <AlertTriangle className="h-5 w-5" />
             Confirmar Finalização da Campanha
           </DialogTitle>
-          <DialogDescription className="text-left">
-            <div className="space-y-4">
-              <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-700 rounded-lg p-4">
-                <p className="text-red-800 dark:text-red-300 font-medium">
-                  ⚠️ Esta ação não pode ser desfeita!
-                </p>
-                <p className="text-red-700 dark:text-red-400 text-sm mt-1">
-                  Ao finalizar a campanha, você estará confirmando que o trabalho foi concluído e o pagamento será liberado para o criador após a avaliação.
-                </p>
+          
+          <div className="space-y-4 mt-4">
+            <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-700 rounded-lg p-4">
+              <div className="text-red-800 dark:text-red-300 font-medium">
+                ⚠️ Esta ação não pode ser desfeita!
               </div>
-
-              <div className="space-y-2">
-                <p className="font-medium">Detalhes da Campanha:</p>
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-1">
-                  <p className="text-sm">
-                    <span className="font-medium">Título:</span> {contract.title}
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-medium">Valor:</span> {contract.budget}
-                  </p>
-                  {contract.creator && (
-                    <p className="text-sm">
-                      <span className="font-medium">Criador:</span> {contract.creator.name}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
-                <p className="text-blue-800 dark:text-blue-300 text-sm">
-                  <strong>Próximos passos:</strong>
-                </p>
-                <ul className="text-blue-700 dark:text-blue-400 text-sm mt-2 space-y-1">
-                  <li>• A campanha será marcada como concluída</li>
-                  <li>• Você deverá avaliar o trabalho do criador</li>
-                  <li>• O pagamento será liberado após a avaliação</li>
-                  <li>• Uma mensagem automática será enviada ao criador</li>
-                </ul>
+              <div className="text-red-700 dark:text-red-400 text-sm mt-1">
+                Ao finalizar a campanha, você estará confirmando que o trabalho foi concluído e o pagamento será liberado para o criador após a avaliação.
               </div>
             </div>
-          </DialogDescription>
+
+            <div className="space-y-2">
+              <div className="font-medium">Detalhes da Campanha:</div>
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-1">
+                <div className="text-sm">
+                  <span className="font-medium">Título:</span> {contract.title}
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium">Valor:</span> {contract.budget}
+                </div>
+                {contract.creator && (
+                  <div className="text-sm">
+                    <span className="font-medium">Criador:</span> {contract.creator.name}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+              <div className="text-blue-800 dark:text-blue-300 text-sm">
+                <strong>Próximos passos:</strong>
+              </div>
+              <ul className="text-blue-700 dark:text-blue-400 text-sm mt-2 space-y-1">
+                <li>• A campanha será marcada como concluída</li>
+                <li>• Você deverá avaliar o trabalho do criador</li>
+                <li>• O pagamento será liberado após a avaliação</li>
+                <li>• Uma mensagem automática será enviada ao criador</li>
+              </ul>
+            </div>
+          </div>
         </DialogHeader>
 
         <DialogFooter className="flex gap-2">
@@ -146,7 +144,7 @@ export default function CampaignFinalizationModal({
             ) : (
               <>
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Completed
+                Finalizar
               </>
             )}
           </Button>

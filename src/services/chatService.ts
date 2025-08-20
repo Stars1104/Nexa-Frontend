@@ -139,9 +139,7 @@ class ChatService {
 
     // Send guide messages when user first enters chat
     async sendGuideMessages(roomId: string): Promise<void> {
-        console.log('[chatService] Calling sendGuideMessages API for room:', roomId);
         const response = await apiClient.post(`/chat/rooms/${roomId}/send-guide-messages`);
-        console.log('[chatService] sendGuideMessages API response:', response);
     }
 
     // Download file with CORS handling

@@ -14,8 +14,6 @@ const BackendAPI = axios.create({
 // Guide Create Function
 export const GuideCreate = async (formData: FormData) => {
     try {
-        console.log("GuideCreate called with FormData:", formData);
-        
         // Use admin endpoint
         const res = await BackendAPI.post("/api/admin/guides", formData, {
             headers: {
@@ -23,7 +21,6 @@ export const GuideCreate = async (formData: FormData) => {
             },
         });
         
-        console.log("GuideCreate response:", res);
         return res.data;
     } catch (error: any) {
         throw error;

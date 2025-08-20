@@ -24,15 +24,60 @@ import NotificationsPage from "./pages/Notifications";
 import BankRegistrationPage from "./pages/creator/BankRegistrationPage";
 import Guide from "./pages/Guide";
 import { HelmetProvider } from "react-helmet-async";
+import { useState, useEffect } from "react";
 
 const queryClient = new QueryClient();
 
 const App = () => {
+  const [isAppReady, setIsAppReady] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('Carregando...');
+  
   // Initialize auth rehydration
-  useAuthRehydration();
+  const authState = useAuthRehydration();
   
   // Initialize global socket connection for real-time notifications
   useSocket();
+
+  // Set app as ready after authentication is properly initialized
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Only set app as ready if authentication rehydration is complete
+      // This prevents routes from rendering before auth state is restored
+      if (!authState.isRehydrating) {
+        setIsAppReady(true);
+      }
+    }, 1000);
+
+    // Add a timeout to prevent infinite loading
+    const timeoutTimer = setTimeout(() => {
+      if (!isAppReady) {
+        console.warn('App - Initialization timeout, forcing ready state');
+        setIsAppReady(true);
+      }
+    }, 10000); // 10 second timeout
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(timeoutTimer);
+    };
+  }, [authState.isRehydrating, isAppReady]);
+
+  // Show loading state while app initializes
+  if (!isAppReady) {
+    const message = authState.isRehydrating 
+      ? 'Verificando autenticação...' 
+      : loadingMessage;
+      
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">{message}</p>
+          <p className="text-sm text-muted-foreground mt-2">Se o carregamento demorar, tente atualizar a página</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ErrorBoundary>

@@ -1,4 +1,5 @@
 import { apiClient } from '../services/apiClient';
+import { DeliveryMaterial } from './deliveryMaterials';
 
 export interface CampaignMilestone {
   id: number;
@@ -41,6 +42,9 @@ export interface CampaignMilestone {
   can_be_extended?: boolean;
   is_extended?: boolean;
   total_extension_days?: number;
+  
+  // Materials loaded with the milestone
+  deliveryMaterials?: DeliveryMaterial[];
 }
 
 export interface TimelineStatistics {
@@ -111,6 +115,17 @@ class CampaignTimelineApi {
    */
   async approveMilestone(milestoneId: number, comment?: string): Promise<CampaignMilestone> {
     const response = await apiClient.post('/campaign-timeline/approve-milestone', {
+      milestone_id: milestoneId,
+      comment
+    });
+    return response.data.data;
+  }
+
+  /**
+   * Reject a milestone
+   */
+  async rejectMilestone(milestoneId: number, comment?: string): Promise<CampaignMilestone> {
+    const response = await apiClient.post('/campaign-timeline/reject-milestone', {
       milestone_id: milestoneId,
       comment
     });
