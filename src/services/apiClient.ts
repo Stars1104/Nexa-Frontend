@@ -15,6 +15,54 @@ const handleAuthFailure = () => {
     }
 };
 
+// Utility function to check if error is a network error
+const isNetworkError = (error: any): boolean => {
+    return (
+        error.code === 'ERR_NETWORK' ||
+        error.message === 'Network Error' ||
+        error.message === 'ERR_CONNECTION_REFUSED' ||
+        error.message === 'ERR_INTERNET_DISCONNECTED' ||
+        error.message === 'ERR_NETWORK_CHANGED' ||
+        error.message === 'ERR_TIMEOUT' ||
+        error.message === 'ERR_FAILED' ||
+        !error.response ||
+        error.response?.status === 0
+    );
+};
+
+// Utility function to get user-friendly error message
+const getErrorMessage = (error: any): string => {
+    if (isNetworkError(error)) {
+        return "Erro de conexão: O servidor não está respondendo. Verifique se o backend está rodando e tente novamente.";
+    }
+    
+    if (error.response?.status === 404) {
+        return "Recurso não encontrado. Pode ter sido removido ou você não tem permissão para acessá-lo.";
+    }
+    
+    if (error.response?.status === 403) {
+        return "Acesso negado. Você não tem permissão para realizar esta ação.";
+    }
+    
+    if (error.response?.status === 400) {
+        return error.response?.data?.message || "Dados inválidos para esta operação.";
+    }
+    
+    if (error.response?.status >= 500) {
+        return "Erro interno do servidor. Tente novamente em alguns instantes.";
+    }
+    
+    if (error.response?.data?.message) {
+        return error.response.data.message;
+    }
+    
+    if (error.message) {
+        return error.message;
+    }
+    
+    return "Ocorreu um erro inesperado. Tente novamente.";
+};
+
 // Create axios instance with base configuration
 export const apiClient = axios.create({
     baseURL: `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/api`,
@@ -85,6 +133,11 @@ export const createAuthenticatedClient = (token: string) => {
                 }
             }
 
+            // Enhance error message for network errors
+            if (isNetworkError(error)) {
+                error.userMessage = getErrorMessage(error);
+            }
+
             return Promise.reject(error);
         }
     );
@@ -134,6 +187,15 @@ const handleResponse = (response: any) => {
 };
 
 const handleError = async (error: any) => {
+    // Log the error for debugging
+    console.error('API Error:', {
+        message: error.message,
+        code: error.code,
+        status: error.response?.status,
+        data: error.response?.data,
+        config: error.config
+    });
+    
     // Handle 401 Unauthorized - Token expired or invalid
     if (error.response?.status === 401) {           
         handleAuthFailure();
@@ -162,8 +224,16 @@ const handleError = async (error: any) => {
         }
     }
 
+    // Enhance error message for network errors
+    if (isNetworkError(error)) {
+        error.userMessage = getErrorMessage(error);
+    }
+
     return Promise.reject(error);
 };
 
 apiClient.interceptors.response.use(handleResponse, handleError);
-paymentClient.interceptors.response.use(handleResponse, handleError); 
+paymentClient.interceptors.response.use(handleResponse, handleError);
+
+// Export utility functions for use in components
+export { isNetworkError, getErrorMessage }; 

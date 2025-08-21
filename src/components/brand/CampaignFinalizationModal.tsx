@@ -7,7 +7,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, XCircle, WifiOff, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { hiringApi } from "@/api/hiring";
 
@@ -33,10 +33,12 @@ export default function CampaignFinalizationModal({
   onCampaignFinalized,
 }: CampaignFinalizationModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleFinalizeCampaign = async () => {
     setIsProcessing(true);
+    setError(null);
 
     try {
       const response = await hiringApi.completeContract(contract.id);
@@ -54,10 +56,34 @@ export default function CampaignFinalizationModal({
       }
     } catch (error: any) {
       console.error("Error finalizing campaign:", error);
+      
+      // Handle different types of errors
+      let errorMessage = "Erro ao finalizar campanha";
+      let isNetworkError = false;
+      
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        errorMessage = "Erro de conexão: O servidor não está respondendo. Verifique se o backend está rodando.";
+        isNetworkError = true;
+      } else if (error.response?.status === 404) {
+        errorMessage = "Contrato não encontrado. Pode ter sido removido ou você não tem permissão para acessá-lo.";
+      } else if (error.response?.status === 403) {
+        errorMessage = "Acesso negado. Você não tem permissão para finalizar este contrato.";
+      } else if (error.response?.status === 400) {
+        errorMessage = error.response?.data?.message || "Dados inválidos para finalizar o contrato.";
+      } else if (error.response?.status >= 500) {
+        errorMessage = "Erro interno do servidor. Tente novamente em alguns instantes.";
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
+      
+      // Show toast with appropriate styling
       toast({
-        title: "Erro",
-        description:
-          error.response?.data?.message || "Erro ao finalizar campanha",
+        title: isNetworkError ? "Erro de Conexão" : "Erro",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -65,8 +91,14 @@ export default function CampaignFinalizationModal({
     }
   };
 
+  const handleRetry = () => {
+    setError(null);
+    handleFinalizeCampaign();
+  };
+
   const handleClose = () => {
     if (!isProcessing) {
+      setError(null);
       onClose();
     }
   };
@@ -81,6 +113,31 @@ export default function CampaignFinalizationModal({
           </DialogTitle>
           
           <div className="space-y-4 mt-4">
+            {/* Error Display */}
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-700 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <WifiOff className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="text-red-800 dark:text-red-300 font-medium mb-2">
+                      Erro ao Finalizar Campanha
+                    </div>
+                    <div className="text-red-700 dark:text-red-400 text-sm mb-3">
+                      {error}
+                    </div>
+                    <Button
+                      onClick={handleRetry}
+                      size="sm"
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Tentar Novamente
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-700 rounded-lg p-4">
               <div className="text-red-800 dark:text-red-300 font-medium">
                 ⚠️ Esta ação não pode ser desfeita!

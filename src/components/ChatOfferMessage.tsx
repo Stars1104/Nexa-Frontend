@@ -61,17 +61,6 @@ export default function ChatOfferMessage({
   isCreator = false,
 }: ChatOfferMessageProps) {
   
-  // Debug logging
-  console.log('ChatOfferMessage rendered with offer:', {
-    id: offer.id,
-    title: offer.title,
-    status: offer.status,
-    can_be_accepted: offer.can_be_accepted,
-    has_onAccept: !!onAccept,
-    id_type: typeof offer.id,
-    id_valid: offer.id && offer.id > 0 && !isNaN(offer.id)
-  });
-  
   // Check if offer is expired
   const isExpired = offer.status === "expired" || offer.days_until_expiry < 0;
 

@@ -34,7 +34,7 @@
     "axios": "^1.10.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
-    "date-fns": "^4.1.0",
+    "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.6.0",
     "lovable-tagger": "^1.1.8",
     "lucide-react": "^0.294.0",

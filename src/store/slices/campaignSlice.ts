@@ -40,6 +40,7 @@ export interface Campaign {
   description: string;
   briefing: string;
   budget: number;
+  remunerationType?: 'paga' | 'permuta';
   deadline: string;
   states: string[];
   creatorRequirements: string[];
@@ -67,10 +68,15 @@ export interface CampaignFormData {
   description: string;
   briefing: string;
   budget: string;
+  remunerationType: 'paga' | 'permuta';
   deadline: Date;
   states: string[];
   creatorRequirements: string;
   type: string;
+  minAge?: number;
+  maxAge?: number;
+  targetGenders: string[];
+  targetCreatorTypes: string[];
   logo?: File | null;
   attachments?: File[];
 }

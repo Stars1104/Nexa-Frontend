@@ -328,6 +328,18 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                                         </svg>
                                         {formatBudget(campaign.budget)}
                                     </span>
+                                    {/* Remuneration Type */}
+                                    {campaign.remunerationType && (
+                                        <span className="flex items-center gap-1">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                campaign.remunerationType === 'paga' 
+                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200' 
+                                                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                                            }`}>
+                                                {campaign.remunerationType === 'paga' ? '💰 Paga' : '🔄 Permuta'}
+                                            </span>
+                                        </span>
+                                    )}
                                 </div>
                                 
                                 {/* Google Drive Link */}

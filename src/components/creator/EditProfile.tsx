@@ -56,9 +56,11 @@ const defaultProfile = {
     state: "São Paulo",
     role: "UGC e Influenciador",
     languages: ["Português", "Inglês"],
-    gender: "Feminino",
+    gender: "none",
     categories: ["Moda", "Estilo de Vida", "Beleza"],
     image: null as File | null,
+    birth_date: null as string | null,
+    creator_type: null as string | null,
 };
 
 export const EditProfile: React.FC<{
@@ -98,7 +100,11 @@ export const EditProfile: React.FC<{
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
         const { name, value } = e.target;
-        setProfile((p) => ({ ...p, [name]: value }));
+        if (name === 'birth_date') {
+            setProfile((p) => ({ ...p, [name]: value || null }));
+        } else {
+            setProfile((p) => ({ ...p, [name]: value }));
+        }
     };
 
     const handleLanguagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -245,21 +251,52 @@ export const EditProfile: React.FC<{
                     <div className="flex flex-col">
                         <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Gênero <span className="text-xs text-gray-400">(Opcional)</span></label>
                         <Select
-                            value={profile.gender}
-                            onValueChange={val => setProfile(p => ({ ...p, gender: val }))}
+                            value={profile.gender || 'none'}
+                            onValueChange={val => setProfile(p => ({ ...p, gender: val === 'none' ? null : val }))}
                             disabled={isLoading}
                         >
                             <SelectTrigger className="bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-md px-4 py-2 text-gray-900 dark:text-white outline-none placeholder-gray-400 dark:placeholder-gray-500 text-base">
                                 <SelectValue placeholder="Selecione o gênero" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="Feminino">Feminino</SelectItem>
-                                <SelectItem value="Masculino">Masculino</SelectItem>
-                                <SelectItem value="Não-binário">Não-binário</SelectItem>
-                                <SelectItem value="Prefiro não informar">Prefiro não informar</SelectItem>
+                                <SelectItem value="female">Feminino</SelectItem>
+                                <SelectItem value="male">Masculino</SelectItem>
+                                <SelectItem value="other">Não-binário</SelectItem>
+                                <SelectItem value="none">Prefiro não informar</SelectItem>
                             </SelectContent>
                         </Select>
                         <span className="text-xs text-gray-400 mt-1">Campo opcional</span>
+                    </div>
+                    <div className="flex flex-col">
+                        <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Nascimento <span className="text-xs text-gray-400">(Opcional)</span></label>
+                        <Input
+                            id="birth_date"
+                            name="birth_date"
+                            type="date"
+                            value={profile.birth_date || ''}
+                            onChange={handleChange}
+                            disabled={isLoading}
+                            max={new Date().toISOString().split('T')[0]}
+                        />
+                        <span className="text-xs text-gray-400 mt-1">Isso ajuda as marcas a encontrar campanhas adequadas para sua idade</span>
+                    </div>
+                    <div className="flex flex-col">
+                        <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de Criador <span className="text-xs text-gray-400">(Opcional)</span></label>
+                        <Select
+                            value={profile.creator_type || ''}
+                            onValueChange={val => setProfile(p => ({ ...p, creator_type: val }))}
+                            disabled={isLoading}
+                        >
+                            <SelectTrigger className="bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-md px-4 py-2 text-gray-900 dark:text-white outline-none placeholder-gray-400 dark:placeholder-gray-500 text-base">
+                                <SelectValue placeholder="Selecione o tipo de criador" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ugc">UGC (Conteúdo do Usuário)</SelectItem>
+                                <SelectItem value="influencer">Influenciador</SelectItem>
+                                <SelectItem value="both">Ambos os Tipos</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <span className="text-xs text-gray-400 mt-1">Isso ajuda as marcas a encontrar campanhas adequadas para seu perfil</span>
                     </div>
                 </div>
                 {error && <div className="text-red-500 text-sm mt-2">{error}</div>}

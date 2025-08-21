@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Separator } from '@/components/ui/separator';
 import { GetGuide } from '../api/admin/guide';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, BookOpen, Target, Users, Loader2, TrendingUp } from 'lucide-react';
@@ -32,6 +30,9 @@ interface Guide {
   steps?: Step[];
 }
 
+interface GuideEmbeddedProps {
+  audience: 'Brand' | 'Creator';
+}
 
 function StepList({ steps, role }: { steps: Step[]; role: "Brand" | "Creator" }) {
   const sortedSteps = steps.sort((a, b) => a.order - b.order);
@@ -48,7 +49,7 @@ function StepList({ steps, role }: { steps: Step[]; role: "Brand" | "Creator" })
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <Badge variant="secondary" className="text-sm font-medium">
-                    {`Step ${idx + 1}`}
+                    {`Passo ${idx + 1}`}
                   </Badge>
                   <CardTitle className="leading-tight text-lg">{step.title}</CardTitle>
                 </div>
@@ -68,7 +69,7 @@ function StepList({ steps, role }: { steps: Step[]; role: "Brand" | "Creator" })
                 disablePictureInPicture
             >
                 <source src={`${import.meta.env.VITE_BACKEND_URL}${step.video_url}`} />
-                Your browser does not support the video tag.
+                Seu navegador não suporta a tag de vídeo.
             </video>
           </div>
         </article>
@@ -91,19 +92,17 @@ function GuideHeader({ guide, role }: { guide: Guide; role: "Brand" | "Creator" 
       </p>
       <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
         <TrendingUp className="h-4 w-4" />
-        <span>Follow these steps to maximize your success on Nexa</span>
+        <span>Siga estes passos para maximizar seu sucesso na Nexa</span>
       </div>
     </div>
   );
 }
 
-export default function GuideEmbedded() {
+export default function GuideEmbedded({ audience }: GuideEmbeddedProps) {
   const [guides, setGuides] = useState<Guide[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-
-  const defaultTab = useMemo(() => "brands", []);
 
   useEffect(() => {
     const fetchGuides = async () => {
@@ -113,7 +112,7 @@ export default function GuideEmbedded() {
         setGuides(data.data || data);
         setError(null);
       } catch (err: any) {
-        setError(err.message || "Failed to fetch guides");
+        setError(err.message || "Falha ao carregar guias");
         console.error("Error fetching guides:", err);
         toast({
           title: "Erro",
@@ -128,8 +127,7 @@ export default function GuideEmbedded() {
     fetchGuides();
   }, [toast]);
 
-  const brandGuide = guides.find(g => g.audience === 'Brand');
-  const creatorGuide = guides.find(g => g.audience === 'Creator');
+  const guide = guides.find(g => g.audience === audience);
 
   if (loading) {
     return (
@@ -165,77 +163,40 @@ export default function GuideEmbedded() {
       {/* Page Header */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold tracking-tight mb-4">
-          Nexa Platform Guides
+          Guias da Plataforma Nexa
         </h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          Master the Nexa platform with our comprehensive step-by-step guides designed specifically for brands and creators.
+          Domine a plataforma Nexa com nossos guias abrangentes passo a passo projetados especificamente para {audience === 'Brand' ? 'marcas' : 'criadores'}.
         </p>
       </div>
 
-      <Tabs defaultValue={defaultTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
-          <TabsTrigger value="brands" className="flex items-center gap-2">
-            <Target className="h-4 w-4" />
-            Guia para Marcas
-          </TabsTrigger>
-          <TabsTrigger value="creators" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Guia para Criadores
-          </TabsTrigger>
-        </TabsList>
-
-        <Separator className="my-8" />
-
-        <TabsContent value="brands" asChild>
-          <section aria-labelledby="brands-heading" className="space-y-8">
-            <h2 id="brands-heading" className="sr-only">
-              Guide for Brands
-            </h2>
-            {brandGuide && brandGuide.steps && brandGuide.steps.length > 0 ? (
-              <>
-                <GuideHeader guide={brandGuide} role="Brand" />
-                <StepList steps={brandGuide.steps} role="Brand" />
-              </>
-            ) : (
-              <div className="text-center py-16">
-                <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Guia para marcas em desenvolvimento</h3>
-                <p className="text-muted-foreground mb-4">
-                  Nossa equipe está trabalhando para criar um guia completo e detalhado para marcas.
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Em breve você terá acesso a todas as informações necessárias para criar campanhas de sucesso.
-                </p>
-              </div>
-            )}
-          </section>
-        </TabsContent>
-
-        <TabsContent value="creators" asChild>
-          <section aria-labelledby="creators-heading" className="space-y-8">
-            <h2 id="creators-heading" className="sr-only">
-              Guide for Creators
-            </h2>
-            {creatorGuide && creatorGuide.steps && creatorGuide.steps.length > 0 ? (
-              <>
-                <GuideHeader guide={creatorGuide} role="Creator" />
-                <StepList steps={creatorGuide.steps} role="Creator" />
-              </>
-            ) : (
-              <div className="text-center py-16">
-                <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Guia para criadores em desenvolvimento</h3>
-                <p className="text-muted-foreground mb-4">
-                  Nossa equipe está trabalhando para criar um guia completo e detalhado para criadores.
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Em breve você terá acesso a todas as informações necessárias para maximizar seu sucesso na plataforma.
-                </p>
-              </div>
-            )}
-          </section>
-        </TabsContent>
-      </Tabs>
+      <section aria-labelledby={`${audience.toLowerCase()}-heading`} className="space-y-8">
+        <h2 id={`${audience.toLowerCase()}-heading`} className="sr-only">
+          Guia para {audience === 'Brand' ? 'Marcas' : 'Criadores'}
+        </h2>
+        {guide && guide.steps && guide.steps.length > 0 ? (
+          <>
+            <GuideHeader guide={guide} role={audience} />
+            <StepList steps={guide.steps} role={audience} />
+          </>
+        ) : (
+          <div className="text-center py-16">
+            <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">
+              Guia para {audience === 'Brand' ? 'marcas' : 'criadores'} em desenvolvimento
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              Nossa equipe está trabalhando para criar um guia completo e detalhado para {audience === 'Brand' ? 'marcas' : 'criadores'}.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {audience === 'Brand' 
+                ? 'Em breve você terá acesso a todas as informações necessárias para criar campanhas de sucesso.'
+                : 'Em breve você terá acesso a todas as informações necessárias para maximizar seu sucesso na plataforma.'
+              }
+            </p>
+          </div>
+        )}
+      </section>
     </div>
   );
 } 

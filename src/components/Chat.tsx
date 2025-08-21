@@ -1659,15 +1659,6 @@ export default function Chat() {
         </div>
       );
     } else if (message.message_type === "offer" && message.offer_data) {
-      // Debug logging for offer data
-      console.log('Processing offer message:', {
-        message_id: message.id,
-        offer_data: message.offer_data,
-        offer_id: message.offer_data.offer_id,
-        offer_id_type: typeof message.offer_data.offer_id,
-        has_offer_id: !!message.offer_data.offer_id
-      });
-
       // Safety check for offer ID
       if (!message.offer_data.offer_id || message.offer_data.offer_id <= 0 || isNaN(message.offer_data.offer_id)) {
         console.error('Invalid offer ID in message:', {

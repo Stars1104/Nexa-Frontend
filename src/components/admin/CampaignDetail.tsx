@@ -134,11 +134,17 @@ const CampaignDetail = ({
 
         <div className="space-y-6">
           {/* Info Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-b border-gray-200 dark:border-neutral-700 pb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 border-b border-gray-200 dark:border-neutral-700 pb-4">
             <div>
               <div className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">Valor</div>
               <div className="text-base font-semibold text-gray-800 dark:text-gray-100">
                 R$ {(displayData.budget || displayData.value)?.toLocaleString("pt-BR") || 'Não especificado'}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">Tipo de Remuneração</div>
+              <div className="text-base font-semibold text-gray-800 dark:text-gray-100">
+                {displayData.remunerationType === 'paga' ? '💰 Paga' : displayData.remunerationType === 'permuta' ? '🔄 Permuta' : 'Não especificado'}
               </div>
             </div>
             <div>

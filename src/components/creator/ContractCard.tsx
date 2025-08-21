@@ -29,6 +29,7 @@ import {
   Award,
   MessageCircle,
 } from "lucide-react";
+import { getAvatarUrl } from "@/lib/utils";
 
 interface Contract {
   id: number;
@@ -281,7 +282,7 @@ export default function ContractCard({
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={contract.other_user?.avatar_url} />
+                <AvatarImage src={getAvatarUrl(contract.other_user?.avatar_url)} />
                 <AvatarFallback>
                   <User className="h-5 w-5" />
                 </AvatarFallback>

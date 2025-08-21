@@ -216,6 +216,20 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                   </div>
                 </div>
               </div>
+              {/* Remuneration Type */}
+              {project.remunerationType && (
+                <div className="flex items-center gap-3">
+                  <span className="text-[#E91E63] text-ellipsis text-2xl">
+                    {project.remunerationType === 'paga' ? '💰' : '🔄'}
+                  </span>
+                  <div>
+                    <div className="text-xs text-muted-foreground">Tipo de Remuneração</div>
+                    <div className="font-bold text-base text-foreground">
+                      {project.remunerationType === 'paga' ? 'Paga' : 'Permuta'}
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="flex items-center gap-3">
                 <Clock className="text-[#E91E63]" />
                 <div>

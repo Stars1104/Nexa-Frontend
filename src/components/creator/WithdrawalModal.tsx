@@ -4,7 +4,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -256,6 +255,8 @@ export default function WithdrawalModal({
       case "bank_transfer":
       case "pagarme_bank_transfer":
         return <BanknoteIcon className="h-4 w-4" />;
+      case "pagarme_account":
+        return <CreditCard className="h-4 w-4" />;
       default:
         return <CreditCard className="h-4 w-4" />;
     }
@@ -306,7 +307,7 @@ export default function WithdrawalModal({
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={`Selecione ${config.label.toLowerCase()}`} />
+                    <SelectValue placeholder={`Selecione ${config.label?.toLowerCase() || 'opção'}`} />
                   </SelectTrigger>
                   <SelectContent>
                     {config.options?.map((option: any) => (
@@ -327,7 +328,7 @@ export default function WithdrawalModal({
                       [fieldName]: e.target.value,
                     }))
                   }
-                  placeholder={`Digite ${config.label.toLowerCase()}`}
+                  placeholder={`Digite ${config.label?.toLowerCase() || 'informação'}`}
                   required={config.required}
                 />
               )}
@@ -512,7 +513,15 @@ export default function WithdrawalModal({
 
   const calculateFee = () => {
     if (!selectedMethodData || !amount) return 0;
-    return (parseFloat(amount) * selectedMethodData.fee) / 100;
+    
+    // Check if the method has a fixed fee or percentage fee
+    if (selectedMethodData.id === 'pix') {
+      // PIX has a fixed fee
+      return selectedMethodData.fee;
+    } else {
+      // Other methods have percentage fees
+      return (parseFloat(amount) * selectedMethodData.fee) / 100;
+    }
   };
 
   const calculateFixedFee = () => {
@@ -528,32 +537,41 @@ export default function WithdrawalModal({
     return parseFloat(amount) - calculateTotalFees();
   };
 
+  const getFeeDisplay = () => {
+    if (!selectedMethodData) return '';
+    
+    if (selectedMethodData.id === 'pix') {
+      return `Taxa: R$ ${selectedMethodData.fee.toFixed(2)}`;
+    } else {
+      return `Taxa: ${selectedMethodData.fee}%`;
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Solicitar Saque</DialogTitle>
-          <DialogDescription>
-            <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="w-5 h-5 bg-amber-600 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs">ℹ</span>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-amber-800">
-                    Conta Bancária Necessária
-                  </h4>
-                  <p className="text-sm text-amber-700 mt-1">
-                    Para solicitar um saque, você precisa ter uma conta bancária registrada via Pagar.me. 
-                    Se ainda não registrou sua conta, acesse seu perfil para fazer o cadastro.
-                  </p>
-                </div>
+        </DialogHeader>
+
+        <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg mx-6">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <div className="w-5 h-5 bg-amber-600 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs">ℹ</span>
               </div>
             </div>
-          </DialogDescription>
-        </DialogHeader>
+            <div>
+              <h4 className="text-sm font-medium text-amber-800">
+                Conta Bancária Necessária
+              </h4>
+              <p className="text-sm text-amber-700 mt-1">
+                Para solicitar um saque, você precisa ter uma conta bancária registrada via Pagar.me. 
+                Se ainda não registrou sua conta, acesse seu perfil para fazer o cadastro.
+              </p>
+            </div>
+          </div>
+        </div>
 
         <div 
           className="flex-1 overflow-y-auto pr-2 relative"
@@ -638,7 +656,7 @@ export default function WithdrawalModal({
                       <div>
                         Max: {formatCurrency(selectedMethodData.max_amount)}
                       </div>
-                      <div>Taxa: {selectedMethodData.fee}%</div>
+                      <div>{getFeeDisplay()}</div>
                       <div>Tempo: {selectedMethodData.processing_time}</div>
                     </div>
                   </div>
@@ -696,7 +714,7 @@ export default function WithdrawalModal({
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">
-                      Taxa ({selectedMethodData.fee}%):
+                      {selectedMethodData.id === 'pix' ? 'Taxa PIX:' : `Taxa (${selectedMethodData.fee}%):`}
                     </span>
                     <span className="text-red-600">
                       -{formatCurrency(calculateFee())}
@@ -704,7 +722,7 @@ export default function WithdrawalModal({
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">
-                      Taxa Fixa:
+                      Taxa da Plataforma:
                     </span>
                     <span className="text-red-600">
                       -{formatCurrency(calculateFixedFee())}

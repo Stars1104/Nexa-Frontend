@@ -161,17 +161,11 @@ export default function Dashboard({
 
   // Fetch approved campaigns on component mount
   useEffect(() => {
-    const fetchCampaigns = async () => {
-      try {
-        await dispatch(fetchApprovedCampaigns()).unwrap();
-      } catch (error) {
-        console.error("Error fetching approved campaigns:", error);
-        toast.error("Erro ao carregar campanhas");
-      }
-    };
-
-    fetchCampaigns();
-  }, [dispatch]);
+    if (user?.role === "creator") {
+      dispatch(fetchApprovedCampaigns());
+      dispatch(fetchCreatorApplications());
+    }
+  }, [dispatch, user?.role]);
 
   // Clear error on component unmount
   useEffect(() => {
@@ -242,6 +236,17 @@ export default function Dashboard({
   const handleToggleFavorite = async (campaignId: number) => {
     try {
       const result = await dispatch(toggleFavoriteCampaign(campaignId)).unwrap();
+      
+      // Show success message
+      if (result.is_favorited) {
+        safeToast.success("Campanha adicionada aos favoritos!");
+      } else {
+        safeToast.success("Campanha removida dos favoritos!");
+      }
+      
+      // The campaign slice will automatically update the local state
+      // No need to refetch all campaigns
+      
     } catch (error) {
       console.error('❌ Error in handleToggleFavorite:', error);
       safeToast.error("Falha ao favoritar/desfavoritar campanha");

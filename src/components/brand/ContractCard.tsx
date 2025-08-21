@@ -273,7 +273,7 @@ export default function ContractCard({
                     variant={
                       contract.payment.status === "completed"
                         ? "default"
-                        : contract.payment.status === "pending_release"
+                        : contract.payment.status === "pending"
                         ? "outline"
                         : "secondary"
                     }
@@ -281,7 +281,7 @@ export default function ContractCard({
                   >
                     {contract.payment.status === "completed"
                       ? "Pago"
-                      : contract.payment.status === "pending_release"
+                      : contract.payment.status === "pending"
                       ? "Aguardando Review"
                       : "Pendente"}
                   </Badge>

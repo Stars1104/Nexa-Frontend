@@ -137,14 +137,18 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                         </CardTitle>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                        {onToggleFavorite && campaign.is_favorited && (
+                        {onToggleFavorite && (
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="p-2 h-auto text-red-500"
-                                onClick={() => onToggleFavorite(campaign.id)}
+                                className={`p-2 h-auto ${campaign.is_favorited ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    onToggleFavorite(campaign.id);
+                                }}
                             >
-                                <Heart className="h-4 w-4 fill-current" />
+                                <Heart className={`h-4 w-4 ${campaign.is_favorited ? 'fill-current' : ''}`} />
                             </Button>
                         )}
                         {badge}
@@ -226,15 +230,37 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                         <DollarSign className="h-4 w-4 text-green-600" />
                         <span className="font-bold text-lg">{formatBudget(campaign.budget)}</span>
                     </div>
+                    {/* Remuneration Type */}
+                    {campaign.remunerationType && (
+                        <div className="flex items-center gap-1">
+                            <Badge 
+                                variant="outline" 
+                                className={`text-xs ${
+                                    campaign.remunerationType === 'paga' 
+                                        ? 'text-green-600 bg-green-50 border-green-200 dark:bg-green-900 dark:text-green-200 dark:border-green-700' 
+                                        : 'text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:border-green-700'
+                                }`}
+                            >
+                                {campaign.remunerationType === 'paga' ? '💰 Paga' : '🔄 Permuta'}
+                            </Badge>
+                        </div>
+                    )}
                     <div className='w-full flex justify-center items-center gap-2'>
                         {button}
                         {/* Contribute Button - Add to Favorites */}
-                        <Button  className="bg-green-600 hover:bg-green-700 text-white text-xs w-full"
-                            onClick={() => {
+                        <Button  
+                            className={`text-xs w-full ${
+                                campaign.is_favorited 
+                                    ? 'bg-red-600 hover:bg-red-700 text-white' 
+                                    : 'bg-green-600 hover:bg-green-700 text-white'
+                            }`}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 onToggleFavorite && onToggleFavorite(campaign.id);
                             }}
                         >
-                            Contribuir
+                            {campaign.is_favorited ? 'Remover' : 'Contribuir'}
                         </Button>
                     </div>
                 </div>

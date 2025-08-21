@@ -16,8 +16,11 @@ import {
   XCircle, 
   AlertTriangle,
   Star,
-  User
+  User,
+  ExternalLink,
+  MessageCircle
 } from 'lucide-react';
+import { getAvatarUrl } from '@/lib/utils';
 
 interface Offer {
   id: number;
@@ -33,6 +36,7 @@ interface Offer {
   accepted_at?: string;
   rejected_at?: string;
   rejection_reason?: string;
+  can_be_accepted: boolean;
   other_user: {
     id: number;
     name: string;
@@ -177,7 +181,7 @@ export default function OfferCard({ offer, onOfferUpdated }: OfferCardProps) {
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={offer.other_user.avatar_url} />
+                <AvatarImage src={getAvatarUrl(offer.other_user.avatar_url)} />
                 <AvatarFallback>
                   <User className="h-5 w-5" />
                 </AvatarFallback>

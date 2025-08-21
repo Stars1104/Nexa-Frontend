@@ -7,6 +7,7 @@ import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '../ui/dialog';
 import { Camera, Loader2, Plus } from 'lucide-react';
 import { useToast } from '../../hooks/use-toast';
+import { getAvatarUrl } from '../../lib/utils';
 
 const MAX_BIO_LENGTH = 500;
 const MAX_FILES_PER_UPLOAD = 5;
@@ -277,9 +278,9 @@ export default function Portfolio() {
 
     // Get user avatar
     const getUserAvatar = () => {
-        if (profilePic) return profilePic;
-        if (user?.avatar_url) return user.avatar_url;
-        if (user?.avatar) return user.avatar;
+        if (profilePic) return getAvatarUrl(profilePic);
+        if (user?.avatar_url) return getAvatarUrl(user.avatar_url);
+        if (user?.avatar) return getAvatarUrl(user.avatar);
         return null;
     };
 
@@ -330,7 +331,20 @@ export default function Portfolio() {
                         <div className="relative w-28 h-28 flex-shrink-0">
                             <div className="w-28 h-28 rounded-full border-2 border-dashed border-muted-foreground flex items-center justify-center bg-muted overflow-hidden">
                                 {getUserAvatar() ? (
-                                    <img src={getUserAvatar()} alt="Profile" className="object-cover w-full h-full rounded-full" />
+                                    <img 
+                                        src={getUserAvatar()} 
+                                        alt="Profile" 
+                                        className="object-cover w-full h-full rounded-full"
+                                        onError={(e) => {
+                                            // Fallback to initials if image fails to load
+                                            const target = e.target as HTMLImageElement;
+                                            target.style.display = 'none';
+                                            const parent = target.parentElement;
+                                            if (parent) {
+                                                parent.innerHTML = `<div class="w-full h-full rounded-full bg-purple-100 dark:bg-[#E91E63] flex items-center justify-center text-2xl font-bold text-purple-600 dark:text-white">${getInitials(getUserName())}</div>`;
+                                            }
+                                        }}
+                                    />
                                 ) : (
                                     <div className="w-full h-full rounded-full bg-purple-100 dark:bg-[#E91E63] flex items-center justify-center text-2xl font-bold text-purple-600 dark:text-white">
                                         {getInitials(getUserName())}

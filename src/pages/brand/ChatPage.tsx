@@ -482,7 +482,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                 ...contract,
                 ...data.contractData,
                 status: 'completed',
-                workflow_status: 'waiting_creator_review',
+                workflow_status: 'waiting_review',
                 can_review: true,
               }
               : contract
@@ -2415,17 +2415,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         </div>
       );
     } else if (message.message_type === "offer" && message.offer_data) {
-      // Debug logging to see what's in the offer_data
-      console.log('Processing offer message:', {
-        message_id: message.id,
-        offer_data: message.offer_data,
-        offer_id: message.offer_data.offer_id,
-        has_offer_id: !!message.offer_data.offer_id,
-        offer_id_type: typeof message.offer_data.offer_id,
-        offers_available: offers.length,
-        offers_ids: offers.map(o => o.id),
-        isLoadingOffers
-      });
       
       // If offers are still loading or not ready, show a loading state
       if (isLoadingOffers || !offersReady) {
@@ -2675,11 +2664,11 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                   <Button
                     size="sm"
                     onClick={() => {
-                      // Try to find contract with waiting_creator_review status first
+                      // Try to find contract with waiting_review status first
                       let contractToReview = contracts.find(
                         (c) =>
                           c.status === "completed" &&
-                          c.workflow_status === "waiting_creator_review"
+                          c.workflow_status === "waiting_review"
                       );
 
                       // If not found, try to find any completed contract
@@ -3063,11 +3052,11 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                     {canReview && (
                       <Button
                         onClick={() => {
-                          // Try to find contract with waiting_creator_review status first
+                          // Try to find contract with waiting_review status first
                           let contractToReview = contracts.find(
                             (c) =>
                               c.status === "completed" &&
-                              c.workflow_status === "waiting_creator_review"
+                              c.workflow_status === "waiting_review"
                           );
 
                           // If not found, try to find any completed contract
@@ -3154,7 +3143,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
                           const contractToReview = contracts.find(
                             (c) =>
                               c.status === "completed" &&
-                              c.workflow_status === "waiting_creator_review"
+                              c.workflow_status === "waiting_review"
                           );
                           if (contractToReview) {
                             setContractToReview(contractToReview);

@@ -15,6 +15,7 @@ import { hiringApi, CreatorBalance as CreatorBalanceType } from "@/api/hiring";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { getAvatarUrl } from "@/lib/utils";
 
 const getInitials = (name: string) => {
   return name
@@ -31,10 +32,13 @@ const defaultProfile = {
   state: "Não especificado",
   role: "Influenciador",
   languages: ["Português"],
-  gender: "Não especificado",
+  gender: "none",
   categories: ["Geral"],
   image: null,
   balance: 0,
+  age: null,
+  creator_type: null,
+  birth_date: null,
 };
 
 export const CreatorProfile = () => {
@@ -108,6 +112,9 @@ export const CreatorProfile = () => {
     image: profile?.avatar || profile?.avatar_url || null,
     has_premium: profile?.has_premium || user?.has_premium || false,
     balance: profile?.balance || user?.balance || defaultProfile.balance,
+    age: profile?.age || user?.age || defaultProfile.age,
+    creator_type: profile?.creator_type || user?.creator_type || defaultProfile.creator_type,
+    birth_date: profile?.birth_date || user?.birth_date || null,
   };
 
   const handleSaveProfile = useCallback(
@@ -121,7 +128,9 @@ export const CreatorProfile = () => {
           email: updatedProfile.email,
           state: updatedProfile.state, // Send state directly instead of mapping to location
           role: updatedProfile.role,
-          gender: updatedProfile.gender,
+          gender: updatedProfile.gender === 'none' ? null : updatedProfile.gender,
+          birth_date: updatedProfile.birth_date,
+          creator_type: updatedProfile.creator_type,
         };
 
         // Avatar: backend expects 'avatar' (file), not 'avatar_url'
@@ -324,14 +333,21 @@ export const CreatorProfile = () => {
             {/* Avatar and name */}
             <div className="flex gap-4 items-center min-w-[120px]">
               <div className="relative">
-                <div className="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-400 flex items-center justify-center text-2xl font-bold text-purple-600 dark:text-white mb-2">
+                <div className="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-400 flex items-center justify-center text-2xl font-bold text-purple-600 dark:text-white mb-2 overflow-hidden">
                   {displayProfile.image ? (
                     <img
-                      src={`${import.meta.env.VITE_BACKEND_URL ||
-                        "https://nexacreators.com.br"
-                        }${displayProfile.image}`}
+                      src={getAvatarUrl(displayProfile.image)}
                       alt="Profile"
                       className="w-16 h-16 rounded-full object-cover"
+                      onError={(e) => {
+                        // Fallback to initials if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = getInitials(displayProfile.name);
+                        }
+                      }}
                     />
                   ) : (
                     getInitials(displayProfile.name)
@@ -398,9 +414,36 @@ export const CreatorProfile = () => {
                     Gênero
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
-                    {displayProfile.gender}
+                    {displayProfile.gender === 'female' ? 'Feminino' :
+                     displayProfile.gender === 'male' ? 'Masculino' :
+                     displayProfile.gender === 'other' ? 'Não-binário' :
+                     !displayProfile.gender || displayProfile.gender === null || displayProfile.gender === 'none' ? 'Prefiro não informar' :
+                     displayProfile.gender}
                   </div>
                 </div>
+                {displayProfile.age && (
+                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                    <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
+                      Idade
+                    </div>
+                    <div className="text-gray-900 dark:text-white font-medium">
+                      {displayProfile.age} anos
+                    </div>
+                  </div>
+                )}
+                {displayProfile.creator_type && (
+                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                    <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
+                      Tipo de Criador
+                    </div>
+                    <div className="text-gray-900 dark:text-white font-medium">
+                      {displayProfile.creator_type === 'ugc' ? 'UGC (Conteúdo do Usuário)' :
+                       displayProfile.creator_type === 'influencer' ? 'Influenciador' :
+                       displayProfile.creator_type === 'both' ? 'UGC e Influenciador' :
+                       displayProfile.creator_type}
+                    </div>
+                  </div>
+                )}
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />

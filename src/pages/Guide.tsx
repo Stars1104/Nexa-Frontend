@@ -299,7 +299,7 @@ export default function Guides() {
               ) : (
                 <div className="text-center py-16">
                   <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Guia para marcas em desenvolvimento</h3>
+                  <h3 className="text-xl font-semibold mb-2">Guia para marcas em</h3>
                   <p className="text-muted-foreground mb-4">
                     Nossa equipe está trabalhando para criar um guia completo e detalhado para marcas.
                   </p>
@@ -324,7 +324,7 @@ export default function Guides() {
               ) : (
                 <div className="text-center py-16">
                   <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Guia para criadores em desenvolvimento</h3>
+                  <h3 className="text-xl font-semibold mb-2">Guia para criadores em</h3>
                   <p className="text-muted-foreground mb-4">
                     Nossa equipe está trabalhando para criar um guia completo e detalhado para criadores.
                   </p>

@@ -14,9 +14,10 @@ const setAuthToken = (token: string) => {
 };
 
 // Get creator profile for brands
-export const getCreatorProfile = async (creatorId: string) => {
+export const getCreatorProfile = async (creatorId: string, token: string) => {
     try {
-        const response = await UserAPI.get(`/creators/${creatorId}/profile`);
+        setAuthToken(token);
+        const response = await UserAPI.get(`/api/creators/${creatorId}/profile`);
         return response.data;
     } catch (error) {
         throw error;

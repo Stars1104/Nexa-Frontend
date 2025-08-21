@@ -100,6 +100,10 @@ export const createCampaign = createAsyncThunk<
       throw new Error('Orçamento deve ser um número válido e positivo');
     }
     formData.append('budget', budgetValue.toString());
+    
+    // Add remuneration type
+    formData.append('remuneration_type', campaignData.remunerationType);
+    
     // Ensure deadline is a valid date
     if (!campaignData.deadline || isNaN(campaignData.deadline.getTime())) {
       throw new Error('Prazo deve ser uma data válida');
@@ -116,6 +120,28 @@ export const createCampaign = createAsyncThunk<
     // Always send campaign_type and category, even if empty
     formData.append('campaign_type', campaignData.type?.trim() || '');
     formData.append('category', campaignData.type?.trim() || '');
+    
+    // Add creator filter fields
+    if (campaignData.minAge) {
+      formData.append('min_age', campaignData.minAge.toString());
+    }
+    if (campaignData.maxAge) {
+      formData.append('max_age', campaignData.maxAge.toString());
+    }
+    
+    // Handle target_genders - send as array
+    if (campaignData.targetGenders && campaignData.targetGenders.length > 0) {
+      campaignData.targetGenders.forEach((gender: string) => {
+        formData.append('target_genders[]', gender);
+      });
+    }
+    
+    // Handle target_creator_types - send as array (required)
+    if (campaignData.targetCreatorTypes && campaignData.targetCreatorTypes.length > 0) {
+      campaignData.targetCreatorTypes.forEach((creatorType: string) => {
+        formData.append('target_creator_types[]', creatorType);
+      });
+    }
     
     if (campaignData.logo) {
       formData.append('logo', campaignData.logo);

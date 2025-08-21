@@ -16,6 +16,7 @@ import {
   Wallet,
   TrendingUp,
 } from "lucide-react";
+import { getAvatarUrl } from "@/lib/utils";
 
 interface ContractsWithPaymentAvailableProps {
   onWithdrawalRequested?: () => void;
@@ -130,8 +131,8 @@ export const ContractsWithPaymentAvailable: React.FC<
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={contract.brand?.avatar_url} />
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={getAvatarUrl(contract.brand?.avatar_url)} />
                       <AvatarFallback>
                         {contract.brand?.name.charAt(0).toUpperCase()}
                       </AvatarFallback>

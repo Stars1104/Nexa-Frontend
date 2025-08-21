@@ -60,6 +60,7 @@ export default function CreateCampaign() {
     setTitle("");
     setDescription("");
     setBudget("");
+    setRemunerationType('paga');
     setDeadline(undefined);
     setSelectedStates([]);
     setFile(null);
@@ -67,6 +68,12 @@ export default function CreateCampaign() {
     setCreatorReq("");
     setCampaignType("");
     setAttachments([]);
+    
+    // Reset creator filters
+    setMinAge(undefined);
+    setMaxAge(undefined);
+    setTargetGenders([]);
+    setTargetCreatorTypes([]);
   }, []);
 
   // Cleanup timeouts on unmount
@@ -80,6 +87,7 @@ export default function CreateCampaign() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [budget, setBudget] = useState("");
+  const [remunerationType, setRemunerationType] = useState<'paga' | 'permuta'>('paga');
   const [deadline, setDeadline] = useState<Date | undefined>();
   const [selectedStates, setSelectedStates] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
@@ -89,6 +97,12 @@ export default function CreateCampaign() {
   const [campaignType, setCampaignType] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
+  
+  // Creator filter state
+  const [minAge, setMinAge] = useState<number | undefined>();
+  const [maxAge, setMaxAge] = useState<number | undefined>();
+  const [targetGenders, setTargetGenders] = useState<string[]>([]);
+  const [targetCreatorTypes, setTargetCreatorTypes] = useState<string[]>([]);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const attachmentInputRef = useRef<HTMLInputElement>(null);
@@ -206,6 +220,28 @@ export default function CreateCampaign() {
       safeToast('error', "Tipo de campanha é obrigatório.");
       return false;
     }
+    
+    // Validate creator filters
+    if (targetCreatorTypes.length === 0) {
+      safeToast('error', "Selecione pelo menos um tipo de criador.");
+      return false;
+    }
+    
+    if (minAge && maxAge && minAge > maxAge) {
+      safeToast('error', "Idade mínima não pode ser maior que idade máxima.");
+      return false;
+    }
+    
+    if (minAge && minAge < 18) {
+      safeToast('error', "Idade mínima deve ser pelo menos 18 anos.");
+      return false;
+    }
+    
+    if (maxAge && maxAge < 18) {
+      safeToast('error', "Idade máxima deve ser pelo menos 18 anos.");
+      return false;
+    }
+    
     return true;
   };
 
@@ -227,10 +263,15 @@ export default function CreateCampaign() {
         description: description.trim(),
         briefing: creatorReq.trim(),
         budget: budget.trim(),
+        remunerationType: remunerationType,
         deadline: deadline!,
         states: selectedStates,
         creatorRequirements: creatorReq.trim(),
         type: campaignType,
+        minAge: minAge,
+        maxAge: maxAge,
+        targetGenders: targetGenders,
+        targetCreatorTypes: targetCreatorTypes,
         logo: file,
         attachments: attachments,
       };
@@ -255,7 +296,7 @@ export default function CreateCampaign() {
     } catch (err) {
       safeToast('error', "Erro inesperado ao criar campanha.");
     }
-  }, [title, description, budget, deadline, selectedStates, creatorReq, campaignType, file, attachments, error, dispatch, validateForm, safeToast, resetForm]);
+  }, [title, description, budget, deadline, selectedStates, creatorReq, campaignType, minAge, maxAge, targetGenders, targetCreatorTypes, file, attachments, error, dispatch, validateForm, safeToast, resetForm]);
 
   // Show success message if submitted
   if (isSubmitted) {
@@ -334,6 +375,21 @@ export default function CreateCampaign() {
              />
            </div>
 
+           {/* Tipo de Remuneração */}
+           <div className="mb-5">
+             <label htmlFor="remunerationType" className="block text-xs font-medium text-zinc-500 mb-1">Tipo de Remuneração *</label>
+             <select
+               id="remunerationType"
+               value={remunerationType}
+               onChange={e => setRemunerationType(e.target.value as 'paga' | 'permuta')}
+               className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-background text-zinc-900 dark:text-zinc-100 text-sm"
+               required
+             >
+               <option value="paga">Paga (Dinheiro)</option>
+               <option value="permuta">Permuta (Troca por produtos/serviços)</option>
+             </select>
+           </div>
+
            {/* Tipo de Campanha */}
            <div className="mb-5">
              <label htmlFor="type" className="block text-xs font-medium text-zinc-500 mb-1">Tipo de Campanha *</label>
@@ -349,6 +405,101 @@ export default function CreateCampaign() {
                  <option key={type} value={type}>{type}</option>
                ))}
              </select>
+           </div>
+
+           {/* Filtros de Criadores */}
+           <div className="mb-5">
+             <label className="block text-xs font-medium text-zinc-500 mb-1">Filtros de Criadores *</label>
+             <span className="block text-xs text-zinc-400 mb-3">Configure quais criadores podem se candidatar à sua campanha</span>
+             
+             {/* Tipo de Criador */}
+             <div className="mb-4">
+               <label className="block text-xs font-medium text-zinc-500 mb-2">Tipo de Criador *</label>
+               <div className="space-y-2">
+                 {['ugc', 'influencer', 'both'].map(type => (
+                   <label key={type} className="flex items-center space-x-2 cursor-pointer">
+                     <input
+                       type="checkbox"
+                       checked={targetCreatorTypes.includes(type)}
+                       onChange={(e) => {
+                         if (e.target.checked) {
+                           setTargetCreatorTypes(prev => [...prev, type]);
+                         } else {
+                           setTargetCreatorTypes(prev => prev.filter(t => t !== type));
+                         }
+                       }}
+                       className="rounded border-zinc-300 text-pink-500 focus:ring-pink-500"
+                     />
+                     <span className="text-sm text-zinc-700 dark:text-zinc-300 capitalize">
+                       {type === 'ugc' ? 'UGC (Conteúdo do Usuário)' : 
+                        type === 'influencer' ? 'Influenciador' : 
+                        'Ambos os Tipos'}
+                     </span>
+                   </label>
+                 ))}
+               </div>
+             </div>
+
+             {/* Faixa de Idade */}
+             <div className="mb-4">
+               <label className="block text-xs font-medium text-zinc-500 mb-2">Faixa de Idade (opcional)</label>
+               <div className="grid grid-cols-2 gap-3">
+                 <div>
+                   <label className="block text-xs text-zinc-500 mb-1">Idade Mínima</label>
+                   <Input
+                     type="number"
+                     min="18"
+                     max="100"
+                     value={minAge || ''}
+                     onChange={(e) => setMinAge(e.target.value ? parseInt(e.target.value) : undefined)}
+                     placeholder="18"
+                     className="rounded-lg border-zinc-200 dark:border-zinc-700 bg-background text-zinc-900 dark:text-zinc-100 text-sm"
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-xs text-zinc-500 mb-1">Idade Máxima</label>
+                   <Input
+                     type="number"
+                     min="18"
+                     max="100"
+                     value={maxAge || ''}
+                     onChange={(e) => setMaxAge(e.target.value ? parseInt(e.target.value) : undefined)}
+                     placeholder="100"
+                     className="rounded-lg border-zinc-200 dark:border-zinc-700 bg-background text-zinc-900 dark:text-zinc-100 text-sm"
+                   />
+                 </div>
+               </div>
+               <span className="block text-xs text-zinc-400 mt-1">Deixe em branco para não aplicar filtro de idade</span>
+             </div>
+
+             {/* Gênero */}
+             <div className="mb-4">
+               <label className="block text-xs font-medium text-zinc-500 mb-2">Gênero (opcional)</label>
+               <span className="block text-xs text-zinc-400 mb-2">Deixe em branco para não aplicar filtro de gênero</span>
+               <div className="space-y-2">
+                 {['male', 'female', 'other'].map(gender => (
+                   <label key={gender} className="flex items-center space-x-2 cursor-pointer">
+                     <input
+                       type="checkbox"
+                       checked={targetGenders.includes(gender)}
+                       onChange={(e) => {
+                         if (e.target.checked) {
+                           setTargetGenders(prev => [...prev, gender]);
+                         } else {
+                           setTargetGenders(prev => prev.filter(g => g !== gender));
+                         }
+                       }}
+                       className="rounded border-zinc-300 text-pink-500 focus:ring-pink-500"
+                     />
+                     <span className="text-sm text-zinc-700 dark:text-zinc-300 capitalize">
+                       {gender === 'male' ? 'Masculino' : 
+                        gender === 'female' ? 'Feminino' : 
+                        'Outro'}
+                     </span>
+                   </label>
+                 ))}
+               </div>
+             </div>
            </div>
 
           {/* Prazo Final */}

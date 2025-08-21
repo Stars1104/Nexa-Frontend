@@ -22,7 +22,7 @@ import BankRegistrationDemo from "../BankRegistrationDemo";
 import GuideEmbedded from "@/components/GuideEmbedded";
 import { Helmet } from "react-helmet-async";
 
-const Index = () => {
+function Index() {
     const isMobile = useIsMobile();
     const location = useLocation();
     const { hasPremium, loading: premiumLoading } = usePremiumContext();
@@ -86,7 +86,7 @@ const Index = () => {
             case "Cadastro Bancário":
                 return <BankRegistrationDemo />;
             case "Guia da Plataforma":
-                return <GuideEmbedded />;
+                return <GuideEmbedded audience="Creator" />;
             default:
                 return <NotFound />;
         }

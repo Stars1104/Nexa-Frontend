@@ -125,7 +125,7 @@ export const fetchCreatorProfile = createAsyncThunk<
       throw new Error('Usuário não autenticado');
     }
     
-    const response = await getCreatorProfile(creatorId);
+    const response = await getCreatorProfile(creatorId, token);
     return response.data;
   } catch (error: unknown) {
     const apiError = handleApiError(error);

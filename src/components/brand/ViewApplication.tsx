@@ -50,10 +50,16 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
         </div>
 
         {/* Info Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 border-b border-gray-200 dark:border-neutral-700 pb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6 border-b border-gray-200 dark:border-neutral-700 pb-4">
           <div>
             <div className={labelClass}>Valor</div>
             <div className={valueClass}>{campaign.budget}</div>
+          </div>
+          <div>
+            <div className={labelClass}>Tipo de Remuneração</div>
+            <div className={valueClass}>
+              {campaign.remunerationType === 'paga' ? '💰 Paga' : campaign.remunerationType === 'permuta' ? '🔄 Permuta' : 'Não especificado'}
+            </div>
           </div>
           <div>
             <div className={labelClass}>Data de criação</div>

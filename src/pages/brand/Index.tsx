@@ -17,7 +17,7 @@ import CreatorProfile from "@/components/brand/CreatorProfile";
 import GuideEmbedded from "@/components/GuideEmbedded";
 import { Helmet } from "react-helmet-async";
 
-const Index = () => {
+function Index() {
     const isMobile = useIsMobile();
 
     const [component, setComponent] = useState<string | { name: string; campaign: any }>("Minhas campanhas");
@@ -40,7 +40,7 @@ const Index = () => {
                 case "Perfil do Criador":
                     return <CreatorProfile setComponent={setComponent} />;
                 case "Guia da Plataforma":
-                    return <GuideEmbedded />;
+                    return <GuideEmbedded audience="Brand" />;
                 default:
                     return <NotFound />;
             }
