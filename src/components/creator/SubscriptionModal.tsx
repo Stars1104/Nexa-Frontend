@@ -374,7 +374,7 @@ export default function SubscriptionModal({
         description: "Sua assinatura premium foi ativada com sucesso! Você agora tem acesso a todos os recursos premium.",
       });
     } catch (error) {
-      console.error("Error refreshing user data after subscription:", error);
+      console.error("Erro ao atualizar dados do usuário após assinatura:", error);
       
       // Show error message but still close modal
       toast({

@@ -150,6 +150,8 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
                       setIsCreatingChat(true);
                       try {
                         await navigateToChatWithRoom(campaignId, app.creator.id, setComponent);
+                      } catch (error) {
+                        console.error('Error in Chat button click handler:', error);
                       } finally {
                         setIsCreatingChat(false);
                       }

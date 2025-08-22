@@ -20,7 +20,7 @@ import { Helmet } from "react-helmet-async";
 function Index() {
     const isMobile = useIsMobile();
 
-    const [component, setComponent] = useState<string | { name: string; campaign: any }>("Minhas campanhas");
+    const [component, setComponent] = useState<string | { name: string; campaign?: any; creatorId?: string }>("Minhas campanhas");
 
     const CreatorComponent = () => {
         if (typeof component === "string") {
@@ -50,6 +50,8 @@ function Index() {
             return <ViewCreators setComponent={setComponent} campaignId={component.campaign?.id} campaignTitle={component.campaign?.title} />;
         } else if (typeof component === "object" && component.name === "Perfil do Criador") {
             return <CreatorProfile setComponent={setComponent} creatorId={(component as any).creatorId} />;
+        } else if (typeof component === "object" && component.name === "Chat") {
+            return <ChatPage setComponent={setComponent} campaignId={component.campaign?.id} creatorId={component.creatorId} />;
         } else {
             return <NotFound />;
         }

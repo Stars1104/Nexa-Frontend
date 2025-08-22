@@ -32,7 +32,7 @@ const defaultProfile = {
   state: "Não especificado",
   role: "Influenciador",
   languages: ["Português"],
-  gender: "none",
+  gender: "Não especificado",
   categories: ["Geral"],
   image: null,
   balance: 0,
@@ -128,7 +128,7 @@ export const CreatorProfile = () => {
           email: updatedProfile.email,
           state: updatedProfile.state, // Send state directly instead of mapping to location
           role: updatedProfile.role,
-          gender: updatedProfile.gender === 'none' ? null : updatedProfile.gender,
+          gender: updatedProfile.gender,
           birth_date: updatedProfile.birth_date,
           creator_type: updatedProfile.creator_type,
         };
@@ -417,8 +417,8 @@ export const CreatorProfile = () => {
                     {displayProfile.gender === 'female' ? 'Feminino' :
                      displayProfile.gender === 'male' ? 'Masculino' :
                      displayProfile.gender === 'other' ? 'Não-binário' :
-                     !displayProfile.gender || displayProfile.gender === null || displayProfile.gender === 'none' ? 'Prefiro não informar' :
-                     displayProfile.gender}
+                     displayProfile.gender === 'prefer_not_to_say' ? 'Prefiro não informar' :
+                     displayProfile.gender || 'Não especificado'}
                   </div>
                 </div>
                 {displayProfile.age && (
@@ -444,17 +444,7 @@ export const CreatorProfile = () => {
                     </div>
                   </div>
                 )}
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
-                    <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">
-                      Saldo
-                    </div>
-                  </div>
-                  <div className="text-gray-900 dark:text-white font-medium text-lg">
-                    ${displayProfile.balance?.toFixed(2) || "0.00"}
-                  </div>
-                </div>
+
               </div>
             </div>
           </div>

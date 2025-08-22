@@ -114,12 +114,11 @@ export default function Subscription() {
                 // Set default selected plan to monthly plan
                 setSelectedPlan(validatedPlans[0]);
             } else {
-                console.warn('No subscription plans received or invalid data structure');
                 setSubscriptionPlans([]);
                 setSelectedPlan(null);
             }
         } catch (error) {
-            console.error('Error loading subscription plans:', error);
+            console.error('Erro ao carregar planos de assinatura:', error);
             setSubscriptionPlans([]);
             setSelectedPlan(null);
             toast({
@@ -233,7 +232,7 @@ export default function Subscription() {
                                 <div className="text-base text-foreground font-medium sm:text-right">
                                     {subscriptionStatus?.premium_expires_at 
                                         ? formatDate(subscriptionStatus.premium_expires_at)
-                                        : "N/A"
+                                        : "Não disponível"
                                     }
                                 </div>
                             </div>
@@ -421,9 +420,9 @@ export default function Subscription() {
                 // Dispatch event to notify other components about premium status update
                 window.dispatchEvent(new CustomEvent('premium-status-updated'));
                 
-                toast({
-                  title: "Success!",
-                  description: "Your premium subscription has been activated successfully!",
+                                toast({
+                    title: "Sucesso!",
+                    description: "Sua assinatura premium foi ativada com sucesso!",
                 });
               }}
             />

@@ -59,9 +59,11 @@ import { Helmet } from "react-helmet-async";
 
 interface ChatPageProps {
   setComponent?: (component: string) => void;
+  campaignId?: number;
+  creatorId?: string;
 }
 
-export default function ChatPage({ setComponent }: ChatPageProps) {
+export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPageProps) {
   // Custom CSS to hide scrollbars
   useEffect(() => {
     const style = document.createElement('style');
@@ -180,8 +182,10 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     if (isMountedRef.current) {
       loadChatRooms();
     }
+  }, []); // Remove selectedRoom dependency to prevent infinite reloading
 
-    // Cleanup function to stop typing indicators when component unmounts
+  // Cleanup typing indicators when component unmounts
+  useEffect(() => {
     return () => {
       if (selectedRoom && isCurrentUserTyping) {
         if (typingTimeoutRef.current) {
@@ -192,7 +196,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         stopTyping(selectedRoom.room_id);
       }
     };
-  }, [selectedRoom]);
+  }, [selectedRoom, isCurrentUserTyping, stopTyping]);
 
   // Clear typing users when room changes
   useEffect(() => {
@@ -212,6 +216,21 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
       }
     }
   }, [chatRooms]);
+
+  // Check for campaignId and creatorId parameters to automatically select the correct room
+  useEffect(() => {
+    if (!isMountedRef.current || !campaignId || !creatorId || chatRooms.length === 0) return;
+    
+    // Find the room that matches both campaignId and creatorId
+    const room = chatRooms.find((r) => 
+      r.campaign_id === campaignId && 
+      r.other_user.id === parseInt(creatorId)
+    );
+    
+    if (room) {
+      setSelectedRoom(room);
+    }
+  }, [campaignId, creatorId, chatRooms]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -602,100 +621,6 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
     }
   }, [typingUsers]);
 
-  // Cleanup typing indicators when component unmounts or user navigates away
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (selectedRoom && isCurrentUserTyping) {
-        stopTyping(selectedRoom.room_id);
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.hidden && selectedRoom && isCurrentUserTyping) {
-        if (typingTimeoutRef.current) {
-          clearTimeout(typingTimeoutRef.current);
-          typingTimeoutRef.current = null;
-        }
-        setIsCurrentUserTyping(false);
-        stopTyping(selectedRoom.room_id);
-      }
-    };
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && imageViewer.isOpen) {
-        setImageViewer({
-          isOpen: false,
-          imageUrl: "",
-          imageName: "",
-          imageSize: "",
-        });
-        setImageZoom(1);
-        setImageRotation(0);
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!imageViewer.isOpen) return;
-
-      switch (event.key) {
-        case "Escape":
-          setImageViewer({
-            isOpen: false,
-            imageUrl: "",
-            imageName: "",
-            imageSize: "",
-          });
-          setImageZoom(1);
-          setImageRotation(0);
-          break;
-        case "+":
-        case "=":
-          event.preventDefault();
-          setImageZoom((prev) => Math.min(prev + 0.25, 3));
-          break;
-        case "-":
-          event.preventDefault();
-          setImageZoom((prev) => Math.max(prev - 0.25, 0.25));
-          break;
-        case "r":
-          event.preventDefault();
-          setImageRotation((prev) => (prev + 90) % 360);
-          break;
-        case "0":
-          event.preventDefault();
-          setImageZoom(1);
-          setImageRotation(0);
-          break;
-        case "d":
-          event.preventDefault();
-          downloadImageToLocal(imageViewer.imageUrl, imageViewer.imageName);
-          break;
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    document.addEventListener("keydown", handleEscape);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      document.removeEventListener("keydown", handleEscape);
-      document.removeEventListener("keydown", handleKeyDown);
-
-      // Cleanup typing indicators on unmount
-      if (selectedRoom && isCurrentUserTyping) {
-        if (typingTimeoutRef.current) {
-          clearTimeout(typingTimeoutRef.current);
-          typingTimeoutRef.current = null;
-        }
-        setIsCurrentUserTyping(false);
-        stopTyping(selectedRoom.room_id);
-      }
-    };
-  }, [selectedRoom, isCurrentUserTyping, stopTyping, imageViewer.isOpen]);
-
   const loadChatRooms = async () => {
     if (!isMountedRef.current) return;
 
@@ -848,7 +773,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
   };
 
   // Load messages for a specific room
-  const loadMessages = async (roomId: string) => {
+  const loadMessages = useCallback(async (roomId: string) => {
     if (!isMountedRef.current) return;
 
     try {
@@ -897,10 +822,10 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         setIsLoading(false);
       }
     }
-  };
+  }, [joinRoom, markMessagesAsRead, toast]);
 
   // Load contracts for the selected room
-  const loadContracts = async (roomId: string): Promise<void> => {
+  const loadContracts = useCallback(async (roomId: string): Promise<void> => {
     if (!isMountedRef.current) return;
 
     try {
@@ -939,10 +864,10 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         setIsLoadingContracts(false);
       }
     }
-  };
+  }, [hiringApi, toast]);
 
   // Load offers for the selected room
-  const loadOffers = async (roomId: string): Promise<void> => {
+  const loadOffers = useCallback(async (roomId: string): Promise<void> => {
     if (!isMountedRef.current) return;
 
     try {
@@ -965,7 +890,7 @@ export default function ChatPage({ setComponent }: ChatPageProps) {
         setIsLoadingOffers(false);
       }
     }
-  };
+  }, [hiringApi, toast]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();

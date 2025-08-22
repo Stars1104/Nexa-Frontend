@@ -6,7 +6,7 @@ import { useToast } from '../hooks/use-toast';
 interface UseBrandChatNavigationReturn {
     createChatRoom: (campaignId: number, creatorId: number) => Promise<string>;
     navigateToChat: (roomId?: string) => void;
-    navigateToChatWithRoom: (campaignId: number, creatorId: number, setComponent: (component: string) => void) => Promise<void>;
+    navigateToChatWithRoom: (campaignId: number, creatorId: number, setComponent: (component: string | { name: string; campaign?: any; creatorId?: string }) => void) => Promise<void>;
 }
 
 export const useBrandChatNavigation = (): UseBrandChatNavigationReturn => {
@@ -32,10 +32,17 @@ export const useBrandChatNavigation = (): UseBrandChatNavigationReturn => {
         navigate(`/brand/chat?room=${roomId}`);
     }, [navigate]);
 
-    const navigateToChatWithRoom = useCallback(async (campaignId: number, creatorId: number) => {
+    const navigateToChatWithRoom = useCallback(async (campaignId: number, creatorId: number, setComponent: (component: string | { name: string; campaign?: any; creatorId?: string }) => void) => {
         try {
             const roomId = await createChatRoom(campaignId, creatorId);
-            navigateToChat(roomId);
+            // Store the room ID in localStorage so ChatPage can automatically select it
+            localStorage.setItem("selectedChatRoom", roomId);
+            // Use setComponent to navigate to Chat component with room ID
+            setComponent({
+                name: "Chat",
+                campaign: { id: campaignId },
+                creatorId: creatorId.toString()
+            });
         } catch (error) {
             console.error('Error navigating to chat with room:', error);
             toast({
@@ -45,7 +52,7 @@ export const useBrandChatNavigation = (): UseBrandChatNavigationReturn => {
             });
             throw error;
         }
-    }, [createChatRoom, navigateToChat, toast]);
+    }, [createChatRoom, toast]);
 
     return {
         createChatRoom,
