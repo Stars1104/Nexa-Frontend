@@ -142,6 +142,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
   const isMountedRef = useRef(true);
   const imageViewerRef = useRef<HTMLDivElement>(null);
 
+
   // Socket.IO hook
   const {
     socket,
@@ -160,6 +161,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     onContractCompleted,
     onContractTerminated,
     onContractActivated,
+    sendOfferAcceptanceMessage,
     reconnect,
   } = useSocket({ enableNotifications: false, enableChat: true });
 
@@ -174,6 +176,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = null;
       }
+
     };
   }, []);
 
@@ -286,6 +289,10 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   }, [selectedRoom, joinRoom, leaveRoom]);
 
+      // Guide messages are now handled directly in loadMessages function
+
+
+
   // Socket event listeners for real-time updates
   useEffect(() => {
     if (!socket || !isMountedRef.current) return;
@@ -314,9 +321,12 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             created_at: data.timestamp || new Date().toISOString(),
           };
 
-          setMessages((prev) => {
-            const updated = [...prev, newMessage];
-            return updated;
+          setMessages(prev => {
+            console.log('[DEBUG] setMessages callback: Previous messages count:', prev.length);
+            const newMessages = [newMessage, ...prev];
+            console.log('[DEBUG] setMessages callback: New messages count:', newMessages.length);
+            console.log('[DEBUG] setMessages callback: First few messages:', newMessages.slice(0, 3));
+            return newMessages;
           });
 
           // Mark as read if it's not from current user
@@ -447,6 +457,45 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
 
         // Reload messages to show the acceptance message
         loadMessages(selectedRoom.room_id);
+      }
+    };
+
+    // Listen for offer acceptance confirmation messages
+    const handleOfferAcceptanceMessage = (data: any) => {
+      console.log('Received offer acceptance message via socket:', data);
+      
+      if (!isMountedRef.current) return;
+
+      if (data.roomId === selectedRoom?.room_id) {
+        console.log('Processing offer acceptance message for current room');
+        
+        // Add the acceptance confirmation message to the chat
+        const confirmationMessage: Message = {
+          id: Date.now(), // Temporary ID
+          message: `✅ Oferta aceita com sucesso! Contrato criado.`,
+          message_type: 'text',
+          sender_id: data.senderId,
+          sender_name: data.senderName,
+          sender_avatar: data.senderAvatar,
+          is_sender: data.senderId === user?.id,
+          is_read: false,
+          created_at: data.timestamp,
+        };
+
+        console.log('Adding confirmation message to chat:', confirmationMessage);
+        setMessages((prev) => [...prev, confirmationMessage]);
+
+        // Scroll to bottom to show new message
+        setTimeout(() => {
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      } else {
+        console.log('Message not for current room:', {
+          messageRoomId: data.roomId,
+          currentRoomId: selectedRoom?.room_id
+        });
       }
     };
 
@@ -590,6 +639,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     // Set up event listeners
     socket.on('offer_created', handleOfferCreated);
     socket.on('offer_accepted', handleOfferAccepted);
+    socket.on('offer_acceptance_message', handleOfferAcceptanceMessage);
     socket.on('offer_rejected', handleOfferRejected);
     socket.on('offer_cancelled', handleOfferCancelled);
     socket.on('contract_completed', handleContractCompleted);
@@ -600,6 +650,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       // Cleanup event listeners
       socket.off('offer_created', handleOfferCreated);
       socket.off('offer_accepted', handleOfferAccepted);
+      socket.off('offer_acceptance_message', handleOfferAcceptanceMessage);
       socket.off('offer_rejected', handleOfferRejected);
       socket.off('offer_cancelled', handleOfferCancelled);
       socket.off('contract_completed', handleContractCompleted);
@@ -677,92 +728,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     // Load offers for the selected room
     await loadOffers(room.room_id);
 
-    // Add guide messages when user first enters chat (frontend-only approach)
-    try {
-      // Check if guide messages already exist
-      const existingGuideMessages = messages.filter(msg => 
-        msg.message_type === 'system' && 
-        msg.message.includes('Parabéns')
-      );
-      
-      if (existingGuideMessages.length === 0) {
-        // Create guide messages locally
-        const isBrand = user?.role === 'brand';
-        
-        let guideMessage = '';
-        if (isBrand) {
-          guideMessage = "🎉 Parabéns pela parceria iniciada com uma criadora da nossa plataforma!\n\n" +
-            "Para garantir o melhor resultado possível, é essencial que você oriente a criadora com detalhamento e clareza sobre como deseja que o conteúdo seja feito. Quanto mais específica for a comunicação, maior será a qualidade da entrega.\n\n" +
-            "📋 Próximos Passos Importantes:\n\n" +
-            "• 💰 Saldo da Campanha: Insira o valor da campanha na aba \"Saldo\" da plataforma\n" +
-            "• ✅ Aprovação de Conteúdo: Avalie o roteiro antes da gravação para garantir alinhamento\n" +
-            "• 🎬 Entrega Final: Após receber o conteúdo pronto e editado, libere o pagamento\n" +
-            "• ⭐ Finalização: Clique em \"Finalizar Campanha\" e avalie o trabalho entregue\n" +
-            "• 📝 Briefing: Reforce os pontos principais com a criadora para alinhar com o objetivo da marca\n" +
-            "• 🔄 Ajustes: Permita até 2 pedidos de ajustes por vídeo caso necessário\n\n" +
-            "🔒 Regras de Segurança da Campanha:\n\n" +
-            "✅ Comunicação Exclusiva: Toda comunicação deve ser feita pelo chat da NEXA\n" +
-            "❌ Proteção de Dados: Não compartilhe dados bancários, contatos pessoais ou WhatsApp\n" +
-            "⚠️ Cumprimento de Prazos: Descumprimento pode resultar em advertência ou bloqueio\n" +
-            "🚫 Cancelamento: Em caso de cancelamento, o produto deve ser solicitado de volta\n\n" +
-            "💼 A NEXA está aqui para facilitar conexões seguras e profissionais!\n" +
-            "Conte conosco para apoiar o sucesso da sua campanha! 📢✨";
-        } else {
-          guideMessage = "🩷 Parabéns, você foi aprovada em mais uma campanha da NEXA!\n\n" +
-            "Estamos muito felizes em contar com você e esperamos que mostre toda sua criatividade, comprometimento e qualidade para representar bem a marca e a nossa plataforma.\n\n" +
-            "Antes de começar, fique atenta aos pontos abaixo para garantir uma parceria de sucesso:\n\n" +
-            "• Confirme seu endereço de envio o quanto antes, para que o produto possa ser encaminhado sem atrasos.\n" +
-            "• Você devera entregar o roteiro da campanha em até 5 dias úteis.\n" +
-            "• É essencial seguir todas as orientações da marca presentes no briefing.\n" +
-            "• Aguarde a aprovação do roteiro antes de gravar o conteúdo.\n" +
-            "• Após a aprovação do roteiro, o conteúdo final deve ser entregue em até 5 dias úteis.\n" +
-            "• O vídeo deve ser enviado com qualidade profissional, e poderá passar por até 2 solicitações de ajustes, caso não esteja conforme o briefing.\n" +
-            "• Pedimos que mantenha o retorno rápido nas mensagens dentro do chat da plataforma.\n\n" +
-            "Atenção para algumas regras importantes:\n\n" +
-            "✔ Toda a comunicação deve acontecer exclusivamente pelo chat da Anexa.\n" +
-            "✘ Não é permitido compartilhar dados bancários, e-mails ou número de WhatsApp dentro da plataforma.\n" +
-            "⚠️ O não cumprimento dos prazos ou regras pode acarretar em penalizações ou banimento.\n" +
-            "🚫 Caso a campanha seja cancelada, o produto deverá ser devolvido, e a criadora poderá ser punida.\n\n" +
-            "Estamos aqui para garantir a melhor experiência para criadoras e marcas. Boa campanha! 💼💡";
-        }
-        
-        const quoteMessage = "💼 Detalhes da Campanha:\n\n" +
-          "Status: 🟢 Conectado\n\n" +
-          "Você está agora conectado e pode começar a conversar. Use o chat para todas as comunicações e siga as diretrizes da plataforma para uma parceria de sucesso.";
-        
-        // Create guide message
-        const guideMsg: Message = {
-          id: Date.now() * 1000 + Math.random(), // Generate unique ID
-          message: guideMessage,
-          message_type: 'system',
-          sender_id: user?.id || 0,
-          sender_name: user?.name || 'Sistema',
-          sender_avatar: user?.avatar_url,
-          is_sender: false,
-          is_read: false,
-          created_at: new Date().toISOString(),
-        };
-        
-        // Create quote message
-        const quoteMsg: Message = {
-          id: Date.now() * 1000 + Math.random() + 1, // Generate unique ID
-          message: quoteMessage,
-          message_type: 'system',
-          sender_id: user?.id || 0,
-          sender_name: user?.name || 'Sistema',
-          sender_avatar: user?.avatar_url,
-          is_sender: false,
-          is_read: false,
-          created_at: new Date().toISOString(),
-        };
-        
-        // Add messages to the beginning of the messages array
-        setMessages(prev => [guideMsg, quoteMsg, ...prev]);
-      } else {
-      }
-    } catch (error) {
-      console.error('[ChatPage] Error adding guide messages:', error);
-    }
+    // Guide messages are now handled by a dedicated useEffect that triggers whenever selectedRoom changes
 
     // Focus input
     setTimeout(() => {
@@ -790,11 +756,181 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           return true;
         });
 
-        // Debug logging for messages
-        console.log('Loaded messages:', deduplicatedMessages);
-        console.log('Offer messages:', deduplicatedMessages.filter(msg => msg.message_type === 'offer'));
+        // Check if this room needs guide messages
+        const guideMessagesKey = `guide_messages_${roomId}`;
+        const hasGuideMessagesInStorage = localStorage.getItem(guideMessagesKey);
+        const needsGuideMessages = !hasGuideMessagesInStorage;
+
+        // If guide messages are needed, add them immediately to the messages array
+        let finalMessages = [...deduplicatedMessages];
+        if (needsGuideMessages && user) {
+          console.log('[DEBUG] loadMessages: Adding guide messages immediately for room:', roomId);
+          
+          const isBrand = user.role === 'brand';
+          
+          let guideMessage = '';
+          if (isBrand) {
+            guideMessage = "🎉 Parabéns pela parceria iniciada com uma criadora da nossa plataforma!\n\n" +
+              "Para garantir o melhor resultado possível, é essencial que você oriente a criadora com detalhamento e clareza sobre como deseja que o conteúdo seja feito. Quanto mais específica for a comunicação, maior será a qualidade da entrega.\n\n" +
+              "📋 Próximos Passos Importantes:\n\n" +
+              "• 💰 Saldo da Campanha: Insira o valor da campanha na aba \"Saldo\" da plataforma\n" +
+              "• ✅ Aprovação de Conteúdo: Avalie o roteiro antes da gravação para garantir alinhamento\n" +
+              "• 🎬 Entrega Final: Após receber o conteúdo pronto e editado, libere o pagamento\n" +
+              "• ⭐ Finalização: Clique em \"Finalizar Campanha\" e avalie o trabalho entregue\n" +
+              "• 📝 Briefing: Reforce os pontos principais com a criadora para alinhar com o objetivo da marca\n" +
+              "• 🔄 Ajustes: Permita até 2 pedidos de ajustes por vídeo caso necessário\n\n" +
+              "🔒 Regras de Segurança da Campanha:\n\n" +
+              "✅ Comunicação Exclusiva: Toda comunicação deve ser feita pelo chat da NEXA\n" +
+              "❌ Proteção de Dados: Não compartilhe dados bancários, contatos pessoais ou WhatsApp\n" +
+              "⚠️ Cumprimento de Prazos: Descumprimento pode resultar em advertência ou bloqueio\n" +
+              "🚫 Cancelamento: Em caso de cancelamento, o produto deve ser solicitado de volta\n\n" +
+              "💼 A NEXA está aqui para facilitar conexões seguras e profissionais!\n" +
+              "Conte conosco para apoiar o sucesso da sua campanha! 📢✨";
+          } else {
+            guideMessage = "🩷 Parabéns, você foi aprovada em mais uma campanha da NEXA!\n\n" +
+              "Estamos muito felizes em contar com você e esperamos que mostre toda sua criatividade, comprometimento e qualidade para representar bem a marca e a nossa plataforma.\n\n" +
+              "Antes de começar, fique atenta aos pontos abaixo para garantir uma parceria de sucesso:\n\n" +
+              "• Confirme seu endereço de envio o quanto antes, para que o produto possa ser encaminhado sem atrasos.\n" +
+              "• Você devera entregar o roteiro da campanha em até 5 dias úteis.\n" +
+              "• É essencial seguir todas as orientações da marca presentes no briefing.\n" +
+              "• Aguarde a aprovação do roteiro antes de gravar o conteúdo.\n" +
+              "• Após a aprovação do roteiro, o conteúdo final deve ser entregue em até 5 dias úteis.\n" +
+              "• O vídeo deve ser enviado com qualidade profissional, e poderá passar por até 2 solicitações de ajustes, caso não esteja conforme o briefing.\n" +
+              "• Pedimos que mantenha o retorno rápido nas mensagens dentro do chat da plataforma.\n\n" +
+              "Atenção para algumas regras importantes:\n\n" +
+              "✔ Toda a comunicação deve acontecer exclusivamente pelo chat da Anexa.\n" +
+              "✘ Não é permitido compartilhar dados bancários, e-mails ou número de WhatsApp dentro da plataforma.\n" +
+              "⚠️ O não cumprimento dos prazos ou regras pode acarretar em penalizações ou banimento.\n" +
+              "🚫 Caso a campanha seja cancelada, o produto deverá ser devolvido, e a criadora poderá ser punida.\n\n" +
+              "Estamos aqui para garantir a melhor experiência para criadoras e marcas. Boa campanha! 💼💡";
+          }
+          
+          const quoteMessage = "💼 Detalhes da Campanha:\n\n" +
+            "Status: 🟢 Conectado\n\n" +
+            "Você está agora conectado e pode começar a conversar. Use o chat para todas as comunicações e siga as diretrizes da plataforma para uma parceria de sucesso.";
+          
+          // Create guide message
+          const guideMsg: Message = {
+            id: Date.now() + Math.floor(Math.random() * 1000),
+            message: guideMessage,
+            message_type: 'system',
+            sender_id: user.id || 0,
+            sender_name: user.name || 'Sistema',
+            sender_avatar: user.avatar_url,
+            is_sender: false,
+            is_read: false,
+            created_at: new Date().toISOString(),
+          };
+          
+          // Create quote message
+          const quoteMsg: Message = {
+            id: Date.now() + Math.floor(Math.random() * 1000) + 1,
+            message: quoteMessage,
+            message_type: 'system',
+            sender_id: user.id || 0,
+            sender_name: user.name || 'Sistema',
+            sender_avatar: user.avatar_url,
+            is_sender: false,
+            is_read: false,
+            created_at: new Date().toISOString(),
+          };
+          
+          // Add guide messages to the beginning
+          finalMessages = [guideMsg, quoteMsg, ...deduplicatedMessages];
+          
+          // Mark that this room has received guide messages
+          localStorage.setItem(guideMessagesKey, 'true');
+          
+  
+        } else if (hasGuideMessagesInStorage) {
+          // If guide messages exist in localStorage but not in current messages, restore them
+          const existingGuideMessages = deduplicatedMessages.filter(msg => 
+            msg.message_type === 'system' && 
+            (msg.message.includes('Parabéns') || msg.message.includes('parceria'))
+          );
+          
+          if (existingGuideMessages.length === 0) {
+
+            
+            const isBrand = user?.role === 'brand';
+            
+            let guideMessage = '';
+            if (isBrand) {
+              guideMessage = "🎉 Parabéns pela parceria iniciada com uma criadora da nossa plataforma!\n\n" +
+                "Para garantir o melhor resultado possível, é essencial que você oriente a criadora com detalhamento e clareza sobre como deseja que o conteúdo seja feito. Quanto mais específica for a comunicação, maior será a qualidade da entrega.\n\n" +
+                "📋 Próximos Passos Importantes:\n\n" +
+                "• 💰 Saldo da Campanha: Insira o valor da campanha na aba \"Saldo\" da plataforma\n" +
+                "• ✅ Aprovação de Conteúdo: Avalie o roteiro antes da gravação para garantir alinhamento\n" +
+                "• 🎬 Entrega Final: Após receber o conteúdo pronto e editado, libere o pagamento\n" +
+                "• ⭐ Finalização: Clique em \"Finalizar Campanha\" e avalie o trabalho entregue\n" +
+                "• 📝 Briefing: Reforce os pontos principais com a criadora para alinhar com o objetivo da marca\n" +
+                "• 🔄 Ajustes: Permita até 2 pedidos de ajustes por vídeo caso necessário\n\n" +
+                "🔒 Regras de Segurança da Campanha:\n\n" +
+                "✅ Comunicação Exclusiva: Toda comunicação deve ser feita pelo chat da NEXA\n" +
+                "❌ Proteção de Dados: Não compartilhe dados bancários, contatos pessoais ou WhatsApp\n" +
+                "⚠️ Cumprimento de Prazos: Descumprimento pode resultar em advertência ou bloqueio\n" +
+                "🚫 Cancelamento: Em caso de cancelamento, o produto deve ser solicitado de volta\n\n" +
+                "💼 A NEXA está aqui para facilitar conexões seguras e profissionais!\n" +
+                "Conte conosco para apoiar o sucesso da sua campanha! 📢✨";
+            } else {
+              guideMessage = "🩷 Parabéns, você foi aprovada em mais uma campanha da NEXA!\n\n" +
+                "Estamos muito felizes em contar com você e esperamos que mostre toda sua criatividade, comprometimento e qualidade para representar bem a marca e a nossa plataforma.\n\n" +
+                "Antes de começar, fique atenta aos pontos abaixo para garantir uma parceria de sucesso:\n\n" +
+                "• Confirme seu endereço de envio o quanto antes, para que o produto possa ser encaminhado sem atrasos.\n" +
+                "• Você devera entregar o roteiro da campanha em até 5 dias úteis.\n" +
+                "• É essencial seguir todas as orientações da marca presentes no briefing.\n" +
+                "• Aguarde a aprovação do roteiro antes de gravar o conteúdo.\n" +
+                "• Após a aprovação do roteiro, o conteúdo final deve ser entregue em até 5 dias úteis.\n" +
+                "• O vídeo deve ser enviado com qualidade profissional, e poderá passar por até 2 solicitações de ajustes, caso não esteja conforme o briefing.\n" +
+                "• Pedimos que mantenha o retorno rápido nas mensagens dentro do chat da plataforma.\n\n" +
+                "Atenção para algumas regras importantes:\n\n" +
+                "✔ Toda a comunicação deve acontecer exclusivamente pelo chat da Anexa.\n" +
+                "✘ Não é permitido compartilhar dados bancários, e-mails ou número de WhatsApp dentro da plataforma.\n" +
+                "⚠️ O não cumprimento dos prazos ou regras pode acarretar em penalizações ou banimento.\n" +
+                "🚫 Caso a campanha seja cancelada, o produto deverá ser devolvido, e a criadora poderá ser punida.\n\n" +
+                "Estamos aqui para garantir a melhor experiência para criadoras e marcas. Boa campanha! 💼💡";
+            }
+            
+            const quoteMessage = "💼 Detalhes da Campanha:\n\n" +
+              "Status: 🟢 Conectado\n\n" +
+              "Você está agora conectado e pode começar a conversar. Use o chat para todas as comunicações e siga as diretrizes da plataforma para uma parceria de sucesso.";
+            
+            // Create guide message
+            const guideMsg: Message = {
+              id: Date.now() + Math.floor(Math.random() * 1000),
+              message: guideMessage,
+              message_type: 'system',
+              sender_id: user?.id || 0,
+              sender_name: user?.name || 'Sistema',
+              sender_avatar: user?.avatar_url,
+              is_sender: false,
+              is_read: false,
+              created_at: new Date().toISOString(),
+            };
+            
+            // Create quote message
+            const quoteMsg: Message = {
+              id: Date.now() + Math.floor(Math.random() * 1000) + 1,
+              message: quoteMessage,
+              message_type: 'system',
+              sender_id: user?.id || 0,
+              sender_name: user?.name || 'Sistema',
+              sender_avatar: user?.avatar_url,
+              is_sender: false,
+              is_read: false,
+              created_at: new Date().toISOString(),
+            };
+            
+            // Add guide messages to the beginning
+            finalMessages = [guideMsg, quoteMsg, ...deduplicatedMessages];
+            
+
+          }
+        }
+
+        setMessages(finalMessages);
         
-        setMessages(deduplicatedMessages);
+
 
         // Join the room for real-time updates
         joinRoom(roomId);
@@ -822,7 +958,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         setIsLoading(false);
       }
     }
-  }, [joinRoom, markMessagesAsRead, toast]);
+  }, [joinRoom, markMessagesAsRead, toast, user]);
 
   // Load contracts for the selected room
   const loadContracts = useCallback(async (roomId: string): Promise<void> => {
@@ -892,6 +1028,8 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   }, [hiringApi, toast]);
 
+
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRoom || (!input.trim() && !selectedFile)) return;
@@ -916,7 +1054,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       if (isMountedRef.current) {
         // Add the message to the UI immediately for better UX
         // The message from the API response is already complete with proper ID
-        setMessages((prev) => {
+        setMessages(prev => {
           const updated = [...prev, newMessage];
           return updated;
         });
@@ -1171,12 +1309,6 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
 
   // Handle offer actions from chat
   const handleAcceptOfferById = useCallback(async (offerId: number) => {
-    console.log('ChatPage.tsx handleAcceptOfferById called with offerId:', offerId, typeof offerId);
-    console.log('ChatPage.tsx handleAcceptOfferById function context:', {
-      selectedRoom: selectedRoom?.room_id,
-      offers: offers.map(o => ({ id: o.id, title: o.title })),
-      user: user?.role
-    });
     
     // Basic validation
     if (!offerId || offerId <= 0 || isNaN(offerId)) {
@@ -1204,6 +1336,42 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           title: "Sucesso",
           description: "Oferta aceita com sucesso!",
         });
+
+        // Send acceptance confirmation message via socket
+        if (selectedRoom && response.data?.offer && response.data?.contract && user) {
+          console.log('Sending offer acceptance message via socket:', {
+            roomId: selectedRoom.room_id,
+            offer: response.data.offer,
+            contract: response.data.contract,
+            user: { id: user.id, name: user.name, avatar: user.avatar_url }
+          });
+          
+          // Ensure we're in the room before sending the message
+          if (isConnected) {
+            console.log('Socket is connected, sending message...');
+            // Add a small delay to ensure everything is ready
+            setTimeout(() => {
+              sendOfferAcceptanceMessage(
+                selectedRoom.room_id,
+                response.data.offer,
+                response.data.contract,
+                user.id,
+                user.name,
+                user.avatar_url
+              );
+            }, 100);
+          } else {
+            console.log('Socket not connected, cannot send message');
+          }
+        } else {
+          console.log('Cannot send socket message - missing data:', {
+            hasSelectedRoom: !!selectedRoom,
+            hasOffer: !!response.data?.offer,
+            hasContract: !!response.data?.contract,
+            hasUser: !!user,
+            responseData: response.data
+          });
+        }
 
         // Reload data to show updated status
         if (selectedRoom) {
@@ -1240,7 +1408,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         ]);
       }
     }
-  }, [selectedRoom, offers, user?.role, toast, hiringApi, loadMessages, loadOffers, loadContracts]);
+  }, [selectedRoom, offers, user?.role, toast, hiringApi, loadMessages, loadOffers, loadContracts, sendOfferAcceptanceMessage, user]);
 
   const handleRejectOffer = useCallback(async (offerId: number) => {
     // Add validation to ensure offerId is valid
@@ -2251,6 +2419,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
   };
 
   const renderMessageContent = (message: Message) => {
+    
     if (message.message_type === "file") {
       return (
         <div className="space-y-3">
@@ -2513,13 +2682,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         );
       }
 
-      // Debug: Log the function references being passed
-      console.log('Passing functions to ChatOfferMessage:', {
-        onAccept: handleAcceptOfferById,
-        onAccept_name: handleAcceptOfferById.name,
-        onAccept_toString: handleAcceptOfferById.toString().substring(0, 100),
-        chatOffer_id: chatOffer.id
-      });
+
 
               return (
           <ChatOfferMessage
@@ -2536,6 +2699,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
 
     // Handle system messages (like contract completion messages)
     if (message.message_type === "system") {
+      
       const isReviewMessage =
         message.message?.includes("review") ||
         message.message?.includes("avaliação");
@@ -2544,6 +2708,8 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       const isGuideMessage = message.message?.includes("Parabéns") || 
                            message.message?.includes("parceria iniciada") ||
                            message.message?.includes("Detalhes da Campanha");
+      
+
 
       if (isGuideMessage) {
         return (
@@ -2922,6 +3088,8 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                   </div>
 
                   <div className="flex items-center gap-2">
+
+
                     {/* Timeline Button */}
                     {activeContract && (
                       <Button
@@ -2933,6 +3101,8 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                         Linha do Tempo
                       </Button>
                     )}
+
+
 
                     {/* Send Offer Button */}
                     {canSendOffer && (
@@ -3050,6 +3220,19 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                     )}
 
                     {/* Terminate Contract Button */}
+                    {canTerminateContract && (
+                      <Button
+                        onClick={() => {
+                          const contractToTerminate = activeContract;
+                          if (contractToTerminate) {
+                            handleTerminateContract(contractToTerminate.id);
+                          }
+                        }}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        Terminar Contrato
+                      </Button>
+                    )}
                   </div>
                 </div>
 
@@ -3112,69 +3295,73 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
+  
+                  
                   <div className="space-y-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={cn(
-                          "flex gap-3",
-                          message.message_type === "system"
-                            ? "justify-center"
-                            : message.is_sender
-                              ? "justify-end"
-                              : "justify-start"
-                        )}
-                      >
-                        {!message.is_sender &&
-                          message.message_type !== "system" && (
-                            <Avatar className="w-8 h-8">
-                              <AvatarImage
-                                src={`${import.meta.env.VITE_BACKEND_URL ||
-                                  "https://nexacreators.com.br"
-                                  }${selectedRoom.other_user.avatar}`}
-                              />
-                              <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400 text-xs">
-                                {selectedRoom.other_user.name
-                                  .charAt(0)
-                                  .toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                          )}
+                    {messages.map((message) => {
+                      return (
                         <div
+                          key={message.id}
                           className={cn(
+                            "flex gap-3",
                             message.message_type === "system"
-                              ? "max-w-3xl px-4 py-2"
-                              : "max-w-md lg:max-w-2xl xl:max-w-3xl px-4 py-2 rounded-2xl",
-                            message.message_type === "system"
-                              ? ""
+                              ? "justify-center"
                               : message.is_sender
-                                ? "bg-pink-500 text-white"
-                                : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300"
+                                ? "justify-end"
+                                : "justify-start"
                           )}
                         >
-                          {renderMessageContent(message)}
-                          {message.message_type !== "system" && (
-                            <div className="flex items-center justify-between mt-1">
-                              <span className="text-xs opacity-70">
-                                {formatMessageTime(message.created_at)}
-                              </span>
-                              {message.is_sender && (
-                                <div className="flex items-center gap-1">
-                                  {message.is_read ? (
-                                    <div className="flex items-center gap-0.5">
-                                      <Check className="w-3 h-3" />
-                                      <Check className="w-3 h-3 -ml-1" />
-                                    </div>
-                                  ) : (
-                                    <Clock className="w-3 h-3" />
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          )}
+                          {!message.is_sender &&
+                            message.message_type !== "system" && (
+                              <Avatar className="w-8 h-8">
+                                <AvatarImage
+                                  src={`${import.meta.env.VITE_BACKEND_URL ||
+                                    "https://nexacreators.com.br"
+                                    }${selectedRoom.other_user.avatar}`}
+                                />
+                                <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400 text-xs">
+                                  {selectedRoom.other_user.name
+                                    .charAt(0)
+                                    .toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                            )}
+                          <div
+                            className={cn(
+                              message.message_type === "system"
+                                ? "max-w-3xl px-4 py-2"
+                                : "max-w-md lg:max-w-2xl xl:max-w-3xl px-4 py-2 rounded-2xl",
+                              message.message_type === "system"
+                                ? ""
+                                : message.is_sender
+                                  ? "bg-pink-500 text-white"
+                                  : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300"
+                            )}
+                          >
+                            {renderMessageContent(message)}
+                            {message.message_type !== "system" && (
+                              <div className="flex items-center justify-between mt-1">
+                                <span className="text-xs opacity-70">
+                                  {formatMessageTime(message.created_at)}
+                                </span>
+                                {message.is_sender && (
+                                  <div className="flex items-center gap-1">
+                                    {message.is_read ? (
+                                      <div className="flex items-center gap-0.5">
+                                        <Check className="w-3 h-3" />
+                                        <Check className="w-3 h-3 -ml-1" />
+                                      </div>
+                                    ) : (
+                                      <Clock className="w-3 h-3" />
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     <div ref={messagesEndRef} />
                   </div>
                 </div>

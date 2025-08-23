@@ -238,13 +238,32 @@ const MyApplication: React.FC<MyApplicationProps> = ({ setComponent }) => {
                   <span className="text-sm font-semibold text-gray-500 dark:text-gray-300">
                     Status
                   </span>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      statusStyles[app.status]
-                    }`}
-                  >
-                    {statusLabels[app.status]}
-                  </span>
+                  <div className="flex flex-col gap-1 items-end">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        statusStyles[app.status]
+                      }`}
+                    >
+                      {statusLabels[app.status]}
+                    </span>
+                    
+                    {/* Workflow Status - Only show for approved applications */}
+                    {app.status === 'approved' && app.workflow_status && (
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          app.workflow_status === 'first_contact_pending' 
+                            ? 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200'
+                            : app.workflow_status === 'agreement_in_progress'
+                            ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+                            : 'bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200'
+                        }`}
+                      >
+                        {app.workflow_status === 'first_contact_pending' && 'Primeiro Contato Pendente'}
+                        {app.workflow_status === 'agreement_in_progress' && 'Acordo em Andamento'}
+                        {app.workflow_status === 'agreement_finalized' && 'Acordo Finalizado'}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex justify-between items-center mt-2">
                   <span className="text-sm font-semibold text-gray-500 dark:text-gray-300">

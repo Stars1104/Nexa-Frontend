@@ -103,6 +103,7 @@ export default function Chat() {
     markMessagesAsRead,
     reconnect,
     onMessagesRead,
+    sendOfferAcceptanceMessage,
   } = useSocket({ enableNotifications: false, enableChat: true });
 
   // Component mount/unmount tracking
@@ -238,15 +239,46 @@ export default function Chat() {
       }
     };
 
+    // Listen for offer acceptance confirmation messages
+    const handleOfferAcceptanceMessage = (data: any) => {
+      if (!isMountedRef.current) return;
+
+      if (data.roomId === selectedRoom?.room_id) {
+        // Add the acceptance confirmation message to the chat
+        const confirmationMessage: Message = {
+          id: Date.now(), // Temporary ID
+          message: `✅ Oferta aceita com sucesso! Contrato criado.`,
+          message_type: 'text',
+          sender_id: data.senderId,
+          sender_name: data.senderName,
+          sender_avatar: data.senderAvatar,
+          is_sender: data.senderId === user?.id,
+          is_read: false,
+          created_at: data.timestamp,
+        };
+
+        setMessages((prev) => [...prev, confirmationMessage]);
+
+        // Scroll to bottom to show new message
+        setTimeout(() => {
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      }
+    };
+
     socket.on("new_message", handleNewMessage);
     socket.on("user_typing", handleUserTyping);
     socket.on("messages_read", handleMessagesRead);
+    socket.on("offer_acceptance_message", handleOfferAcceptanceMessage);
 
     return () => {
       try {
         socket.off("new_message", handleNewMessage);
         socket.off("user_typing", handleUserTyping);
         socket.off("messages_read", handleMessagesRead);
+        socket.off("offer_acceptance_message", handleOfferAcceptanceMessage);
       } catch (error) {
         console.warn("Error removing socket listeners:", error);
       }
@@ -314,7 +346,88 @@ export default function Chat() {
     }
   };
 
-  // Load messages for a specific room
+  // Create guide messages for a specific room (returns array, doesn't modify state)
+  const createGuideMessages = (room: ChatRoom): Message[] => {
+    console.log('[Chat] createGuideMessages called for room:', room.room_id, 'user role:', user?.role);
+    try {
+      const isBrand = user?.role === 'brand';
+      
+      let guideMessage = '';
+      if (isBrand) {
+        guideMessage = "🎉 **Parabéns pela parceria iniciada com uma criadora da nossa plataforma!**\n\n" +
+          "Para garantir o melhor resultado possível, é essencial que você oriente a criadora com detalhamento e clareza sobre como deseja que o conteúdo seja feito. **Quanto mais específica for a comunicação, maior será a qualidade da entrega.**\n\n" +
+          "**📋 Próximos Passos Importantes:**\n\n" +
+          "• **💰 Saldo da Campanha:** Insira o valor da campanha na aba \"Saldo\" da plataforma\n" +
+          "• **✅ Aprovação de Conteúdo:** Avalie o roteiro antes da gravação para garantir alinhamento\n" +
+          "• **🎬 Entrega Final:** Após receber o conteúdo pronto e editado, libere o pagamento\n" +
+          "• **⭐ Finalização:** Clique em \"Finalizar Campanha\" e avalie o trabalho entregue\n" +
+          "• **📝 Briefing:** Reforce os pontos principais com a criadora para alinhar com o objetivo da marca\n" +
+          "• **🔄 Ajustes:** Permita até 2 pedidos de ajustes por vídeo caso necessário\n\n" +
+          "**🔒 Regras de Segurança da Campanha:**\n\n" +
+          "✅ **Comunicação Exclusiva:** Toda comunicação deve ser feita pelo chat da NEXA\n" +
+          "❌ **Proteção de Dados:** Não compartilhe dados bancários, contatos pessoais ou WhatsApp\n" +
+          "⚠️ **Cumprimento de Prazos:** Descumprimento pode resultar em advertência ou bloqueio\n" +
+          "🚫 **Cancelamento:** Em caso de cancelamento, o produto deve ser solicitado de volta\n\n" +
+          "**💼 A NEXA está aqui para facilitar conexões seguras e profissionais!**\n" +
+          "Conte conosco para apoiar o sucesso da sua campanha! 📢✨";
+      } else {
+        guideMessage = "🩷 **Parabéns, você foi aprovada em mais uma campanha da NEXA!**\n\n" +
+          "Estamos muito felizes em contar com você e esperamos que mostre toda sua criatividade, comprometimento e qualidade para representar bem a marca e a nossa plataforma.\n\n" +
+          "**📋 Próximos Passos:**\n\n" +
+          "• **Confirme seu endereço de envio** o quanto antes, para que o produto possa ser encaminhado sem atrasos\n" +
+          "• **Entregue o roteiro da campanha** em até 5 dias úteis\n" +
+          "• **Siga todas as orientações** da marca presentes no briefing\n" +
+          "• **Aguarde a aprovação** do roteiro antes de gravar o conteúdo\n" +
+          "• **Entregue o conteúdo final** em até 5 dias úteis após aprovação do roteiro\n" +
+          "• **Envie o vídeo com qualidade profissional** - até 2 solicitações de ajustes serão permitidas\n" +
+          "• **Mantenha retorno rápido** nas mensagens dentro do chat da plataforma\n\n" +
+          "**⚠️ Regras Importantes:**\n\n" +
+          "✅ **Toda a comunicação** deve acontecer exclusivamente pelo chat da NEXA\n" +
+          "❌ **Não compartilhe** dados bancários, e-mails ou número de WhatsApp\n" +
+          "⚠️ **Descumprimento** dos prazos ou regras pode resultar em penalizações\n" +
+          "🚫 **Em caso de cancelamento**, o produto deve ser devolvido\n\n" +
+          "**Boa campanha!** 💼💡";
+      }
+      
+      const quoteMessage = "💼 **Detalhes da Campanha:**\n\n" +
+        "**Status:** 🟢 Conectado\n\n" +
+        "Você está agora conectado e pode começar a conversar. **Use o chat para todas as comunicações** e siga as diretrizes da plataforma para uma parceria de sucesso.";
+      
+      // Create guide message
+      const guideMsg: Message = {
+        id: Date.now() * 1000 + Math.random(), // Generate unique ID
+        message: guideMessage,
+        message_type: 'system',
+        sender_id: user?.id || 0,
+        sender_name: user?.name || 'Sistema',
+        sender_avatar: user?.avatar_url,
+        is_sender: false,
+        is_read: false,
+        created_at: new Date().toISOString(),
+      };
+      
+      // Create quote message
+      const quoteMsg: Message = {
+        id: Date.now() * 1000 + Math.random() + 1, // Generate unique ID
+        message: quoteMessage,
+        message_type: 'system',
+        sender_id: user?.id || 0,
+        sender_name: user?.name || 'Sistema',
+        sender_avatar: user?.avatar_url,
+        is_sender: false,
+        is_read: false,
+        created_at: new Date().toISOString(),
+      };
+      
+      console.log('[Chat] Guide messages created for room:', room.room_id);
+      return [guideMsg, quoteMsg];
+    } catch (error) {
+      console.error('[Chat] Error creating guide messages:', error);
+      return [];
+    }
+  };
+
+    // Load messages for a specific room
   const loadMessages = async (room: ChatRoom) => {
     if (!isMountedRef.current) return;
 
@@ -333,7 +446,40 @@ export default function Chat() {
           return true;
         });
 
-        setMessages(deduplicatedMessages);
+        // Check if guide messages need to be added after API response
+        const existingGuideMessages = deduplicatedMessages.filter(msg => 
+          msg.message_type === 'system' && 
+          (msg.message.includes('Parabéns') || msg.message.includes('parceria'))
+        );
+        
+        const guideMessagesKey = `guide_messages_${room.room_id}`;
+        const hasGuideMessagesInStorage = localStorage.getItem(guideMessagesKey);
+        
+        console.log('[Chat] Guide message check:', {
+          roomId: room.room_id,
+          existingGuideMessages: existingGuideMessages.length,
+          hasGuideMessagesInStorage,
+          totalMessages: deduplicatedMessages.length
+        });
+        
+        // Add guide messages if they don't exist in API response and haven't been added before
+        if (existingGuideMessages.length === 0) { // && !hasGuideMessagesInStorage) {
+          console.log('[Chat] Adding guide messages for room:', room.room_id);
+          // Add guide messages directly to the deduplicated messages before setting state
+          const guideMessages = createGuideMessages(room);
+          const messagesWithGuides = [...guideMessages, ...deduplicatedMessages];
+          setMessages(messagesWithGuides);
+          // Mark that this room has received guide messages
+          localStorage.setItem(guideMessagesKey, 'true');
+        } else {
+          // Set messages normally
+          setMessages(deduplicatedMessages);
+          if (existingGuideMessages.length > 0) {
+            // Mark that guide messages exist in this room
+            localStorage.setItem(guideMessagesKey, 'true');
+            console.log('[Chat] Guide messages already exist for room:', room.room_id);
+          }
+        }
 
         // Join the room for real-time updates
         joinRoom(room.room_id);
@@ -436,91 +582,7 @@ export default function Chat() {
     // Load contracts for the selected room
     await loadContracts(room.room_id);
 
-    // Add guide messages when user first enters chat (frontend-only approach)
-    try {
-      // Check if guide messages already exist
-      const existingGuideMessages = messages.filter(msg => 
-        msg.message_type === 'system' && 
-        msg.message.includes('Parabéns')
-      );
-      
-      if (existingGuideMessages.length === 0) {
-        // Create guide messages locally
-        const isBrand = user?.role === 'brand';
-        
-        let guideMessage = '';
-        if (isBrand) {
-          guideMessage = "🎉 **Parabéns pela parceria iniciada com uma criadora da nossa plataforma!**\n\n" +
-            "Para garantir o melhor resultado possível, é essencial que você oriente a criadora com detalhamento e clareza sobre como deseja que o conteúdo seja feito. **Quanto mais específica for a comunicação, maior será a qualidade da entrega.**\n\n" +
-            "**📋 Próximos Passos Importantes:**\n\n" +
-            "• **💰 Saldo da Campanha:** Insira o valor da campanha na aba \"Saldo\" da plataforma\n" +
-            "• **✅ Aprovação de Conteúdo:** Avalie o roteiro antes da gravação para garantir alinhamento\n" +
-            "• **🎬 Entrega Final:** Após receber o conteúdo pronto e editado, libere o pagamento\n" +
-            "• **⭐ Finalização:** Clique em \"Finalizar Campanha\" e avalie o trabalho entregue\n" +
-            "• **📝 Briefing:** Reforce os pontos principais com a criadora para alinhar com o objetivo da marca\n" +
-            "• **🔄 Ajustes:** Permita até 2 pedidos de ajustes por vídeo caso necessário\n\n" +
-            "**🔒 Regras de Segurança da Campanha:**\n\n" +
-            "✅ **Comunicação Exclusiva:** Toda comunicação deve ser feita pelo chat da NEXA\n" +
-            "❌ **Proteção de Dados:** Não compartilhe dados bancários, contatos pessoais ou WhatsApp\n" +
-            "⚠️ **Cumprimento de Prazos:** Descumprimento pode resultar em advertência ou bloqueio\n" +
-            "🚫 **Cancelamento:** Em caso de cancelamento, o produto deve ser solicitado de volta\n\n" +
-            "**💼 A NEXA está aqui para facilitar conexões seguras e profissionais!**\n" +
-            "Conte conosco para apoiar o sucesso da sua campanha! 📢✨";
-        } else {
-          guideMessage = "🩷 **Parabéns, você foi aprovada em mais uma campanha da NEXA!**\n\n" +
-            "Estamos muito felizes em contar com você e esperamos que mostre toda sua criatividade, comprometimento e qualidade para representar bem a marca e a nossa plataforma.\n\n" +
-            "**📋 Próximos Passos:**\n\n" +
-            "• **Confirme seu endereço de envio** o quanto antes, para que o produto possa ser encaminhado sem atrasos\n" +
-            "• **Entregue o roteiro da campanha** em até 5 dias úteis\n" +
-            "• **Siga todas as orientações** da marca presentes no briefing\n" +
-            "• **Aguarde a aprovação** do roteiro antes de gravar o conteúdo\n" +
-            "• **Entregue o conteúdo final** em até 5 dias úteis após aprovação do roteiro\n" +
-            "• **Envie o vídeo com qualidade profissional** - até 2 solicitações de ajustes serão permitidas\n" +
-            "• **Mantenha retorno rápido** nas mensagens dentro do chat da plataforma\n\n" +
-            "**⚠️ Regras Importantes:**\n\n" +
-            "✅ **Toda a comunicação** deve acontecer exclusivamente pelo chat da NEXA\n" +
-            "❌ **Não compartilhe** dados bancários, e-mails ou número de WhatsApp\n" +
-            "⚠️ **Descumprimento** dos prazos ou regras pode resultar em penalizações\n" +
-            "🚫 **Em caso de cancelamento**, o produto deve ser devolvido\n\n" +
-            "**Boa campanha!** 💼💡";
-        }
-        
-        const quoteMessage = "💼 **Detalhes da Campanha:**\n\n" +
-          "**Status:** 🟢 Conectado\n\n" +
-          "Você está agora conectado e pode começar a conversar. **Use o chat para todas as comunicações** e siga as diretrizes da plataforma para uma parceria de sucesso.";
-        
-        // Create guide message
-        const guideMsg: Message = {
-          id: Date.now() * 1000 + Math.random(), // Generate unique ID
-          message: guideMessage,
-          message_type: 'system',
-          sender_id: user?.id || 0,
-          sender_name: user?.name || 'Sistema',
-          sender_avatar: user?.avatar_url,
-          is_sender: false,
-          is_read: false,
-          created_at: new Date().toISOString(),
-        };
-        
-        // Create quote message
-        const quoteMsg: Message = {
-          id: Date.now() * 1000 + Math.random() + 1, // Generate unique ID
-          message: quoteMessage,
-          message_type: 'system',
-          sender_id: user?.id || 0,
-          sender_name: user?.name || 'Sistema',
-          sender_avatar: user?.avatar_url,
-          is_sender: false,
-          is_read: false, // Add this missing property
-          created_at: new Date().toISOString(),
-        };
-        
-        // Add messages to the beginning of the messages array
-        setMessages(prev => [guideMsg, quoteMsg, ...prev]);
-      }
-    } catch (error) {
-      console.error('[Chat] Error adding guide messages:', error);
-    }
+
 
     // Focus input
     setTimeout(() => {
@@ -1889,6 +1951,43 @@ export default function Chat() {
           title: "Sucesso",
           description: "Oferta aceita com sucesso! Contrato criado.",
         });
+
+        // Send acceptance confirmation message via socket
+        if (selectedRoom && response.data?.offer && response.data?.contract && user) {
+          console.log('Chat component: Sending offer acceptance message via socket:', {
+            roomId: selectedRoom.room_id,
+            offer: response.data.offer,
+            contract: response.data.contract,
+            user: { id: user.id, name: user.name, avatar: user.avatar_url }
+          });
+          
+          // Ensure we're in the room before sending the message
+          if (isConnected) {
+            console.log('Chat component: Socket is connected, sending message...');
+            // Add a small delay to ensure everything is ready
+            setTimeout(() => {
+              sendOfferAcceptanceMessage(
+                selectedRoom.room_id,
+                response.data.offer,
+                response.data.contract,
+                user.id,
+                user.name,
+                user.avatar_url
+              );
+            }, 100);
+          } else {
+            console.log('Chat component: Socket not connected, cannot send message');
+          }
+        } else {
+          console.log('Chat component: Cannot send socket message - missing data:', {
+            hasSelectedRoom: !!selectedRoom,
+            hasOffer: !!response.data?.offer,
+            hasContract: !!response.data?.contract,
+            hasUser: !!user,
+            responseData: response.data
+          });
+        }
+
         // Refresh contracts
         if (selectedRoom) {
           loadContracts(selectedRoom.room_id);
@@ -2105,10 +2204,6 @@ export default function Chat() {
       room.other_user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       room.campaign_title.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-
-
-
 
   return (
     <div className="flex h-full bg-background">

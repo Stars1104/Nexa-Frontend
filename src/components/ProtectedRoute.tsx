@@ -36,7 +36,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     if (!allowedRoles.includes(user.role)) {
       // Redirect to appropriate dashboard based on user's role
       const defaultDashboard = getDefaultDashboard(user.role);
-      return <Navigate to={redirectTo || defaultDashboard} replace />;
+      // Don't use replace: true for role-based redirects to allow proper browser history
+      return <Navigate to={redirectTo || defaultDashboard} replace={false} />;
     }
   }
 

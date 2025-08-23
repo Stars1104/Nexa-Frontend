@@ -6,6 +6,8 @@ import { useIsMobile } from "../../hooks/use-mobile";
 import { CreatorProfile } from "../../components/creator/CreatorProfile";
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { useComponentNavigation } from "../../hooks/useComponentNavigation";
+import { usePostLoginNavigation } from "../../hooks/usePostLoginNavigation";
 import NotFound from "../NotFound";
 import ProjectDetail from "../../components/creator/ProjectDetail";
 import MyApplication from "../../components/creator/MyApplication";
@@ -28,18 +30,41 @@ function Index() {
     const { hasPremium, loading: premiumLoading } = usePremiumContext();
     const { user } = useAppSelector((state) => state.auth);
 
-    const [component, setComponent] = useState<string | null>("Painel");
     const [projectId, setProjectId] = useState<number | null>(null);
 
-    // Handle subscription route
+    const { component, setComponent } = useComponentNavigation({
+        defaultComponent: "Painel",
+        additionalParams: projectId ? { projectId: projectId.toString() } : {}
+    });
+
+    // Handle post-login navigation to ensure proper browser history
+    usePostLoginNavigation({
+        dashboardPath: "/creator",
+        defaultComponent: "Painel"
+    });
+
+    // Handle subscription route - use the navigation hook instead of direct setComponent
     useEffect(() => {
         if (location.pathname === '/creator/subscription') {
+            // Use the navigation hook to properly update URL and browser history
             setComponent("Assinatura");
-        } else if (location.pathname === '/creator' && !component) {
-            // Set default component if on main creator page
-            setComponent("Painel");
         }
-    }, [location.pathname, component]);
+    }, [location.pathname, setComponent]);
+
+    // Enhanced setComponent that also handles projectId
+    const handleComponentChange = (newComponent: string, newProjectId?: number | null) => {
+        setComponent(newComponent, { projectId: newProjectId?.toString() });
+        if (newProjectId !== undefined) {
+            setProjectId(newProjectId);
+        }
+    };
+
+    // Debug logging to understand what's happening
+    useEffect(() => {
+        console.log('Creator Dashboard - Current component:', component);
+        console.log('Creator Dashboard - Current URL:', location.pathname + location.search);
+        console.log('Creator Dashboard - Is authenticated:', !!user);
+    }, [component, location.pathname, location.search, user]);
 
     const CreatorComponent = () => {
         // Define which components require premium access
@@ -52,7 +77,7 @@ function Index() {
         // If premium is required and user doesn't have it, show premium guard
         if (isPremiumRequired && !userHasPremium && !premiumLoading) {
             return (
-                <PremiumAccessGuard setComponent={setComponent}>
+                <PremiumAccessGuard setComponent={handleComponentChange}>
                     <div>This component requires premium</div>
                 </PremiumAccessGuard>
             );
@@ -62,15 +87,15 @@ function Index() {
             case "Painel":
                 return (
                     <div>
-                        <Dashboard setComponent={setComponent} setProjectId={setProjectId} />
+                        <Dashboard setComponent={handleComponentChange} setProjectId={setProjectId} />
                     </div>
                 );
             case "Minha Conta":
                 return <CreatorProfile />;
             case "Detalhes do Projeto":
-                return <ProjectDetail setComponent={setComponent} projectId={projectId} />;
+                return <ProjectDetail setComponent={handleComponentChange} projectId={projectId} />;
             case "Minha Aplicação":
-                return <MyApplication setComponent={setComponent} />;
+                return <MyApplication setComponent={handleComponentChange} />;
             case "Chat":
                 return <Chat />;
             case "Portfólio":
@@ -98,7 +123,10 @@ function Index() {
             <ThemeProvider>
                 <div className="flex h-screen bg-background text-foreground">
                     <div className="flex-1 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <div className="text-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                            <p className="text-muted-foreground">Verificando status premium...</p>
+                        </div>
                     </div>
                 </div>
             </ThemeProvider>
@@ -108,21 +136,21 @@ function Index() {
     return (
         <ThemeProvider>
             <Helmet>
-                <title>{component ? `${component} - Nexa Creator` : 'Nexa Creator'}</title>
-                <meta name="description" content="Painel do criador da plataforma Nexa - Gerencie suas campanhas, portfólio e aplicações" />
+                <title>{component ? `${component} - Nexa Creator` : 'Dashboard - Nexa Creator'}</title>
+                <meta name="description" content="Painel do criador na plataforma Nexa - Gerencie seus projetos, portfólio e pagamentos" />
             </Helmet>
             <div className="flex h-screen bg-background text-foreground">
-                {!isMobile && <Sidebar setComponent={setComponent} component={component} />}
+                {!isMobile && <Sidebar setComponent={handleComponentChange} component={component} />}
                 <div className="flex-1 flex flex-col min-w-0">
-                    <ComponentNavbar title={component} />
-                    <main className={`flex-1 overflow-y-auto bg-muted/50 ${isMobile ? 'md:pb-20' : ''} scrollbar-hide-mobile`}>
+                    <ComponentNavbar title={component || "Dashboard"} />
+                    <main className={`flex-1 overflow-y-auto bg-muted/50`}>
                         <CreatorComponent />
                     </main>
                 </div>
-                {isMobile && <Sidebar setComponent={setComponent} component={component} />}
+                {isMobile && <Sidebar setComponent={handleComponentChange} component={component} />}
             </div>
         </ThemeProvider>
     );
-};
+}
 
 export default Index;

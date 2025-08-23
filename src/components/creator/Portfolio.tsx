@@ -650,7 +650,7 @@ export default function Portfolio() {
             </section>
 
             {/* Save Button */}
-            <div className="flex justify-end mt-6">
+            {/* <div className="flex justify-end mt-6">
                 <Button
                     className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-8 py-2 rounded-md text-base"
                     onClick={handleSavePortfolioComplete}
@@ -659,7 +659,7 @@ export default function Portfolio() {
                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                     Salvar Portfólio
                 </Button>
-            </div>
+            </div> */}
 
             {/* Image Modal */}
             {isImageModalOpen && selectedImage && (

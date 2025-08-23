@@ -353,7 +353,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                                             <path stroke="currentColor" strokeWidth="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                                             <path stroke="currentColor" strokeWidth="2" d="M2 12C3.6 7 7.8 4 12 4s8.4 3 10 8c-1.6 5-5.8 8-10 8s-8.4-3-10-8Z" />
                                         </svg>
-                                        Ver aplicações
+                                        Ver campanha
                                     </button>
                                     <button
                                         className="flex-1 bg-[#E91E63] text-white font-medium rounded-lg py-2 transition hover:bg-[#E91E63]/90 flex justify-center items-center gap-2"

@@ -23,6 +23,8 @@ interface UseSocketReturn {
     onContractCompleted: (callback: (data: { roomId: string; contractData: any; senderId: number; timestamp: string }) => void) => void;
     onContractTerminated: (callback: (data: { roomId: string; contractData: any; senderId: number; terminationReason?: string; timestamp: string }) => void) => void;
     onContractActivated: (callback: (data: { roomId: string; contractData: any; senderId: number; timestamp: string }) => void) => void;
+    onOfferAcceptanceMessage: (callback: (data: { roomId: string; offerData: any; contractData: any; senderId: number; senderName: string; senderAvatar?: string; timestamp: string }) => void) => void;
+    sendOfferAcceptanceMessage: (roomId: string, offerData: any, contractData: any, senderId: number, senderName: string, senderAvatar?: string) => void;
     reconnect: () => void;
 }
 
@@ -520,6 +522,54 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         };
     }, [enableChat]);
 
+    // Set up offer acceptance message callback
+    const onOfferAcceptanceMessage = useCallback((callback: (data: { roomId: string; offerData: any; contractData: any; senderId: number; senderName: string; senderAvatar?: string; timestamp: string }) => void) => {
+        if (!socketRef.current || !enableChat) return;
+
+        const handleOfferAcceptanceMessage = (data: any) => {
+            if (!isMountedRef.current) return;
+            callback(data);
+        };
+
+        socketRef.current.on('offer_acceptance_message', handleOfferAcceptanceMessage);
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.off('offer_acceptance_message', handleOfferAcceptanceMessage);
+            }
+        };
+    }, [enableChat]);
+
+    // Send offer acceptance message
+    const sendOfferAcceptanceMessage = useCallback((roomId: string, offerData: any, contractData: any, senderId: number, senderName: string, senderAvatar?: string) => {
+        console.log('sendOfferAcceptanceMessage called with:', { roomId, offerData, contractData, senderId, senderName, senderAvatar });
+        
+        if (!socketRef.current || !isConnected || !isMountedRef.current || !enableChat) {
+            console.warn('Cannot send offer acceptance message: socket not connected or chat disabled', {
+                hasSocket: !!socketRef.current,
+                isConnected,
+                isMounted: isMountedRef.current,
+                enableChat
+            });
+            return;
+        }
+
+        try {
+            console.log('Emitting send_offer_acceptance_message event');
+            socketRef.current.emit('send_offer_acceptance_message', {
+                roomId,
+                offerData,
+                contractData,
+                senderId,
+                senderName,
+                senderAvatar,
+            });
+            console.log('Event emitted successfully');
+        } catch (error) {
+            console.error('Error sending offer acceptance message:', error);
+        }
+    }, [isConnected, enableChat]);
+
     return {
         socket: socketRef.current,
         isConnected,
@@ -538,6 +588,8 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         onContractCompleted,
         onContractTerminated,
         onContractActivated,
+        onOfferAcceptanceMessage,
+        sendOfferAcceptanceMessage,
         reconnect,
     };
 }; 

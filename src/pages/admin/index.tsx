@@ -8,6 +8,8 @@ import { Alert, AlertTitle, AlertDescription } from "../../components/ui/alert";
 import { Button } from "../../components/ui/button";
 import { toast } from "../../components/ui/sonner";
 import { toggleAdminRole } from "../../store/slices/authSlice";
+import { useComponentNavigation } from "../../hooks/useComponentNavigation";
+import { usePostLoginNavigation } from "../../hooks/usePostLoginNavigation";
 import NotFound from "../NotFound";
 import AdminSidebar from "@/components/admin/Sidebar";
 import Dashboard from "@/components/admin/Dashboard";
@@ -23,8 +25,17 @@ const AdminIndex = () => {
     const isMobile = useIsMobile();
     const dispatch = useDispatch<AppDispatch>();
     const { user } = useSelector((state: RootState) => state.auth);
-    const [component, setComponent] = useState<string | null>("Painel");
     const [accessDenied, setAccessDenied] = useState(false);
+
+    const { component, setComponent } = useComponentNavigation({
+        defaultComponent: "Painel"
+    });
+
+    // Handle post-login navigation to ensure proper browser history
+    usePostLoginNavigation({
+        dashboardPath: "/admin",
+        defaultComponent: "Painel"
+    });
 
     // Check if user has admin role
     useEffect(() => {

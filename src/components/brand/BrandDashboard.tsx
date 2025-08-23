@@ -13,7 +13,7 @@ const campaigns = {
       tags: ["Photo", "Video"],
       term: "15/12/2023",
       creators: "12/5 creators",
-      actions: ["Ver Aplicações", "Chat"],
+      actions: ["Ver Campanha", "Chat"],
     },
     {
       id: 2,
@@ -23,7 +23,7 @@ const campaigns = {
       tags: ["Review", "Video"],
       term: "20/12/2023",
       creators: "8/3 creators",
-      actions: ["Ver Aplicações", "Chat"],
+      actions: ["Ver Campanha", "Chat"],
     },
     {
       id: 3,
@@ -33,7 +33,7 @@ const campaigns = {
       tags: ["Review", "Video", "Photo"],
       term: "20/12/2023",
       creators: "8/3 creators",
-      actions: ["Ver Aplicações", "Chat"],
+      actions: ["Ver Campanha", "Chat"],
     },
   ],
   previous: [
@@ -169,7 +169,7 @@ const BrandDashboard: React.FC<BrandDashboardProps> = ({ setComponent }) => {
                         d="M2 12C3.6 7 7.8 4 12 4s8.4 3 10 8c-1.6 5-5.8 8-10 8s-8.4-3-10-8Z"
                       />
                     </svg>
-                    Ver aplicativos
+                    Ver campanha
                   </button>
                   <button
                     className="flex-1 bg-[#E91E63] text-white font-medium rounded-lg py-2 transition hover:bg-[#E91E63]"

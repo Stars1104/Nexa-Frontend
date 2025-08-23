@@ -86,6 +86,7 @@ export interface Application {
   campaign_id: number;
   creator_id: number;
   status: 'pending' | 'approved' | 'rejected';
+  workflow_status: 'first_contact_pending' | 'agreement_in_progress' | 'agreement_finalized';
   proposal: string;
   portfolio_links?: string[];
   estimated_delivery_days?: number;
@@ -94,6 +95,8 @@ export interface Application {
   reviewed_by?: number;
   reviewed_at?: string;
   approved_at?: string;
+  first_contact_at?: string;
+  agreement_finalized_at?: string;
   created_at: string;
   updated_at: string;
   campaign?: {

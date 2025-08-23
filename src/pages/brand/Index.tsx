@@ -1,7 +1,11 @@
 import { ThemeProvider } from "../../components/ThemeProvider";
 import ComponentNavbar from "../../components/ComponentNavbar";
 import { useIsMobile } from "../../hooks/use-mobile";
-import { useState } from "react";
+import { useAdvancedComponentNavigation } from "../../hooks/useAdvancedComponentNavigation";
+import { usePostLoginNavigation } from "../../hooks/usePostLoginNavigation";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { useAppSelector } from "../../store/hooks";
 import BrandSidebar from "../../components/brand/BrandSidebar";
 import BrandDashboard from "../../components/brand/BrandDashboard";
 import AllowedCampaigns from "../../components/brand/AllowedCampaigns";
@@ -19,8 +23,25 @@ import { Helmet } from "react-helmet-async";
 
 function Index() {
     const isMobile = useIsMobile();
+    const location = useLocation();
+    const { user } = useAppSelector((state) => state.auth);
+    
+    const { component, setComponent } = useAdvancedComponentNavigation({
+        defaultComponent: "Minhas campanhas"
+    });
 
-    const [component, setComponent] = useState<string | { name: string; campaign?: any; creatorId?: string }>("Minhas campanhas");
+    // Handle post-login navigation to ensure proper browser history
+    usePostLoginNavigation({
+        dashboardPath: "/brand",
+        defaultComponent: "Minhas campanhas"
+    });
+
+    // Debug logging to compare with creator dashboard
+    useEffect(() => {
+        console.log('Brand Dashboard - Current component:', component);
+        console.log('Brand Dashboard - Current URL:', location.pathname + location.search);
+        console.log('Brand Dashboard - Is authenticated:', !!user);
+    }, [component, location.pathname, location.search, user]);
 
     const CreatorComponent = () => {
         if (typeof component === "string") {

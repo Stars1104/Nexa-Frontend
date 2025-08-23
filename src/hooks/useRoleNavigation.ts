@@ -20,11 +20,13 @@ export const useRoleNavigation = () => {
     }
   };
 
-  const navigateToRoleDashboard = (role?: string) => {
+  const navigateToRoleDashboard = (role?: string, options?: { replace?: boolean }) => {
     const userRole = role || user?.role;
     if (userRole) {
       const dashboard = getDefaultDashboard(userRole);
-      navigate(dashboard, { replace: true });
+      // Use replace: false by default to add to browser history
+      // This allows the back button to work properly within the dashboard
+      navigate(dashboard, { replace: options?.replace ?? false });
     }
   };
 
@@ -33,7 +35,8 @@ export const useRoleNavigation = () => {
   };
 
   const navigateToSubscription = () => {
-    navigate("/creator", { replace: true });
+    // Don't replace for subscription navigation to allow back button to work
+    navigate("/creator", { replace: false });
   };
 
   const navigateToLogin = (from?: string) => {
