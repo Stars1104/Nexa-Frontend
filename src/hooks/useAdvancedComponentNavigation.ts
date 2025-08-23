@@ -16,6 +16,47 @@ interface UseAdvancedComponentNavigationOptions {
   additionalParams?: Record<string, string>;
 }
 
+// Component mapping: English URL names -> Portuguese display names
+const COMPONENT_MAPPING: Record<string, string> = {
+  // Creator components
+  'dashboard': 'Painel',
+  'profile': 'Minha Conta',
+  'project-detail': 'Detalhes do Projeto',
+  'application': 'Minha Aplicação',
+  'chat': 'Chat',
+  'portfolio': 'Portfólio',
+  'balance': 'Saldo e Saques',
+  'notifications': 'Notificações',
+  'subscription': 'Assinatura',
+  'payment-history': 'Histórico de Pagamentos',
+  'bank-registration': 'Cadastro Bancário',
+  'guide': 'Guia da Plataforma',
+  
+  // Brand components - Fix the mapping to use the correct URL format
+  'Minhas+campanhas': 'Minhas campanhas',
+  'brand-profile': 'Meu perfil',
+  'create-campaign': 'Nova campanha',
+  'payments': 'Pagamentos',
+  'brand-notifications': 'Notificações',
+  'creator-profile': 'Perfil do Criador',
+  'brand-guide': 'Guia da Plataforma',
+  
+  // Admin components
+  'admin-dashboard': 'Painel',
+  'pending-campaigns': 'Campanhas Pendentes',
+  'all-campaigns': 'Todas as Campanhas',
+  'users': 'Usuários',
+  'brand-rankings': 'Rankings das Marcas',
+  'withdrawal-verification': 'Verificação de Saques',
+  'admin-guide': 'Guia para',
+  'admin-notifications': 'Notificações'
+};
+
+// Reverse mapping: Portuguese display names -> English URL names
+const REVERSE_COMPONENT_MAPPING: Record<string, string> = Object.fromEntries(
+  Object.entries(COMPONENT_MAPPING).map(([key, value]) => [value, key])
+);
+
 export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavigationOptions) => {
   const { defaultComponent, urlParamName = 'component', additionalParams = {} } = options;
   const navigate = useNavigate();
@@ -23,6 +64,16 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
   
   const [component, setComponent] = useState<ComponentType>(defaultComponent);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Convert Portuguese display name to English URL name
+  const toUrlName = (displayName: string): string => {
+    return REVERSE_COMPONENT_MAPPING[displayName] || displayName;
+  };
+
+  // Convert English URL name to Portuguese display name
+  const toDisplayName = (urlName: string): string => {
+    return COMPONENT_MAPPING[urlName] || urlName;
+  };
 
   // Helper function to parse component from URL
   const parseComponentFromURL = (searchParams: URLSearchParams): ComponentType => {
@@ -57,7 +108,8 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
           creatorId: creatorId
         };
       } else {
-        return componentParam;
+        // Convert URL name to display name for string components
+        return toDisplayName(componentParam);
       }
     } catch (error) {
       console.warn('Error parsing component from URL:', error);
@@ -85,7 +137,9 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
     const searchParams = new URLSearchParams();
     
     if (typeof newComponent === "string") {
-      searchParams.set(urlParamName, newComponent);
+      // Convert display name to URL name
+      const urlName = toUrlName(newComponent);
+      searchParams.set(urlParamName, urlName);
     } else {
       searchParams.set(urlParamName, newComponent.name);
       if (newComponent.campaign?.id) {

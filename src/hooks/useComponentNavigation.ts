@@ -24,7 +24,7 @@ const COMPONENT_MAPPING: Record<string, string> = {
   'guide': 'Guia da Plataforma',
   
   // Brand components
-  'campaigns': 'Minhas campanhas',
+  'Minhas+campanhas': 'Minhas campanhas',
   'brand-profile': 'Meu perfil',
   'create-campaign': 'Nova campanha',
   'payments': 'Pagamentos',

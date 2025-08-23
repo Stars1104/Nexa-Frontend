@@ -23,8 +23,8 @@ const COMPONENT_MAPPING: Record<string, string> = {
   'bank-registration': 'Cadastro Bancário',
   'guide': 'Guia da Plataforma',
   
-  // Brand components
-  'campaigns': 'Minhas campanhas',
+  // Brand components - Fix the mapping to use the correct URL format
+  'Minhas+campanhas': 'Minhas campanhas',
   'brand-profile': 'Meu perfil',
   'create-campaign': 'Nova campanha',
   'payments': 'Pagamentos',
