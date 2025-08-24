@@ -348,7 +348,6 @@ export default function Chat() {
 
   // Create guide messages for a specific room (returns array, doesn't modify state)
   const createGuideMessages = (room: ChatRoom): Message[] => {
-    console.log('[Chat] createGuideMessages called for room:', room.room_id, 'user role:', user?.role);
     try {
       const isBrand = user?.role === 'brand';
       
@@ -419,7 +418,6 @@ export default function Chat() {
         created_at: new Date().toISOString(),
       };
       
-      console.log('[Chat] Guide messages created for room:', room.room_id);
       return [guideMsg, quoteMsg];
     } catch (error) {
       console.error('[Chat] Error creating guide messages:', error);
@@ -455,16 +453,8 @@ export default function Chat() {
         const guideMessagesKey = `guide_messages_${room.room_id}`;
         const hasGuideMessagesInStorage = localStorage.getItem(guideMessagesKey);
         
-        console.log('[Chat] Guide message check:', {
-          roomId: room.room_id,
-          existingGuideMessages: existingGuideMessages.length,
-          hasGuideMessagesInStorage,
-          totalMessages: deduplicatedMessages.length
-        });
-        
         // Add guide messages if they don't exist in API response and haven't been added before
         if (existingGuideMessages.length === 0) { // && !hasGuideMessagesInStorage) {
-          console.log('[Chat] Adding guide messages for room:', room.room_id);
           // Add guide messages directly to the deduplicated messages before setting state
           const guideMessages = createGuideMessages(room);
           const messagesWithGuides = [...guideMessages, ...deduplicatedMessages];
@@ -477,7 +467,6 @@ export default function Chat() {
           if (existingGuideMessages.length > 0) {
             // Mark that guide messages exist in this room
             localStorage.setItem(guideMessagesKey, 'true');
-            console.log('[Chat] Guide messages already exist for room:', room.room_id);
           }
         }
 
@@ -1942,8 +1931,6 @@ export default function Chat() {
       return;
     }
 
-    console.log('handleAcceptOffer called with offerId:', offerId, typeof offerId);
-
     try {
       const response = await hiringApi.acceptOffer(offerId);
       if (response.success) {
@@ -1954,16 +1941,9 @@ export default function Chat() {
 
         // Send acceptance confirmation message via socket
         if (selectedRoom && response.data?.offer && response.data?.contract && user) {
-          console.log('Chat component: Sending offer acceptance message via socket:', {
-            roomId: selectedRoom.room_id,
-            offer: response.data.offer,
-            contract: response.data.contract,
-            user: { id: user.id, name: user.name, avatar: user.avatar_url }
-          });
           
           // Ensure we're in the room before sending the message
           if (isConnected) {
-            console.log('Chat component: Socket is connected, sending message...');
             // Add a small delay to ensure everything is ready
             setTimeout(() => {
               sendOfferAcceptanceMessage(
@@ -1975,17 +1955,7 @@ export default function Chat() {
                 user.avatar_url
               );
             }, 100);
-          } else {
-            console.log('Chat component: Socket not connected, cannot send message');
           }
-        } else {
-          console.log('Chat component: Cannot send socket message - missing data:', {
-            hasSelectedRoom: !!selectedRoom,
-            hasOffer: !!response.data?.offer,
-            hasContract: !!response.data?.contract,
-            hasUser: !!user,
-            responseData: response.data
-          });
         }
 
         // Refresh contracts
@@ -2016,8 +1986,6 @@ export default function Chat() {
       });
       return;
     }
-
-    console.log('handleRejectOffer called with offerId:', offerId, typeof offerId);
 
     try {
       const response = await hiringApi.rejectOffer(offerId);
@@ -2054,8 +2022,6 @@ export default function Chat() {
       });
       return;
     }
-
-    console.log('handleCancelOffer called with offerId:', offerId, typeof offerId);
 
     try {
       const response = await hiringApi.cancelOffer(offerId);

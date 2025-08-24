@@ -282,10 +282,6 @@ export default function ChatOfferMessage({
                 <Button
                   size="sm"
                   onClick={() => {
-                    console.log('Accept button clicked with offer ID:', offer.id);
-                    console.log('Offer object at click time:', offer);
-                    console.log('onAccept function:', onAccept);
-                    
                     try {
                       onAccept(offer.id);
                     } catch (error) {

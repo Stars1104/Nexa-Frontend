@@ -65,15 +65,6 @@ export const usePostLoginNavigation = (options: UsePostLoginNavigationOptions) =
     if (isAuthenticated && user && location.pathname === dashboardPath && !hasNavigatedRef.current) {
       hasNavigatedRef.current = true;
       
-      console.log('usePostLoginNavigation - Setting up dashboard:', {
-        dashboardPath,
-        defaultComponent,
-        currentPath: location.pathname,
-        currentSearch: location.search,
-        isAuthenticated,
-        userRole: user?.role
-      });
-      
       // If there's no component in the URL, set the default component
       if (defaultComponent && !location.search.includes('component=')) {
         const searchParams = new URLSearchParams();
@@ -81,18 +72,10 @@ export const usePostLoginNavigation = (options: UsePostLoginNavigationOptions) =
         // Convert display name to URL name
         const urlName = toUrlName(defaultComponent);
         searchParams.set('component', urlName);
-        
-        console.log('usePostLoginNavigation - Setting default component:', {
-          displayName: defaultComponent,
-          urlName: urlName
-        });
-        
-        // Use replace: true to replace the current URL
+
         // This ensures the dashboard is added to browser history
         navigate(`?${searchParams.toString()}`, { replace: true });
-      } else {
-        console.log('usePostLoginNavigation - Component already in URL or no default component');
-      }
+      } 
     }
   }, [isAuthenticated, user, location.pathname, location.search, dashboardPath, defaultComponent, navigate]);
 
@@ -100,7 +83,6 @@ export const usePostLoginNavigation = (options: UsePostLoginNavigationOptions) =
   useEffect(() => {
     if (!isAuthenticated) {
       hasNavigatedRef.current = false;
-      console.log('usePostLoginNavigation - User logged out, reset navigation flag');
     }
   }, [isAuthenticated]);
 

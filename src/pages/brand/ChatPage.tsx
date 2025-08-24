@@ -322,10 +322,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           };
 
           setMessages(prev => {
-            console.log('[DEBUG] setMessages callback: Previous messages count:', prev.length);
             const newMessages = [newMessage, ...prev];
-            console.log('[DEBUG] setMessages callback: New messages count:', newMessages.length);
-            console.log('[DEBUG] setMessages callback: First few messages:', newMessages.slice(0, 3));
             return newMessages;
           });
 
@@ -462,12 +459,10 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
 
     // Listen for offer acceptance confirmation messages
     const handleOfferAcceptanceMessage = (data: any) => {
-      console.log('Received offer acceptance message via socket:', data);
       
       if (!isMountedRef.current) return;
 
       if (data.roomId === selectedRoom?.room_id) {
-        console.log('Processing offer acceptance message for current room');
         
         // Add the acceptance confirmation message to the chat
         const confirmationMessage: Message = {
@@ -482,7 +477,6 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           created_at: data.timestamp,
         };
 
-        console.log('Adding confirmation message to chat:', confirmationMessage);
         setMessages((prev) => [...prev, confirmationMessage]);
 
         // Scroll to bottom to show new message
@@ -491,12 +485,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
           }
         }, 100);
-      } else {
-        console.log('Message not for current room:', {
-          messageRoomId: data.roomId,
-          currentRoomId: selectedRoom?.room_id
-        });
-      }
+      } 
     };
 
     // Listen for offer rejected events
@@ -764,7 +753,6 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         // If guide messages are needed, add them immediately to the messages array
         let finalMessages = [...deduplicatedMessages];
         if (needsGuideMessages && user) {
-          console.log('[DEBUG] loadMessages: Adding guide messages immediately for room:', roomId);
           
           const isBrand = user.role === 'brand';
           
@@ -1320,8 +1308,6 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
 
     try {
-      console.log('Making API call to accept offer:', offerId);
-
       toast({
         title: "Processando...",
         description: "Aceitando oferta...",
@@ -1337,16 +1323,9 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
 
         // Send acceptance confirmation message via socket
         if (selectedRoom && response.data?.offer && response.data?.contract && user) {
-          console.log('Sending offer acceptance message via socket:', {
-            roomId: selectedRoom.room_id,
-            offer: response.data.offer,
-            contract: response.data.contract,
-            user: { id: user.id, name: user.name, avatar: user.avatar_url }
-          });
           
           // Ensure we're in the room before sending the message
           if (isConnected) {
-            console.log('Socket is connected, sending message...');
             // Add a small delay to ensure everything is ready
             setTimeout(() => {
               sendOfferAcceptanceMessage(
@@ -1358,18 +1337,8 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                 user.avatar_url
               );
             }, 100);
-          } else {
-            console.log('Socket not connected, cannot send message');
           }
-        } else {
-          console.log('Cannot send socket message - missing data:', {
-            hasSelectedRoom: !!selectedRoom,
-            hasOffer: !!response.data?.offer,
-            hasContract: !!response.data?.contract,
-            hasUser: !!user,
-            responseData: response.data
-          });
-        }
+        } 
 
         // Reload data to show updated status
         if (selectedRoom) {
@@ -1427,7 +1396,6 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         throw new Error(`Invalid offer ID: ${offerId}`);
       }
 
-      console.log('Making API call to reject offer:', offerId);
 
       toast({
         title: "Processando...",
@@ -1477,8 +1445,6 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         console.error('Final validation failed for offer ID:', offerId);
         throw new Error(`Invalid offer ID: ${offerId}`);
       }
-
-      console.log('Making API call to cancel offer:', offerId);
 
       await hiringApi.cancelOffer(offerId);
       toast({
@@ -2494,18 +2460,10 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       // First, try to get the offer ID from the message data
       if (message.offer_data.offer_id && typeof message.offer_data.offer_id === 'number' && message.offer_data.offer_id > 0) {
         actualOfferId = message.offer_data.offer_id;
-        console.log('Using offer_id from message data:', actualOfferId);
       }
       
       // If no valid offer ID from message, try to find a matching offer from the offers list
       if (!actualOfferId && offers.length > 0) {
-        console.log('Attempting to find matching offer from offers list:', {
-          offers_count: offers.length,
-          offers_ids: offers.map(o => o.id),
-          message_budget: message.offer_data.budget,
-          message_days: message.offer_data.estimated_days,
-          message_title: message.offer_data.title
-        });
         
         // Try to find the offer by matching multiple properties for better accuracy
         const matchingOffer = offers.find(offer => {
@@ -2525,30 +2483,12 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           
           const isMatch = budgetMatch && daysMatch && titleMatch && statusMatch;
           
-          if (isMatch) {
-            console.log('Found matching offer:', {
-              offer_id: offer.id,
-              offer_budget: offer.budget,
-              offer_days: offer.estimated_days,
-              message_budget: message.offer_data.budget,
-              message_days: message.offer_data.estimated_days
-            });
-          }
-          
           return isMatch;
         });
         
         if (matchingOffer) {
           actualOfferId = matchingOffer.id;
-          console.log('Found matching offer by properties:', matchingOffer);
-        } else {
-          console.log('No matching offer found in offers list');
-        }
-      } else if (!actualOfferId) {
-        console.log('No offers available to search through:', {
-          offers_count: offers.length,
-          actualOfferId
-        });
+        } 
       }
       
       // Final check - if we still don't have a valid offer ID, show an error
@@ -2562,7 +2502,6 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         
         // Try to reload offers as a last resort
         if (selectedRoom && offers.length === 0) {
-          console.log('Attempting to reload offers for room:', selectedRoom.room_id);
           loadOffers(selectedRoom.room_id);
         }
         

@@ -59,13 +59,6 @@ function Index() {
         }
     };
 
-    // Debug logging to understand what's happening
-    useEffect(() => {
-        console.log('Creator Dashboard - Current component:', component);
-        console.log('Creator Dashboard - Current URL:', location.pathname + location.search);
-        console.log('Creator Dashboard - Is authenticated:', !!user);
-    }, [component, location.pathname, location.search, user]);
-
     const CreatorComponent = () => {
         // Define which components require premium access
         const premiumRequiredComponents = ["Painel", "Detalhes do Projeto", "Minha Aplicação", "Chat", "Notificações"];

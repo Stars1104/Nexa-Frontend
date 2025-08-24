@@ -36,13 +36,6 @@ function Index() {
         defaultComponent: "Minhas campanhas"
     });
 
-    // Debug logging to compare with creator dashboard
-    useEffect(() => {
-        console.log('Brand Dashboard - Current component:', component);
-        console.log('Brand Dashboard - Current URL:', location.pathname + location.search);
-        console.log('Brand Dashboard - Is authenticated:', !!user);
-    }, [component, location.pathname, location.search, user]);
-
     const CreatorComponent = () => {
         if (typeof component === "string") {
             switch (component) {

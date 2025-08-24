@@ -46,13 +46,6 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
   const { user } = useAppSelector((state) => state.auth);
   const { toast } = useToast();
   
-  // Debug logging
-  console.log('CampaignTimeline component rendered:', { 
-    contractId, 
-    isOpen, 
-    user: user ? { id: user.id, role: user.role } : null
-  });
-  
   const [milestones, setMilestones] = useState<CampaignMilestone[]>([]);
   const [statistics, setStatistics] = useState<TimelineStatistics | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -155,13 +148,10 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
 
   // Load timeline data
   useEffect(() => {
-    console.log('CampaignTimeline useEffect triggered:', { isOpen, contractId, user });
     
     if (isOpen && contractId && user) {
-      console.log('Loading timeline for contract:', contractId);
       loadTimeline();
     } else {
-      console.log('Not loading timeline:', { isOpen, contractId, hasUser: !!user });
       if (!user) {
         console.warn('User not authenticated, cannot load timeline');
       }
@@ -171,8 +161,6 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
   const loadTimeline = async () => {
     try {
       setIsLoading(true);
-      console.log('Loading timeline for contract:', contractId);
-      console.log('User role:', user?.role);
       
       // Check if user has access to this contract
       if (!user) {
@@ -187,9 +175,6 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
         campaignTimelineApi.getTimeline(contractId),
         campaignTimelineApi.getStatistics(contractId)
       ]);
-      
-      console.log('Timeline data received:', timelineData);
-      console.log('Stats data received:', statsData);
       
       setMilestones(timelineData);
       setStatistics(statsData);
@@ -215,7 +200,6 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
   const createMilestones = async () => {
     try {
       setIsLoading(true);
-      console.log('Creating milestones for contract:', contractId);
       
       const newMilestones = await campaignTimelineApi.createMilestones(contractId);
       setMilestones(newMilestones);

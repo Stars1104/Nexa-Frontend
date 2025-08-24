@@ -98,17 +98,23 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
   const createMilestones = async () => {
     try {
       setIsLoading(true);
+      
+      if (!user || user.role !== 'brand') {
+        throw new Error('Apenas marcas podem criar milestones');
+      }
+      
       const newMilestones = await campaignTimelineApi.createMilestones(contractId);
-      setMilestones(newMilestones);
+      
       toast({
         title: "Sucesso",
-        description: "Milestones criados com sucesso!",
+        description: "Milestones criados com sucesso",
       });
+      loadTimeline();
     } catch (error: any) {
       console.error('Error creating milestones:', error);
       toast({
         title: "Erro",
-        description: error.response?.data?.message || "Erro ao criar milestones",
+        description: error.response?.data?.message || error.message || "Erro ao criar milestones",
         variant: "destructive",
       });
     } finally {
@@ -117,33 +123,28 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
   };
 
   const handleFileUpload = async (milestoneId: number) => {
-    if (!selectedFile) {
-      toast({
-        title: "Erro",
-        description: "Por favor, selecione um arquivo",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    if (!selectedFile) return;
+    
     try {
       setIsUploading(true);
-      await campaignTimelineApi.uploadFile(milestoneId, selectedFile);
       
-      toast({
-        title: "Sucesso",
-        description: "Arquivo enviado com sucesso!",
-      });
+      const response = await campaignTimelineApi.uploadFile(milestoneId, selectedFile);
       
-      setShowUploadDialog(false);
-      setSelectedFile(null);
-      setMaterialDescription('');
-      loadTimeline(); // Reload to get updated data
+      if (response.success) {
+        toast({
+          title: "Sucesso",
+          description: "Arquivo enviado com sucesso",
+        });
+        setShowUploadDialog(false);
+        setSelectedFile(null);
+        setMaterialDescription('');
+        loadTimeline();
+      }
     } catch (error: any) {
       console.error('Error uploading file:', error);
       toast({
         title: "Erro",
-        description: error.response?.data?.message || "Erro ao enviar arquivo",
+        description: error.response?.data?.message || error.message || "Erro ao enviar arquivo",
         variant: "destructive",
       });
     } finally {
@@ -151,93 +152,70 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
     }
   };
 
-  const handleMilestoneApproval = async (milestoneId: number, approved: boolean) => {
+  const handleApproval = async (milestoneId: number, isApproved: boolean) => {
     try {
-      if (approved) {
-        await campaignTimelineApi.approveMilestone(milestoneId, comment);
-        toast({
-          title: "Sucesso",
-          description: "Milestone aprovado com sucesso!",
-        });
+      let response;
+      if (isApproved) {
+        response = await campaignTimelineApi.approveMilestone(milestoneId, comment);
       } else {
-        await campaignTimelineApi.rejectMilestone(milestoneId, comment);
-        toast({
-          title: "Sucesso",
-          description: "Milestone rejeitado com sucesso!",
-        });
+        response = await campaignTimelineApi.rejectMilestone(milestoneId, comment);
       }
       
+      toast({
+        title: "Sucesso",
+        description: isApproved ? "Milestone aprovado com sucesso" : "Milestone rejeitado com sucesso",
+      });
       setShowApprovalDialog(false);
       setComment('');
-      loadTimeline(); // Reload to get updated data
+      loadTimeline();
     } catch (error: any) {
-      console.error('Error updating milestone:', error);
+      console.error('Error approving milestone:', error);
       toast({
         title: "Erro",
-        description: error.response?.data?.message || "Erro ao atualizar milestone",
+        description: error.response?.data?.message || error.message || "Erro ao processar milestone",
         variant: "destructive",
       });
     }
   };
 
-  const handleJustifyDelay = async (milestoneId: number) => {
-    if (!justification.trim()) {
-      toast({
-        title: "Erro",
-        description: "Por favor, forneça uma justificativa para o atraso",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleJustification = async (milestoneId: number) => {
     try {
       await campaignTimelineApi.justifyDelay(milestoneId, justification);
       
       toast({
         title: "Sucesso",
-        description: "Atraso justificado com sucesso!",
+        description: "Atraso justificado com sucesso",
       });
-      
       setShowJustificationDialog(false);
       setJustification('');
-      loadTimeline(); // Reload to get updated data
+      loadTimeline();
     } catch (error: any) {
       console.error('Error justifying delay:', error);
       toast({
         title: "Erro",
-        description: error.response?.data?.message || "Erro ao justificar atraso",
+        description: error.response?.data?.message || error.message || "Erro ao justificar atraso",
         variant: "destructive",
       });
     }
   };
 
-  const handleExtendTimeline = async (milestoneId: number) => {
-    if (!extensionReason.trim()) {
-      toast({
-        title: "Erro",
-        description: "Por favor, forneça um motivo para a extensão",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleExtension = async (milestoneId: number) => {
     try {
       await campaignTimelineApi.extendTimeline(milestoneId, extensionDays, extensionReason);
       
       toast({
         title: "Sucesso",
-        description: "Timeline estendida com sucesso!",
+        description: "Prazo estendido com sucesso",
       });
-      
       setShowExtensionDialog(false);
       setExtensionDays(1);
       setExtensionReason('');
-      loadTimeline(); // Reload to get updated data
+      loadTimeline();
     } catch (error: any) {
-      console.error('Error extending timeline:', error);
+      console.error('Error extending deadline:', error);
       toast({
         title: "Erro",
-        description: error.response?.data?.message || "Erro ao estender timeline",
+        description: error.response?.data?.message || error.message || "Erro ao estender prazo",
         variant: "destructive",
       });
     }
@@ -264,12 +242,12 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
   };
 
   const getStatusColor = (status: string, isOverdue: boolean) => {
-    if (isOverdue) return 'text-red-600 bg-red-50 border-red-200';
+    if (isOverdue) return 'text-destructive bg-destructive/10 border-destructive/20';
     switch (status) {
-      case 'approved': return 'text-green-600 bg-green-50 border-green-200';
-      case 'completed': return 'text-green-600 bg-green-50 border-green-200';
-      case 'delayed': return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'approved': return 'text-green-600 bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800';
+      case 'completed': return 'text-green-600 bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800';
+      case 'delayed': return 'text-destructive bg-destructive/10 border-destructive/20';
+      default: return 'text-yellow-600 bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800';
     }
   };
 
@@ -281,21 +259,21 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
       {/* Backdrop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
           onClick={onClose}
         />
       )}
 
       {/* Sidebar */}
       <div className={cn(
-        "fixed right-0 top-0 h-full w-96 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 shadow-2xl transform transition-transform duration-300 ease-in-out z-50",
+        "fixed right-0 top-0 h-full w-96 bg-background border-l border-border shadow-2xl transform transition-transform duration-300 ease-in-out z-50",
         isOpen ? "translate-x-0" : "translate-x-full"
       )}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-border bg-card">
           <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <Clock className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold text-foreground">
               Linha do Tempo
             </h2>
           </div>
@@ -303,7 +281,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 hover:bg-accent"
           >
             <X className="w-4 h-4" />
           </Button>
@@ -311,9 +289,9 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
 
         {/* Warning for overdue/delayed milestones */}
         {(hasOverdueMilestones || hasDelayedMilestones) && (
-          <Alert className="mx-4 mt-4 border-red-200 bg-red-50 dark:bg-red-900/20">
-            <AlertTriangle className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-800 dark:text-red-200">
+          <Alert className="mx-4 mt-4 border-destructive/20 bg-destructive/10">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <AlertDescription className="text-destructive">
               {hasOverdueMilestones && hasDelayedMilestones 
                 ? "Existem milestones atrasados e com atraso justificado. Penalidades podem ser aplicadas."
                 : hasOverdueMilestones 
@@ -329,12 +307,12 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
           <div className="p-4 space-y-4">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : milestones.length === 0 ? (
               <div className="text-center py-8">
-                <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400 mb-4">
+                <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground mb-4">
                   Nenhum milestone encontrado
                 </p>
                 {user?.role === 'brand' && (
@@ -346,8 +324,6 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
               </div>
             ) : (
               <>
-
-
                 {/* Milestones */}
                 <div className="space-y-4">
                   {milestones.map((milestone, index) => {
@@ -360,29 +336,29 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
 
                     return (
                       <Card key={milestone.id} className={cn(
-                        "transition-all duration-200",
-                        isOverdue && "border-red-300 bg-red-50/50"
+                        "transition-all duration-200 border-border bg-card",
+                        isOverdue && "border-destructive/30 bg-destructive/5"
                       )}>
                         <CardHeader className="pb-3">
                           <div className="flex items-start justify-between">
                             <div className="flex items-center gap-3">
                               <span className="text-2xl">{getMilestoneIcon(milestone.milestone_type)}</span>
                               <div className="flex-1">
-                                <CardTitle className="text-sm font-medium text-gray-900 dark:text-white">
+                                <CardTitle className="text-sm font-medium text-foreground">
                                   {milestone.title}
                                 </CardTitle>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                <p className="text-xs text-muted-foreground mt-1">
                                   {milestone.description}
                                 </p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Badge className={cn(
+                              {/* <Badge className={cn(
                                 "text-xs border",
                                 getStatusColor(milestone.status, isOverdue)
                               )}>
                                 {getStatusIcon(milestone.status, isOverdue)}
-                              </Badge>
+                              </Badge> */}
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -395,7 +371,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                                   }
                                   setExpandedMilestones(newExpanded);
                                 }}
-                                className="h-6 w-6 p-0"
+                                className="h-6 w-6 p-0 hover:bg-accent"
                               >
                                 {isExpanded ? (
                                   <ChevronDown className="w-4 h-4" />
@@ -411,14 +387,14 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                           <CardContent className="pt-0 space-y-3">
                             {/* Deadline */}
                             <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-600 dark:text-gray-400">Prazo:</span>
+                              <span className="text-muted-foreground">Prazo:</span>
                               <span className={cn(
                                 "font-medium",
-                                isOverdue ? "text-red-600" : "text-gray-900 dark:text-white"
+                                isOverdue ? "text-destructive" : "text-foreground"
                               )}>
                                 {milestone.formatted_deadline}
                                 {isOverdue && (
-                                  <span className="ml-2 text-red-500">
+                                  <span className="ml-2 text-destructive">
                                     ({Math.abs(milestone.days_overdue || 0)} dias atrasado)
                                   </span>
                                 )}
@@ -430,26 +406,26 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
                                   {milestone.milestone_type === 'script_submission' ? (
-                                    <FileText className="w-4 h-4 text-blue-600" />
+                                    <FileText className="w-4 h-4 text-primary" />
                                   ) : (
-                                    <FileVideo className="w-4 h-4 text-purple-600" />
+                                    <FileVideo className="w-4 h-4 text-primary" />
                                   )}
-                                  <span className="text-sm font-medium">
+                                  <span className="text-sm font-medium text-foreground">
                                     {milestone.milestone_type === 'script_submission' ? 'Enviar Script' : 'Enviar Vídeo/Imagem'}
                                   </span>
                                 </div>
                                 
                                 {milestone.file_path ? (
-                                  <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                    <FileText className="w-4 h-4 text-gray-500" />
-                                    <span className="text-sm text-gray-600 dark:text-gray-400 flex-1">
+                                  <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                                    <FileText className="w-4 h-4 text-muted-foreground" />
+                                    <span className="text-sm text-muted-foreground flex-1">
                                       {milestone.file_name}
                                     </span>
                                     <Button
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => window.open(`/api/download/${milestone.file_path}`, '_blank')}
-                                      className="h-6 px-2 text-xs"
+                                      className="h-6 px-2 text-xs hover:bg-accent"
                                     >
                                       <Download className="w-3 h-3" />
                                     </Button>
@@ -475,7 +451,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
                                   <Check className="w-4 h-4 text-green-600" />
-                                  <span className="text-sm font-medium">Aprovar ou Rejeitar</span>
+                                  <span className="text-sm font-medium text-foreground">Aprovar ou Rejeitar</span>
                                 </div>
                                 <div className="flex gap-2">
                                   <Button
@@ -495,7 +471,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                                       setShowApprovalDialog(true);
                                     }}
                                     variant="outline"
-                                    className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                                    className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/5"
                                     size="sm"
                                   >
                                     <Ban className="w-4 h-4 mr-2" />
@@ -510,7 +486,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
                                   <AlertCircle className="w-4 h-4 text-orange-600" />
-                                  <span className="text-sm font-medium text-orange-700">
+                                  <span className="text-sm font-medium text-orange-700 dark:text-orange-400">
                                     Atraso Detectado - Justificar para Evitar Penalidades
                                   </span>
                                 </div>
@@ -520,7 +496,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                                     setShowJustificationDialog(true);
                                   }}
                                   variant="outline"
-                                  className="w-full border-orange-300 text-orange-600 hover:bg-orange-50"
+                                  className="w-full border-orange-300 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20"
                                   size="sm"
                                 >
                                   <AlertCircle className="w-4 h-4 mr-2" />
@@ -533,8 +509,8 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                             {canExtend && (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
-                                  <Clock className="w-4 h-4 text-blue-600" />
-                                  <span className="text-sm font-medium">Estender Prazo</span>
+                                  <Clock className="w-4 h-4 text-primary" />
+                                  <span className="text-sm font-medium text-foreground">Estender Prazo</span>
                                 </div>
                                 <Button
                                   onClick={() => {
@@ -555,27 +531,27 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                             {milestone.deliveryMaterials && milestone.deliveryMaterials.length > 0 && (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
-                                  <ImageIcon className="w-4 h-4 text-purple-600" />
-                                  <span className="text-sm font-medium">Materiais de Entrega</span>
+                                  <ImageIcon className="w-4 h-4 text-primary" />
+                                  <span className="text-sm font-medium text-foreground">Materiais de Entrega</span>
                                 </div>
                                 <div className="space-y-2">
                                   {milestone.deliveryMaterials.map((material) => (
-                                    <div key={material.id} className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                    <div key={material.id} className="p-2 bg-muted rounded-lg">
                                       <div className="flex items-center justify-between">
-                                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                                        <span className="text-sm text-muted-foreground">
                                           {material.file_name}
                                         </span>
                                         <Badge className={cn(
                                           "text-xs",
-                                          material.status === 'approved' ? "bg-green-100 text-green-800" :
-                                          material.status === 'rejected' ? "bg-red-100 text-red-800" :
-                                          "bg-yellow-100 text-yellow-800"
+                                          material.status === 'approved' ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400" :
+                                          material.status === 'rejected' ? "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400" :
+                                          "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
                                         )}>
                                           {material.status}
                                         </Badge>
                                       </div>
                                       {material.comment && (
-                                        <p className="text-xs text-gray-500 mt-1">{material.comment}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">{material.comment}</p>
                                       )}
                                     </div>
                                   ))}
@@ -596,17 +572,17 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
 
       {/* Upload Dialog */}
       {showUploadDialog && selectedMilestone && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-card rounded-lg p-6 max-w-md w-full border border-border">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground">
               {selectedMilestone.milestone_type === 'script_submission' ? (
                 <>
-                  <FileText className="w-5 h-5 text-blue-600" />
+                  <FileText className="w-5 h-5 text-primary" />
                   Enviar Script
                 </>
               ) : (
                 <>
-                  <FileVideo className="w-5 h-5 text-purple-600" />
+                  <FileVideo className="w-5 h-5 text-primary" />
                   Enviar Vídeo/Imagem
                 </>
               )}
@@ -614,7 +590,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium mb-2 text-foreground">
                   Arquivo
                 </label>
                 <Input
@@ -627,7 +603,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium mb-2 text-foreground">
                   Descrição (opcional)
                 </label>
                 <Textarea
@@ -673,16 +649,16 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
 
       {/* Approval Dialog */}
       {showApprovalDialog && selectedMilestone && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-card rounded-lg p-6 max-w-md w-full border border-border">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground">
               <Check className="w-5 h-5 text-green-600" />
               Aprovar Milestone
             </h3>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium mb-2 text-foreground">
                   Comentário (opcional)
                 </label>
                 <Textarea
@@ -705,7 +681,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                 Cancelar
               </Button>
               <Button
-                onClick={() => handleMilestoneApproval(selectedMilestone.id, true)}
+                onClick={() => handleApproval(selectedMilestone.id, true)}
                 className="bg-green-600 hover:bg-green-700"
               >
                 <Check className="w-4 h-4 mr-2" />
@@ -718,30 +694,23 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
 
       {/* Justification Dialog */}
       {showJustificationDialog && selectedMilestone && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-card rounded-lg p-6 max-w-md w-full border border-border">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground">
               <AlertCircle className="w-5 h-5 text-orange-600" />
               Justificar Atraso
             </h3>
             
             <div className="space-y-4">
-              <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
-                <p className="text-sm text-orange-800 dark:text-orange-200">
-                  <strong>⚠️ Aviso:</strong> Se você não justificar o atraso, poderá receber uma penalidade de 7 dias sem novos convites.
-                </p>
-              </div>
-              
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Justificativa <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium mb-2 text-foreground">
+                  Justificativa
                 </label>
                 <Textarea
                   value={justification}
                   onChange={(e) => setJustification(e.target.value)}
                   placeholder="Explique o motivo do atraso..."
-                  rows={4}
-                  required
+                  rows={3}
                 />
               </div>
             </div>
@@ -757,7 +726,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                 Cancelar
               </Button>
               <Button
-                onClick={() => handleJustifyDelay(selectedMilestone.id)}
+                onClick={() => handleJustification(selectedMilestone.id)}
                 disabled={!justification.trim()}
                 className="bg-orange-600 hover:bg-orange-700"
               >
@@ -771,17 +740,17 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
 
       {/* Extension Dialog */}
       {showExtensionDialog && selectedMilestone && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-blue-600" />
-              Estender Timeline
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-card rounded-lg p-6 max-w-md w-full border border-border">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground">
+              <Clock className="w-5 h-5 text-primary" />
+              Estender Prazo
             </h3>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Dias para estender
+                <label className="block text-sm font-medium mb-2 text-foreground">
+                  Dias de Extensão
                 </label>
                 <Input
                   type="number"
@@ -794,15 +763,14 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Motivo <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium mb-2 text-foreground">
+                  Motivo da Extensão
                 </label>
                 <Textarea
                   value={extensionReason}
                   onChange={(e) => setExtensionReason(e.target.value)}
                   placeholder="Explique o motivo da extensão..."
-                  rows={4}
-                  required
+                  rows={3}
                 />
               </div>
             </div>
@@ -819,9 +787,8 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                 Cancelar
               </Button>
               <Button
-                onClick={() => handleExtendTimeline(selectedMilestone.id)}
+                onClick={() => handleExtension(selectedMilestone.id)}
                 disabled={!extensionReason.trim()}
-                className="bg-blue-600 hover:bg-blue-700"
               >
                 <Clock className="w-4 h-4 mr-2" />
                 Estender
