@@ -42,8 +42,8 @@ export interface Campaign {
   budget: number;
   remunerationType?: 'paga' | 'permuta';
   deadline: string;
-  states: string[];
-  creatorRequirements: string[];
+  target_states: string[];
+  requirements: string[];
   brand: {
     id: string;
     name: string;
@@ -53,9 +53,8 @@ export interface Campaign {
   brandId: string;
   type: string;
   category?: string;
-  value: number;
   status: 'pending' | 'approved' | 'rejected' | 'archived';
-  submissionDate: string;
+  created_at: string;
   approvedCreators: number;
   logo?: string;
   attachments?: string[];
@@ -70,7 +69,7 @@ export interface CampaignFormData {
   budget: string;
   remunerationType: 'paga' | 'permuta';
   deadline: Date;
-  states: string[];
+  target_states: string[];
   creatorRequirements: string;
   type: string;
   minAge?: number;

@@ -279,7 +279,7 @@ export default function PendingCampaign() {
                                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-muted-foreground mt-2">
                                             <div className="flex items-center gap-4">
                                                 <span>
-                                                    <span className="font-medium text-foreground">Valor:</span> R$ {campaign.budget?.toLocaleString("pt-BR") || campaign.value?.toLocaleString("pt-BR")}
+                                                    <span className="font-medium text-foreground">Valor:</span> R$ {campaign.budget?.toLocaleString("pt-BR")}
                                                 </span>
                                                 <span>
                                                     <span className="font-medium text-foreground">Prazo:</span> {campaign.created_at ? new Date(campaign.created_at).toLocaleDateString("pt-BR") : 'Prazo não definido'}

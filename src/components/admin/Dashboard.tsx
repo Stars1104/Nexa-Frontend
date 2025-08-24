@@ -170,8 +170,8 @@ export default function Dashboard() {
                                         <div key={campaign.id} className="flex flex-col sm:flex-row sm:items-center justify-between border rounded-lg px-4 py-3 bg-muted/40 dark:bg-muted/20">
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-medium text-foreground">{campaign.title}</div>
-                                                <div className="text-xs text-muted-foreground mt-0.5">
-                                                    {campaign.brand} • {campaign.type} • R$ {campaign.value.toLocaleString()}
+                                                <div className="text-sm text-muted-foreground">
+                                                    {campaign.brand} • {campaign.type} • R$ {campaign.budget.toLocaleString()}
                                                 </div>
                                             </div>
                                             <div className="flex gap-2 mt-3 sm:mt-0 sm:ml-4">

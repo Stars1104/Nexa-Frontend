@@ -79,12 +79,12 @@ const CampaignDetail = ({
   const displayData = {
     ...campaign,
     // Only provide fallbacks if the real data is missing
-    submissionDate: campaign.submissionDate || new Date().toLocaleDateString("pt-BR"),
+    submissionDate: campaign.created_at || new Date().toLocaleDateString("pt-BR"),
     briefing: campaign.description || "Briefing não disponível",
-    requirements: campaign.creatorRequirements || ["Requisitos não especificados"],
+    requirements: campaign.requirements || ["Requisitos não especificados"],
     audience: "Público-alvo não especificado", // This might not be in the campaign data
     deliverables: "Entregáveis não especificados", // This might not be in the campaign data
-    states: Array.isArray(campaign.target_states) ? campaign.target_states : ["Estados não especificados"],
+            states: Array.isArray(campaign.target_states) ? campaign.target_states : ["Estados não especificados"],
   };
 
   // Get attachments from campaign data

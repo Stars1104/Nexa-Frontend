@@ -90,7 +90,7 @@ export interface PendingCampaign {
   title: string;
   brand: string;
   type: string;
-  value: number;
+  budget: number;
 }
 
 export interface PendingCampaignsResponse {
