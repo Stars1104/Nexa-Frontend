@@ -210,7 +210,7 @@ const Notification = () => {
     return (
         <>
             <Helmet>
-                <title>Nexa - Admin Notificações</title>
+                <title>Nexa - Notificações</title>
                 <meta name="description" content="Browse Nexa guides filtered by brand and creator. Watch embedded videos and manage guides." />
                 {canonical && <link rel="canonical" href={canonical} />}
                 <script type="application/ld+json">{JSON.stringify(structuredData)}</script>

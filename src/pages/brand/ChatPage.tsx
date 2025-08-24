@@ -159,7 +159,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     onOfferRejected,
     onOfferCancelled,
     onContractCompleted,
-    onContractTerminated,
+
     onContractActivated,
     sendOfferAcceptanceMessage,
     reconnect,
@@ -657,7 +657,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       socket.off('contract_terminated', handleContractTerminated);
       socket.off('contract_activated', handleContractActivated);
     };
-  }, [socket, selectedRoom, user, onOfferCreated, onOfferAccepted, onOfferRejected, onOfferCancelled, onContractCompleted, onContractTerminated, onContractActivated]);
+  }, [socket, selectedRoom, user, onOfferCreated, onOfferAccepted, onOfferRejected, onOfferCancelled, onContractCompleted, onContractActivated]);
 
   // Auto-clear typing users after 3 seconds to prevent them from persisting
   useEffect(() => {
@@ -1237,9 +1237,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
   const canEndContract =
     user?.role === "brand" && selectedRoom && (activeContract || acceptedOffer);
 
-  // Check if current user can terminate contract (brand only)
-  const canTerminateContract =
-    user?.role === "brand" && selectedRoom && (activeContract || acceptedOffer);
+
 
   // Check if current user can activate contract (brand only) - CACHE BUST
   const canActivateContract =
@@ -1571,41 +1569,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   };
 
-  const handleTerminateContract = async (contractId: number) => {
-    try {
-      const response = await hiringApi.terminateContract(contractId);
 
-      if (response.success) {
-        toast({
-          title: "Sucesso",
-          description: "Contrato terminado com sucesso!",
-        });
-
-        // Update local state immediately
-        setContracts((prev) =>
-          prev.map((contract) =>
-            contract.id === contractId
-              ? {
-                ...contract,
-                status: 'terminated',
-                workflow_status: 'terminated',
-              }
-              : contract
-          )
-        );
-      } else {
-        throw new Error(response.message || "Erro ao terminar contrato");
-      }
-    } catch (error: any) {
-      console.error("Error terminating contract:", error);
-      toast({
-        title: "Erro",
-        description:
-          error.response?.data?.message || "Erro ao terminar contrato",
-        variant: "destructive",
-      });
-    }
-  };
 
   // Review modal handlers
   const handleReviewSubmitted = () => {
@@ -3215,24 +3179,11 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                         }}
                         className="bg-orange-600 hover:bg-orange-700 text-white"
                       >
-                        Completed
+                        Concluído
                       </Button>
                     )}
 
-                    {/* Terminate Contract Button */}
-                    {canTerminateContract && (
-                      <Button
-                        onClick={() => {
-                          const contractToTerminate = activeContract;
-                          if (contractToTerminate) {
-                            handleTerminateContract(contractToTerminate.id);
-                          }
-                        }}
-                        className="bg-red-600 hover:bg-red-700 text-white"
-                      >
-                        Terminar Contrato
-                      </Button>
-                    )}
+
                   </div>
                 </div>
 

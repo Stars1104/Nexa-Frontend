@@ -64,16 +64,16 @@ export const ContractsWaitingReview: React.FC<ContractsWaitingReviewProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-600" />
-            Contracts Waiting for Review
+            Contratos Aguardando Avaliação
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
             <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">All Caught Up!</h3>
+            <h3 className="text-lg font-semibold mb-2">Tudo em Dia!</h3>
             <p className="text-muted-foreground">
-              You have no contracts waiting for review. All your completed
-              contracts have been reviewed.
+              Você não tem contratos aguardando avaliação. Todos os seus contratos
+              concluídos foram avaliados.
             </p>
           </div>
         </CardContent>
@@ -86,11 +86,10 @@ export const ContractsWaitingReview: React.FC<ContractsWaitingReviewProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <AlertCircle className="h-5 w-5 text-orange-600" />
-          Contracts Waiting for Review ({contracts.length})
+          Contratos Aguardando Avaliação ({contracts.length})
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Please review these completed contracts to release payment to
-          creators.
+          Por favor, avalie estes contratos concluídos para liberar o pagamento aos criadores.
         </p>
       </CardHeader>
       <CardContent>
@@ -112,7 +111,7 @@ export const ContractsWaitingReview: React.FC<ContractsWaitingReviewProps> = ({
                     <div>
                       <h4 className="font-semibold">{contract.title}</h4>
                       <p className="text-sm text-muted-foreground">
-                        Creator: {contract.creator.name}
+                        Criador: {contract.creator.name}
                       </p>
                     </div>
                   </div>
@@ -129,7 +128,7 @@ export const ContractsWaitingReview: React.FC<ContractsWaitingReviewProps> = ({
                     <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4 text-blue-600" />
                       <span>
-                        Completed{" "}
+                        Concluído{" "}
                         {new Date(contract.completed_at!).toLocaleDateString()}
                       </span>
                     </div>
@@ -141,14 +140,14 @@ export const ContractsWaitingReview: React.FC<ContractsWaitingReviewProps> = ({
                     variant="outline"
                     className="text-orange-600 border-orange-600"
                   >
-                    Waiting for Review
+                    Aguardando Avaliação
                   </Badge>
                   <Button
                     size="sm"
                     className="bg-orange-600 hover:bg-orange-700"
                   >
                     <Star className="h-4 w-4 mr-2" />
-                    Submit Review
+                    Enviar Avaliação
                   </Button>
                 </div>
               </div>

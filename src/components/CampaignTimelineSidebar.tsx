@@ -5,7 +5,7 @@ import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
-import { Progress } from './ui/progress';
+
 import { ScrollArea } from './ui/scroll-area';
 import { 
   Clock, 
@@ -28,8 +28,7 @@ import { useToast } from '../hooks/use-toast';
 import { useAppSelector } from '../store/hooks';
 import { 
   campaignTimelineApi, 
-  CampaignMilestone, 
-  TimelineStatistics 
+  CampaignMilestone
 } from '../api/campaignTimeline';
 
 interface CampaignTimelineSidebarProps {
@@ -43,7 +42,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
   const { toast } = useToast();
   
   const [milestones, setMilestones] = useState<CampaignMilestone[]>([]);
-  const [statistics, setStatistics] = useState<TimelineStatistics | null>(null);
+
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMilestone, setSelectedMilestone] = useState<CampaignMilestone | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
@@ -81,13 +80,9 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
         throw new Error('Usuário não tem permissão para acessar este contrato');
       }
       
-      const [timelineData, statsData] = await Promise.all([
-        campaignTimelineApi.getTimeline(contractId),
-        campaignTimelineApi.getStatistics(contractId)
-      ]);
+      const timelineData = await campaignTimelineApi.getTimeline(contractId);
       
       setMilestones(timelineData);
-      setStatistics(statsData);
     } catch (error: any) {
       console.error('Error loading timeline:', error);
       toast({
@@ -351,25 +346,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
               </div>
             ) : (
               <>
-                {/* Statistics */}
-                {statistics && (
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium">Progresso Geral</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Milestones Concluídos</span>
-                        <span className="font-medium">{statistics.completed_milestones}/{statistics.total_milestones}</span>
-                      </div>
-                      <Progress value={(statistics.completed_milestones / statistics.total_milestones) * 100} />
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Progresso</span>
-                        <span className="font-medium">{statistics.progress_percentage}% concluído</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+
 
                 {/* Milestones */}
                 <div className="space-y-4">
@@ -404,7 +381,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                                 "text-xs border",
                                 getStatusColor(milestone.status, isOverdue)
                               )}>
-                                {getStatusIcon(milestone.status, isOverdue)} {milestone.status}
+                                {getStatusIcon(milestone.status, isOverdue)}
                               </Badge>
                               <Button
                                 variant="ghost"
