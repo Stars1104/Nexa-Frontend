@@ -171,7 +171,7 @@ export default function Dashboard() {
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-medium text-foreground">{campaign.title}</div>
                                                 <div className="text-sm text-muted-foreground">
-                                                    {campaign.brand} • {campaign.type} • R$ {campaign.budget.toLocaleString()}
+                                                    {campaign.brand} • {campaign.type} • R$ {campaign.budget}
                                                 </div>
                                             </div>
                                             <div className="flex gap-2 mt-3 sm:mt-0 sm:ml-4">
