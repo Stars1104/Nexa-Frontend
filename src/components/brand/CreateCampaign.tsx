@@ -204,8 +204,8 @@ export default function CreateCampaign() {
       safeToast('error', "Descrição da campanha é obrigatória.");
       return false;
     }
-    if (!budget.trim()) {
-      safeToast('error', "Orçamento é obrigatório.");
+    if (remunerationType === 'paga' && !budget.trim()) {
+      safeToast('error', "Orçamento é obrigatório para campanhas pagas.");
       return false;
     }
     if (!deadline) {
@@ -264,8 +264,9 @@ export default function CreateCampaign() {
         briefing: creatorReq.trim(),
         budget: budget.trim(),
         remunerationType: remunerationType,
+        status: 'pending', // Assuming a default status for now, as it's not in the form
         deadline: deadline!,
-        states: selectedStates,
+        target_states: selectedStates,
         creatorRequirements: creatorReq.trim(),
         type: campaignType,
         minAge: minAge,
@@ -361,20 +362,6 @@ export default function CreateCampaign() {
              />
            </div>
 
-            {/* Orçamento */}
-           <div className="mb-5">
-             <label htmlFor="budget" className="block text-xs font-medium text-zinc-500 mb-1">Orçamento (R$) *</label>
-             <Input
-               id="budget"
-               type="text"
-               value={budget}
-               onChange={e => setBudget(e.target.value)}
-               placeholder="R$ 800,00"
-               className="rounded-lg border-zinc-200 dark:border-zinc-700 bg-background text-zinc-900 dark:text-zinc-100 text-sm"
-               required
-             />
-           </div>
-
            {/* Tipo de Remuneração */}
            <div className="mb-5">
              <label htmlFor="remunerationType" className="block text-xs font-medium text-zinc-500 mb-1">Tipo de Remuneração *</label>
@@ -388,6 +375,37 @@ export default function CreateCampaign() {
                <option value="paga">Paga (Dinheiro)</option>
                <option value="permuta">Permuta (Troca por produtos/serviços)</option>
              </select>
+           </div>
+
+            {/* Orçamento */}
+           <div className="mb-5">
+             <label htmlFor="budget" className="block text-xs font-medium text-zinc-500 mb-1">
+               {remunerationType === 'permuta' ? 'Valor Estimado (R$) - Opcional' : 'Orçamento (R$) *'}
+             </label>
+             <Input
+               id="budget"
+               type="text"
+               value={budget}
+               onChange={e => setBudget(e.target.value)}
+               placeholder={remunerationType === 'permuta' ? 'R$ 0,00 (opcional)' : 'R$ 800,00'}
+               className={`rounded-lg border-zinc-200 dark:border-zinc-700 bg-background text-zinc-900 dark:text-zinc-100 text-sm ${
+                 remunerationType === 'permuta' 
+                   ? '!opacity-50 !cursor-not-allowed !bg-gray-100 dark:!bg-gray-800 !border-gray-300 dark:!border-gray-600' 
+                   : ''
+               }`}
+               disabled={remunerationType === 'permuta'}
+               required={remunerationType !== 'permuta'}
+               style={{
+                 opacity: remunerationType === 'permuta' ? 0.5 : 1,
+                 cursor: remunerationType === 'permuta' ? 'not-allowed' : 'text',
+                 backgroundColor: remunerationType === 'permuta' ? '#f3f4f6' : 'transparent'
+               }}
+             />
+             {remunerationType === 'permuta' && (
+               <span className="block text-xs text-zinc-400 mt-1">
+                 Para campanhas de permuta, o valor é opcional e pode ser usado como referência
+               </span>
+             )}
            </div>
 
            {/* Tipo de Campanha */}

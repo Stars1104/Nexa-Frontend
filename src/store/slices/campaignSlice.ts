@@ -68,6 +68,7 @@ export interface CampaignFormData {
   briefing: string;
   budget: string;
   remunerationType: 'paga' | 'permuta';
+  status?: string;
   deadline: Date;
   target_states: string[];
   creatorRequirements: string;

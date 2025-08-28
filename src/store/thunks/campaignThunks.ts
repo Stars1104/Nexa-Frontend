@@ -95,14 +95,33 @@ export const createCampaign = createAsyncThunk<
     const requirements = (campaignData.briefing || campaignData.creatorRequirements || '').trim();
     formData.append('requirements', requirements);
     // Ensure budget is a valid number
-    const budgetValue = parseFloat(campaignData.budget);
-    if (isNaN(budgetValue) || budgetValue <= 0) {
-      throw new Error('Orçamento deve ser um número válido e positivo');
+    if (campaignData.remunerationType === 'paga') {
+      const budgetValue = parseFloat(campaignData.budget);
+      if (isNaN(budgetValue) || budgetValue <= 0) {
+        throw new Error('Orçamento deve ser um número válido e positivo para campanhas pagas');
+      }
+      formData.append('budget', budgetValue.toString());
+    } else {
+      // For permuta campaigns, budget is optional
+      if (campaignData.budget.trim()) {
+        const budgetValue = parseFloat(campaignData.budget);
+        if (!isNaN(budgetValue) && budgetValue >= 0) {
+          formData.append('budget', budgetValue.toString());
+        } else {
+          formData.append('budget', '0');
+        }
+      } else {
+        formData.append('budget', '0');
+      }
     }
-    formData.append('budget', budgetValue.toString());
     
     // Add remuneration type
     formData.append('remuneration_type', campaignData.remunerationType);
+    
+    // Add status if provided
+    if (campaignData.status) {
+      formData.append('status', campaignData.status);
+    }
     
     // Ensure deadline is a valid date
     if (!campaignData.deadline || isNaN(campaignData.deadline.getTime())) {
@@ -111,8 +130,8 @@ export const createCampaign = createAsyncThunk<
     formData.append('deadline', campaignData.deadline.toISOString().split('T')[0]); // Send only the date part
     
     // Handle target_states - send as array
-    if (campaignData.states && campaignData.states.length > 0) {
-      campaignData.states.forEach((state: string) => {
+    if (campaignData.target_states && campaignData.target_states.length > 0) {
+      campaignData.target_states.forEach((state: string) => {
         formData.append('target_states[]', state);
       });
     }
@@ -326,10 +345,10 @@ export const updateCampaign = createAsyncThunk<
     formData.append('budget', data.budget);
     formData.append('deadline', data.deadline.toISOString());
     
-    // Handle states - send as comma-separated string
-    const filteredStates = data.states.filter(Boolean);
-    formData.append('states', filteredStates.join(','));
-    formData.append('locations', filteredStates.join(',')); // Also send as locations in case backend expects it 
+    // Handle target_states - send as comma-separated string
+    const filteredStates = data.target_states.filter(Boolean);
+    formData.append('target_states', filteredStates.join(','));
+    formData.append('locations', filteredStates.join(',')); // Also send as locations in case backend expects it
     
     formData.append('creatorRequirements', data.creatorRequirements);
     formData.append('type', data.type);
