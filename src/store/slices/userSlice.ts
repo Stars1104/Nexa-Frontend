@@ -13,6 +13,15 @@ interface UserProfile {
   gender?: string;
   categories?: string[];
   has_premium?: boolean;
+  creator_type?: string;
+  birth_date?: string;
+  instagram_handle?: string;
+  tiktok_handle?: string;
+  youtube_channel?: string;
+  facebook_page?: string;
+  twitter_handle?: string;
+  industry?: string;
+  state?: string;
   socialLinks?: {
     twitter?: string;
     instagram?: string;

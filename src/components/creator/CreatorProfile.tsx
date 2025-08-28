@@ -39,6 +39,12 @@ const defaultProfile = {
   age: null,
   creator_type: null,
   birth_date: null,
+  instagram_handle: null,
+  tiktok_handle: null,
+  youtube_channel: null,
+  facebook_page: null,
+  twitter_handle: null,
+  industry: null,
 };
 
 export const CreatorProfile = () => {
@@ -115,6 +121,12 @@ export const CreatorProfile = () => {
     age: profile?.age || user?.age || defaultProfile.age,
     creator_type: profile?.creator_type || user?.creator_type || defaultProfile.creator_type,
     birth_date: profile?.birth_date || user?.birth_date || null,
+    instagram_handle: profile?.instagram_handle || user?.instagram_handle || defaultProfile.instagram_handle,
+    tiktok_handle: profile?.tiktok_handle || user?.tiktok_handle || defaultProfile.tiktok_handle,
+    youtube_channel: profile?.youtube_channel || user?.youtube_channel || defaultProfile.youtube_channel,
+    facebook_page: profile?.facebook_page || user?.facebook_page || defaultProfile.facebook_page,
+    twitter_handle: profile?.twitter_handle || user?.twitter_handle || defaultProfile.twitter_handle,
+    industry: profile?.industry || user?.industry || defaultProfile.industry,
   };
 
   const handleSaveProfile = useCallback(
@@ -131,6 +143,12 @@ export const CreatorProfile = () => {
           gender: updatedProfile.gender,
           birth_date: updatedProfile.birth_date,
           creator_type: updatedProfile.creator_type,
+          instagram_handle: updatedProfile.instagram_handle,
+          tiktok_handle: updatedProfile.tiktok_handle,
+          youtube_channel: updatedProfile.youtube_channel,
+          facebook_page: updatedProfile.facebook_page,
+          twitter_handle: updatedProfile.twitter_handle,
+          industry: updatedProfile.industry,
         };
 
         // Avatar: backend expects 'avatar' (file), not 'avatar_url'
@@ -222,7 +240,24 @@ export const CreatorProfile = () => {
   if (editMode) {
     return (
       <EditProfile
-        initialProfile={displayProfile}
+        initialProfile={{
+          name: displayProfile.name,
+          email: displayProfile.email,
+          state: displayProfile.state,
+          role: displayProfile.role,
+          languages: displayProfile.languages,
+          gender: displayProfile.gender,
+          categories: displayProfile.categories,
+          image: displayProfile.image,
+          birth_date: displayProfile.birth_date,
+          creator_type: displayProfile.creator_type,
+          instagram_handle: displayProfile.instagram_handle,
+          tiktok_handle: displayProfile.tiktok_handle,
+          youtube_channel: displayProfile.youtube_channel,
+          facebook_page: displayProfile.facebook_page,
+          twitter_handle: displayProfile.twitter_handle,
+          industry: displayProfile.industry,
+        }}
         onCancel={() => setEditMode(false)}
         onSave={handleSaveProfile}
         isLoading={isLoading || isUpdating}
@@ -421,30 +456,92 @@ export const CreatorProfile = () => {
                      displayProfile.gender || 'Não especificado'}
                   </div>
                 </div>
-                {displayProfile.age && (
-                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                    <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                      Idade
-                    </div>
-                    <div className="text-gray-900 dark:text-white font-medium">
-                      {displayProfile.age} anos
-                    </div>
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
+                    Data de Nascimento
                   </div>
-                )}
-                {displayProfile.creator_type && (
-                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                    <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                      Tipo de Criador
-                    </div>
-                    <div className="text-gray-900 dark:text-white font-medium">
-                      {displayProfile.creator_type === 'ugc' ? 'UGC (Conteúdo do Usuário)' :
+                  <div className="text-gray-900 dark:text-white font-medium">
+                    {displayProfile.birth_date ? 
+                      new Date(displayProfile.birth_date).toLocaleDateString('pt-BR') : 
+                      'Não informado'}
+                  </div>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
+                    Tipo de Criador
+                  </div>
+                  <div className="text-gray-900 dark:text-white font-medium">
+                    {displayProfile.creator_type ? 
+                      (displayProfile.creator_type === 'ugc' ? 'UGC (Conteúdo do Usuário)' :
                        displayProfile.creator_type === 'influencer' ? 'Influenciador' :
                        displayProfile.creator_type === 'both' ? 'UGC e Influenciador' :
-                       displayProfile.creator_type}
-                    </div>
+                       displayProfile.creator_type) : 
+                      'Não informado'}
                   </div>
-                )}
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
+                    Indústria
+                  </div>
+                  <div className="text-gray-900 dark:text-white font-medium">
+                    {displayProfile.industry || 'Não informado'}
+                  </div>
+                </div>
 
+              </div>
+            </div>
+            
+            {/* Social Media Information - Always show for all creators */}
+            <div className="w-full">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">
+                Redes Sociais
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                {displayProfile.creator_type === 'influencer' || displayProfile.creator_type === 'both' 
+                  ? 'Suas redes sociais ajudam as marcas a conhecerem melhor seu alcance e engajamento'
+                  : 'Adicione suas redes sociais para aumentar suas chances de ser selecionado para campanhas'}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 text-sm">
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
+                    Instagram
+                  </div>
+                  <div className="text-gray-900 dark:text-white font-medium">
+                    {displayProfile.instagram_handle || 'Não informado'}
+                  </div>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
+                    TikTok
+                  </div>
+                  <div className="text-gray-900 dark:text-white font-medium">
+                    {displayProfile.tiktok_handle || 'Não informado'}
+                  </div>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
+                    YouTube
+                  </div>
+                  <div className="text-gray-900 dark:text-white font-medium">
+                    {displayProfile.youtube_channel || 'Não informado'}
+                  </div>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
+                    Facebook
+                  </div>
+                  <div className="text-gray-900 dark:text-white font-medium">
+                    {displayProfile.facebook_page || 'Não informado'}
+                  </div>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
+                    Twitter
+                  </div>
+                  <div className="text-gray-900 dark:text-white font-medium">
+                    {displayProfile.twitter_handle || 'Não informado'}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

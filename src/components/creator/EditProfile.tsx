@@ -7,6 +7,13 @@ import {
     SelectContent,
     SelectItem
 } from "../ui/select";
+import { Calendar } from "../ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Button } from "../ui/button";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { UploadIcon, XIcon } from "lucide-react";
 
 const BRAZILIAN_STATES = [
@@ -39,6 +46,29 @@ const BRAZILIAN_STATES = [
   "Tocantins"
 ];
 
+const INDUSTRIES = [
+  "Moda e Beleza",
+  "Tecnologia",
+  "Saúde e Bem-estar",
+  "Educação",
+  "Entretenimento",
+  "Esportes",
+  "Gastronomia",
+  "Viagem e Turismo",
+  "Negócios e Empreendedorismo",
+  "Arte e Cultura",
+  "Música",
+  "Jogos",
+  "Fitness e Esportes",
+  "Maternidade e Família",
+  "Automotivo",
+  "Imóveis",
+  "Finanças",
+  "Política",
+  "Meio Ambiente",
+  "Outros"
+];
+
 const getInitials = (name: string) => {
     return name
         .split(" ")
@@ -61,6 +91,12 @@ const defaultProfile = {
     image: null as File | null,
     birth_date: null as string | null,
     creator_type: null as string | null,
+    instagram_handle: null as string | null,
+    tiktok_handle: null as string | null,
+    youtube_channel: null as string | null,
+    facebook_page: null as string | null,
+    twitter_handle: null as string | null,
+    industry: null as string | null,
 };
 
 export const EditProfile: React.FC<{
@@ -120,6 +156,19 @@ export const EditProfile: React.FC<{
 
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Validate required fields
+        if (!profile.gender) {
+            setError("Gênero é obrigatório");
+            return;
+        }
+        
+        if (!profile.birth_date) {
+            setError("Data de nascimento é obrigatória");
+            return;
+        }
+        
+        setError("");
         onSave(profile);
     };
 
@@ -249,11 +298,12 @@ export const EditProfile: React.FC<{
                         />
                     </div>
                     <div className="flex flex-col">
-                        <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Gênero <span className="text-xs text-gray-400">(Opcional)</span></label>
+                        <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Gênero <span className="text-red-500">*</span></label>
                         <Select
-                            value={profile.gender || 'none'}
-                            onValueChange={val => setProfile(p => ({ ...p, gender: val === 'none' ? null : val }))}
+                            value={profile.gender || ''}
+                            onValueChange={val => setProfile(p => ({ ...p, gender: val }))}
                             disabled={isLoading}
+                            required
                         >
                             <SelectTrigger className="bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-md px-4 py-2 text-gray-900 dark:text-white outline-none placeholder-gray-400 dark:placeholder-gray-500 text-base">
                                 <SelectValue placeholder="Selecione o gênero" />
@@ -262,23 +312,42 @@ export const EditProfile: React.FC<{
                                 <SelectItem value="female">Feminino</SelectItem>
                                 <SelectItem value="male">Masculino</SelectItem>
                                 <SelectItem value="other">Não-binário</SelectItem>
-                                <SelectItem value="none">Prefiro não informar</SelectItem>
                             </SelectContent>
                         </Select>
-                        <span className="text-xs text-gray-400 mt-1">Campo opcional</span>
+                        <span className="text-xs text-gray-400 mt-1">Campo obrigatório</span>
                     </div>
                     <div className="flex flex-col">
-                        <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Nascimento <span className="text-xs text-gray-400">(Opcional)</span></label>
-                        <Input
-                            id="birth_date"
-                            name="birth_date"
-                            type="date"
-                            value={profile.birth_date || ''}
-                            onChange={handleChange}
-                            disabled={isLoading}
-                            max={new Date().toISOString().split('T')[0]}
-                        />
-                        <span className="text-xs text-gray-400 mt-1">Isso ajuda as marcas a encontrar campanhas adequadas para sua idade</span>
+                        <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Nascimento <span className="text-red-500">*</span></label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className={cn(
+                                        "w-full justify-start text-left font-normal bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-md px-4 py-2 text-gray-900 dark:text-white outline-none placeholder-gray-400 dark:placeholder-gray-500 text-base",
+                                        !profile.birth_date && "text-gray-400 dark:text-gray-500"
+                                    )}
+                                    disabled={isLoading}
+                                >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {profile.birth_date ? (
+                                        format(new Date(profile.birth_date), "PPP", { locale: ptBR })
+                                    ) : (
+                                        <span>Selecione uma data</span>
+                                    )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={profile.birth_date ? new Date(profile.birth_date) : undefined}
+                                    onSelect={(date) => setProfile(p => ({ ...p, birth_date: date ? format(date, 'yyyy-MM-dd') : null }))}
+                                    disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
+                                    initialFocus
+                                    locale={ptBR}
+                                />
+                            </PopoverContent>
+                        </Popover>
+                        <span className="text-xs text-gray-400 mt-1">Campo obrigatório - Isso ajuda as marcas a encontrar campanhas adequadas para sua idade</span>
                     </div>
                     <div className="flex flex-col">
                         <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de Criador <span className="text-xs text-gray-400">(Opcional)</span></label>
@@ -298,6 +367,95 @@ export const EditProfile: React.FC<{
                         </Select>
                         <span className="text-xs text-gray-400 mt-1">Isso ajuda as marcas a encontrar campanhas adequadas para seu perfil</span>
                     </div>
+                    <div className="flex flex-col">
+                        <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Indústria <span className="text-xs text-gray-400">(Opcional)</span></label>
+                        <Select
+                            value={profile.industry || ''}
+                            onValueChange={val => setProfile(p => ({ ...p, industry: val }))}
+                            disabled={isLoading}
+                        >
+                            <SelectTrigger className="bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-md px-4 py-2 text-gray-900 dark:text-white outline-none placeholder-gray-400 dark:placeholder-gray-500 text-base">
+                                <SelectValue placeholder="Selecione sua indústria" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {INDUSTRIES.map((industry) => (
+                                    <SelectItem key={industry} value={industry}>
+                                        {industry}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <span className="text-xs text-gray-400 mt-1">Sua área de atuação principal</span>
+                    </div>
+                    
+                    {/* Social Media Fields - Only show for influencers */}
+                    {(profile.creator_type === 'influencer' || profile.creator_type === 'both') && (
+                        <>
+                            <div className="col-span-2">
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Redes Sociais</h3>
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Instagram <span className="text-xs text-gray-400">(Opcional)</span></label>
+                                <Input
+                                    id="instagram_handle"
+                                    name="instagram_handle"
+                                    type="text"
+                                    placeholder="@seu_usuario"
+                                    value={profile.instagram_handle || ''}
+                                    onChange={handleChange}
+                                    disabled={isLoading}
+                                />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">TikTok <span className="text-xs text-gray-400">(Opcional)</span></label>
+                                <Input
+                                    id="tiktok_handle"
+                                    name="tiktok_handle"
+                                    type="text"
+                                    placeholder="@seu_usuario"
+                                    value={profile.tiktok_handle || ''}
+                                    onChange={handleChange}
+                                    disabled={isLoading}
+                                />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">YouTube <span className="text-xs text-gray-400">(Opcional)</span></label>
+                                <Input
+                                    id="youtube_channel"
+                                    name="youtube_channel"
+                                    type="text"
+                                    placeholder="Nome do canal"
+                                    value={profile.youtube_channel || ''}
+                                    onChange={handleChange}
+                                    disabled={isLoading}
+                                />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Facebook <span className="text-xs text-gray-400">(Opcional)</span></label>
+                                <Input
+                                    id="facebook_page"
+                                    name="facebook_page"
+                                    type="text"
+                                    placeholder="Nome da página"
+                                    value={profile.facebook_page || ''}
+                                    onChange={handleChange}
+                                    disabled={isLoading}
+                                />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Twitter <span className="text-xs text-gray-400">(Opcional)</span></label>
+                                <Input
+                                    id="twitter_handle"
+                                    name="twitter_handle"
+                                    type="text"
+                                    placeholder="@seu_usuario"
+                                    value={profile.twitter_handle || ''}
+                                    onChange={handleChange}
+                                    disabled={isLoading}
+                                />
+                            </div>
+                        </>
+                    )}
                 </div>
                 {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
                 {/* Actions */}

@@ -13,7 +13,15 @@ import {
   Calendar, 
   Star, 
   Play,
-  Image
+  Image,
+  Globe,
+  Languages,
+  Briefcase,
+  User,
+  Instagram,
+  Youtube,
+  Facebook,
+  Twitter
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -175,6 +183,25 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                   </p>
                 )}
                 
+                {/* Creator Type and Industry */}
+                {(creator.creator_type || creator.industry) && (
+                  <div className="mt-2 space-y-1">
+                    {creator.creator_type && (
+                      <div className="flex items-center justify-center">
+                        <Badge variant="outline" className="text-xs">
+                          {creator.creator_type === 'ugc' ? 'UGC' : 
+                           creator.creator_type === 'influencer' ? 'Influenciador' : 'Ambos'}
+                        </Badge>
+                      </div>
+                    )}
+                    {creator.industry && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        {creator.industry}
+                      </p>
+                    )}
+                  </div>
+                )}
+                
                 <div className="flex items-center justify-center gap-1 mt-2">
                   <Star className={`h-4 w-4 ${getRatingColor(creator.rating)} fill-current`} />
                   <span className={`font-semibold ${getRatingColor(creator.rating)}`}>
@@ -289,10 +316,151 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                 <CardHeader>
                   <CardTitle>Sobre {creator.name}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {portfolio?.bio || creator.bio || "Nenhuma descrição disponível."}
-                  </p>
+                <CardContent className="space-y-6">
+                  {/* Bio Section */}
+                  <div>
+                    <h4 className="font-semibold text-foreground mb-2">Biografia</h4>
+                    <p className="text-muted-foreground leading-relaxed">
+                      {portfolio?.bio || creator.bio || "Nenhuma descrição disponível."}
+                    </p>
+                  </div>
+
+                  {/* Personal Information */}
+                  {(creator.birth_date || creator.gender || creator.creator_type) && (
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Informações Pessoais
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {creator.birth_date && (
+                          <div className="flex items-center gap-3">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <div className="text-sm font-medium">Data de Nascimento</div>
+                              <div className="text-sm text-muted-foreground">
+                                {format(new Date(creator.birth_date), 'dd/MM/yyyy', { locale: ptBR })}
+                                {creator.age && ` (${creator.age} anos)`}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        {creator.gender && (
+                          <div className="flex items-center gap-3">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <div className="text-sm font-medium">Gênero</div>
+                              <div className="text-sm text-muted-foreground capitalize">
+                                {creator.gender === 'male' ? 'Masculino' : 
+                                 creator.gender === 'female' ? 'Feminino' : 'Outro'}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        {creator.creator_type && (
+                          <div className="flex items-center gap-3">
+                            <Briefcase className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <div className="text-sm font-medium">Tipo de Criador</div>
+                              <div className="text-sm text-muted-foreground capitalize">
+                                {creator.creator_type === 'ugc' ? 'UGC' : 
+                                 creator.creator_type === 'influencer' ? 'Influenciador' : 'Ambos'}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Area of Expertise */}
+                  {creator.industry && (
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <Briefcase className="h-4 w-4" />
+                        Área de Atuação
+                      </h4>
+                      <div className="flex items-center gap-3">
+                        <Globe className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">{creator.industry}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Languages */}
+                  {creator.languages && creator.languages.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <Languages className="h-4 w-4" />
+                        Idiomas
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {creator.languages.map((language: string, index: number) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {language}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Social Media */}
+                  {(creator.instagram_handle || creator.tiktok_handle || creator.youtube_channel || 
+                    creator.facebook_page || creator.twitter_handle) && (
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <Globe className="h-4 w-4" />
+                        Redes Sociais
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {creator.instagram_handle && (
+                          <div className="flex items-center gap-3">
+                            <Instagram className="h-4 w-4 text-pink-500" />
+                            <div>
+                              <div className="text-sm font-medium">Instagram</div>
+                              <div className="text-sm text-muted-foreground">@{creator.instagram_handle}</div>
+                            </div>
+                          </div>
+                        )}
+                        {creator.tiktok_handle && (
+                          <div className="flex items-center gap-3">
+                            <div className="h-4 w-4 bg-black text-white rounded flex items-center justify-center text-xs font-bold">T</div>
+                            <div>
+                              <div className="text-sm font-medium">TikTok</div>
+                              <div className="text-sm text-muted-foreground">@{creator.tiktok_handle}</div>
+                            </div>
+                          </div>
+                        )}
+                        {creator.youtube_channel && (
+                          <div className="flex items-center gap-3">
+                            <Youtube className="h-4 w-4 text-red-500" />
+                            <div>
+                              <div className="text-sm font-medium">YouTube</div>
+                              <div className="text-sm text-muted-foreground">{creator.youtube_channel}</div>
+                            </div>
+                          </div>
+                        )}
+                        {creator.facebook_page && (
+                          <div className="flex items-center gap-3">
+                            <Facebook className="h-4 w-4 text-blue-600" />
+                            <div>
+                              <div className="text-sm font-medium">Facebook</div>
+                              <div className="text-sm text-muted-foreground">{creator.facebook_page}</div>
+                            </div>
+                          </div>
+                        )}
+                        {creator.twitter_handle && (
+                          <div className="flex items-center gap-3">
+                            <Twitter className="h-4 w-4 text-blue-400" />
+                            <div>
+                              <div className="text-sm font-medium">Twitter</div>
+                              <div className="text-sm text-muted-foreground">@{creator.twitter_handle}</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
