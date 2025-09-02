@@ -23,6 +23,7 @@ import AdminIndex from "./pages/admin";
 import NotificationsPage from "./pages/Notifications";
 import BankRegistrationPage from "./pages/creator/BankRegistrationPage";
 import Guide from "./pages/Guide";
+import Documentation from "./pages/Documentation";
 import { HelmetProvider } from "react-helmet-async";
 import { useState, useEffect } from "react";
 
@@ -136,8 +137,12 @@ const App = () => {
                     </ProtectedRoute>
                   } />
                   
-                  {/* Guide route - accessible to everyone */}
-                  <Route path="/guides" element={<Guide />} />
+                          {/* Guide route - accessible to everyone */}
+        <Route path="/guides" element={<Guide />} />
+        
+        {/* Documentation route - accessible to everyone */}
+        <Route path="/docs" element={<Documentation />} />
+        <Route path="/docs/:section" element={<Documentation />} />
                   
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />

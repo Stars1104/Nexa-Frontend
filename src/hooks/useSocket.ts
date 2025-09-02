@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { apiClient } from '../services/apiClient';
-import { Message } from '../services/chatService';
+import { Message, chatService } from '../services/chatService';
 import { addNotification, incrementUnreadCount } from '../store/slices/notificationSlice';
 
 interface UseSocketReturn {
@@ -23,7 +23,7 @@ interface UseSocketReturn {
     onContractCompleted: (callback: (data: { roomId: string; contractData: any; senderId: number; timestamp: string }) => void) => void;
     onContractTerminated: (callback: (data: { roomId: string; contractData: any; senderId: number; terminationReason?: string; timestamp: string }) => void) => void;
     onContractActivated: (callback: (data: { roomId: string; contractData: any; senderId: number; timestamp: string }) => void) => void;
-    onOfferAcceptanceMessage: (callback: (data: { roomId: string; offerData: any; contractData: any; senderId: number; senderName: string; senderAvatar?: string; timestamp: string }) => void) => void;
+    onContractStatusUpdate: (callback: (data: { roomId: string; contractData: any; terminationReason?: string; timestamp: string }) => void) => void;
     sendOfferAcceptanceMessage: (roomId: string, offerData: any, contractData: any, senderId: number, senderName: string, senderAvatar?: string) => void;
     reconnect: () => void;
 }
@@ -94,12 +94,16 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
             setConnectionError(null);
             reconnectAttemptsRef.current = 0;
             
-            // Join with user data
+            // Join with user data and auto-join all chat rooms
             try {
                 socket.emit('user_join', {
                     userId: user.id,
                     userRole: user.role,
                 });
+
+                // Auto-join all chat rooms when connected for persistent message receiving
+                // Note: This is now handled by the Chat component to avoid duplicate API calls
+                // The Chat component will handle joining rooms when it loads
             } catch (error) {
                 console.warn('Error joining user:', error);
             }
@@ -297,23 +301,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                 messageData = response.data.data;
             }
 
-            // Emit socket event for real-time delivery
-            socketRef.current.emit('send_message', {
-                roomId,
-                messageId: messageData.id,
-                message: messageData.message,
-                senderId: messageData.sender_id,
-                senderName: messageData.sender_name,
-                senderAvatar: messageData.sender_avatar,
-                messageType: messageData.message_type,
-                fileData: messageData.file_path ? {
-                    file_path: messageData.file_path,
-                    file_name: messageData.file_name,
-                    file_size: messageData.file_size,
-                    file_type: messageData.file_type,
-                    file_url: messageData.file_url,
-                } : undefined,
-            });
+            // Socket event is now handled by backend for better reliability
 
             return messageData;
         } catch (error) {
@@ -354,13 +342,18 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
 
     // Mark messages as read
     const markMessagesAsRead = useCallback(async (roomId: string, messageIds: number[]): Promise<void> => {
-        if (!socketRef.current || !isConnected || !user || !isMountedRef.current || !enableChat) {
-            throw new Error('Socket not connected or user not authenticated');
+        if (!user || !isMountedRef.current || !enableChat) {
+            console.warn('Cannot mark messages as read: user not authenticated or chat disabled');
+            return;
+        }
+
+        if (!socketRef.current || !isConnected) {
+            console.warn('Socket not connected, marking messages as read via API only');
         }
 
         try {
             // Update read status via API
-            await apiClient.post('/chat/messages/mark-read', {
+            await apiClient.post('/chat/mark-read', {
                 room_id: roomId,
                 message_ids: messageIds,
             });
@@ -540,6 +533,24 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         };
     }, [enableChat]);
 
+    // Set up contract status update callback
+    const onContractStatusUpdate = useCallback((callback: (data: { roomId: string; contractData: any; terminationReason?: string; timestamp: string }) => void) => {
+        if (!socketRef.current || !enableChat) return;
+
+        const handleContractStatusUpdate = (data: any) => {
+            if (!isMountedRef.current) return;
+            callback(data);
+        };
+
+        socketRef.current.on('contract_status_update', handleContractStatusUpdate);
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.off('contract_status_update', handleContractStatusUpdate);
+            }
+        };
+    }, [enableChat]);
+
     // Send offer acceptance message
     const sendOfferAcceptanceMessage = useCallback((roomId: string, offerData: any, contractData: any, senderId: number, senderName: string, senderAvatar?: string) => {
         if (!socketRef.current || !isConnected || !isMountedRef.current || !enableChat) {
@@ -578,7 +589,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         onContractCompleted,
         onContractTerminated,
         onContractActivated,
-        onOfferAcceptanceMessage,
+        onContractStatusUpdate,
         sendOfferAcceptanceMessage,
         reconnect,
     };

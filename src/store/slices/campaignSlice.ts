@@ -41,6 +41,7 @@ export interface Campaign {
   briefing: string;
   budget: number;
   remunerationType?: 'paga' | 'permuta';
+
   deadline: string;
   target_states: string[];
   requirements: string[];
@@ -68,6 +69,7 @@ export interface CampaignFormData {
   briefing: string;
   budget: string;
   remunerationType: 'paga' | 'permuta';
+
   status?: string;
   deadline: Date;
   target_states: string[];

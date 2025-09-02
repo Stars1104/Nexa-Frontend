@@ -38,6 +38,7 @@ import { Plus, Trash2, GripVertical } from "lucide-react";
  */
 
 const MAX_VIDEO_BYTES = 80 * 1024 * 1024; // 80MB
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
 
 const stepSchema = z.object({
   title: z.string().min(2, "O título deve ter pelo menos 2 caracteres").max(255, "O título não pode ter mais de 255 caracteres"),
@@ -50,6 +51,15 @@ const stepSchema = z.object({
     })
     .refine((file) => !file || file.type.startsWith("video/"), {
       message: "Apenas arquivos de vídeo são permitidos",
+    }),
+  screenshots: z
+    .array(z.instanceof(File))
+    .optional()
+    .refine((files) => !files || files.every(file => file.size <= MAX_IMAGE_BYTES), {
+      message: "Cada screenshot deve ter no máximo 10MB",
+    })
+    .refine((files) => !files || files.every(file => file.type.startsWith("image/")), {
+      message: "Apenas arquivos de imagem são permitidos",
     }),
 });
 
@@ -72,6 +82,7 @@ const defaultStep: StepFormValues = {
   title: "",
   description: "",
   videoFile: undefined,
+  screenshots: undefined,
 };
 
 const defaultValues: Partial<GuideFormValues> = {
@@ -354,20 +365,44 @@ const GuideCreateDialog: React.FC<GuideProps> = ({ isOpen, onClose, onSuccess })
                           />
                         </div>
                       </div>
-                      <div>
-                        <label className="text-sm font-medium">Vídeo do Passo (opcional)</label>
-                        <Input
-                          type="file"
-                          accept="video/*"
-                          onChange={(e) => {
-                            const file = e.currentTarget.files?.[0];
-                            updateStep(index, 'videoFile', file || undefined);
-                          }}
-                          className="mt-1"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Tamanho máximo: 80MB. MP4 recomendado.
-                        </p>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-sm font-medium">Vídeo do Passo (opcional)</label>
+                          <Input
+                            type="file"
+                            accept="video/*"
+                            onChange={(e) => {
+                              const file = e.currentTarget.files?.[0];
+                              updateStep(index, 'videoFile', file || undefined);
+                            }}
+                            className="mt-1"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Tamanho máximo: 80MB. MP4 recomendado.
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <label className="text-sm font-medium">Screenshots do Passo (opcional)</label>
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={(e) => {
+                              const files = Array.from(e.currentTarget.files || []);
+                              updateStep(index, 'screenshots', files.length > 0 ? files : undefined);
+                            }}
+                            className="mt-1"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Múltiplas imagens permitidas. Máximo 10MB cada. PNG/JPG recomendado.
+                          </p>
+                          {step.screenshots && step.screenshots.length > 0 && (
+                            <p className="text-xs text-green-600 mt-1">
+                              {step.screenshots.length} screenshot(s) selecionado(s)
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -33,8 +33,8 @@ export const Navbar = () => {
                     <SheetDescription>Navigation options for mobile users</SheetDescription>
                 </VisuallyHidden>
                 <div className="flex flex-col gap-6 mt-8">
-                    <Button variant="ghost" className="justify-start" onClick={() => navigate("/guides")}>
-                        Guia para
+                    <Button variant="ghost" className="justify-start" onClick={() => navigate("/docs")}>
+                        Documentação
                     </Button>
                     <Button variant="ghost" className="justify-start" onClick={() => navigate("/auth/login")}>
                         Entrar
@@ -48,7 +48,7 @@ export const Navbar = () => {
     );
 
     return (
-        <header className="relative z-50 p-4 md:p-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40">
+        <header className="w-full top-0 z-50 p-4 md:p-6 bg-background/95 backdrop-blur fixed supports-[backdrop-filter]:bg-background/60 border-b border-border/40">
             <div className="max-w-7xl mx-auto flex justify-between items-center">
                 <div className="text-xl md:text-2xl font-bold text-foreground" onClick={() => navigate("/")}>
                     {
@@ -62,8 +62,8 @@ export const Navbar = () => {
 
                 {/* Desktop Navigation */}
                 <div className="hidden md:flex items-center gap-4">
-                    <Button variant="ghost" className="justify-start" onClick={() => navigate("/guides")}>
-                        Guia para
+                    <Button variant="ghost" className="justify-start" onClick={() => navigate("/docs")}>
+                        Documentação
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => navigate("/auth/login")}>
                         Entrar

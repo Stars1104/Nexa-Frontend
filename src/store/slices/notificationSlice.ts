@@ -2,15 +2,16 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../index';
 import * as notificationAPI from '../../api/notification';
 
-// Types
 export interface Notification {
     id: number;
-    type: string;
     title: string;
     message: string;
-    data?: any;
+    type: 'success' | 'warning' | 'error' | 'info';
     is_read: boolean;
     created_at: string;
+    updated_at: string;
+    user_id: number;
+    data?: any;
 }
 
 export interface NotificationState {
@@ -18,10 +19,10 @@ export interface NotificationState {
     unreadCount: number;
     isLoading: boolean;
     error: string | null;
+    hasInitialData: boolean; // Track if initial data has been fetched
     statistics: {
         total: number;
         unread: number;
-        read: number;
         by_type: Record<string, number>;
     } | null;
 }
@@ -32,6 +33,7 @@ const initialState: NotificationState = {
     unreadCount: 0,
     isLoading: false,
     error: null,
+    hasInitialData: false,
     statistics: null,
 };
 
@@ -45,6 +47,7 @@ export const fetchNotifications = createAsyncThunk<
         const response = await notificationAPI.getNotifications(token, params);
         return response;
     } catch (error: any) {
+        console.error('fetchNotifications: API call failed', error);
         return rejectWithValue(error.response?.data?.message || 'Falha ao buscar notificações');
     }
 });
@@ -58,6 +61,7 @@ export const fetchUnreadCount = createAsyncThunk<
         const response = await notificationAPI.getUnreadCount(token);
         return response.count;
     } catch (error: any) {
+        console.error('fetchUnreadCount: API call failed', error);
         return rejectWithValue(error.response?.data?.message || 'Falha ao buscar contagem de não lidas');
     }
 });
@@ -121,6 +125,12 @@ const notificationSlice = createSlice({
         clearError: (state) => {
             state.error = null;
         },
+        resetNotifications: (state) => {
+            state.notifications = [];
+            state.unreadCount = 0;
+            state.hasInitialData = false;
+            state.statistics = null;
+        },
         addNotification: (state, action: PayloadAction<Notification>) => {
             state.notifications.unshift(action.payload);
             if (!action.payload.is_read) {
@@ -169,6 +179,7 @@ const notificationSlice = createSlice({
             .addCase(fetchNotifications.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.notifications = action.payload.data;
+                state.hasInitialData = true; // Set flag to true after initial data is fetched
             })
             .addCase(fetchNotifications.rejected, (state, action) => {
                 state.isLoading = false;
@@ -179,6 +190,7 @@ const notificationSlice = createSlice({
         builder
             .addCase(fetchUnreadCount.fulfilled, (state, action) => {
                 state.unreadCount = action.payload;
+                state.hasInitialData = true; // Set flag to true after unread count is fetched
             })
             .addCase(fetchUnreadCount.rejected, (state, action) => {
                 state.error = action.payload || 'Falha ao buscar contagem de não lidas';
@@ -233,9 +245,18 @@ const notificationSlice = createSlice({
     },
 });
 
-// Actions
+// Selectors
+export const selectNotifications = (state: RootState) => state.notification.notifications;
+export const selectUnreadCount = (state: RootState) => state.notification.unreadCount;
+export const selectNotificationLoading = (state: RootState) => state.notification.isLoading;
+export const selectNotificationError = (state: RootState) => state.notification.error;
+export const selectNotificationStatistics = (state: RootState) => state.notification.statistics;
+export const selectHasInitialData = (state: RootState) => state.notification.hasInitialData;
+
+// Export actions
 export const {
     clearError,
+    resetNotifications,
     addNotification,
     updateNotification,
     removeNotification,
@@ -244,11 +265,4 @@ export const {
     resetUnreadCount,
 } = notificationSlice.actions;
 
-// Selectors
-export const selectNotifications = (state: RootState) => state.notification.notifications;
-export const selectUnreadCount = (state: RootState) => state.notification.unreadCount;
-export const selectNotificationLoading = (state: RootState) => state.notification.isLoading;
-export const selectNotificationError = (state: RootState) => state.notification.error;
-export const selectNotificationStatistics = (state: RootState) => state.notification.statistics;
-
-export default notificationSlice.reducer; 
+export default notificationSlice.reducer;

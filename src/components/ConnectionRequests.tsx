@@ -92,9 +92,9 @@ export default function ConnectionRequests({ onRequestAccepted, className }: Con
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         if (isToday(date)) {
-            return 'Today';
+            return 'Hoje';
         } else if (isYesterday(date)) {
-            return 'Yesterday';
+            return 'Ontem';
         } else {
             return format(date, 'MMM d, yyyy');
         }

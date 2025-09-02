@@ -23,7 +23,7 @@ export interface ChatOffer {
   description: string;
   budget: string;
   estimated_days: number;
-  status: "pending" | "accepted" | "rejected" | "expired" | "cancelled";
+  status: "pending" | "accepted" | "rejected" | "expired" | "cancelled" | "terminated";
   expires_at: string;
   days_until_expiry: number;
   is_expiring_soon: boolean;
@@ -39,6 +39,9 @@ export interface ChatOffer {
   contract_id?: number;
   contract_status?: string;
   can_be_completed?: boolean;
+  is_barter?: boolean;
+  barter_description?: string;
+  is_new_partnership?: boolean;
 }
 
 interface ChatOfferMessageProps {
@@ -48,6 +51,7 @@ interface ChatOfferMessageProps {
   onReject?: (offerId: number) => void;
   onCancel?: (offerId: number) => void;
   onEndContract?: (contractId: number) => void;
+  onTerminateContract?: (contractId: number) => void;
   isCreator?: boolean;
 }
 
@@ -58,6 +62,7 @@ export default function ChatOfferMessage({
   onReject,
   onCancel,
   onEndContract,
+  onTerminateContract,
   isCreator = false,
 }: ChatOfferMessageProps) {
   
@@ -109,6 +114,8 @@ export default function ChatOfferMessage({
         return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300 border-gray-200 dark:border-gray-700";
       case "cancelled":
         return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300 border-gray-200 dark:border-gray-700";
+      case "terminated":
+        return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300 border-red-200 dark:border-red-700";
       default:
         return "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border-blue-200 dark:border-blue-700";
     }
@@ -125,6 +132,8 @@ export default function ChatOfferMessage({
       case "expired":
         return <AlertCircle className="w-4 h-4" />;
       case "cancelled":
+        return <X className="w-4 h-4" />;
+      case "terminated":
         return <X className="w-4 h-4" />;
       default:
         return <Briefcase className="w-4 h-4" />;
@@ -143,6 +152,8 @@ export default function ChatOfferMessage({
         return "Expirada";
       case "cancelled":
         return "Cancelada";
+      case "terminated":
+        return "Terminada";
       default:
         return status;
     }
@@ -226,12 +237,21 @@ export default function ChatOfferMessage({
 
           {/* Details */}
           <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="flex items-center gap-2 text-sm">
-              <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
-              <span className="font-medium text-slate-900 dark:text-white">
-                {formatBudget(offer.budget)}
-              </span>
-            </div>
+            {offer.is_barter ? (
+              <div className="flex items-center gap-2 text-sm">
+                <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <span className="font-medium text-slate-900 dark:text-white">
+                  Permuta
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-sm">
+                <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
+                <span className="font-medium text-slate-900 dark:text-white">
+                  {formatBudget(offer.budget)}
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="w-4 h-4 text-purple-600 dark:text-purple-400" />
               <span className="text-slate-700 dark:text-slate-300">
@@ -240,6 +260,32 @@ export default function ChatOfferMessage({
               </span>
             </div>
           </div>
+
+          {/* Barter Description */}
+          {offer.is_barter && offer.barter_description && (
+            <div className="mb-4 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg">
+              <p className="text-sm text-purple-800 dark:text-purple-200">
+                <strong>Detalhes da Permuta:</strong> {offer.barter_description}
+              </p>
+            </div>
+          )}
+
+          {/* New Partnership Info */}
+          {offer.is_new_partnership && (
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+              <div className="flex items-start gap-2">
+                <div className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5">ℹ️</div>
+                <div>
+                  <p className="text-sm text-blue-800 dark:text-blue-400 font-medium">
+                    Nova Oferta de Parceria
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    Esta opção 'Nova Oferta' foi criada para propor uma nova parceria ao criador.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Expiry Info */}
           {displayStatus === "pending" && (
@@ -335,29 +381,71 @@ export default function ChatOfferMessage({
             </div>
           )}
 
-          {/* Contract Actions */}
+          {/* Contract Actions - Only brands can complete contracts */}
           {displayStatus === "accepted" &&
             offer.contract_id &&
             offer.contract_id > 0 &&
             !isNaN(offer.contract_id) &&
             offer.contract_status === "active" &&
             offer.can_be_completed &&
-            onEndContract && (
+            !isCreator &&
+            (onEndContract || onTerminateContract) && (
               <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    if (offer.contract_id && offer.contract_id > 0 && !isNaN(offer.contract_id)) {
-                      onEndContract(offer.contract_id);
-                    } else {
-                      console.error('Invalid contract ID in ChatOfferMessage:', offer.contract_id);
-                    }
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <FileText className="w-4 h-4 mr-1" />
-                  Em acordo
-                </Button>
+                {onEndContract && (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (offer.contract_id && offer.contract_id > 0 && !isNaN(offer.contract_id)) {
+                        onEndContract(offer.contract_id);
+                      } else {
+                        console.error('Invalid contract ID in ChatOfferMessage:', offer.contract_id);
+                      }
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <FileText className="w-4 h-4 mr-1" />
+                    Finalizar Contrato
+                  </Button>
+                )}
+                {onTerminateContract && (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (offer.contract_id && offer.contract_id > 0 && !isNaN(offer.contract_id)) {
+                        onTerminateContract(offer.contract_id);
+                      } else {
+                        console.error('Invalid contract ID in ChatOfferMessage:', offer.contract_id);
+                      }
+                    }}
+                    variant="outline"
+                    className="border-red-300 text-red-700 hover:bg-red-50 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-900/20"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    Terminar Contrato
+                  </Button>
+                )}
+              </div>
+            )}
+
+          {/* Creator Instructions - Show delivery material submission info */}
+          {displayStatus === "accepted" &&
+            offer.contract_id &&
+            offer.contract_id > 0 &&
+            !isNaN(offer.contract_id) &&
+            offer.contract_status === "active" &&
+            isCreator && (
+              <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="text-blue-800 dark:text-blue-300 font-medium mb-1">
+                      Contrato Ativo
+                    </p>
+                    <p className="text-blue-700 dark:text-blue-400 text-xs">
+                      Use a seção "Entregáveis" para enviar seu trabalho finalizado. A marca poderá revisar e aprovar seus materiais.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -381,10 +469,7 @@ export default function ChatOfferMessage({
             </div>
           )}
 
-          {/* Timestamp */}
-          <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-            {format(new Date(offer.created_at), "dd/MM/yyyy HH:mm")}
-          </div>
+
         </CardContent>
       </Card>
     </div>

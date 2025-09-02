@@ -8,7 +8,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { GetGuide } from "@/api/admin/guide";
 import { Button } from "@/components/ui/button";
-import { Loader2, Play, AlertCircle, BookOpen, Users, Target, TrendingUp } from "lucide-react";
+import { Loader2, Play, AlertCircle, BookOpen, Users, Target, TrendingUp, Image, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Step {
   id: number;
@@ -17,6 +17,8 @@ interface Step {
   video_path?: string;
   video_url?: string;
   video_mime?: string;
+  screenshots?: string[];
+  screenshot_urls?: string[];
   order: number;
 }
 
@@ -27,6 +29,8 @@ interface Guide {
   audience: string;
   video_path?: string;
   video_url?: string;
+  screenshots?: string[];
+  screenshot_urls?: string[];
   created_by?: number;
   created_at: string;
   updated_at: string;
@@ -83,55 +87,145 @@ function usePageSEO() {
   }, []);
 }
 
-const VideoSlot = ({ step, label }: { step: Step; label: string }) => {
+const MediaSlot = ({ step, label }: { step: Step; label: string }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentScreenshot, setCurrentScreenshot] = useState(0);
+  const [mediaType, setMediaType] = useState<'video' | 'screenshots'>('video');
 
-  if (!step.video_url) {
+  const hasVideo = !!step.video_url;
+  const hasScreenshots = !!step.screenshot_urls && step.screenshot_urls.length > 0;
+
+  // Default to screenshots if available, otherwise video
+  useEffect(() => {
+    if (hasScreenshots) {
+      setMediaType('screenshots');
+    } else if (hasVideo) {
+      setMediaType('video');
+    }
+  }, [hasScreenshots, hasVideo]);
+
+  const nextScreenshot = () => {
+    if (step.screenshot_urls && currentScreenshot < step.screenshot_urls.length - 1) {
+      setCurrentScreenshot(currentScreenshot + 1);
+    }
+  };
+
+  const prevScreenshot = () => {
+    if (currentScreenshot > 0) {
+      setCurrentScreenshot(currentScreenshot - 1);
+    }
+  };
+
+  if (!hasVideo && !hasScreenshots) {
     return (
       <div className="flex items-center justify-center h-full min-h-[200px] bg-muted rounded-lg">
         <div className="text-center text-muted-foreground">
           <BookOpen className="h-12 w-12 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">No video available</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full min-h-[200px] bg-muted rounded-lg">
-        <div className="text-center text-muted-foreground">
-          <AlertCircle className="h-12 w-12 mx-auto mb-2 text-destructive" />
-          <p className="text-sm text-destructive">Video unavailable</p>
+          <p className="text-sm">No media available</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full">
+    <div className="h-full space-y-3">
+      {/* Media Type Toggle */}
+      {hasVideo && hasScreenshots && (
+        <div className="flex gap-2 justify-center">
+          <Button
+            variant={mediaType === 'video' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setMediaType('video')}
+            className="flex items-center gap-2"
+          >
+            <Play className="h-4 w-4" />
+            Video
+          </Button>
+          <Button
+            variant={mediaType === 'screenshots' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setMediaType('screenshots')}
+            className="flex items-center gap-2"
+          >
+            <Image className="h-4 w-4" />
+            Screenshots
+          </Button>
+        </div>
+      )}
+
       <AspectRatio ratio={16 / 9} className="h-full">
         <div className="relative w-full h-full bg-muted rounded-lg overflow-hidden">
-          {!isPlaying ? (
+          {mediaType === 'video' && hasVideo ? (
+            <>
+              {!isPlaying ? (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Button
+                    onClick={() => setIsPlaying(true)}
+                    size="lg"
+                    className="rounded-full w-16 h-16 bg-primary hover:bg-primary/90"
+                  >
+                    <Play className="h-8 w-8 ml-1" />
+                  </Button>
+                </div>
+              ) : (
+                <video
+                  src={step.video_url}
+                  controls
+                  className="w-full h-full object-cover"
+                  onError={() => setError("Failed to load video")}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              )}
+            </>
+          ) : hasScreenshots && step.screenshot_urls ? (
+            <>
+              <img
+                src={step.screenshot_urls[currentScreenshot]}
+                alt={`${step.title} - Screenshot ${currentScreenshot + 1}`}
+                className="w-full h-full object-contain"
+                onError={() => setError("Failed to load screenshot")}
+              />
+              
+              {/* Screenshot Navigation */}
+              {step.screenshot_urls.length > 1 && (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="absolute left-2 top-1/2 transform -translate-y-1/2 rounded-full w-8 h-8 p-0"
+                    onClick={prevScreenshot}
+                    disabled={currentScreenshot === 0}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full w-8 h-8 p-0"
+                    onClick={nextScreenshot}
+                    disabled={currentScreenshot === step.screenshot_urls.length - 1}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* Screenshot Counter */}
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                    {currentScreenshot + 1} / {step.screenshot_urls.length}
+                  </div>
+                </>
+              )}
+            </>
+          ) : null}
+
+          {error && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Button
-                onClick={() => setIsPlaying(true)}
-                size="lg"
-                className="rounded-full w-16 h-16 bg-primary hover:bg-primary/90"
-              >
-                <Play className="h-8 w-8 ml-1" />
-              </Button>
+              <div className="text-center text-muted-foreground">
+                <AlertCircle className="h-12 w-12 mx-auto mb-2 text-destructive" />
+                <p className="text-sm text-destructive">{error}</p>
+              </div>
             </div>
-          ) : (
-            <video
-              src={step.video_url}
-              controls
-              className="w-full h-full object-cover"
-              onError={() => setError("Failed to load video")}
-            >
-              Your browser does not support the video tag.
-            </video>
           )}
         </div>
       </AspectRatio>
@@ -165,7 +259,7 @@ function StepList({ steps, role }: { steps: Step[]; role: "Brand" | "Creator" })
             </Card>
           </div>
           <div className="md:col-span-2">
-            <VideoSlot step={step} label={`${role} – Step ${idx + 1}`} />
+            <MediaSlot step={step} label={`${role} – Step ${idx + 1}`} />
           </div>
         </article>
       ))}
@@ -219,14 +313,14 @@ export default function Guides() {
     fetchGuides();
   }, []);
 
-  const brandGuide = guides.find(g => g.audience === 'Brand');
-  const creatorGuide = guides.find(g => g.audience === 'Creator');
+  const brandGuides = guides.filter(g => g.audience === 'Brand');
+  const creatorGuides = guides.filter(g => g.audience === 'Creator');
 
   if (loading) {
     return (
       <>
         <Navbar />
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center justify-center min-h-screen mt-[88px]">
           <div className="text-center space-y-4">
             <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
             <div>
@@ -291,17 +385,26 @@ export default function Guides() {
               <h2 id="brands-heading" className="sr-only">
                 Guide for Brands
               </h2>
-              {brandGuide && brandGuide.steps && brandGuide.steps.length > 0 ? (
-                <>
-                  <GuideHeader guide={brandGuide} role="Brand" />
-                  <StepList steps={brandGuide.steps} role="Brand" />
-                </>
+              {brandGuides && brandGuides.length > 0 ? (
+                <div className="space-y-12">
+                  {brandGuides.map((guide) => (
+                    <div key={guide.id} className="space-y-8">
+                      <GuideHeader guide={guide} role="Brand" />
+                      {guide.steps && guide.steps.length > 0 && (
+                        <StepList steps={guide.steps} role="Brand" />
+                      )}
+                      {guide.id !== brandGuides[brandGuides.length - 1].id && (
+                        <Separator className="my-12" />
+                      )}
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div className="text-center py-16">
                   <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Guia para marcas em</h3>
+                  <h3 className="text-xl font-semibold mb-2">Guias para marcas em desenvolvimento</h3>
                   <p className="text-muted-foreground mb-4">
-                    Nossa equipe está trabalhando para criar um guia completo e detalhado para marcas.
+                    Nossa equipe está trabalhando para criar guias completos e detalhados para marcas.
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Em breve você terá acesso a todas as informações necessárias para criar campanhas de sucesso.
@@ -316,17 +419,26 @@ export default function Guides() {
               <h2 id="creators-heading" className="sr-only">
                 Guide for Creators
               </h2>
-              {creatorGuide && creatorGuide.steps && creatorGuide.steps.length > 0 ? (
-                <>
-                  <GuideHeader guide={creatorGuide} role="Creator" />
-                  <StepList steps={creatorGuide.steps} role="Creator" />
-                </>
+              {creatorGuides && creatorGuides.length > 0 ? (
+                <div className="space-y-12">
+                  {creatorGuides.map((guide) => (
+                    <div key={guide.id} className="space-y-8">
+                      <GuideHeader guide={guide} role="Creator" />
+                      {guide.steps && guide.steps.length > 0 && (
+                        <StepList steps={guide.steps} role="Creator" />
+                      )}
+                      {guide.id !== creatorGuides[creatorGuides.length - 1].id && (
+                        <Separator className="my-12" />
+                      )}
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div className="text-center py-16">
                   <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Guia para criadores em</h3>
+                  <h3 className="text-xl font-semibold mb-2">Guias para criadores em desenvolvimento</h3>
                   <p className="text-muted-foreground mb-4">
-                    Nossa equipe está trabalhando para criar um guia completo e detalhado para criadores.
+                    Nossa equipe está trabalhando para criar guias completos e detalhados para criadores.
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Em breve você terá acesso a todas as informações necessárias para maximizar seu sucesso na plataforma.

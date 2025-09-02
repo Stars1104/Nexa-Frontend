@@ -461,6 +461,57 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                       </div>
                     </div>
                   )}
+
+                  {/* Project Links */}
+                  {portfolio?.project_links && portfolio.project_links.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <Globe className="h-4 w-4" />
+                        Projetos Anteriores
+                      </h4>
+                      <div className="grid grid-cols-1 gap-3">
+                        {portfolio.project_links
+                          .filter(link => {
+                            if (typeof link === 'string') {
+                              return link && link.trim() !== '';
+                            }
+                            return link && link.url && link.url.trim() !== '';
+                          })
+                          .map((link, index) => {
+                            const linkData = typeof link === 'string' 
+                              ? { title: `Projeto ${index + 1}`, url: link }
+                              : { title: link.title || `Projeto ${index + 1}`, url: link.url || '' };
+                            
+                            return (
+                              <a
+                                key={index}
+                                href={linkData.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors group"
+                              >
+                                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                  <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                  </svg>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-medium text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                    {linkData.title}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground truncate">
+                                    {linkData.url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                                  </div>
+                                </div>
+                                <svg className="w-4 h-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </a>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}

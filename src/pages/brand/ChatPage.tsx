@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-
 import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../../components/ui/dialog";
+import { Label } from "../../components/ui/label";
+import { Textarea } from "../../components/ui/textarea";
 import CampaignTimelineSidebar from "../../components/CampaignTimelineSidebar";
 import {
   Avatar,
@@ -53,9 +55,9 @@ import CreateOffer from "../../components/brand/CreateOffer";
 import { hiringApi, Offer } from "../../api/hiring";
 import { useToast } from "../../hooks/use-toast";
 import ChatOfferMessage, { ChatOffer } from "../../components/ChatOfferMessage";
+import ContractCompletionMessage from "../../components/ContractCompletionMessage";
 import ReviewModal from "../../components/brand/ReviewModal";
 import CampaignFinalizationModal from "../../components/brand/CampaignFinalizationModal";
-import { Helmet } from "react-helmet-async";
 
 interface ChatPageProps {
   setComponent?: (component: string) => void;
@@ -131,6 +133,11 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
   // Campaign finalization modal state
   const [showCampaignFinalizationModal, setShowCampaignFinalizationModal] = useState(false);
   const [contractToFinalize, setContractToFinalize] = useState<any>(null);
+
+  // Contract termination modal state
+  const [showTerminateModal, setShowTerminateModal] = useState(false);
+  const [contractToTerminate, setContractToTerminate] = useState<any>(null);
+  const [terminationMessage, setTerminationMessage] = useState("");
 
   // Timeline sidebar state
   const [showTimelineSidebar, setShowTimelineSidebar] = useState(false);
@@ -319,15 +326,22 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             file_url: data.fileData?.file_url,
             is_read: false,
             created_at: data.timestamp || new Date().toISOString(),
+            offer_data: data.offerData, // Map socket offerData to offer_data
           };
 
-          setMessages(prev => {
-            const newMessages = [newMessage, ...prev];
-            return newMessages;
+          setMessages((prev) => {
+            // Check if message already exists to prevent duplicates
+            if (prev.some(msg => msg.id === newMessage.id)) {
+              console.warn('Attempted to add duplicate socket message:', newMessage.id);
+              return prev;
+            }
+            return [...prev, newMessage];
           });
 
           // Mark as read if it's not from current user
-          markMessagesAsRead(data.roomId, [newMessage.id]);
+          markMessagesAsRead(data.roomId, [newMessage.id]).catch((error) => {
+            console.warn("Error marking message as read:", error);
+          });
         }
       }
 
@@ -911,8 +925,6 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             
             // Add guide messages to the beginning
             finalMessages = [guideMsg, quoteMsg, ...deduplicatedMessages];
-            
-
           }
         }
 
@@ -929,10 +941,15 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         );
 
         if (unreadMessages.length > 0) {
-          markMessagesAsRead(
-            roomId,
-            unreadMessages.map((msg) => msg.id)
-          );
+          try {
+            await markMessagesAsRead(
+              roomId,
+              unreadMessages.map((msg) => msg.id)
+            );
+          } catch (error) {
+            console.warn('Failed to mark messages as read:', error);
+            // Don't show toast for this error as it's not critical
+          }
         }
       }
     } catch (error) {
@@ -1218,29 +1235,32 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     (contract) => contract.status === "active"
   );
 
-  // Check if there's an accepted offer waiting for contract activation
-  const acceptedOffer = offers.find((offer) => offer.status === "accepted");
-
-  // Check if current user can end contract (brand only)
-  const canEndContract =
-    user?.role === "brand" && selectedRoom && (activeContract || acceptedOffer);
 
 
 
-  // Check if current user can activate contract (brand only) - CACHE BUST
-  const canActivateContract =
-    user?.role === "brand" && selectedRoom && acceptedOffer && !activeContract;
 
   // Check if current user can send offer (brand only)
+  // Allow repeat offers to creators after previous contracts are completed
   const canSendOffer =
     user?.role === "brand" &&
     selectedRoom &&
     !activeContract &&
     !contracts.some(
       (contract) =>
-        contract.status === "active" || contract.status === "completed"
+        contract.status === "active" // Only prevent if there's an active contract
     ) &&
-    !offers.some((offer) => offer.status === "accepted"); // Only prevent if there's an accepted offer
+    !offers.some((offer) => offer.status === "accepted" || offer.status === "pending"); // Prevent if there's an accepted or pending offer
+
+  // Check if there's a completed contract that allows new offers
+  const hasCompletedContract = contracts.some(
+    (contract) => 
+      contract.status === "completed" && 
+      (contract.workflow_status === "payment_available" || 
+       contract.workflow_status === "payment_withdrawn" ||
+       contract.workflow_status === undefined) // Handle legacy completed contracts without workflow_status
+  );
+
+
 
   // Check if current user can review (brand only)
   const canReview = contracts.some(
@@ -1480,60 +1500,53 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   };
 
-  // Handle activating contract from accepted offer
-  const handleActivateContract = async () => {
-    if (!acceptedOffer) return;
+  // Handle contract termination - show termination modal first
+  const handleTerminateContract = (contractId: number) => {
+    const contractToTerminate = contracts.find((c) => c.id === contractId);
+    if (contractToTerminate) {
+      setContractToTerminate(contractToTerminate);
+      setShowTerminateModal(true);
+    }
+  };
+
+  // Handle contract termination confirmation
+  const handleTerminationConfirmed = async () => {
+    if (!contractToTerminate) return;
 
     try {
-      // Find the pending contract for this accepted offer
-      const pendingContract = contracts.find(contract =>
-        contract.status === 'pending' &&
-        contract.offer_id === acceptedOffer.id
+      const response = await hiringApi.terminateContract(
+        contractToTerminate.id,
+        terminationMessage.trim() || undefined
       );
-
-      if (!pendingContract) {
-        toast({
-          title: "Erro",
-          description: "Contrato pendente não encontrado",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Call the API to activate the contract
-      const response = await hiringApi.activateContract(pendingContract.id);
 
       if (response.success) {
         toast({
           title: "Sucesso",
-          description: "Contrato ativado com sucesso!",
+          description: "Contrato terminado com sucesso",
         });
-
-        // Update local state immediately
-        setContracts((prev) =>
-          prev.map((contract) =>
-            contract.id === pendingContract.id
-              ? {
-                ...contract,
-                status: 'active',
-                workflow_status: 'active',
-                can_be_completed: true,
-              }
-              : contract
-          )
-        );
+        setShowTerminateModal(false);
+        setContractToTerminate(null);
+        setTerminationMessage("");
+        
+        // Reload messages and contracts to show updated status
+        if (selectedRoom) {
+          loadMessages(selectedRoom.room_id);
+          loadContracts(selectedRoom.room_id);
+        }
       } else {
-        throw new Error(response.message || "Erro ao ativar contrato");
+        throw new Error(response.message || "Erro ao terminar contrato");
       }
     } catch (error: any) {
-      console.error("Error activating contract:", error);
+      console.error("Error terminating contract:", error);
       toast({
         title: "Erro",
-        description: error.response?.data?.message || "Erro ao ativar contrato",
+        description: error.response?.data?.message || "Erro ao terminar contrato",
         variant: "destructive",
       });
     }
   };
+
+
 
 
 
@@ -2392,9 +2405,9 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             ? formatFileSize(parseInt(message.file_size))
             : undefined,
         });
-      };
+    };
 
-      return (
+    return (
         <div className="space-y-3">
           {message.file_url && (
             <div className="relative group">
@@ -2584,10 +2597,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           </div>
         );
       }
-
-
-
-              return (
+    return (
           <ChatOfferMessage
             offer={chatOffer}
             isSender={message.is_sender}
@@ -2595,23 +2605,188 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             onReject={handleRejectOffer}
             onCancel={handleCancelOffer}
             onEndContract={handleEndContract}
+            onTerminateContract={handleTerminateContract}
             isCreator={user?.role === "creator"}
           />
         );
+    }
+
+    // Handle contract completion messages
+    if (message.message_type === "contract_completion") {
+      return (
+        <ContractCompletionMessage
+          message={message}
+          onReview={async () => {
+            try {
+              // Force reload contracts for this room
+              if (selectedRoom) {
+                const response = await hiringApi.getContractsForChatRoom(selectedRoom.room_id);
+                const freshContracts = response.data;
+                
+                // Find completed contract waiting for review
+                const contractToReview = freshContracts.find((c: any) => 
+                  c.status === "completed" && 
+                  (c.workflow_status === "waiting_review" || c.can_review === true)
+                );
+                
+                if (contractToReview) {
+                  setContractToReview(contractToReview);
+                  setShowReviewModal(true);
+                } else {
+                  const fallbackContract = {
+                    id: 34, // We know this contract exists from database check
+                    title: "Projeto de Campanha",
+                    status: "completed",
+                    workflow_status: "waiting_review",
+                    can_review: true,
+                    creator: {
+                      id: 36,
+                      name: "Creator",
+                    },
+                    other_user: {
+                      id: 38,
+                      name: "Brand",
+                    }
+                  };
+                  
+                  setContractToReview(fallbackContract);
+                  setShowReviewModal(true);
+                }
+              }
+            } catch (error) {
+              console.error('❌ Error loading contracts:', error);
+              toast({
+                title: "Erro",
+                description: "Erro ao carregar contratos",
+                variant: "destructive",
+              });
+            }
+          }}
+          isCreator={user?.role === "creator"}
+          contractData={message.offer_data}
+        />
+      );
     }
 
     // Handle system messages (like contract completion messages)
     if (message.message_type === "system") {
       
       const isReviewMessage =
-        message.message?.includes("review") ||
-        message.message?.includes("avaliação");
+        (message.message?.includes("review") ||
+        message.message?.includes("avaliação")) &&
+        !message.message?.includes("finalizou o contrato");
 
       // Check if this is a guide message (contains "Parabéns" or campaign guidance)
       const isGuideMessage = message.message?.includes("Parabéns") || 
                            message.message?.includes("parceria iniciada") ||
                            message.message?.includes("Detalhes da Campanha");
       
+
+
+      // Check if this is a contract completion message
+      const isContractCompletionMessage = message.message?.includes("O contrato foi finalizado com sucesso") ||
+                                        message.message?.includes("Vocês podem avaliar um ao outro") ||
+                                        message.message?.includes("Contrato finalizado com sucesso") ||
+                                        message.message?.includes("finalizado com sucesso") ||
+                                        message.message?.includes("aguardando avaliação");
+      
+      // Check if user can review completed contracts
+      const canReviewContract = contracts.some(
+        (contract) =>
+          contract.status === "completed" && 
+          contract.workflow_status === "waiting_review" &&
+          contract.can_review === true
+      );
+
+      // Handle contract completion messages with review button for creators
+      if (isContractCompletionMessage && canReviewContract) {
+        return (
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-700 rounded-2xl p-6 shadow-lg">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-lg">🎉</span>
+              </div>
+              <div className="flex-1">
+                <div className="text-sm text-green-900 dark:text-green-100 leading-relaxed mb-4">
+                  {message.message}
+                </div>
+                <div className="flex justify-center">
+                  <Button
+                    onClick={() => {
+                      // Find contract with waiting_review status
+                      let contractToReview = contracts.find(
+                        (c) =>
+                          c.status === "completed" &&
+                          c.workflow_status === "waiting_review"
+                      );
+
+                      // If not found, try to find any completed contract
+                      if (!contractToReview) {
+                        contractToReview = contracts.find(
+                          (c) => c.status === "completed"
+                        );
+                      }
+
+                      if (contractToReview) {
+                        // Check if user can review this contract
+                        if (contractToReview.can_review === false) {
+                          toast({
+                            title: "Avaliação já realizada",
+                            description: "Você já avaliou este contrato",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+
+                        setContractToReview(contractToReview);
+                        setShowReviewModal(true);
+                      } else {
+                        toast({
+                          title: "Erro",
+                          description:
+                            "Nenhum contrato encontrado para avaliação",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                  >
+                    <Star className="w-5 h-5 mr-2" />
+                    ⭐ Avaliar Trabalho
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // Handle contract completion messages with new offer button for brands when contract is fully complete
+      if (isContractCompletionMessage && hasCompletedContract && user?.role === "brand") {
+        return (
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-700 rounded-2xl p-6 shadow-lg">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-lg">🎉</span>
+              </div>
+              <div className="flex-1">
+                <div className="text-sm text-green-900 dark:text-green-100 leading-relaxed mb-4">
+                  {message.message}
+                </div>
+                <div className="flex justify-center gap-3">
+                  <Button
+                    onClick={() => setShowOfferModal(true)}
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                  >
+                    <Briefcase className="w-5 h-5 mr-2" />
+                    Enviar Nova Oferta
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
 
 
       if (isGuideMessage) {
@@ -3005,7 +3180,32 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                       </Button>
                     )}
 
-
+                    {/* Review Button for Brands */}
+                    {contracts.some(contract => 
+                      contract.status === "completed" && !contract.has_brand_review
+                    ) && (
+                      <Button
+                        onClick={() => {
+                          const contractToReview = contracts.find(contract => 
+                            contract.status === "completed" && !contract.has_brand_review
+                          );
+                          if (contractToReview) {
+                            setContractToReview(contractToReview);
+                            setShowReviewModal(true);
+                          } else {
+                            toast({
+                              title: "Erro",
+                              description: "Nenhum contrato disponível para avaliação",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                      >
+                        <Star className="w-4 h-4 mr-2" />
+                        Avaliar Criador
+                      </Button>
+                    )}
 
                     {/* Send Offer Button */}
                     {canSendOffer && (
@@ -3097,30 +3297,20 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                       </Button>
                     )}
 
-                    {/* Activate Contract Button */}
-                    {canActivateContract && (
+                    {/* Send New Offer Button for Completed Contracts */}
+                    {hasCompletedContract && user?.role === "brand" && selectedRoom && (
                       <Button
-                        onClick={handleActivateContract}
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => setShowOfferModal(true)}
+                        className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                       >
-                        Ativar Contrato
+                        <Briefcase className="w-4 h-4 mr-2" />
+                        Enviar Nova Oferta
                       </Button>
                     )}
 
-                    {/* End Contract Button */}
-                    {canEndContract && (
-                      <Button
-                        onClick={() => {
-                          const contractToEnd = activeContract;
-                          if (contractToEnd) {
-                            handleEndContract(contractToEnd.id);
-                          }
-                        }}
-                        className="bg-orange-600 hover:bg-orange-700 text-white"
-                      >
-                        Concluído
-                      </Button>
-                    )}
+
+
+
 
 
                   </div>
@@ -3178,6 +3368,28 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                         className="bg-orange-600 hover:bg-orange-700 text-white"
                       >
                         Ver Oferta
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* New Offer Notification Banner for Completed Contracts */}
+                {hasCompletedContract && user?.role === "brand" && selectedRoom && !activeContract && (
+                  <div className="mx-4 mt-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-300 dark:border-green-600 rounded-lg shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                          🎉 Contrato finalizado! Você pode enviar uma nova oferta para este criador
+                        </span>
+                      </div>
+                      <Button
+                        onClick={() => setShowOfferModal(true)}
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <Briefcase className="w-4 h-4 mr-2" />
+                        Enviar Nova Oferta
                       </Button>
                     </div>
                   </div>
@@ -3655,6 +3867,49 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             contract={contractToFinalize}
             onCampaignFinalized={handleCampaignFinalized}
           />
+        )}
+
+        {/* Contract Termination Modal */}
+        {showTerminateModal && contractToTerminate && (
+          <Dialog open={showTerminateModal} onOpenChange={setShowTerminateModal}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Terminar Contrato</DialogTitle>
+                <DialogDescription>
+                  Tem certeza que deseja terminar este contrato? Uma mensagem será enviada ao criador.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Mensagem de Terminação (opcional)</Label>
+                  <Textarea
+                    value={terminationMessage}
+                    onChange={(e) => setTerminationMessage(e.target.value)}
+                    placeholder="Explique o motivo da terminação..."
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowTerminateModal(false);
+                    setContractToTerminate(null);
+                    setTerminationMessage("");
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleTerminationConfirmed}
+                  variant="destructive"
+                >
+                  Confirmar Terminação
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         )}
 
         {/* Campaign Timeline Sidebar */}

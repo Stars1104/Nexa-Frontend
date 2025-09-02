@@ -118,6 +118,7 @@ export const createCampaign = createAsyncThunk<
     // Add remuneration type
     formData.append('remuneration_type', campaignData.remunerationType);
     
+
     // Add status if provided
     if (campaignData.status) {
       formData.append('status', campaignData.status);

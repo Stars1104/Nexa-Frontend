@@ -37,12 +37,10 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
     if (campaignObj && typeof campaignObj === 'object') {
       // Check if the campaign data is wrapped in a 'data' property (API response structure)
       if (campaignObj.data && typeof campaignObj.data === 'object') {
-        console.log('Extracting campaign data from response wrapper:', campaignObj.data);
         return campaignObj.data;
       }
       // Check if it's a direct campaign object
       if (campaignObj.id && (campaignObj.title || campaignObj.description || campaignObj.budget)) {
-        console.log('Campaign data is already extracted:', campaignObj);
         return campaignObj;
       }
     }
@@ -59,15 +57,12 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
   // Fetch campaign data if only ID is available
   useEffect(() => {
     if (needsFetching && campaign.id) {
-      console.log('Fetching campaign data for ID:', campaign.id);
       setIsLoading(true);
       dispatch(fetchCampaignById(campaign.id))
         .unwrap()
         .then((fetchedCampaign) => {
-          console.log('Fetched campaign data:', fetchedCampaign);
           // Handle API response structure - campaign data might be wrapped in a 'data' property
           const campaignData = (fetchedCampaign as any).data || fetchedCampaign;
-          console.log('Extracted campaign data:', campaignData);
           // Update the campaign state with fetched data
           setCampaign(campaignData);
         })
@@ -85,39 +80,6 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
     const extractedData = extractCampaignData(propCampaign);
     setCampaign(extractedData);
   }, [propCampaign]);
-
-  // Debug logging
-  useEffect(() => {
-    console.log('ViewApplication - Received campaign data:', campaign);
-    if (campaign) {
-      console.log('Campaign fields:', {
-        title: campaign.title,
-        description: campaign.description,
-        requirements: campaign.requirements,
-        budget: campaign.budget,
-        remunerationType: campaign.remunerationType,
-        remuneration_type: (campaign as any).remuneration_type,
-        category: campaign.category,
-        logo: campaign.logo,
-        target_states: campaign.target_states,
-        created_at: campaign.created_at,
-        deadline: campaign.deadline,
-        brand: campaign.brand
-      });
-      
-      // Additional debugging for data types
-      console.log('Data types:', {
-        budgetType: typeof campaign.budget,
-        targetStatesType: typeof campaign.target_states,
-        targetStatesIsArray: Array.isArray(campaign.target_states),
-        targetStatesValue: campaign.target_states
-      });
-      
-      // Show all campaign properties for debugging
-      console.log('All campaign properties:', Object.keys(campaign));
-      console.log('Campaign as JSON:', JSON.stringify(campaign, null, 2));
-    }
-  }, [campaign]);
 
   // Check if campaign exists
   if (!campaign) {
@@ -176,14 +138,12 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
       ? campaign.requirements.join(', ') 
       : campaign.requirements;
     const desc = requirements || campaign.briefing || campaign.description;
-    console.log('Description fields:', { requirements, briefing: campaign.briefing, description: campaign.description });
     return desc || 'Descrição não disponível';
   };
 
   // Helper function to get remuneration type
   const getRemunerationType = () => {
     const type = campaign.remunerationType || (campaign as any).remuneration_type;
-    console.log('Remuneration type:', { remunerationType: campaign.remunerationType, remuneration_type: (campaign as any).remuneration_type });
     if (type === 'paga') return '💰 Paga';
     if (type === 'permuta') return '🔄 Permuta';
     return 'Não especificado';
@@ -201,7 +161,6 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
 
   // Helper function to format budget - handle both string and number types
   const formatBudget = (budget?: number | string) => {
-    console.log('Budget value:', budget);
     if (!budget) return 'Não especificado';
     
     // Convert string to number if needed
@@ -216,6 +175,8 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
     if (numericBudget <= 0) return 'Não especificado';
     return `R$ ${numericBudget.toLocaleString('pt-BR')}`;
   };
+
+
 
   // Helper function to get target states - handle both string and array types
   const getTargetStates = () => {
@@ -267,12 +228,11 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
           <div className="flex justify-center items-center gap-4">
             <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gray-200 dark:bg-neutral-700 flex items-center justify-center text-3xl font-bold text-gray-400 overflow-hidden">
               {campaign.logo ? (
-                <img 
-                  src={`${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${campaign.logo}`} 
+                <img
+                  src={`${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${campaign.logo}`}
                   alt="Campaign Logo" 
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    console.log('Image failed to load:', campaign.logo);
                     e.currentTarget.style.display = 'none';
                     e.currentTarget.nextElementSibling?.classList.remove('hidden');
                   }}
@@ -300,7 +260,7 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6 border-b border-gray-200 dark:border-neutral-700 pb-4">
           <div>
             <div className={labelClass}>Valor</div>
-            <div className={valueClass}>{formatBudget(campaign.budget)}</div>
+                            <div className={valueClass}>{formatBudget(campaign.budget)}</div>
           </div>
           <div>
             <div className={labelClass}>Tipo de Remuneração</div>

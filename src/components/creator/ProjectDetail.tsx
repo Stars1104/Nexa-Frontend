@@ -52,33 +52,40 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   
   const [open, setOpen] = useState(false);
 
+  // Fetch data sequentially to prevent rate limiting
   useEffect(() => {
     if (user?.role === "creator") {
-      dispatch(fetchCreatorApplications());
-    }
-  }, [dispatch, user?.id, user?.role]);
-
-  // Fetch campaigns if not loaded or when projectId changes
-  useEffect(() => {
-    if (!safeApprovedCampaigns.length || !project) {
-      dispatch(fetchApprovedCampaigns()).catch((error) => {
-        console.error('Error fetching approved campaigns:', error);
-        // Fallback: try to fetch the specific campaign by ID
-        if (projectId) {
-          dispatch(fetchCampaignById(projectId)).catch((fallbackError) => {
-            console.error('Error fetching campaign by ID:', fallbackError);
-          });
+      const fetchDataSequentially = async () => {
+        try {
+          // First, fetch creator applications
+          await dispatch(fetchCreatorApplications()).unwrap();
+          
+          // Then, fetch approved campaigns if needed
+          if (!safeApprovedCampaigns.length || !project) {
+            await dispatch(fetchApprovedCampaigns()).unwrap();
+          }
+          
+          // If we have approved campaigns but the specific project is not found, try to fetch it by ID
+          if (safeApprovedCampaigns.length > 0 && !project && projectId) {
+            await dispatch(fetchCampaignById(projectId)).unwrap();
+          }
+        } catch (error) {
+          console.error('Error fetching project detail data:', error);
+          
+          // Fallback: try to fetch the specific campaign by ID if other calls failed
+          if (projectId) {
+            try {
+              await dispatch(fetchCampaignById(projectId)).unwrap();
+            } catch (fallbackError) {
+              console.error('Error fetching campaign by ID:', fallbackError);
+            }
+          }
         }
-      });
+      };
+      
+      fetchDataSequentially();
     }
-    
-    // If we have approved campaigns but the specific project is not found, try to fetch it by ID
-    if (safeApprovedCampaigns.length > 0 && !project && projectId) {
-      dispatch(fetchCampaignById(projectId)).catch((error) => {
-        console.error('Error fetching campaign by ID:', error);
-      });
-    }
-  }, [dispatch, safeApprovedCampaigns.length, project, projectId]);
+  }, [dispatch, user?.id, user?.role, safeApprovedCampaigns.length, project, projectId]);
 
   // Check if user is eligible to apply
   const isCreator = user?.role === "creator";

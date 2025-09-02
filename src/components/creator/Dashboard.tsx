@@ -162,8 +162,23 @@ export default function Dashboard({
   // Fetch approved campaigns on component mount
   useEffect(() => {
     if (user?.role === "creator") {
-      dispatch(fetchApprovedCampaigns());
-      dispatch(fetchCreatorApplications());
+      // Sequential API calls to prevent rate limiting
+      const fetchDataSequentially = async () => {
+        try {
+          // First, fetch approved campaigns
+          await dispatch(fetchApprovedCampaigns()).unwrap();
+          
+          // Add a longer delay to respect backend rate limiting
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Then, fetch creator applications after the first call completes
+          await dispatch(fetchCreatorApplications()).unwrap();
+        } catch (error) {
+          console.error('Error fetching dashboard data:', error);
+        }
+      };
+      
+      fetchDataSequentially();
     }
   }, [dispatch, user?.role]);
 

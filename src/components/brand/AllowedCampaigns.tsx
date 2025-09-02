@@ -15,7 +15,7 @@ import {
 } from "../ui/pagination";
 import { Skeleton } from "../ui/skeleton";
 import { Alert, AlertDescription } from "../ui/alert";
-import { AlertCircle, User } from "lucide-react";
+import { AlertCircle, User, RefreshCw, DollarSign } from "lucide-react";
 
 const tagColors: Record<string, string> = {
     Photo: "bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-200",
@@ -322,12 +322,19 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                                         </svg>
                                         Prazo: {formatDate(campaign.deadline)}
                                     </span>
-                                    <span className="flex items-center gap-1">
-                                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
-                                            <path stroke="currentColor" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                        </svg>
-                                        {formatBudget(campaign.budget)}
-                                    </span>
+                                                                    {/* Budget or Barter Display */}
+                                {campaign.remunerationType === 'permuta' ? (
+                                    <div className="flex items-center gap-1">
+                                        <RefreshCw className="h-4 w-4 text-blue-600" />
+                                        <span className="font-bold text-lg text-blue-600">🔄 Permuta</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-1">
+                                        <DollarSign className="h-4 w-4 text-green-600" />
+                                        <span className="font-bold text-lg">{formatBudget(campaign.budget)}</span>
+                                    </div>
+                                )}
+
                                     {/* Remuneration Type */}
                                     {campaign.remunerationType && (
                                         <span className="flex items-center gap-1">

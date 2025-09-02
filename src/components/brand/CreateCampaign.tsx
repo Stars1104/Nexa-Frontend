@@ -61,6 +61,7 @@ export default function CreateCampaign() {
     setDescription("");
     setBudget("");
     setRemunerationType('paga');
+
     setDeadline(undefined);
     setSelectedStates([]);
     setFile(null);
@@ -88,6 +89,7 @@ export default function CreateCampaign() {
   const [description, setDescription] = useState("");
   const [budget, setBudget] = useState("");
   const [remunerationType, setRemunerationType] = useState<'paga' | 'permuta'>('paga');
+
   const [deadline, setDeadline] = useState<Date | undefined>();
   const [selectedStates, setSelectedStates] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
@@ -178,6 +180,16 @@ export default function CreateCampaign() {
     }
   };
 
+  // Handle select all states
+  const handleSelectAllStates = () => {
+    setSelectedStates([...BRAZILIAN_STATES]);
+  };
+
+  // Handle clear all states
+  const handleClearAllStates = () => {
+    setSelectedStates([]);
+  };
+
   // Attachment handlers
   const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -264,6 +276,7 @@ export default function CreateCampaign() {
         briefing: creatorReq.trim(),
         budget: budget.trim(),
         remunerationType: remunerationType,
+
         status: 'pending', // Assuming a default status for now, as it's not in the form
         deadline: deadline!,
         target_states: selectedStates,
@@ -376,6 +389,8 @@ export default function CreateCampaign() {
                <option value="permuta">Permuta (Troca por produtos/serviços)</option>
              </select>
            </div>
+
+
 
             {/* Orçamento */}
            <div className="mb-5">
@@ -552,6 +567,7 @@ export default function CreateCampaign() {
           <div className="mb-5">
              <label className="block text-xs font-medium text-zinc-500 mb-1">Em quais estados a campanha será divulgada? *</label>
              <span className="block text-xs text-zinc-400 mb-2">Selecione um ou mais estados. Apenas criadores desses estados verão esta campanha.</span>
+
             <div className="flex flex-wrap gap-2 mb-2">
               {selectedStates.map(state => (
                 <span
@@ -570,6 +586,24 @@ export default function CreateCampaign() {
                 </span>
               ))}
             </div>
+            <div className="flex items-center gap-2 mb-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSelectAllStates}
+                className="text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                Selecionar Todos
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClearAllStates}
+                className="text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                Limpar Todos
+              </Button>
+            </div>
             <select
               value=""
               onChange={handleStateChange}
@@ -580,7 +614,12 @@ export default function CreateCampaign() {
                 <option key={state} value={state}>{state}</option>
               ))}
             </select>
-            <span className="text-xs text-zinc-400">Selecione estados da lista para adicionar à campanha</span>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-xs text-zinc-400">Selecione estados da lista para adicionar à campanha</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                {selectedStates.length} de {BRAZILIAN_STATES.length} estados selecionados
+              </span>
+            </div>
           </div>
 
           {/* Referência visual (upload) */}

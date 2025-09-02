@@ -28,56 +28,16 @@ import {
   FileText,
   Award,
   MessageCircle,
+  Briefcase,
 } from "lucide-react";
-
-interface Contract {
-  id: number;
-  title: string;
-  description: string;
-  budget: string;
-  creator_amount: string;
-  platform_fee: string;
-  estimated_days: number;
-  requirements: string[];
-  status: "pending" | "active" | "completed" | "cancelled" | "disputed" | "terminated" | "payment_failed";
-  started_at: string;
-  expected_completion_at: string;
-  completed_at?: string;
-  cancelled_at?: string;
-  cancellation_reason?: string;
-  days_until_completion: number;
-  progress_percentage: number;
-  is_overdue: boolean;
-  is_near_completion: boolean;
-  can_be_completed: boolean;
-  can_be_cancelled: boolean;
-  other_user: {
-    id: number;
-    name: string;
-    avatar_url?: string;
-  };
-  payment?: {
-    id: number;
-    status: string;
-    total_amount: string;
-    creator_amount: string;
-    platform_fee: string;
-    processed_at?: string;
-  };
-  review?: {
-    id: number;
-    rating: number;
-    comment?: string;
-    created_at: string;
-  };
-  created_at: string;
-}
+import { Contract } from "@/api/hiring";
 
 interface ContractCardProps {
   contract: Contract;
   onContractUpdated: () => void;
   onComplete: (contract: Contract) => void;
   onReview: (contract: Contract) => void;
+  onRenewalOffer: (contract: Contract) => void;
 }
 
 export default function ContractCard({
@@ -85,10 +45,13 @@ export default function ContractCard({
   onContractUpdated,
   onComplete,
   onReview,
+  onRenewalOffer,
 }: ContractCardProps) {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showTerminateDialog, setShowTerminateDialog] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [terminateMessage, setTerminateMessage] = useState("");
   const { toast } = useToast();
 
   const getStatusColor = () => {
@@ -159,6 +122,39 @@ export default function ContractCard({
         title: "Erro",
         description:
           error.response?.data?.message || "Erro ao cancelar contrato",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleTerminate = async () => {
+    setIsProcessing(true);
+
+    try {
+      const response = await hiringApi.terminateContract(
+        contract.id,
+        terminateMessage.trim() || undefined
+      );
+
+      if (response.success) {
+        toast({
+          title: "Sucesso",
+          description: "Contrato terminado com sucesso",
+        });
+        setShowTerminateDialog(false);
+        setTerminateMessage("");
+        onContractUpdated();
+      } else {
+        throw new Error(response.message || "Erro ao terminar contrato");
+      }
+    } catch (error: any) {
+      console.error("Error terminating contract:", error);
+      toast({
+        title: "Erro",
+        description:
+          error.response?.data?.message || "Erro ao terminar contrato",
         variant: "destructive",
       });
     } finally {
@@ -349,7 +345,19 @@ export default function ContractCard({
               </Button>
             )}
 
-            {contract.status === "completed" && !contract.review && (
+            {contract.status === "active" && contract.can_be_terminated && (
+              <Button
+                onClick={() => setShowTerminateDialog(true)}
+                disabled={isProcessing}
+                variant="outline"
+                className="flex-1"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Terminar
+              </Button>
+            )}
+
+            {contract.status === "completed" && !contract.has_brand_review && (
               <Button
                 onClick={() => onReview(contract)}
                 disabled={isProcessing}
@@ -357,6 +365,17 @@ export default function ContractCard({
               >
                 <Star className="h-4 w-4 mr-2" />
                 Avaliar
+              </Button>
+            )}
+
+            {contract.status === "completed" && (
+              <Button
+                onClick={() => onRenewalOffer(contract)}
+                disabled={isProcessing}
+                className="flex-1 bg-purple-600 hover:bg-purple-700"
+              >
+                <Briefcase className="h-4 w-4 mr-2" />
+                Oferta de Renovação
               </Button>
             )}
 
@@ -403,6 +422,45 @@ export default function ContractCard({
             >
               {isProcessing ? "Cancelando..." : "Confirmar Cancelamento"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Terminate Dialog */}
+      <Dialog open={showTerminateDialog} onOpenChange={setShowTerminateDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Terminar Contrato</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja terminar este contrato? Esta ação não pode
+              ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Mensagem de Terminação (opcional)</Label>
+              <Textarea
+                value={terminateMessage}
+                onChange={(e) => setTerminateMessage(e.target.value)}
+                placeholder="Explique o motivo da terminação..."
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowTerminateDialog(false)}
+            >
+              Voltar
+            </Button>
+                         <Button
+               onClick={handleTerminate}
+               disabled={isProcessing}
+               variant="destructive"
+             >
+               {isProcessing ? "Terminando..." : "Confirmar Terminação"}
+             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

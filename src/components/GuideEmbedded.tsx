@@ -14,6 +14,8 @@ interface Step {
   video_path?: string;
   video_url?: string;
   video_mime?: string;
+  screenshots?: string[];
+  screenshot_urls?: string[];
   order: number;
 }
 
@@ -24,6 +26,8 @@ interface Guide {
   audience: string;
   video_path?: string;
   video_url?: string;
+  screenshots?: string[];
+  screenshot_urls?: string[];
   created_by?: number;
   created_at: string;
   updated_at: string;

@@ -4,7 +4,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Separator } from "../ui/separator";
-import { Eye, Clock, MapPin, DollarSign, Calendar, Users, Heart, User, Star } from "lucide-react";
+import { Eye, Clock, MapPin, DollarSign, Calendar, Users, Heart, User, Star, RefreshCw } from "lucide-react";
 
 interface CampaignCardProps {
     campaign: any;
@@ -226,11 +226,20 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
             
             <CardFooter className="pt-3">
                 <div className="w-full flex flex-col sm:justify-start sm:items-start gap-3">
-                    <div className="flex items-center gap-1">
-                        <DollarSign className="h-4 w-4 text-green-600" />
-                        <span className="font-bold text-lg">{formatBudget(campaign.budget)}</span>
-                    </div>
-                    {/* Remuneration Type */}
+                    {/* Budget or Barter Display */}
+                    {campaign.remunerationType === 'permuta' ? (
+                        <div className="flex items-center gap-1">
+                            <RefreshCw className="h-4 w-4 text-blue-600" />
+                            <span className="font-bold text-lg text-blue-600">🔄 Permuta</span>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-1">
+                            <DollarSign className="h-4 w-4 text-green-600" />
+                            <span className="font-bold text-lg">{formatBudget(campaign.budget)}</span>
+                        </div>
+                    )}
+                    
+                    {/* Remuneration Type Badge */}
                     {campaign.remunerationType && (
                         <div className="flex items-center gap-1">
                             <Badge 
@@ -238,7 +247,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                                 className={`text-xs ${
                                     campaign.remunerationType === 'paga' 
                                         ? 'text-green-600 bg-green-50 border-green-200 dark:bg-green-900 dark:text-green-200 dark:border-green-700' 
-                                        : 'text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:border-green-700'
+                                        : 'text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-700'
                                 }`}
                             >
                                 {campaign.remunerationType === 'paga' ? '💰 Paga' : '🔄 Permuta'}

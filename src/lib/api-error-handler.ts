@@ -78,6 +78,11 @@ export const handleApiError = (error: any): ApiError => {
           }
         }
         
+        // Check for notification rate limiting
+        if (error.config?.url?.includes('/notifications')) {
+          message = `Muitas requisições de notificações. Tente novamente em ${Math.ceil(retryAfter / 60)} minuto(s).`;
+        }
+        
         // Check for new user flow rate limiting
         if (data?.error_type === 'new_user_flow_rate_limited') {
           message = `Muitas tentativas de criação de conta. Tente novamente em ${Math.ceil(retryAfter / 60)} minuto(s).`;

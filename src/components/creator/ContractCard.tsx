@@ -25,9 +25,6 @@ import {
   AlertTriangle,
   Star,
   User,
-  FileText,
-  Award,
-  MessageCircle,
 } from "lucide-react";
 import { getAvatarUrl } from "@/lib/utils";
 
@@ -72,6 +69,7 @@ interface Contract {
     created_at: string;
   };
   created_at: string;
+  has_creator_review: boolean;
 }
 
 interface ContractCardProps {
@@ -398,7 +396,7 @@ export default function ContractCard({
               </Button>
             )}
 
-            {contract.status === "completed" && !contract.review && (
+            {contract.status === "completed" && !contract.has_creator_review && (
               <Button
                 onClick={() => setShowReviewDialog(true)}
                 disabled={isProcessing}

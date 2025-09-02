@@ -107,6 +107,15 @@ export default function ContractList() {
     setShowReviewModal(true);
   };
 
+  const handleRenewalOffer = (contract: Contract) => {
+    // This will be handled by the parent component (ChatPage)
+    // For now, we'll just show a toast message
+    toast({
+      title: "Oferta de Renovação",
+      description: "Use o chat para enviar uma nova oferta de renovação.",
+    });
+  };
+
   const getStatusCounts = () => {
     const counts = {
       all: contracts.length,
@@ -262,6 +271,7 @@ export default function ContractList() {
                       onContractUpdated={handleContractUpdated}
                       onComplete={handleCompleteContract}
                       onReview={handleReviewContract}
+                      onRenewalOffer={handleRenewalOffer}
                     />
                   ))
                 )}
@@ -291,6 +301,7 @@ export default function ContractList() {
                         onContractUpdated={handleContractUpdated}
                         onComplete={handleCompleteContract}
                         onReview={handleReviewContract}
+                        onRenewalOffer={handleRenewalOffer}
                       />
                     ))
                 )}
@@ -320,6 +331,7 @@ export default function ContractList() {
                         onContractUpdated={handleContractUpdated}
                         onComplete={handleCompleteContract}
                         onReview={handleReviewContract}
+                        onRenewalOffer={handleRenewalOffer}
                       />
                     ))
                 )}
@@ -349,6 +361,7 @@ export default function ContractList() {
                         onContractUpdated={handleContractUpdated}
                         onComplete={handleCompleteContract}
                         onReview={handleReviewContract}
+                        onRenewalOffer={handleRenewalOffer}
                       />
                     ))
                 )}
@@ -378,6 +391,7 @@ export default function ContractList() {
                         onContractUpdated={handleContractUpdated}
                         onComplete={handleCompleteContract}
                         onReview={handleReviewContract}
+                        onRenewalOffer={handleRenewalOffer}
                       />
                     ))
                 )}

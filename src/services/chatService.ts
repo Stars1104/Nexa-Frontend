@@ -5,6 +5,7 @@ export interface ChatRoom {
     room_id: string;
     campaign_id: number;
     campaign_title: string;
+    campaign_status?: 'pending' | 'approved' | 'rejected' | 'completed' | 'cancelled';
     other_user: {
         id: number;
         name: string;
@@ -13,7 +14,7 @@ export interface ChatRoom {
     last_message?: {
         id: number;
         message: string;
-        message_type: 'text' | 'file' | 'image' | 'offer' | 'system';
+        message_type: 'text' | 'file' | 'image' | 'offer' | 'system' | 'contract_completion';
         sender_id: number;
         is_sender: boolean;
         created_at: string;
@@ -25,7 +26,7 @@ export interface ChatRoom {
 export interface Message {
     id: number;
     message: string;
-    message_type: 'text' | 'file' | 'image' | 'offer' | 'system';
+    message_type: 'text' | 'file' | 'image' | 'offer' | 'system' | 'contract_completion';
     sender_id: number;
     sender_name: string;
     sender_avatar?: string;
@@ -58,7 +59,20 @@ export interface Message {
         contract_status?: string;
         can_be_completed?: boolean;
         rejection_reason?: string;
+        termination_type?: string;
+        cancelled_at?: string;
+        cancellation_reason?: string;
     };
+}
+
+export interface ConnectionRequest {
+    id: number;
+    sender: { id: number; name: string; avatar?: string };
+    receiver: { id: number; name: string; avatar?: string };
+    message?: string;
+    status: 'pending' | 'accepted' | 'rejected' | 'cancelled';
+    campaign?: { id: number; title: string };
+    created_at: string;
 }
 
 export interface ChatRoomResponse {
@@ -85,8 +99,15 @@ class ChatService {
     // Get messages for a specific chat room
     async getMessages(roomId: string): Promise<ChatRoomResponse> {
         const timestamp = Date.now(); // Cache-busting parameter
-        const response = await apiClient.get(`/chat/rooms/${roomId}/messages?t=${timestamp}`);
-        return response.data.data;
+        const url = `/chat/rooms/${roomId}/messages?t=${timestamp}`;
+        
+        try {
+            const response = await apiClient.get(url);
+            return response.data.data;
+        } catch (error) {
+            console.error('[ChatService] Error getting messages:', error);
+            throw error;
+        }
     }
 
     // Send a text message
@@ -172,6 +193,30 @@ class ChatService {
             console.warn('Direct fetch failed, will use fallback methods:', error);
             throw error;
         }
+    }
+
+    // Get connection requests
+    async getConnectionRequests(type: 'received' | 'sent'): Promise<{ data: ConnectionRequest[] }> {
+        const response = await apiClient.get(`/connection-requests?type=${type}`);
+        return response.data;
+    }
+
+    // Accept connection request
+    async acceptConnectionRequest(requestId: number): Promise<any> {
+        const response = await apiClient.post(`/connection-requests/${requestId}/accept`);
+        return response.data;
+    }
+
+    // Reject connection request
+    async rejectConnectionRequest(requestId: number): Promise<any> {
+        const response = await apiClient.post(`/connection-requests/${requestId}/reject`);
+        return response.data;
+    }
+
+    // Cancel connection request
+    async cancelConnectionRequest(requestId: number): Promise<any> {
+        const response = await apiClient.post(`/connection-requests/${requestId}/cancel`);
+        return response.data;
     }
 }
 

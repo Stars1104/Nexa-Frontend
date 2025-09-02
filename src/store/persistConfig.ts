@@ -19,5 +19,5 @@ export const userPersistConfig: PersistConfig<any> = {
 export const rootPersistConfig: PersistConfig<any> = {
   key: 'root',
   storage,
-  whitelist: ['auth', 'user', 'campaign'], // Persist auth, user, and campaign states
+  whitelist: ['auth', 'user', 'campaign', 'chat'], // Persist auth, user, campaign, and chat states
 }; 

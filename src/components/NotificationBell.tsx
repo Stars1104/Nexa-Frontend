@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Bell, Check, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -13,6 +13,8 @@ import {
     fetchNotifications,
     selectUnreadCount,
     selectNotifications,
+    selectHasInitialData,
+    selectNotificationLoading,
     markNotificationAsRead,
     deleteNotification,
     markAllNotificationsAsRead
@@ -25,16 +27,51 @@ const NotificationBell = () => {
     const { token } = useAppSelector((state) => state.auth);
     const unreadCount = useAppSelector(selectUnreadCount);
     const notifications = useAppSelector(selectNotifications);
+    const hasInitialData = useAppSelector(selectHasInitialData);
+    const isLoading = useAppSelector(selectNotificationLoading);
     const [isOpen, setIsOpen] = useState(false);
+    const hasInitialFetch = useRef(false);
+    const lastFetchTime = useRef(0);
+    const isMounted = useRef(true);
+    const componentId = useRef(Math.random().toString(36).substr(2, 9));
+    const renderCount = useRef(0);
 
-    // Fetch unread count and recent notifications on mount
+    // Track renders
+    renderCount.current += 1;
+
     useEffect(() => {
-        if (token) {
-            dispatch(fetchUnreadCount(token));
-            // Fetch recent notifications (last 10)
-            dispatch(fetchNotifications({ token, params: { per_page: 10 } }));
+        const instances = document.querySelectorAll('[data-notification-bell]');
+        if (instances.length > 1) {
+            console.warn(`NotificationBell: Multiple instances detected on page: ${instances.length}`);
         }
-    }, [dispatch, token]);
+    }, []);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            isMounted.current = false;
+        };
+    }, []);
+
+    // Fetch unread count and recent notifications on mount (only once)
+    useEffect(() => {
+        const now = Date.now();
+        const timeSinceLastFetch = now - lastFetchTime.current;
+        
+        if (token && !hasInitialFetch.current && !hasInitialData && !isLoading && timeSinceLastFetch > 1000 && isMounted.current) {
+            const timeoutId = setTimeout(() => {
+                if (!isMounted.current || !token || isLoading) return; // Don't make API calls if unmounting, no token, or already loading
+                
+                hasInitialFetch.current = true;
+                lastFetchTime.current = Date.now();
+                dispatch(fetchUnreadCount(token));
+                // Fetch recent notifications (last 10)
+                dispatch(fetchNotifications({ token, params: { per_page: 10 } }));
+            }, 100); // 100ms delay
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [dispatch, token, hasInitialData, isLoading]);
     
     // Get recent notifications (last 5 for display)
     const recentNotifications = notifications.slice(0, 5);
@@ -86,7 +123,7 @@ const NotificationBell = () => {
     };
 
     return (
-        <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <Popover open={isOpen} onOpenChange={setIsOpen} data-notification-bell={componentId.current}>
             <PopoverTrigger asChild>
                 <Button
                     variant="ghost"

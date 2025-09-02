@@ -40,6 +40,7 @@ export default function Portfolio() {
     const [profileTitle, setProfileTitle] = useState('');
     const [bio, setBio] = useState('');
     const [profilePic, setProfilePic] = useState<string | null>(null);
+    const [projectLinks, setProjectLinks] = useState<{title: string; url: string}[]>([]);
     const profilePicInputRef = useRef<HTMLInputElement>(null);
 
     // State for portfolio editing
@@ -72,6 +73,22 @@ export default function Portfolio() {
             setBio(portfolio.bio || "");
             setProfileTitle(portfolio.title || "");
             setProfilePic(portfolio.profile_picture_url || null);
+            
+            // Handle project links with backward compatibility
+            if (portfolio.project_links && portfolio.project_links.length > 0) {
+                const links = portfolio.project_links.map((link: any, index: number) => {
+                    if (typeof link === 'string') {
+                        // Legacy string format
+                        return { title: `Projeto ${index + 1}`, url: link };
+                    } else {
+                        // New object format
+                        return { title: link.title || `Projeto ${index + 1}`, url: link.url || '' };
+                    }
+                });
+                setProjectLinks(links);
+            } else {
+                setProjectLinks([{title: '', url: ''}]);
+            }
         }
     }, [portfolio]);
 
@@ -152,9 +169,13 @@ export default function Portfolio() {
             formData.append('title', titleToSend);
             formData.append('bio', bioToSend);
 
-
-
-            // Additional debugging - check if values are actually strings
+            // Add project links
+            if (projectLinks && projectLinks.length > 0) {
+                const validLinks = projectLinks.filter(link => link.title.trim() !== '' && link.url.trim() !== '');
+                if (validLinks.length > 0) {
+                    formData.append('project_links', JSON.stringify(validLinks));
+                }
+            }
 
 
             if (profilePic && profilePic.startsWith('blob:')) {
@@ -252,6 +273,14 @@ export default function Portfolio() {
             formData.append('title', profileTitle);
             formData.append('bio', bio);
 
+            // Add project links
+            if (projectLinks && projectLinks.length > 0) {
+                const validLinks = projectLinks.filter(link => link.title.trim() !== '' && link.url.trim() !== '');
+                if (validLinks.length > 0) {
+                    formData.append('project_links', JSON.stringify(validLinks));
+                }
+            }
+
             if (profilePic && profilePic.startsWith('blob:')) {
                 const response = await fetch(profilePic);
                 const blob = await response.blob();
@@ -293,6 +322,22 @@ export default function Portfolio() {
     const getTotalMediaCount = () => {
         const existingItems = portfolio?.items?.length || 0;
         return existingItems + media.length;
+    };
+
+    // Project links management
+    const addProjectLink = () => {
+        setProjectLinks([...projectLinks, {title: '', url: ''}]);
+    };
+
+    const updateProjectLink = (index: number, field: 'title' | 'url', value: string) => {
+        const newLinks = [...projectLinks];
+        newLinks[index] = { ...newLinks[index], [field]: value };
+        setProjectLinks(newLinks);
+    };
+
+    const removeProjectLink = (index: number) => {
+        const newLinks = projectLinks.filter((_, i) => i !== index);
+        setProjectLinks(newLinks);
     };
 
     // Image modal handlers
@@ -366,6 +411,55 @@ export default function Portfolio() {
                             {bio}
                         </div>
                     </div>
+                    
+                    {/* Project Links Display */}
+                    {projectLinks && projectLinks.length > 0 && (
+                        <div className="flex flex-col gap-2 mt-4">
+                            <h3 className="font-semibold text-base">Projetos Anteriores</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {projectLinks
+                                    .filter(link => {
+                                        if (typeof link === 'string') {
+                                            return link && link.trim() !== '';
+                                        }
+                                        return link && link.url && link.url.trim() !== '';
+                                    })
+                                    .map((link, index) => {
+                                        const linkData = typeof link === 'string' 
+                                            ? { title: `Projeto ${index + 1}`, url: link }
+                                            : { title: link.title || `Projeto ${index + 1}`, url: link.url || '' };
+                                        
+                                        return (
+                                            <a
+                                                key={index}
+                                                href={linkData.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors group"
+                                            >
+                                                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                                    <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                    </svg>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-sm font-medium text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                                        {linkData.title}
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground truncate">
+                                                        {linkData.url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                                                    </div>
+                                                </div>
+                                                <svg className="w-4 h-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                </svg>
+                                            </a>
+                                        );
+                                    })}
+                            </div>
+                        </div>
+                    )}
+                    
                     <div className="flex flex-col gap-2 mt-6">
                         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                             <DialogTrigger asChild>
@@ -399,6 +493,57 @@ export default function Portfolio() {
                                         />
                                         <div className="text-xs text-muted-foreground mt-1">
                                             {bio.length}/{MAX_BIO_LENGTH} caracteres
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Project Links Section */}
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Links de Projetos Anteriores</label>
+                                        <div className="space-y-2">
+                                            {projectLinks.map((link, index) => (
+                                                <div key={index} className="space-y-2 p-3 border rounded-lg bg-muted/20">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-sm font-medium">Projeto {index + 1}</span>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => removeProjectLink(index)}
+                                                            className="px-2 h-6"
+                                                        >
+                                                            ×
+                                                        </Button>
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        className="w-full rounded-md border px-3 py-2 text-sm bg-background text-foreground outline-none transition placeholder:text-muted-foreground"
+                                                        placeholder="Título do Projeto"
+                                                        value={link.title}
+                                                        onChange={(e) => updateProjectLink(index, 'title', e.target.value)}
+                                                    />
+                                                    <input
+                                                        type="url"
+                                                        className="w-full rounded-md border px-3 py-2 text-sm bg-background text-foreground outline-none transition placeholder:text-muted-foreground"
+                                                        placeholder="https://exemplo.com/meu-projeto"
+                                                        value={link.url}
+                                                        onChange={(e) => updateProjectLink(index, 'url', e.target.value)}
+                                                    />
+                                                </div>
+                                            ))}
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={addProjectLink}
+                                                className="w-full"
+                                                disabled={projectLinks.length >= 10}
+                                            >
+                                                <Plus className="w-4 h-4 mr-2" />
+                                                Adicionar Link
+                                            </Button>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground mt-1">
+                                            Adicione links para seus projetos anteriores (máximo 10 links)
                                         </div>
                                     </div>
                                 </div>

@@ -31,7 +31,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { UpdateGuide } from "@/api/admin/guide";
-import { Plus, Trash2, GripVertical, Play } from "lucide-react";
+import { Plus, Trash2, GripVertical, Play, Image } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 /**
@@ -39,6 +39,7 @@ import { Label } from "@/components/ui/label";
  */
 
 const MAX_VIDEO_BYTES = 80 * 1024 * 1024; // 80MB
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
 
 const stepSchema = z.object({
   id: z.number().optional(),
@@ -53,8 +54,18 @@ const stepSchema = z.object({
     .refine((file) => !file || file.type.startsWith("video/"), {
       message: "Apenas arquivos de vídeo são permitidos",
     }),
+  screenshots: z
+    .array(z.instanceof(File))
+    .optional()
+    .refine((files) => !files || files.every(file => file.size <= MAX_IMAGE_BYTES), {
+      message: "Cada screenshot deve ter no máximo 10MB",
+    })
+    .refine((files) => !files || files.every(file => file.type.startsWith("image/")), {
+      message: "Apenas arquivos de imagem são permitidos",
+    }),
   video_url: z.string().optional(),
   video_path: z.string().optional(),
+  screenshot_urls: z.array(z.string()).optional(),
 });
 
 const guideSchema = z.object({
@@ -77,6 +88,7 @@ const defaultStep: StepFormValues = {
   title: "",
   description: "",
   videoFile: undefined,
+  screenshots: undefined,
 };
 
 const GuideEditDialog: React.FC<GuideEditDialogProps> = ({ isOpen, onClose, guide, onSuccess }) => {
@@ -107,7 +119,9 @@ const GuideEditDialog: React.FC<GuideEditDialogProps> = ({ isOpen, onClose, guid
           description: step.description,
           video_url: step.video_url,
           video_path: step.video_path,
+          screenshot_urls: step.screenshot_urls,
           videoFile: undefined,
+          screenshots: undefined,
         })));
       } else {
         setSteps([defaultStep]);
@@ -353,6 +367,31 @@ const GuideEditDialog: React.FC<GuideEditDialogProps> = ({ isOpen, onClose, guid
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Play className="h-4 w-4" />
                               Vídeo atual: {step.video_url.split('/').pop()}
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Screenshots do Passo (opcional)</Label>
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={(e) => {
+                              const files = Array.from(e.target.files || []);
+                              updateStep(index, 'screenshots', files.length > 0 ? files : undefined);
+                            }}
+                          />
+                          {step.screenshot_urls && step.screenshot_urls.length > 0 && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Image className="h-4 w-4" />
+                              {step.screenshot_urls.length} screenshot(s) atual(is)
+                            </div>
+                          )}
+                          {step.screenshots && step.screenshots.length > 0 && (
+                            <div className="flex items-center gap-2 text-sm text-green-600">
+                              <Image className="h-4 w-4" />
+                              {step.screenshots.length} novo(s) screenshot(s) selecionado(s)
                             </div>
                           )}
                         </div>

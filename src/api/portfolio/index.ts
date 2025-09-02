@@ -7,6 +7,7 @@ export interface Portfolio {
   bio: string | null;
   profile_picture: string | null;
   profile_picture_url?: string;
+  project_links?: ({title: string; url: string} | string)[] | null;
   created_at: string;
   updated_at: string;
   items?: PortfolioItem[];

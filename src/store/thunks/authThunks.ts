@@ -3,6 +3,7 @@ import { loginStart, loginSuccess, loginFailure, signupStart, signupSuccess, sig
 import { signup, signin, logout as logoutAPI, updatePassword } from '../../api/auth';
 import { handleApiError } from '../../lib/api-error-handler';
 import { initiateGoogleOAuth, handleOAuthCallback } from '../../api/auth/googleAuth';
+import { resetNotifications } from '../slices/notificationSlice';
 
 interface LoginCredentials {
   email: string;
@@ -40,7 +41,7 @@ interface AuthResponse {
 }
 
 // Async thunk for signup
-export const signupUser = createAsyncThunk(
+export const signupUser = createAsyncThunk( 
   'auth/signup',
   async (credentials: SignupCredentials, { dispatch, rejectWithValue }: any) => {
     try {
@@ -118,6 +119,8 @@ export const logoutUser = createAsyncThunk(
       // If it's another error, we still want to log the user out locally
     } finally {
       // Always clear state regardless of API call success
+      // Reset notification state
+      dispatch(resetNotifications());
       // redux-persist will handle localStorage cleanup
       dispatch(logout());
     }
@@ -183,4 +186,3 @@ export const handleGoogleOAuthCallback = createAsyncThunk(
     }
   }
 );
-

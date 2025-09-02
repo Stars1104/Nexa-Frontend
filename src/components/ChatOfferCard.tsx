@@ -81,6 +81,9 @@ interface Contract {
   can_be_completed: boolean;
   can_be_cancelled: boolean;
   can_be_started?: boolean;
+  has_creator_review: boolean;
+  has_brand_review: boolean;
+  has_both_reviews: boolean;
   other_user: {
     id: number;
     name: string;
@@ -904,7 +907,9 @@ function ContractCard({
               </Button>
             )}
 
-            {contract.status === "completed" && !contract.review && (
+            {contract.status === "completed" && 
+             ((userRole === "creator" && !contract.has_creator_review) || 
+              (userRole === "brand" && !contract.has_brand_review)) && (
               <Button
                 onClick={() => onReviewContract?.(contract)}
                 disabled={isProcessing}

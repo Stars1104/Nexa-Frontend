@@ -49,6 +49,7 @@ export interface Contract {
   is_near_completion: boolean;
   can_be_completed: boolean;
   can_be_cancelled: boolean;
+  can_be_terminated?: boolean;
   can_be_started?: boolean;
   offer_id?: number;
   is_waiting_for_review?: boolean;
@@ -227,6 +228,22 @@ export const hiringApi = {
   // Offers
   createOffer: async (data: CreateOfferRequest): Promise<any> => {
     const response = await apiClient.post('/offers', data);
+    return response.data;
+  },
+
+  sendInitialOffer: async (chatRoomId: string): Promise<any> => {
+    const response = await apiClient.post('/offers/initial', { chat_room_id: chatRoomId });
+    return response.data;
+  },
+
+  sendNewPartnershipOffer: async (data: {
+    chat_room_id: string;
+    budget: number;
+    estimated_days: number;
+    title: string;
+    description: string;
+  }): Promise<any> => {
+    const response = await apiClient.post('/offers/new-partnership', data);
     return response.data;
   },
 
@@ -415,6 +432,18 @@ export const hiringApi = {
     params.append('type', type);
     
     const response = await apiClient.get(`/post-contract/work-history?${params.toString()}`);
+    return response.data;
+  },
+
+  // Send renewal offer after contract completion
+  sendRenewalOffer: async (data: {
+    chat_room_id: string;
+    budget?: number;
+    estimated_days: number;
+    is_barter?: boolean;
+    barter_description?: string;
+  }): Promise<{ success: boolean; data: { offer_id: number; is_barter: boolean } }> => {
+    const response = await apiClient.post('/offers/renewal', data);
     return response.data;
   },
 }; 

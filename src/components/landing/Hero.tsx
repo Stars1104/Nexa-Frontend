@@ -4,7 +4,7 @@ import HeroRightImg from "../../assets/landing/hero-img.png";
 
 export const Hero = () => {
     return (
-        <section className="relative overflow-hidden">
+        <section className="relative overflow-hidden mt-[88px]">
             <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 via-purple-500/10 to-orange-500/10"></div>
             <div className="relative max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-20">
                 <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
