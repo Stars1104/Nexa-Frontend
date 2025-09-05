@@ -373,28 +373,6 @@ export default function ContractCard({
           )}
 
           <div className="flex gap-2">
-            {contract.status === "active" && contract.can_be_completed && (
-              <Button
-                onClick={handleComplete}
-                disabled={isProcessing}
-                className="flex-1 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                {isProcessing ? "Processando..." : "Concluir"}
-              </Button>
-            )}
-
-            {contract.status === "active" && contract.can_be_cancelled && (
-              <Button
-                onClick={() => setShowCancelDialog(true)}
-                disabled={isProcessing}
-                variant="outline"
-                className="flex-1"
-              >
-                <XCircle className="h-4 w-4 mr-2" />
-                Cancelar
-              </Button>
-            )}
 
             {contract.status === "completed" && !contract.has_creator_review && (
               <Button
