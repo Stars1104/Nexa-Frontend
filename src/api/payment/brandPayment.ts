@@ -1,20 +1,27 @@
-import { apiClient } from '../../services/apiClient';
+import { apiClient } from "../../services/apiClient";
 
 export interface BrandPaymentMethod {
   id: string;
-  card_info: string;
+  customer_id: string;
+  payment_method_id: string;
+  is_default: boolean;
+  card_holder_name: string;
   card_brand: string;
   card_last4: string;
-  card_holder_name: string;
-  is_default: boolean;
+  card_exp_month: number;
+  card_exp_year: number;
   created_at: string;
 }
 
 export interface SavePaymentMethodRequest {
-  card_hash: string;
+  customer_id: string;
+  payment_method_id: string;
   card_holder_name: string;
-  cpf: string;
-  is_default?: boolean;
+  card_brand: string;
+  card_last4: string;
+  card_exp_month: number;
+  card_exp_year: number;
+  is_default: boolean;
 }
 
 export interface SavePaymentMethodResponse {
@@ -85,23 +92,33 @@ export interface RetryPaymentResponse {
 
 // Brand payment API functions
 export const brandPaymentApi = {
-  savePaymentMethod: async (paymentData: SavePaymentMethodRequest): Promise<SavePaymentMethodResponse> => {
+  savePaymentMethod: async (
+    paymentData: SavePaymentMethodRequest
+  ): Promise<SavePaymentMethodResponse> => {
     try {
-      const response = await apiClient.post('/brand-payment/save-method', paymentData);
+      const response = await apiClient.post(
+        "/brand-payment/save-method",
+        paymentData
+      );
       return response.data;
     } catch (error: any) {
       if (error.response) {
         return {
           success: false,
-          error: error.response.data.error || error.response.data.message || 'Erro ao salvar método de pagamento',
-          message: error.response.data.message
+          error:
+            error.response.data.error ||
+            error.response.data.message ||
+            "Erro ao salvar método de pagamento",
+          message: error.response.data.message,
         };
       }
-      
+
       return {
         success: false,
-        message: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.',
-        error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
+        message:
+          "Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.",
+        error:
+          "Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.",
       };
     }
   },
@@ -110,21 +127,29 @@ export const brandPaymentApi = {
    * Get brand's payment methods
    * GET /api/brand-payment/methods
    */
-  getPaymentMethods: async (): Promise<{ success: boolean; data?: BrandPaymentMethod[]; error?: string }> => {
+  getPaymentMethods: async (): Promise<{
+    success: boolean;
+    data?: BrandPaymentMethod[];
+    error?: string;
+  }> => {
     try {
-      const response = await apiClient.get('/brand-payment/methods');
+      const response = await apiClient.get("/brand-payment/methods");
       return response.data;
     } catch (error: any) {
       if (error.response) {
         return {
           success: false,
-          error: error.response.data.error || error.response.data.message || 'Erro ao buscar métodos de pagamento'
+          error:
+            error.response.data.error ||
+            error.response.data.message ||
+            "Erro ao buscar métodos de pagamento",
         };
       }
-      
+
       return {
         success: false,
-        error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
+        error:
+          "Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.",
       };
     }
   },
@@ -133,23 +158,29 @@ export const brandPaymentApi = {
    * Set payment method as default
    * POST /api/brand-payment/set-default
    */
-  setDefaultPaymentMethod: async (paymentMethodId: string): Promise<{ success: boolean; message?: string; error?: string }> => {
+  setDefaultPaymentMethod: async (
+    paymentMethodId: string
+  ): Promise<{ success: boolean; message?: string; error?: string }> => {
     try {
-      const response = await apiClient.post('/brand-payment/set-default', {
-        payment_method_id: paymentMethodId
+      const response = await apiClient.post("/brand-payment/set-default", {
+        payment_method_id: paymentMethodId,
       });
       return response.data;
     } catch (error: any) {
       if (error.response) {
         return {
           success: false,
-          error: error.response.data.error || error.response.data.message || 'Erro ao definir método padrão'
+          error:
+            error.response.data.error ||
+            error.response.data.message ||
+            "Erro ao definir método padrão",
         };
       }
-      
+
       return {
         success: false,
-        error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
+        error:
+          "Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.",
       };
     }
   },
@@ -158,23 +189,29 @@ export const brandPaymentApi = {
    * Delete payment method
    * DELETE /api/brand-payment/methods
    */
-  deletePaymentMethod: async (paymentMethodId: string): Promise<{ success: boolean; message?: string; error?: string }> => {
+  deletePaymentMethod: async (
+    paymentMethodId: string
+  ): Promise<{ success: boolean; message?: string; error?: string }> => {
     try {
-      const response = await apiClient.delete('/brand-payment/methods', {
-        data: { payment_method_id: paymentMethodId }
+      const response = await apiClient.delete("/brand-payment/methods", {
+        data: { payment_method_id: paymentMethodId },
       });
       return response.data;
     } catch (error: any) {
       if (error.response) {
         return {
           success: false,
-          error: error.response.data.error || error.response.data.message || 'Erro ao deletar método de pagamento'
+          error:
+            error.response.data.error ||
+            error.response.data.message ||
+            "Erro ao deletar método de pagamento",
         };
       }
-      
+
       return {
         success: false,
-        error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
+        error:
+          "Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.",
       };
     }
   },
@@ -183,23 +220,33 @@ export const brandPaymentApi = {
    * Process contract payment
    * POST /api/contract-payment/process
    */
-  processContractPayment: async (paymentData: ContractPaymentRequest): Promise<ContractPaymentResponse> => {
+  processContractPayment: async (
+    paymentData: ContractPaymentRequest
+  ): Promise<ContractPaymentResponse> => {
     try {
-      const response = await apiClient.post('/contract-payment/process', paymentData);
+      const response = await apiClient.post(
+        "/contract-payment/process",
+        paymentData
+      );
       return response.data;
     } catch (error: any) {
       if (error.response) {
         return {
           success: false,
-          error: error.response.data.error || error.response.data.message || 'Erro ao processar pagamento do contrato',
-          message: error.response.data.message
+          error:
+            error.response.data.error ||
+            error.response.data.message ||
+            "Erro ao processar pagamento do contrato",
+          message: error.response.data.message,
         };
       }
-      
+
       return {
         success: false,
-        message: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.',
-        error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
+        message:
+          "Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.",
+        error:
+          "Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.",
       };
     }
   },
@@ -208,23 +255,33 @@ export const brandPaymentApi = {
    * Get contract payment status
    * GET /api/contract-payment/status?contract_id={id}
    */
-  getContractPaymentStatus: async (contractId: string): Promise<{ success: boolean; data?: ContractPaymentStatus; error?: string }> => {
+  getContractPaymentStatus: async (
+    contractId: string
+  ): Promise<{
+    success: boolean;
+    data?: ContractPaymentStatus;
+    error?: string;
+  }> => {
     try {
-      const response = await apiClient.get('/contract-payment/status', {
-        params: { contract_id: contractId }
+      const response = await apiClient.get("/contract-payment/status", {
+        params: { contract_id: contractId },
       });
       return response.data;
     } catch (error: any) {
       if (error.response) {
         return {
           success: false,
-          error: error.response.data.error || error.response.data.message || 'Erro ao buscar status do pagamento'
+          error:
+            error.response.data.error ||
+            error.response.data.message ||
+            "Erro ao buscar status do pagamento",
         };
       }
-      
+
       return {
         success: false,
-        error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
+        error:
+          "Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.",
       };
     }
   },
@@ -233,23 +290,33 @@ export const brandPaymentApi = {
    * Retry contract payment
    * POST /api/contract-payment/retry
    */
-  retryContractPayment: async (paymentData: RetryPaymentRequest): Promise<RetryPaymentResponse> => {
+  retryContractPayment: async (
+    paymentData: RetryPaymentRequest
+  ): Promise<RetryPaymentResponse> => {
     try {
-      const response = await apiClient.post('/contract-payment/retry', paymentData);
+      const response = await apiClient.post(
+        "/contract-payment/retry",
+        paymentData
+      );
       return response.data;
     } catch (error: any) {
       if (error.response) {
         return {
           success: false,
-          error: error.response.data.error || error.response.data.message || 'Erro ao tentar reprocessar pagamento do contrato',
-          message: error.response.data.message
+          error:
+            error.response.data.error ||
+            error.response.data.message ||
+            "Erro ao tentar reprocessar pagamento do contrato",
+          message: error.response.data.message,
         };
       }
-      
+
       return {
         success: false,
-        message: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.',
-        error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
+        message:
+          "Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.",
+        error:
+          "Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.",
       };
     }
   },
@@ -258,22 +325,30 @@ export const brandPaymentApi = {
    * Get available payment methods for contract
    * GET /api/contract-payment/methods
    */
-  getAvailablePaymentMethods: async (): Promise<{ success: boolean; data?: BrandPaymentMethod[]; error?: string }> => {
+  getAvailablePaymentMethods: async (): Promise<{
+    success: boolean;
+    data?: BrandPaymentMethod[];
+    error?: string;
+  }> => {
     try {
-      const response = await apiClient.get('/contract-payment/methods');
+      const response = await apiClient.get("/contract-payment/methods");
       return response.data;
     } catch (error: any) {
       if (error.response) {
         return {
           success: false,
-          error: error.response.data.error || error.response.data.message || 'Erro ao buscar métodos de pagamento disponíveis'
+          error:
+            error.response.data.error ||
+            error.response.data.message ||
+            "Erro ao buscar métodos de pagamento disponíveis",
         };
       }
-      
+
       return {
         success: false,
-        error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
+        error:
+          "Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.",
       };
     }
-  }
-}; 
+  },
+};

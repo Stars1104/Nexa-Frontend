@@ -1,6 +1,6 @@
-import { apiClient, paymentClient } from '../../services/apiClient';
-import axios from 'axios';
-export * from './creatorPayment';
+import { apiClient, paymentClient } from "../../services/apiClient";
+import axios from "axios";
+export * from "./creatorPayment";
 
 export interface PaymentMethod {
   id: string;
@@ -92,14 +92,33 @@ export interface AccountPaymentRequest {
 
 export const paymentApi = {
   // Get user's payment methods
+  registerStripeCustomer: async (): Promise<any> => {
+    const response = await apiClient.post("/payment/register-customer");
+    return response.data;
+  },
+
+  setupStripeIntent: async (data: { customerId: string }): Promise<any> => {
+    const response = await apiClient.post("/payment/setup-intent", data);
+    return response.data;
+  },
+
+  retrieveStripeCard: async (data: {
+    paymentMethodId: string;
+  }): Promise<any> => {
+    const response = await apiClient.post("/payment/retrieve-stripecard", data);
+    return response.data;
+  },
+
   getPaymentMethods: async (): Promise<PaymentMethod[]> => {
-    const response = await apiClient.get('/payment/methods');
+    const response = await apiClient.get("/payment/methods");
     return response.data.data || [];
   },
 
   // Create a new payment method
-  createPaymentMethod: async (data: CreatePaymentMethodRequest): Promise<PaymentMethod> => {
-    const response = await apiClient.post('/payment/methods', data);
+  createPaymentMethod: async (
+    data: CreatePaymentMethodRequest
+  ): Promise<PaymentMethod> => {
+    const response = await apiClient.post("/payment/methods", data);
     return response.data.data;
   },
 
@@ -110,39 +129,44 @@ export const paymentApi = {
 
   // Process a payment
   processPayment: async (data: ProcessPaymentRequest): Promise<any> => {
-    const response = await paymentClient.post('/payment/process', data);
+    const response = await paymentClient.post("/payment/process", data);
     return response.data;
   },
 
   // Get payment history
-  getPaymentHistory: async (page: number = 1, perPage: number = 10): Promise<PaymentHistoryResponse> => {
-    const response = await apiClient.get('/payment/history', {
-      params: { page, per_page: perPage }
+  getPaymentHistory: async (
+    page: number = 1,
+    perPage: number = 10
+  ): Promise<PaymentHistoryResponse> => {
+    const response = await apiClient.get("/payment/history", {
+      params: { page, per_page: perPage },
     });
     return response.data;
   },
 
   // Process subscription payment for creators
-  processSubscription: async (data: SubscriptionPaymentRequest): Promise<any> => {
-    const response = await paymentClient.post('/payment/subscription', data);
+  processSubscription: async (
+    data: SubscriptionPaymentRequest
+  ): Promise<any> => {
+    const response = await paymentClient.post("/payment/subscription", data);
     return response.data;
   },
 
   // Get available subscription plans
   getSubscriptionPlans: async (): Promise<SubscriptionPlan[]> => {
-    const response = await apiClient.get('/subscription/plans');
+    const response = await apiClient.get("/subscription/plans");
     return response.data.data || [];
   },
 
   // Get subscription history
   getSubscriptionHistory: async (): Promise<any> => {
-    const response = await apiClient.get('/subscription/history');
+    const response = await apiClient.get("/subscription/history");
     return response.data.data || [];
   },
 
   // Cancel subscription
   cancelSubscription: async (): Promise<any> => {
-    const response = await apiClient.post('/subscription/cancel');
+    const response = await apiClient.post("/subscription/cancel");
     return response.data;
   },
 
@@ -150,38 +174,45 @@ export const paymentApi = {
   processAccountPayment: async (data: AccountPaymentRequest): Promise<any> => {
     // Create a special axios instance for account_id authentication
     const accountPaymentClient = axios.create({
-      baseURL: import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br",
+      baseURL:
+        import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br",
       headers: {
-        'Content-Type': 'application/json',
-        'X-PagarMe-Account-ID': data.account_id,
-        'X-PagarMe-Email': data.email,
+        "Content-Type": "application/json",
+        "X-PagarMe-Account-ID": data.account_id,
+        "X-PagarMe-Email": data.email,
       },
     });
 
-    const response = await accountPaymentClient.post('/api/payment/account-payment', {
-      amount: data.amount,
-      description: data.description,
-      account_id: data.account_id,
-      email: data.email,
-    });
+    const response = await accountPaymentClient.post(
+      "/api/payment/account-payment",
+      {
+        amount: data.amount,
+        description: data.description,
+        account_id: data.account_id,
+        email: data.email,
+      }
+    );
 
     return response.data;
   },
 
   // Get transaction history
-  getTransactionHistory: async (page: number = 1, perPage: number = 10): Promise<PaymentHistoryResponse> => {
-    const response = await apiClient.get('/payment/transactions', {
-      params: { page, per_page: perPage }
+  getTransactionHistory: async (
+    page: number = 1,
+    perPage: number = 10
+  ): Promise<PaymentHistoryResponse> => {
+    const response = await apiClient.get("/payment/transactions", {
+      params: { page, per_page: perPage },
     });
     return response.data;
   },
 
   // Get subscription status
   getSubscriptionStatus: async (): Promise<SubscriptionStatus> => {
-    const response = await apiClient.get('/payment/subscription-status');
+    const response = await apiClient.get("/payment/subscription-status");
     return response.data;
   },
 };
 
 // Export creator payment API
-export { creatorPaymentApi } from './creatorPayment';
+export { creatorPaymentApi } from "./creatorPayment";
