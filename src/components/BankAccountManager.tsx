@@ -3,16 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  BanknoteIcon, 
-  CreditCard, 
-  User, 
-  Building2, 
-  Shield, 
-  CheckCircle, 
+import {
+  BanknoteIcon,
+  CreditCard,
+  User,
+  Building2,
+  Shield,
+  CheckCircle,
   Edit,
   Plus,
-  Trash2
+  Trash2,
 } from "lucide-react";
 import { creatorPaymentApi } from "@/api/payment/creatorPayment";
 import BankAccountForm from "./BankAccountForm";
@@ -40,20 +40,23 @@ const BankAccountManager: React.FC = () => {
     try {
       setIsLoading(true);
       const result = await creatorPaymentApi.getBankInfo();
-      
+
       if (result.success && result.data) {
         // Check if we have bank info in the response
         const bankData = result.data.bank_info || result.data;
-        
-        if (bankData && (bankData.bank_code || bankData.agencia || bankData.conta)) {
+
+        if (
+          bankData &&
+          (bankData.bank_code || bankData.agencia || bankData.conta)
+        ) {
           setBankInfo({
-            bank_code: bankData.bank_code || '',
-            agencia: bankData.agencia || '',
-            agencia_dv: bankData.agencia_dv || '',
-            conta: bankData.conta || '',
-            conta_dv: bankData.conta_dv || '',
-            cpf: bankData.cpf || '',
-            name: bankData.name || ''
+            bank_code: bankData.bank_code || "",
+            agencia: bankData.agencia || "",
+            agencia_dv: bankData.agencia_dv || "",
+            conta: bankData.conta || "",
+            conta_dv: bankData.conta_dv || "",
+            cpf: bankData.cpf || "",
+            name: bankData.name || "",
           });
           setHasBankAccount(true);
         } else {
@@ -65,7 +68,7 @@ const BankAccountManager: React.FC = () => {
         setBankInfo(null);
       }
     } catch (error) {
-      console.error('Error fetching bank info:', error);
+      console.error("Error fetching bank info:", error);
       setHasBankAccount(false);
       setBankInfo(null);
     } finally {
@@ -75,14 +78,16 @@ const BankAccountManager: React.FC = () => {
 
   // Delete bank account
   const handleDeleteBankAccount = async () => {
-    if (!confirm('Tem certeza que deseja excluir suas informações bancárias?')) {
+    if (
+      !confirm("Tem certeza que deseja excluir suas informações bancárias?")
+    ) {
       return;
     }
 
     try {
       setIsDeleting(true);
       const result = await creatorPaymentApi.deleteBankInfo();
-      
+
       if (result.success) {
         toast({
           title: "Sucesso!",
@@ -98,7 +103,7 @@ const BankAccountManager: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Error deleting bank info:', error);
+      console.error("Error deleting bank info:", error);
       toast({
         title: "Erro",
         description: "Erro ao excluir informações bancárias",
@@ -126,7 +131,9 @@ const BankAccountManager: React.FC = () => {
           <CardContent className="p-8">
             <div className="flex items-center justify-center">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mr-3" />
-              <span className="text-lg">Carregando informações bancárias...</span>
+              <span className="text-lg">
+                Carregando informações bancárias...
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -170,7 +177,7 @@ const BankAccountManager: React.FC = () => {
               Ativo
             </Badge>
           </CardHeader>
-          
+
           <CardContent className="space-y-6">
             {/* Bank Information */}
             <div className="space-y-4">
@@ -178,15 +185,17 @@ const BankAccountManager: React.FC = () => {
                 <Building2 className="w-4 h-4" />
                 Informações do Banco
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">
                     Código do Banco
                   </label>
-                  <p className="text-foreground font-medium">{bankInfo.bank_code}</p>
+                  <p className="text-foreground font-medium">
+                    {bankInfo.bank_code}
+                  </p>
                 </div>
-                
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">
                     Agência
@@ -204,7 +213,7 @@ const BankAccountManager: React.FC = () => {
                 <CreditCard className="w-4 h-4" />
                 Informações da Conta
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">
@@ -223,7 +232,7 @@ const BankAccountManager: React.FC = () => {
                 <User className="w-4 h-4" />
                 Informações Pessoais
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">
@@ -231,7 +240,7 @@ const BankAccountManager: React.FC = () => {
                   </label>
                   <p className="text-foreground font-medium">{bankInfo.cpf}</p>
                 </div>
-                
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">
                     Nome Completo
@@ -248,8 +257,9 @@ const BankAccountManager: React.FC = () => {
                 <div className="text-sm text-muted-foreground">
                   <p className="font-medium text-foreground mb-1">Segurança</p>
                   <p>
-                    Suas informações bancárias são criptografadas e armazenadas com segurança. 
-                    Utilizamos padrões bancários para proteger seus dados.
+                    Suas informações bancárias são criptografadas e armazenadas
+                    com segurança. Utilizamos padrões bancários para proteger
+                    seus dados.
                   </p>
                 </div>
               </div>
@@ -302,16 +312,19 @@ const BankAccountManager: React.FC = () => {
             Cadastro Bancário
           </CardTitle>
           <p className="text-muted-foreground">
-            Para receber pagamentos, você precisa cadastrar suas informações bancárias
+            Para receber pagamentos, você precisa cadastrar suas informações
+            bancárias
           </p>
         </CardHeader>
-        
+
         <CardContent className="space-y-6">
           {/* Benefits */}
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <CheckCircle className="w-5 h-5 text-green-600" />
-              <span className="text-sm">Receba pagamentos diretamente na sua conta</span>
+              <span className="text-sm">
+                Receba pagamentos diretamente na sua conta
+              </span>
             </div>
             <div className="flex items-center gap-3">
               <CheckCircle className="w-5 h-5 text-green-600" />
@@ -330,8 +343,9 @@ const BankAccountManager: React.FC = () => {
               <div className="text-sm text-muted-foreground">
                 <p className="font-medium text-foreground mb-1">Segurança</p>
                 <p>
-                  Suas informações bancárias são criptografadas e armazenadas com segurança. 
-                  Utilizamos padrões bancários para proteger seus dados.
+                  Suas informações bancárias são criptografadas e armazenadas
+                  com segurança. Utilizamos padrões bancários para proteger seus
+                  dados.
                 </p>
               </div>
             </div>
@@ -339,8 +353,12 @@ const BankAccountManager: React.FC = () => {
 
           {/* Register Button */}
           <Button
-            onClick={() => setShowRegistrationForm(true)}
-            className="w-full bg-primary text-primary-foreground font-medium py-3 bg-[#e91e63] text-white hover:bg-[#e91e63]/90"
+            onClick={async () => {
+              const result = await creatorPaymentApi.registerBank();
+
+              console.log("result---------->", result);
+            }}
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3"
           >
             <Plus className="w-4 h-4 mr-2" />
             Cadastrar Informações Bancárias
@@ -351,4 +369,4 @@ const BankAccountManager: React.FC = () => {
   );
 };
 
-export default BankAccountManager; 
+export default BankAccountManager;

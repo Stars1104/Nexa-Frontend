@@ -1,4 +1,4 @@
-import { apiClient } from '../../services/apiClient';
+import { apiClient } from "../../services/apiClient";
 
 // Bank registration interface based on BankAccountForm component
 export interface BankRegistrationRequest {
@@ -27,23 +27,28 @@ export const creatorPaymentApi = {
    * Register bank account for freelancer/creator
    * POST /api/freelancer/register-bank
    */
-  registerBank: async (bankInfo: BankRegistrationRequest): Promise<BankRegistrationResponse> => {
+  // registerBank: async (bankInfo: BankRegistrationRequest): Promise<BankRegistrationResponse> => {
+  registerBank: async (): Promise<any> => {
     try {
-      const response = await apiClient.post('/freelancer/register-bank', bankInfo);
+      const response = await apiClient.post("/freelancer/register-bank");
       return response.data;
     } catch (error: any) {
       // Handle API errors
       if (error.response) {
         return {
           success: false,
-          error: error.response.data.error || error.response.data.message || 'Erro ao registrar informações bancárias',
-          message: error.response.data.message
+          error:
+            error.response.data.error ||
+            error.response.data.message ||
+            "Erro ao registrar informações bancárias",
+          message: error.response.data.message,
         };
       }
-      
+
       return {
         success: false,
-        error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
+        error:
+          "Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.",
       };
     }
   },
@@ -53,7 +58,7 @@ export const creatorPaymentApi = {
    * GET /api/freelancer/bank-info
    */
   getBankInfo: async (): Promise<any> => {
-    const response = await apiClient.get('/freelancer/bank-info');
+    const response = await apiClient.get("/freelancer/bank-info");
     return response.data;
   },
 
@@ -62,7 +67,7 @@ export const creatorPaymentApi = {
    * PUT /api/freelancer/bank-info
    */
   updateBankInfo: async (bankInfo: BankRegistrationRequest): Promise<any> => {
-    const response = await apiClient.put('/freelancer/bank-info', bankInfo);
+    const response = await apiClient.put("/freelancer/bank-info", bankInfo);
     return response.data;
   },
 
@@ -71,7 +76,7 @@ export const creatorPaymentApi = {
    * DELETE /api/freelancer/bank-info
    */
   deleteBankInfo: async (): Promise<any> => {
-    const response = await apiClient.delete('/freelancer/bank-info');
+    const response = await apiClient.delete("/freelancer/bank-info");
     return response.data;
   },
 
@@ -79,9 +84,12 @@ export const creatorPaymentApi = {
    * Get creator's withdrawal history
    * GET /api/freelancer/withdrawals
    */
-  getWithdrawalHistory: async (page: number = 1, perPage: number = 10): Promise<any> => {
-    const response = await apiClient.get('/freelancer/withdrawals', {
-      params: { page, per_page: perPage }
+  getWithdrawalHistory: async (
+    page: number = 1,
+    perPage: number = 10
+  ): Promise<any> => {
+    const response = await apiClient.get("/freelancer/withdrawals", {
+      params: { page, per_page: perPage },
     });
     return response.data;
   },
@@ -95,7 +103,7 @@ export const creatorPaymentApi = {
     method: string;
     bank_account_id?: string;
   }): Promise<any> => {
-    const response = await apiClient.post('/freelancer/withdrawals', data);
+    const response = await apiClient.post("/freelancer/withdrawals", data);
     return response.data;
   },
 
@@ -104,7 +112,7 @@ export const creatorPaymentApi = {
    * GET /api/freelancer/earnings
    */
   getEarnings: async (): Promise<any> => {
-    const response = await apiClient.get('/freelancer/earnings');
+    const response = await apiClient.get("/freelancer/earnings");
     return response.data;
   },
 
@@ -113,7 +121,7 @@ export const creatorPaymentApi = {
    * GET /api/freelancer/withdrawal-methods
    */
   getWithdrawalMethods: async (): Promise<any> => {
-    const response = await apiClient.get('/freelancer/withdrawal-methods');
+    const response = await apiClient.get("/freelancer/withdrawal-methods");
     return response.data;
-  }
-}; 
+  },
+};

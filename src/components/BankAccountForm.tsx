@@ -207,36 +207,40 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
     try {
       const result = await creatorPaymentApi.registerBank(safeBankInfo);
 
-      if (result.success) {
-        toast({
-          title: "Sucesso!",
-          description: "Informações bancárias registradas com sucesso",
-        });
+      console.log('result---------->', result);
+
+      // if (result.success) {
+      //   toast({
+      //     title: "Sucesso!",
+      //     description: "Informações bancárias registradas com sucesso",
+      //   });
+
+
         
-        // Reset form
-        setBankInfo({
-          bank_code: '',
-          agencia: '',
-          agencia_dv: '',
-          conta: '',
-          conta_dv: '',
-          cpf: '',
-          name: ''
-        });
-        setErrors({});
+      //   // // Reset form
+      //   // setBankInfo({
+      //   //   bank_code: '',
+      //   //   agencia: '',
+      //   //   agencia_dv: '',
+      //   //   conta: '',
+      //   //   conta_dv: '',
+      //   //   cpf: '',
+      //   //   name: ''
+      //   // });
+      //   // setErrors({});
         
-        // Call success callback if provided
-        if (onSuccess) {
-          onSuccess();
-        }
-      } else {
-        const errorMessage = result.error || result.message || 'Erro ao registrar informações bancárias';
-        toast({
-          title: "Erro",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      }
+      //   // // Call success callback if provided
+      //   // if (onSuccess) {
+      //   //   onSuccess();
+      //   // }
+      // } else {
+      //   const errorMessage = result.error || result.message || 'Erro ao registrar informações bancárias';
+      //   toast({
+      //     title: "Erro",
+      //     description: errorMessage,
+      //     variant: "destructive",
+      //   });
+      // }
     } catch (error) {
       console.error('Bank registration error:', error);
       toast({
