@@ -297,13 +297,6 @@ export const CreatorProfile = () => {
   return (
     <div className="min-h-[92vh] bg-gray-50 dark:bg-[#171717] p-6">
       <div className="w-full">
-        <h1 className="text-2xl font-bold mb-1 text-gray-900 dark:text-white">
-          Minha Conta
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-          Gerencie suas informações pessoais
-        </p>
-
         {/* Premium Subscription Alert */}
         {!displayProfile.has_premium && (
           <div className="mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">

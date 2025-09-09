@@ -28,17 +28,17 @@ const EmailVerificationPendingPage: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-            Invalid Access
+            Acesso Inválido
           </h1>
           <p className="text-gray-600 dark:text-gray-300 mb-6">
-            This page is only accessible after registration.
+            Esta página só é acessível após o registro.
           </p>
           <Button onClick={handleGoBack} variant="outline" className="mr-2">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Go Back
+            Voltar
           </Button>
           <Button onClick={handleGoToLogin}>
-            Go to Login
+            Ir para Login
           </Button>
         </div>
       </div>
@@ -48,6 +48,7 @@ const EmailVerificationPendingPage: React.FC = () => {
   return (
     <EmailVerificationPending
       userEmail={userEmail}
+      userRole={userRole}
       onResendEmail={handleResendEmail}
       onGoToLogin={handleGoToLogin}
     />
