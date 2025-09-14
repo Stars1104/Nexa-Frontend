@@ -27,6 +27,39 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "../ui/sonner";
 
+// Language mapping from codes to display names
+const LANGUAGE_CODE_TO_NAME: { [key: string]: string } = {
+  "pt": "Português",
+  "en": "Inglês",
+  "es": "Espanhol",
+  "fr": "Francês",
+  "de": "Alemão",
+  "it": "Italiano",
+  "ja": "Japonês",
+  "zh": "Chinês (Mandarim)",
+  "ko": "Coreano",
+  "ru": "Russo",
+  "ar": "Árabe",
+  "hi": "Hindi",
+  "nl": "Holandês",
+  "sv": "Sueco",
+  "no": "Norueguês",
+  "da": "Dinamarquês",
+  "fi": "Finlandês",
+  "pl": "Polaco",
+  "cs": "Tcheco",
+  "hu": "Húngaro",
+  "el": "Grego",
+  "tr": "Turco",
+  "he": "Hebraico",
+  "th": "Tailandês",
+  "vi": "Vietnamita",
+  "id": "Indonésio",
+  "ms": "Malaio",
+  "tl": "Filipino",
+  "other": "Outros"
+};
+
 interface CreatorProfileProps {
   creatorId?: string;
   onBack?: () => void;
@@ -374,15 +407,15 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                   )}
 
                   {/* Area of Expertise */}
-                  {creator.industry && (
+                  {creator.niche && (
                     <div>
                       <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
                         <Briefcase className="h-4 w-4" />
-                        Área de Atuação
+                        Nicho de Atuação
                       </h4>
                       <div className="flex items-center gap-3">
                         <Globe className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-muted-foreground">{creator.industry}</span>
+                        <span className="text-muted-foreground">{creator.niche}</span>
                       </div>
                     </div>
                   )}
@@ -397,7 +430,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                       <div className="flex flex-wrap gap-2">
                         {creator.languages.map((language: string, index: number) => (
                           <Badge key={index} variant="secondary" className="text-xs">
-                            {language}
+                            {LANGUAGE_CODE_TO_NAME[language] || language}
                           </Badge>
                         ))}
                       </div>

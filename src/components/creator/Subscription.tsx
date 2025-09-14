@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import SubscriptionModal from "./SubscriptionModal";
 import { paymentApi, SubscriptionStatus, SubscriptionPlan } from "../../api/payment";
 import { useToast } from "../../hooks/use-toast";
+import { dispatchPremiumStatusUpdate } from "../../utils/browserUtils";
 
 const benefits = [
     "Aplicações ilimitadas em campanhas",
@@ -418,7 +419,7 @@ export default function Subscription() {
                 });
                 
                 // Dispatch event to notify other components about premium status update
-                window.dispatchEvent(new CustomEvent('premium-status-updated'));
+                dispatchPremiumStatusUpdate();
                 
                                 toast({
                     title: "Sucesso!",

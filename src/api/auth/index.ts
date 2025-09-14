@@ -176,7 +176,9 @@ export const profileUpdate = async (data: any) => {
 // Get Profile Function
 export const getProfile = async () => {
     try {
-        const response = await AuthAPI.get("/api/profile");
+        // Add cache-busting parameter to force fresh data
+        const timestamp = Date.now();
+        const response = await AuthAPI.get(`/api/profile?t=${timestamp}`);
         if (!response.data.success) {
             throw new Error(response.data.message || 'Falha ao buscar perfil');
         }
