@@ -21,6 +21,7 @@ interface UserProfile {
   facebook_page?: string;
   twitter_handle?: string;
   industry?: string;
+  niche?: string;
   state?: string;
   socialLinks?: {
     twitter?: string;
@@ -90,6 +91,11 @@ const userSlice = createSlice({
     clearUserError: (state) => {
       state.error = null;
     },
+    clearProfile: (state) => {
+      state.profile = null;
+      state.isLoading = false;
+      state.error = null;
+    },
   },
 });
 
@@ -103,6 +109,7 @@ export const {
   updateProfileFailure,
   updatePreferences,
   clearUserError,
+  clearProfile,
 } = userSlice.actions;
 
 export default userSlice.reducer; 

@@ -7,6 +7,7 @@ import {
     SelectContent,
     SelectItem
 } from "../ui/select";
+import { DatePicker } from "../ui/date-picker";
 import { cn } from "@/lib/utils";
 import { UploadIcon, XIcon } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
@@ -41,7 +42,7 @@ const BRAZILIAN_STATES = [
   "Tocantins"
 ];
 
-const INDUSTRIES = [
+const NICHES = [
   "Moda e Beleza",
   "Tecnologia",
   "Saúde e Bem-estar",
@@ -64,37 +65,7 @@ const INDUSTRIES = [
   "Outros"
 ];
 
-const LANGUAGES = [
-  "Português",
-  "Inglês",
-  "Espanhol",
-  "Francês",
-  "Alemão",
-  "Italiano",
-  "Japonês",
-  "Chinês (Mandarim)",
-  "Coreano",
-  "Russo",
-  "Árabe",
-  "Hindi",
-  "Holandês",
-  "Sueco",
-  "Norueguês",
-  "Dinamarquês",
-  "Finlandês",
-  "Polaco",
-  "Tcheco",
-  "Húngaro",
-  "Grego",
-  "Turco",
-  "Hebraico",
-  "Tailandês",
-  "Vietnamita",
-  "Indonésio",
-  "Malaio",
-  "Filipino",
-  "Outros"
-];
+
 
 const getInitials = (name: string) => {
     return name
@@ -112,7 +83,6 @@ const defaultProfile = {
     email: "andriikerrn@gmail.com",
     state: "São Paulo",
     role: "UGC e Influenciador",
-    languages: ["Português", "Inglês"],
     gender: "none",
     categories: ["Moda", "Estilo de Vida", "Beleza"],
     image: null as File | null,
@@ -123,7 +93,7 @@ const defaultProfile = {
     youtube_channel: null as string | null,
     facebook_page: null as string | null,
     twitter_handle: null as string | null,
-    industry: null as string | null,
+    niche: null as string | null,
 };
 
 export const EditProfile: React.FC<{
@@ -159,35 +129,15 @@ export const EditProfile: React.FC<{
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
+
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
         const { name, value } = e.target;
-        if (name === 'birth_date') {
-            setProfile((p) => ({ ...p, [name]: value || null }));
-        } else {
-            setProfile((p) => ({ ...p, [name]: value }));
-        }
+        setProfile((p) => ({ ...p, [name]: value }));
     };
 
-    const handleLanguageToggle = (language: string, checked: boolean) => {
-        setProfile((p) => {
-            const currentLanguages = Array.isArray(p.languages) ? p.languages : [];
-            if (checked) {
-                // Add language if not already present
-                if (!currentLanguages.includes(language)) {
-                    return { ...p, languages: [...currentLanguages, language] };
-                }
-            } else {
-                // Remove language
-                return { ...p, languages: currentLanguages.filter(l => l !== language) };
-            }
-            return p;
-        });
-    };
 
-    // Ensure languages is always an array
-    const selectedLanguages = Array.isArray(profile.languages) ? profile.languages : [];
 
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
@@ -203,8 +153,8 @@ export const EditProfile: React.FC<{
             return;
         }
         
-        if (!selectedLanguages.length) {
-            setError("Selecione pelo menos um idioma");
+        if (!profile.niche) {
+            setError("Nicho é obrigatório");
             return;
         }
         
@@ -215,6 +165,7 @@ export const EditProfile: React.FC<{
         }
         
         setError("");
+        
         onSave(profile);
     };
 
@@ -330,32 +281,6 @@ export const EditProfile: React.FC<{
                         <span className="text-xs text-gray-400 mt-1">Isso ajuda as marcas a entenderem seu perfil.</span>
                     </div>
                     <div className="flex flex-col">
-                        <label className="font-medium text-gray-700 dark:text-gray-300 mb-2">Idiomas falados</label>
-                        <div className="bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-md p-4 max-h-48 overflow-y-auto">
-                            <div className="grid grid-cols-2 gap-3">
-                                {LANGUAGES.map((language) => (
-                                    <div key={language} className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id={`language-${language}`}
-                                            checked={selectedLanguages.includes(language)}
-                                            onCheckedChange={(checked) => handleLanguageToggle(language, checked as boolean)}
-                                            disabled={isLoading}
-                                        />
-                                        <label 
-                                            htmlFor={`language-${language}`}
-                                            className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
-                                        >
-                                            {language}
-                                        </label>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <span className="text-xs text-gray-400 mt-1">
-                            Selecione os idiomas que você fala fluentemente. Você pode escolher múltiplos idiomas.
-                        </span>
-                    </div>
-                    <div className="flex flex-col">
                         <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Gênero <span className="text-red-500">*</span></label>
                         <Select
                             value={profile.gender || ''}
@@ -376,18 +301,14 @@ export const EditProfile: React.FC<{
                     </div>
                     <div className="flex flex-col">
                         <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Nascimento <span className="text-red-500">*</span></label>
-                        <Input
-                            id="birth_date"
-                            name="birth_date"
-                            type="date"
+                        <DatePicker
                             value={profile.birth_date || ''}
-                            onChange={handleChange}
+                            onChange={(date) => setProfile(p => ({ ...p, birth_date: date }))}
                             disabled={isLoading}
                             min="1900-01-01"
                             max={new Date().toISOString().split('T')[0]}
-                            className="w-full bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-md px-4 py-2 text-gray-900 dark:text-white outline-none placeholder-gray-400 dark:placeholder-gray-500 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="dd/mm/yyyy"
-                            required
+                            placeholder="Selecione sua data de nascimento"
+                            className="w-full"
                         />
                         <span className="text-xs text-gray-400 mt-1">Campo obrigatório - Isso ajuda as marcas a encontrar campanhas adequadas para sua idade</span>
                     </div>
@@ -410,24 +331,25 @@ export const EditProfile: React.FC<{
                         <span className="text-xs text-gray-400 mt-1">Isso ajuda as marcas a encontrar campanhas adequadas para seu perfil</span>
                     </div>
                     <div className="flex flex-col">
-                        <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Indústria <span className="text-xs text-gray-400">(Opcional)</span></label>
+                        <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Nicho <span className="text-red-500">*</span></label>
                         <Select
-                            value={profile.industry || ''}
-                            onValueChange={val => setProfile(p => ({ ...p, industry: val }))}
+                            value={profile.niche || ''}
+                            onValueChange={val => setProfile(p => ({ ...p, niche: val }))}
                             disabled={isLoading}
+                            required
                         >
                             <SelectTrigger className="bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-md px-4 py-2 text-gray-900 dark:text-white outline-none placeholder-gray-400 dark:placeholder-gray-500 text-base">
-                                <SelectValue placeholder="Selecione sua indústria" />
+                                <SelectValue placeholder="Selecione seu nicho" />
                             </SelectTrigger>
                             <SelectContent>
-                                {INDUSTRIES.map((industry) => (
-                                    <SelectItem key={industry} value={industry}>
-                                        {industry}
+                                {NICHES.map((niche) => (
+                                    <SelectItem key={niche} value={niche}>
+                                        {niche}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
-                        <span className="text-xs text-gray-400 mt-1">Sua área de atuação principal</span>
+                        <span className="text-xs text-gray-400 mt-1">Campo obrigatório - Sua área de atuação principal</span>
                     </div>
                     
                     {/* Social Media Fields - Show for all creator types */}

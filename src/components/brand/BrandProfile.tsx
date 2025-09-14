@@ -17,6 +17,39 @@ import {
   SelectValue,
 } from "../ui/select";
 
+// Language mapping from codes to display names
+const LANGUAGE_CODE_TO_NAME: { [key: string]: string } = {
+  "pt": "Português",
+  "en": "Inglês",
+  "es": "Espanhol",
+  "fr": "Francês",
+  "de": "Alemão",
+  "it": "Italiano",
+  "ja": "Japonês",
+  "zh": "Chinês (Mandarim)",
+  "ko": "Coreano",
+  "ru": "Russo",
+  "ar": "Árabe",
+  "hi": "Hindi",
+  "nl": "Holandês",
+  "sv": "Sueco",
+  "no": "Norueguês",
+  "da": "Dinamarquês",
+  "fi": "Finlandês",
+  "pl": "Polaco",
+  "cs": "Tcheco",
+  "hu": "Húngaro",
+  "el": "Grego",
+  "tr": "Turco",
+  "he": "Hebraico",
+  "th": "Tailandês",
+  "vi": "Vietnamita",
+  "id": "Indonésio",
+  "ms": "Malaio",
+  "tl": "Filipino",
+  "other": "Outros"
+};
+
 // Brazilian states array
 const BRAZILIAN_STATES = [
   "Acre",
@@ -275,7 +308,11 @@ export default function BrandProfile() {
               {/* Languages */}
               <div className="bg-gray-50 dark:bg-background rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                 <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">IDIOMAS FALADOS</div>
-                <div className="text-gray-900 dark:text-white font-medium">en</div>
+                <div className="text-gray-900 dark:text-white font-medium">
+                  {Array.isArray(displayProfile.languages) && displayProfile.languages.length > 0
+                    ? displayProfile.languages.map(lang => LANGUAGE_CODE_TO_NAME[lang] || lang).join(", ")
+                    : "Não informado"}
+                </div>
               </div>
 
               {/* WhatsApp Number */}

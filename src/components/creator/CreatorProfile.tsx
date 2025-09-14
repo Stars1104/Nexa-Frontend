@@ -4,8 +4,9 @@ import {
   fetchUserProfile,
   updateUserProfile,
 } from "../../store/thunks/userThunks";
+import { clearProfile } from "../../store/slices/userSlice";
 import { updateUserPassword } from "../../store/thunks/authThunks";
-import { Crown, Key, AlertTriangle, DollarSign, Wallet, TrendingUp, Clock } from "lucide-react";
+import { Crown, Key, AlertTriangle, DollarSign, Wallet, TrendingUp, Clock, RefreshCw } from "lucide-react";
 import { useSafeToast } from "../../hooks/useSafeToast";
 import EditProfile from "./EditProfile";
 import UpdatePasswordModal from "../ui/UpdatePasswordModal";
@@ -13,6 +14,7 @@ import Reviews from "../Reviews";
 import WithdrawalModal from "./WithdrawalModal";
 import { hiringApi, CreatorBalance as CreatorBalanceType } from "@/api/hiring";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getAvatarUrl } from "@/lib/utils";
@@ -31,7 +33,6 @@ const defaultProfile = {
   email: "usuario@exemplo.com",
   state: "Não especificado",
   role: "Influenciador",
-  languages: ["Português"],
   gender: "Não especificado",
   categories: ["Geral"],
   image: null,
@@ -44,7 +45,7 @@ const defaultProfile = {
   youtube_channel: null,
   facebook_page: null,
   twitter_handle: null,
-  industry: null,
+  niche: "Não informado",
 };
 
 export const CreatorProfile = () => {
@@ -56,7 +57,6 @@ export const CreatorProfile = () => {
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [balance, setBalance] = useState<CreatorBalanceType | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
 
@@ -86,6 +86,8 @@ export const CreatorProfile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        // Clear any cached profile data first
+        dispatch(clearProfile());
         await dispatch(fetchUserProfile()).unwrap();
       } catch (error: any) {
         console.error("Error fetching profile:", error);
@@ -112,7 +114,6 @@ export const CreatorProfile = () => {
     email: profile?.email || user?.email || defaultProfile.email,
     state: profile?.location || profile?.state || defaultProfile.state,
     role: profile?.role || user?.role || defaultProfile.role,
-    languages: profile?.languages || defaultProfile.languages,
     gender: profile?.gender || defaultProfile.gender,
     categories: profile?.categories || defaultProfile.categories,
     image: profile?.avatar || profile?.avatar_url || null,
@@ -126,7 +127,7 @@ export const CreatorProfile = () => {
     youtube_channel: profile?.youtube_channel || user?.youtube_channel || defaultProfile.youtube_channel,
     facebook_page: profile?.facebook_page || user?.facebook_page || defaultProfile.facebook_page,
     twitter_handle: profile?.twitter_handle || user?.twitter_handle || defaultProfile.twitter_handle,
-    industry: profile?.industry || user?.industry || defaultProfile.industry,
+    niche: profile?.niche || user?.niche || profile?.industry || user?.industry || "Não informado",
   };
 
   const handleSaveProfile = useCallback(
@@ -148,7 +149,8 @@ export const CreatorProfile = () => {
           youtube_channel: updatedProfile.youtube_channel,
           facebook_page: updatedProfile.facebook_page,
           twitter_handle: updatedProfile.twitter_handle,
-          industry: updatedProfile.industry,
+          niche: updatedProfile.niche,
+          industry: updatedProfile.niche, // Send niche value to both fields for compatibility
         };
 
         // Avatar: backend expects 'avatar' (file), not 'avatar_url'
@@ -156,15 +158,6 @@ export const CreatorProfile = () => {
           profileData.avatar = updatedProfile.image;
         }
 
-        // Languages: backend expects JSON string
-        if (Array.isArray(updatedProfile.languages)) {
-          profileData.languages = JSON.stringify(updatedProfile.languages);
-        } else if (typeof updatedProfile.languages === "string") {
-          // If it's a comma-separated string, split and stringify
-          profileData.languages = JSON.stringify(
-            updatedProfile.languages.split(",").map((l: string) => l.trim())
-          );
-        }
 
         // Update profile
         await dispatch(updateUserProfile(profileData)).unwrap();
@@ -209,12 +202,23 @@ export const CreatorProfile = () => {
       } catch (error: any) {
         console.error("Password update failed:", error);
         safeToast.error(error?.message || error || "Falha ao atualizar senha");
-      } finally {
-        setIsPasswordLoading(false);
-      }
-    },
-    [dispatch, user?.id]
-  );
+    } finally {
+      setIsPasswordLoading(false);
+    }
+  },
+  [dispatch, user?.id]
+);
+
+const handleRefreshProfile = useCallback(async () => {
+  try {
+    dispatch(clearProfile());
+    await dispatch(fetchUserProfile()).unwrap();
+    safeToast.success("Perfil atualizado!");
+  } catch (error: any) {
+    console.error("Profile refresh failed:", error);
+    safeToast.error("Falha ao atualizar perfil");
+  }
+}, [dispatch]);
 
   const handleWithdrawalCreated = () => {
     setShowWithdrawalModal(false);
@@ -245,7 +249,6 @@ export const CreatorProfile = () => {
           email: displayProfile.email,
           state: displayProfile.state,
           role: displayProfile.role,
-          languages: displayProfile.languages,
           gender: displayProfile.gender,
           categories: displayProfile.categories,
           image: displayProfile.image,
@@ -256,7 +259,7 @@ export const CreatorProfile = () => {
           youtube_channel: displayProfile.youtube_channel,
           facebook_page: displayProfile.facebook_page,
           twitter_handle: displayProfile.twitter_handle,
-          industry: displayProfile.industry,
+          niche: displayProfile.niche,
         }}
         onCancel={() => setEditMode(false)}
         onSave={handleSaveProfile}
@@ -429,16 +432,6 @@ export const CreatorProfile = () => {
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    Idiomas Falados
-                  </div>
-                  <div className="text-gray-900 dark:text-white font-medium">
-                    {Array.isArray(displayProfile.languages)
-                      ? displayProfile.languages.join(", ")
-                      : displayProfile.languages}
-                  </div>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
                     Gênero
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
@@ -477,7 +470,7 @@ export const CreatorProfile = () => {
                     Indústria
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
-                    {displayProfile.industry || 'Não informado'}
+                    {displayProfile.niche || 'Não informado'}
                   </div>
                 </div>
 
@@ -497,7 +490,7 @@ export const CreatorProfile = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 text-sm">
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    Instagram
+                    INSTAGRAM
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
                     {displayProfile.instagram_handle || 'Não informado'}
@@ -505,7 +498,7 @@ export const CreatorProfile = () => {
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    TikTok
+                    TIKTOK
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
                     {displayProfile.tiktok_handle || 'Não informado'}
@@ -513,7 +506,7 @@ export const CreatorProfile = () => {
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    YouTube
+                    YOUTUBE
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
                     {displayProfile.youtube_channel || 'Não informado'}
@@ -521,7 +514,7 @@ export const CreatorProfile = () => {
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    Facebook
+                    FACEBOOK
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
                     {displayProfile.facebook_page || 'Não informado'}
@@ -529,7 +522,7 @@ export const CreatorProfile = () => {
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    Twitter
+                    TWITTER
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
                     {displayProfile.twitter_handle || 'Não informado'}
