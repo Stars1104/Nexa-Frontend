@@ -388,7 +388,7 @@ export const hiringApi = {
 
   // Withdrawals
   createWithdrawal: async (data: CreateWithdrawalRequest): Promise<any> => {
-    const response = await apiClient.post('/withdrawals', data);
+    const response = await apiClient.post('/freelancer/withdrawals', data);
     return response.data;
   },
 
@@ -396,22 +396,22 @@ export const hiringApi = {
     const params = new URLSearchParams();
     if (status) params.append('status', status);
     
-    const response = await apiClient.get(`/withdrawals?${params.toString()}`);
+    const response = await apiClient.get(`/freelancer/withdrawals?${params.toString()}`);
     return response.data;
   },
 
   getWithdrawal: async (id: number): Promise<{ data: Withdrawal }> => {
-    const response = await apiClient.get(`/withdrawals/${id}`);
+    const response = await apiClient.get(`/freelancer/withdrawals/${id}`);
     return response.data;
   },
 
   cancelWithdrawal: async (id: number): Promise<any> => {
-    const response = await apiClient.delete(`/withdrawals/${id}`);
+    const response = await apiClient.delete(`/freelancer/withdrawals/${id}`);
     return response.data;
   },
 
   getWithdrawalStatistics: async (): Promise<{ data: any }> => {
-    const response = await apiClient.get('/withdrawals/statistics');
+    const response = await apiClient.get('/freelancer/withdrawals/statistics');
     return response.data;
   },
 

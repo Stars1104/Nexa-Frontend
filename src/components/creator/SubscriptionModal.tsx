@@ -15,6 +15,7 @@ import { useAppDispatch } from "../../store/hooks";
 import { checkAuthStatus, updateUser } from "../../store/slices/authSlice";
 import { fetchUserProfile } from "../../store/thunks/userThunks";
 import { apiClient } from "../../services/apiClient";
+import { getAuthToken, dispatchPremiumStatusUpdate } from "../../utils/browserUtils";
 
 interface SubscriptionModalProps {
   open?: boolean;
@@ -150,7 +151,8 @@ export default function SubscriptionModal({
   };
 
   const handlePay = async () => {
-    const token = localStorage.getItem("token");
+    const token = getAuthToken();
+    
     if (!token) {
       toast({
         title: "Autenticação Necessária",
@@ -165,6 +167,7 @@ export default function SubscriptionModal({
     }
 
     if (!selectedPlan) {
+      console.error('No selected plan found:', { selectedPlan, open });
       toast({
         title: "Plano não selecionado",
         description: "Por favor, selecione um plano de assinatura",
@@ -244,6 +247,24 @@ export default function SubscriptionModal({
       }
     } catch (error: any) {
       console.error("Erro no pagamento:", error);
+      
+      // Enhanced error logging
+      console.error("Detailed Error Info:", {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers
+        }
+      });
+      
+      // Log the actual error data separately so it's not collapsed
+      console.error("🔴 BACKEND ERROR DATA:", error.response?.data);
+      console.error("🔴 FULL ERROR RESPONSE:", error.response);
+      console.error("🔴 REQUEST CONFIG:", error.config);
 
       if (error.code === "ECONNABORTED" || error.message.includes("timeout")) {
         toast({
@@ -325,7 +346,7 @@ export default function SubscriptionModal({
   const handleSuccess = async () => {
     
     // Dispatch premium status update event
-    window.dispatchEvent(new CustomEvent("premium-status-updated"));
+    dispatchPremiumStatusUpdate();
     
     // Immediately update user data with premium status
     dispatch(updateUser({ has_premium: true }));
@@ -366,7 +387,7 @@ export default function SubscriptionModal({
       await dispatch(fetchUserProfile());
       
       // Dispatch another premium status update event to ensure all listeners get it
-      window.dispatchEvent(new CustomEvent("premium-status-updated"));
+      dispatchPremiumStatusUpdate();
       
       // Show success message
       toast({

@@ -1,7 +1,12 @@
 import axios from 'axios';
+import { safeGetLocalStorage } from '../utils/browserUtils';
 
 // Utility function to handle authentication failures
 const handleAuthFailure = () => {
+    // Only run in browser environment
+    if (typeof window === 'undefined') {
+        return;
+    }
     
     // Clear all authentication data
     localStorage.removeItem('token');
@@ -153,22 +158,27 @@ const addAuthToken = (config: any) => {
     // Try to get token from Redux store first
     try {
         // Access Redux store directly if possible
-        const reduxState = JSON.parse(localStorage.getItem('persist:root') || '{}');
-        const authState = JSON.parse(reduxState.auth || '{}');
-        if (authState.token) {
-            token = JSON.parse(authState.token);
+        const reduxState = safeGetLocalStorage('persist:root');
+        if (reduxState) {
+            const parsedState = JSON.parse(reduxState);
+            const authState = JSON.parse(parsedState.auth || '{}');
+            if (authState.token) {
+                token = JSON.parse(authState.token);
+            }
         }
     } catch (e) {
+        // Silently continue to fallback
     }
     
     // Fallback to localStorage if Redux state doesn't have token
     if (!token) {
-        token = localStorage.getItem('token');
+        token = safeGetLocalStorage('token');
     }
     
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     } else {
+        console.warn('API Request Debug: No token found for request to', config.url);
     }
     return config;
 };
