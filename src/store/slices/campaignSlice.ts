@@ -776,9 +776,14 @@ const campaignSlice = createSlice({
         state.userCampaigns = state.userCampaigns.map(campaign =>
           campaign.id === approvedCampaign.id ? { ...campaign, status: 'approved' } : campaign
         );
-        state.approvedCampaigns = state.approvedCampaigns.map(campaign =>
-          campaign.id === approvedCampaign.id ? { ...campaign, status: 'approved' } : campaign
-        );
+        
+        // Add the approved campaign to approvedCampaigns if it's not already there
+        const existingIndex = state.approvedCampaigns.findIndex(campaign => campaign.id === approvedCampaign.id);
+        if (existingIndex >= 0) {
+          state.approvedCampaigns[existingIndex] = { ...approvedCampaign, status: 'approved' };
+        } else {
+          state.approvedCampaigns = [...state.approvedCampaigns, { ...approvedCampaign, status: 'approved' }];
+        }
       })
       .addCase(approveCampaign.rejected, (state, action) => {
         state.isLoading = false;
