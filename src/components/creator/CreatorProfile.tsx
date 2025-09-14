@@ -27,6 +27,90 @@ const getInitials = (name: string) => {
     .toUpperCase();
 };
 
+// Language mapping for proper display
+const LANGUAGE_MAP: { [key: string]: string } = {
+  'pt': 'Português',
+  'en': 'Inglês',
+  'es': 'Espanhol',
+  'fr': 'Francês',
+  'de': 'Alemão',
+  'it': 'Italiano',
+  'ja': 'Japonês',
+  'zh': 'Chinês',
+  'ko': 'Coreano',
+  'ru': 'Russo',
+  'ar': 'Árabe',
+  'hi': 'Hindi',
+  'nl': 'Holandês',
+  'sv': 'Sueco',
+  'no': 'Norueguês',
+  'da': 'Dinamarquês',
+  'fi': 'Finlandês',
+  'pl': 'Polonês',
+  'cs': 'Tcheco',
+  'hu': 'Húngaro',
+  'ro': 'Romeno',
+  'bg': 'Búlgaro',
+  'hr': 'Croata',
+  'sr': 'Sérvio',
+  'sk': 'Eslovaco',
+  'sl': 'Esloveno',
+  'el': 'Grego',
+  'tr': 'Turco',
+  'he': 'Hebraico',
+  'fa': 'Persa',
+  'ur': 'Urdu',
+  'bn': 'Bengali',
+  'ta': 'Tamil',
+  'te': 'Telugu',
+  'mr': 'Marathi',
+  'gu': 'Gujarati',
+  'pa': 'Punjabi',
+  // Also handle full names in case they're already stored correctly
+  'Português': 'Português',
+  'Inglês': 'Inglês',
+  'Espanhol': 'Espanhol',
+  'Francês': 'Francês',
+  'Alemão': 'Alemão',
+  'Italiano': 'Italiano',
+  'Japonês': 'Japonês',
+  'Chinês': 'Chinês',
+  'Coreano': 'Coreano',
+  'Russo': 'Russo',
+  'Árabe': 'Árabe',
+  'Hindi': 'Hindi',
+  'Holandês': 'Holandês',
+  'Sueco': 'Sueco',
+  'Norueguês': 'Norueguês',
+  'Dinamarquês': 'Dinamarquês',
+  'Finlandês': 'Finlandês',
+  'Polonês': 'Polonês',
+  'Tcheco': 'Tcheco',
+  'Húngaro': 'Húngaro',
+  'Romeno': 'Romeno',
+  'Búlgaro': 'Búlgaro',
+  'Croata': 'Croata',
+  'Sérvio': 'Sérvio',
+  'Eslovaco': 'Eslovaco',
+  'Esloveno': 'Esloveno',
+  'Grego': 'Grego',
+  'Turco': 'Turco',
+  'Hebraico': 'Hebraico',
+  'Persa': 'Persa',
+  'Urdu': 'Urdu',
+  'Bengali': 'Bengali',
+  'Tamil': 'Tamil',
+  'Telugu': 'Telugu',
+  'Marathi': 'Marathi',
+  'Gujarati': 'Gujarati',
+  'Punjabi': 'Punjabi',
+  'Outros': 'Outros'
+};
+
+const getLanguageDisplayName = (language: string): string => {
+  return LANGUAGE_MAP[language] || language;
+};
+
 // Fallback profile data if no user data is available
 const defaultProfile = {
   name: "Usuário",
@@ -46,6 +130,7 @@ const defaultProfile = {
   facebook_page: null,
   twitter_handle: null,
   niche: "Não informado",
+  languages: [],
 };
 
 export const CreatorProfile = () => {
@@ -128,6 +213,7 @@ export const CreatorProfile = () => {
     facebook_page: profile?.facebook_page || user?.facebook_page || defaultProfile.facebook_page,
     twitter_handle: profile?.twitter_handle || user?.twitter_handle || defaultProfile.twitter_handle,
     niche: profile?.niche || user?.niche || profile?.industry || user?.industry || "Não informado",
+    languages: profile?.languages || user?.languages || defaultProfile.languages,
   };
 
   const handleSaveProfile = useCallback(
@@ -151,6 +237,7 @@ export const CreatorProfile = () => {
           twitter_handle: updatedProfile.twitter_handle,
           niche: updatedProfile.niche,
           industry: updatedProfile.niche, // Send niche value to both fields for compatibility
+          languages: updatedProfile.languages,
         };
 
         // Avatar: backend expects 'avatar' (file), not 'avatar_url'
@@ -260,6 +347,7 @@ const handleRefreshProfile = useCallback(async () => {
           facebook_page: displayProfile.facebook_page,
           twitter_handle: displayProfile.twitter_handle,
           niche: displayProfile.niche,
+          languages: displayProfile.languages,
         }}
         onCancel={() => setEditMode(false)}
         onSave={handleSaveProfile}
@@ -471,6 +559,16 @@ const handleRefreshProfile = useCallback(async () => {
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
                     {displayProfile.niche || 'Não informado'}
+                  </div>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
+                    Idiomas
+                  </div>
+                  <div className="text-gray-900 dark:text-white font-medium">
+                    {displayProfile.languages && displayProfile.languages.length > 0 
+                      ? displayProfile.languages.map(getLanguageDisplayName).join(', ') 
+                      : 'Não informado'}
                   </div>
                 </div>
 

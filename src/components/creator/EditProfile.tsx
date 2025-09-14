@@ -65,6 +65,47 @@ const NICHES = [
   "Outros"
 ];
 
+const LANGUAGES = [
+  "Português",
+  "Inglês",
+  "Espanhol",
+  "Francês",
+  "Alemão",
+  "Italiano",
+  "Japonês",
+  "Chinês",
+  "Coreano",
+  "Russo",
+  "Árabe",
+  "Hindi",
+  "Holandês",
+  "Sueco",
+  "Norueguês",
+  "Dinamarquês",
+  "Finlandês",
+  "Polonês",
+  "Tcheco",
+  "Húngaro",
+  "Romeno",
+  "Búlgaro",
+  "Croata",
+  "Sérvio",
+  "Eslovaco",
+  "Esloveno",
+  "Grego",
+  "Turco",
+  "Hebraico",
+  "Persa",
+  "Urdu",
+  "Bengali",
+  "Tamil",
+  "Telugu",
+  "Marathi",
+  "Gujarati",
+  "Punjabi",
+  "Outros"
+];
+
 
 
 const getInitials = (name: string) => {
@@ -73,6 +114,90 @@ const getInitials = (name: string) => {
         .map((n) => n[0])
         .join("")
         .toUpperCase();
+};
+
+// Language mapping for proper display
+const LANGUAGE_MAP: { [key: string]: string } = {
+  'pt': 'Português',
+  'en': 'Inglês',
+  'es': 'Espanhol',
+  'fr': 'Francês',
+  'de': 'Alemão',
+  'it': 'Italiano',
+  'ja': 'Japonês',
+  'zh': 'Chinês',
+  'ko': 'Coreano',
+  'ru': 'Russo',
+  'ar': 'Árabe',
+  'hi': 'Hindi',
+  'nl': 'Holandês',
+  'sv': 'Sueco',
+  'no': 'Norueguês',
+  'da': 'Dinamarquês',
+  'fi': 'Finlandês',
+  'pl': 'Polonês',
+  'cs': 'Tcheco',
+  'hu': 'Húngaro',
+  'ro': 'Romeno',
+  'bg': 'Búlgaro',
+  'hr': 'Croata',
+  'sr': 'Sérvio',
+  'sk': 'Eslovaco',
+  'sl': 'Esloveno',
+  'el': 'Grego',
+  'tr': 'Turco',
+  'he': 'Hebraico',
+  'fa': 'Persa',
+  'ur': 'Urdu',
+  'bn': 'Bengali',
+  'ta': 'Tamil',
+  'te': 'Telugu',
+  'mr': 'Marathi',
+  'gu': 'Gujarati',
+  'pa': 'Punjabi',
+  // Also handle full names in case they're already stored correctly
+  'Português': 'Português',
+  'Inglês': 'Inglês',
+  'Espanhol': 'Espanhol',
+  'Francês': 'Francês',
+  'Alemão': 'Alemão',
+  'Italiano': 'Italiano',
+  'Japonês': 'Japonês',
+  'Chinês': 'Chinês',
+  'Coreano': 'Coreano',
+  'Russo': 'Russo',
+  'Árabe': 'Árabe',
+  'Hindi': 'Hindi',
+  'Holandês': 'Holandês',
+  'Sueco': 'Sueco',
+  'Norueguês': 'Norueguês',
+  'Dinamarquês': 'Dinamarquês',
+  'Finlandês': 'Finlandês',
+  'Polonês': 'Polonês',
+  'Tcheco': 'Tcheco',
+  'Húngaro': 'Húngaro',
+  'Romeno': 'Romeno',
+  'Búlgaro': 'Búlgaro',
+  'Croata': 'Croata',
+  'Sérvio': 'Sérvio',
+  'Eslovaco': 'Eslovaco',
+  'Esloveno': 'Esloveno',
+  'Grego': 'Grego',
+  'Turco': 'Turco',
+  'Hebraico': 'Hebraico',
+  'Persa': 'Persa',
+  'Urdu': 'Urdu',
+  'Bengali': 'Bengali',
+  'Tamil': 'Tamil',
+  'Telugu': 'Telugu',
+  'Marathi': 'Marathi',
+  'Gujarati': 'Gujarati',
+  'Punjabi': 'Punjabi',
+  'Outros': 'Outros'
+};
+
+const getLanguageDisplayName = (language: string): string => {
+  return LANGUAGE_MAP[language] || language;
 };
 
 const MAX_IMAGE_SIZE_MB = 2;
@@ -94,6 +219,7 @@ const defaultProfile = {
     facebook_page: null as string | null,
     twitter_handle: null as string | null,
     niche: null as string | null,
+    languages: [] as string[],
 };
 
 export const EditProfile: React.FC<{
@@ -135,6 +261,15 @@ export const EditProfile: React.FC<{
     ) => {
         const { name, value } = e.target;
         setProfile((p) => ({ ...p, [name]: value }));
+    };
+
+    const handleLanguageToggle = (language: string) => {
+        setProfile((p) => ({
+            ...p,
+            languages: p.languages.includes(language)
+                ? p.languages.filter(l => l !== language)
+                : [...p.languages, language]
+        }));
     };
 
 
@@ -350,6 +485,53 @@ export const EditProfile: React.FC<{
                             </SelectContent>
                         </Select>
                         <span className="text-xs text-gray-400 mt-1">Campo obrigatório - Sua área de atuação principal</span>
+                    </div>
+                    <div className="flex flex-col">
+                        <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">Idiomas <span className="text-xs text-gray-400">(Opcional)</span></label>
+                        <Select
+                            value=""
+                            onValueChange={(value) => {
+                                if (value && !profile.languages.includes(value)) {
+                                    setProfile(p => ({ ...p, languages: [...p.languages, value] }));
+                                }
+                            }}
+                            disabled={isLoading}
+                        >
+                            <SelectTrigger className="bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-md px-4 py-2 text-gray-900 dark:text-white outline-none placeholder-gray-400 dark:placeholder-gray-500 text-base">
+                                <SelectValue placeholder="Adicionar idioma" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {LANGUAGES.filter(lang => !profile.languages.includes(lang)).map((language) => (
+                                    <SelectItem key={language} value={language}>
+                                        {language}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <span className="text-xs text-gray-400 mt-1">Selecione os idiomas que você domina para criação de conteúdo</span>
+                        {profile.languages.length > 0 && (
+                            <div className="mt-3 space-y-2">
+                                <div className="text-xs text-gray-500 dark:text-gray-400">Idiomas selecionados:</div>
+                                <div className="flex flex-wrap gap-2">
+                                    {profile.languages.map((language) => (
+                                        <div
+                                            key={language}
+                                            className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-sm rounded-full"
+                                        >
+                                            <span>{getLanguageDisplayName(language)}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleLanguageToggle(language)}
+                                                className="ml-1 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
+                                                disabled={isLoading}
+                                            >
+                                                <XIcon className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                     
                     {/* Social Media Fields - Show for all creator types */}
