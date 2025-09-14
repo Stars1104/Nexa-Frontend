@@ -467,7 +467,7 @@ const handleRefreshProfile = useCallback(async () => {
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    Indústria
+                    Nicho
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
                     {displayProfile.niche || 'Não informado'}
