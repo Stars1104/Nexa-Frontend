@@ -59,7 +59,11 @@ export const CreateNewCampaign = async (data: FormData, token: string) => {
 // Get all campaigns
 export const GetAllCampaigns = async (token: string) => {
     setAuthToken(token);
-    const response = await CampaignAPI.get("/api/campaigns/get-all-campaigns");
+    const response = await CampaignAPI.get("/api/campaigns/get-all-campaigns", {
+        params: {
+            _t: Date.now() // Cache busting
+        }
+    });
     return response.data;
 };
 
@@ -84,7 +88,11 @@ export const GetUserCampaigns = async (userId: string, token: string) => {
 // Get campaigns by status
 export const GetCampaignsByStatus = async (status: string, token: string) => {
     setAuthToken(token);
-    const response = await CampaignAPI.get(`/api/campaigns/status/${status}`);
+    const response = await CampaignAPI.get(`/api/campaigns/status/${status}`, {
+        params: {
+            _t: Date.now() // Cache busting
+        }
+    });
     return response.data;
 };
 
