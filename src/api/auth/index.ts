@@ -9,6 +9,7 @@ const AuthAPI = axios.create({
         "Content-Type": "application/json",
     },
     withCredentials: false, // Don't send cookies for API requests
+    timeout: 30000, // 30 second timeout for all requests
 });
 
 // Request interceptor to add token dynamically
@@ -103,9 +104,28 @@ function getTokenFromStore(): string | null {
     }
 }
 
+// Retry utility for failed requests
+const retryRequest = async (requestFn: () => Promise<any>, maxRetries = 2, delay = 1000) => {
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            return await requestFn();
+        } catch (error: any) {
+            // Don't retry on client errors (4xx) or if it's the last attempt
+            if (error.response?.status >= 400 && error.response?.status < 500) {
+                throw error;
+            }
+            if (i === maxRetries - 1) {
+                throw error;
+            }
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+        }
+    }
+};
+
 // Signup Function
 export const signup = async (data: any) => {
-    const response = await AuthAPI.post("/api/register", data);
+    const response = await retryRequest(() => AuthAPI.post("/api/register", data));
     return response.data;
 };
 
@@ -135,11 +155,11 @@ export const healthCheck = async () => {
 // Signin Function
 export const signin = async (data: any) => {
     try {
-        const response = await AuthAPI.post("/api/login", data, {
+        const response = await retryRequest(() => AuthAPI.post("/api/login", data, {
             headers: {
                 'Content-Type': 'application/json',
             }
-        });
+        }));
         return response.data;
     } catch (error: any) {
         throw error;

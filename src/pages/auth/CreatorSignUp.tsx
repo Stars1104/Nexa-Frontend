@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "../../components/ui/form";
@@ -48,6 +48,9 @@ const CreatorSignUp = () => {
   const { loginType } = useParams<{ loginType: string }>();
   const { navigateToRoleDashboard, navigateToStudentVerification, navigateToSubscription } = useRoleNavigation();
   
+  // Ref to track if component is mounted
+  const isMountedRef = useRef(true);
+  
   const { isSigningUp, isLoading, error, isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
   const form = useForm<SignUpFormData>({
@@ -65,6 +68,15 @@ const CreatorSignUp = () => {
   useEffect(() => {
     if (loginType === "login") setAuthType("signin");
   }, [loginType])
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      // Clear any pending states when component unmounts
+      dispatch(clearError());
+    };
+  }, [dispatch]);
 
   // Effect to handle successful authentication
   useEffect(() => {
@@ -101,6 +113,11 @@ const CreatorSignUp = () => {
 
   // Reset form when switching auth types
   const handleAuthTypeChange = (newAuthType: string) => {
+    // Don't allow switching if currently processing
+    if (isSigningUp || isLoading) {
+      return;
+    }
+    
     setAuthType(newAuthType);
     setIsNewRegistration(false); // Reset new registration flag
     form.reset({
@@ -111,9 +128,9 @@ const CreatorSignUp = () => {
       confirmPassword: "",
       isStudent: false,
     });
-    if (error) {
-      dispatch(clearError());
-    }
+    
+    // Clear any errors and reset states
+    dispatch(clearError());
   };
 
   // Sign up Function
@@ -134,7 +151,18 @@ const CreatorSignUp = () => {
         role: (role as 'creator' | 'brand') || 'creator',
       };
 
-      const response = await dispatch(signupUser(signupData)).unwrap();
+      // Add timeout to prevent hanging requests
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout - please try again')), 30000); // 30 second timeout
+      });
+
+      const response = await Promise.race([
+        dispatch(signupUser(signupData)).unwrap(),
+        timeoutPromise
+      ]) as any;
+      
+      // Check if component is still mounted before updating state
+      if (!isMountedRef.current) return;
       
       // Check if email verification is required
       if (response.requiresEmailVerification) {
@@ -173,15 +201,39 @@ const CreatorSignUp = () => {
       }
       // Navigation will be handled by useEffect after successful signup
     } catch (error: any) {
+      // Check if component is still mounted before updating state
+      if (!isMountedRef.current) return;
+      
+      // Reset signing up state on error
+      dispatch(clearError());
+      
+      // Handle timeout errors
+      if (error.message === 'Request timeout - please try again') {
+        toast.error("A solicitação demorou muito para responder. Tente novamente.");
+      }
       // Handle rate limiting errors specifically
-      if (error.response?.status === 429) {
+      else if (error.response?.status === 429) {
         const retryAfter = error.response?.data?.retry_after || 60;
         const minutes = Math.ceil(retryAfter / 60);
         const errorMessage = `Muitas tentativas de registro. Tente novamente em ${minutes} minuto(s).`;
         toast.error(errorMessage);
-      } else {
-        // Display other error messages
-        const errorMessage = error || "Erro ao criar conta. Tente novamente.";
+      } 
+      // Handle network errors
+      else if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        toast.error("Erro de conexão. Verifique sua internet e tente novamente.");
+      }
+      // Handle server errors
+      else if (error.response?.status >= 500) {
+        toast.error("Erro interno do servidor. Tente novamente em alguns minutos.");
+      }
+      // Handle validation errors
+      else if (error.response?.status === 422) {
+        const errorMessage = error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
+        toast.error(errorMessage);
+      }
+      // Handle other errors
+      else {
+        const errorMessage = error.response?.data?.message || error.message || "Erro ao criar conta. Tente novamente.";
         toast.error(errorMessage);
       }
       console.error('Sign up error:', error);
@@ -196,21 +248,54 @@ const CreatorSignUp = () => {
         password: data.password,
       };
 
-      const response = await dispatch(loginUser(loginData)).unwrap();
+      // Add timeout to prevent hanging requests
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout - please try again')), 30000); // 30 second timeout
+      });
+
+      const response = await Promise.race([
+        dispatch(loginUser(loginData)).unwrap(),
+        timeoutPromise
+      ]) as any;
+      
+      // Check if component is still mounted before updating state
+      if (!isMountedRef.current) return;
+      
       if (response.user !== null) {
         toast.success("Você fez login com sucesso.");
         // Navigation will be handled by useEffect after successful login
       }
     } catch (error: any) {
+      // Check if component is still mounted before updating state
+      if (!isMountedRef.current) return;
+      
+      // Handle timeout errors
+      if (error.message === 'Request timeout - please try again') {
+        toast.error("A solicitação demorou muito para responder. Tente novamente.");
+      }
       // Handle rate limiting errors specifically
-      if (error.response?.status === 429) {
+      else if (error.response?.status === 429) {
         const retryAfter = error.response?.data?.retry_after || 60;
         const minutes = Math.ceil(retryAfter / 60);
         const errorMessage = `Muitas tentativas de login. Tente novamente em ${minutes} minuto(s).`;
         toast.error(errorMessage);
-      } else {
-        // Display other error messages
-        const errorMessage = error || "Erro ao fazer login. Tente novamente.";
+      } 
+      // Handle network errors
+      else if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        toast.error("Erro de conexão. Verifique sua internet e tente novamente.");
+      }
+      // Handle server errors
+      else if (error.response?.status >= 500) {
+        toast.error("Erro interno do servidor. Tente novamente em alguns minutos.");
+      }
+      // Handle validation errors
+      else if (error.response?.status === 422) {
+        const errorMessage = error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
+        toast.error(errorMessage);
+      }
+      // Handle other errors
+      else {
+        const errorMessage = error.response?.data?.message || error.message || "Erro ao fazer login. Tente novamente.";
         toast.error(errorMessage);
       }
       console.error('Sign in error:', error);
@@ -262,20 +347,20 @@ const CreatorSignUp = () => {
           {/* Account type toggle */}
           <div className="flex w-full mb-2 border border-[#E2E2E2] p-1 rounded-full">
             <button
-              className={`flex-1 py-2 rounded-full text-base font-semibold transition-colors ${authType === "signup" ? "bg-[#E91E63] text-white" : "bg-background text-foreground"}`}
+              className={`flex-1 py-2 rounded-full text-base font-semibold transition-colors ${authType === "signup" ? "bg-[#E91E63] text-white" : "bg-background text-foreground"} ${(isSigningUp || isLoading) ? "opacity-50 cursor-not-allowed" : ""}`}
               onClick={() => handleAuthTypeChange("signup")}
               type="button"
               disabled={isSigningUp || isLoading}
             >
-              Cadastrar
+              {isSigningUp && authType === "signup" ? "Criando..." : "Cadastrar"}
             </button>
             <button
-              className={`flex-1 py-2 rounded-full border-border text-base font-semibold transition-colors ${authType === "signin" ? "bg-[#E91E63] text-white" : "bg-background text-foreground"}`}
+              className={`flex-1 py-2 rounded-full border-border text-base font-semibold transition-colors ${authType === "signin" ? "bg-[#E91E63] text-white" : "bg-background text-foreground"} ${(isSigningUp || isLoading) ? "opacity-50 cursor-not-allowed" : ""}`}
               onClick={() => handleAuthTypeChange("signin")}
               type="button"
               disabled={isSigningUp || isLoading}
             >
-              Entrar
+              {isLoading && authType === "signin" ? "Entrando..." : "Entrar"}
             </button>
           </div>
 
@@ -407,10 +492,17 @@ const CreatorSignUp = () => {
 
                   <Button 
                     type="submit" 
-                    className="w-full bg-[#E91E63] hover:bg-pink-600 text-white mt-2 rounded-full"
+                    className="w-full bg-[#E91E63] hover:bg-pink-600 text-white mt-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={isSigningUp}
                   >
-                    {isSigningUp ? "Criando conta..." : "Criar conta"}
+                    {isSigningUp ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Criando conta...
+                      </div>
+                    ) : (
+                      "Criar conta"
+                    )}
                   </Button>
                 </form>
               </Form>
@@ -490,10 +582,17 @@ const CreatorSignUp = () => {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-[#E91E63] hover:bg-pink-600 text-white mt-2 rounded-full"
+                    className="w-full bg-[#E91E63] hover:bg-pink-600 text-white mt-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={isLoading}
                   >
-                    {isLoading ? "Entrando..." : "Entrar"}
+                    {isLoading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Entrando...
+                      </div>
+                    ) : (
+                      "Entrar"
+                    )}
                   </Button>
                 </form>
               </Form>
