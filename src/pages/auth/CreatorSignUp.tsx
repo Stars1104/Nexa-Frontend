@@ -14,7 +14,7 @@ import { useSystemTheme } from "../../hooks/use-system-theme";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { RootState, AppDispatch } from "../../store";
 import { signupUser, loginUser } from "../../store/thunks/authThunks";
-import { clearError } from "../../store/slices/authSlice";
+import { clearError, resetLoadingStates } from "../../store/slices/authSlice";
 import { toast } from "sonner";
 import { useRoleNavigation } from "../../hooks/useRoleNavigation";
 import GoogleOAuthButton from "../../components/GoogleOAuthButton";
@@ -78,6 +78,12 @@ const CreatorSignUp = () => {
     };
   }, [dispatch]);
 
+  // Reset loading states when component mounts
+  useEffect(() => {
+    // Always reset loading states when component mounts to prevent stuck states
+    dispatch(resetLoadingStates());
+  }, [dispatch]);
+
   // Effect to handle successful authentication
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -113,9 +119,9 @@ const CreatorSignUp = () => {
 
   // Reset form when switching auth types
   const handleAuthTypeChange = (newAuthType: string) => {
-    // Don't allow switching if currently processing
+    // Always allow switching - reset any stuck states first
     if (isSigningUp || isLoading) {
-      return;
+      dispatch(resetLoadingStates());
     }
     
     setAuthType(newAuthType);

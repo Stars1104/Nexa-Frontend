@@ -176,6 +176,12 @@ const authSlice = createSlice({
         state.user = { ...state.user, ...action.payload };
       }
     },
+    // Reset loading states (useful for clearing stuck states)
+    resetLoadingStates: (state) => {
+      state.isLoading = false;
+      state.isSigningUp = false;
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -212,6 +218,7 @@ export const {
   clearEmailVerificationRequired,
   togglePremium,
   toggleAdminRole,
-  updateUser
+  updateUser,
+  resetLoadingStates
 } = authSlice.actions;
 export default authSlice.reducer; 
