@@ -120,6 +120,27 @@ export default function BrandProfile() {
     fetchProfile();
   }, [dispatch]);
 
+  // Helper function to construct full avatar URL
+  const getAvatarUrl = (avatarPath: string | null | undefined) => {
+    if (!avatarPath) {
+      return null;
+    }
+    
+    if (avatarPath.startsWith('http')) {
+      return avatarPath;
+    }
+    
+    if (avatarPath.startsWith('/storage/')) {
+      const baseUrl = import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br';
+      const fullUrl = `${baseUrl}${avatarPath}`;
+      return fullUrl;
+    }
+    
+    const baseUrl = import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br';
+    const fullUrl = `${baseUrl}/storage/avatars/${avatarPath}`;
+    return fullUrl;
+  };
+
   // Merge profile data and fallback to defaults
   const displayProfile = {
     username: profile?.name || initialProfile.username,
@@ -128,13 +149,24 @@ export default function BrandProfile() {
     whatsappNumber: profile?.whatsapp_number || initialProfile.whatsappNumber,
     gender: profile?.gender || initialProfile.gender,
     state: profile?.state || initialProfile.state,
-    avatar: profile?.avatar || initialProfile.avatar,
+    avatar: getAvatarUrl(profile?.avatar || profile?.avatar_url) || initialProfile.avatar,
+    languages: profile?.languages || [],
   };
 
   // Update fieldValues when profile data changes
   useEffect(() => {
     setFieldValues(displayProfile);
   }, [profile]);
+
+  // Update fieldValues when avatar is uploaded
+  useEffect(() => {
+    if (profile?.avatar_url || profile?.avatar) {
+      setFieldValues(prev => ({
+        ...prev,
+        avatar: getAvatarUrl(profile.avatar || profile.avatar_url)
+      }));
+    }
+  }, [profile?.avatar_url, profile?.avatar]);
 
   // Handlers for editing fields
   const handleEditModalOpen = () => {
@@ -152,22 +184,29 @@ export default function BrandProfile() {
   
   const handleSave = async () => {
     try {
-      const updateData = {
+      const updateData: any = {
         username: fieldValues.username,
         email: fieldValues.email,
         company_name: fieldValues.companyName,
         whatsapp_number: fieldValues.whatsappNumber,
-        gender: fieldValues.gender as 'male' | 'female' | 'other',
         state: fieldValues.state,
-        avatar: fieldValues.avatar,
+        // Don't include avatar in regular profile update - it should only be sent when uploading a file
       };
 
+      // Only include gender if it's not empty and is a valid value
+      if (fieldValues.gender && fieldValues.gender !== '' && ['male', 'female', 'other'].includes(fieldValues.gender)) {
+        updateData.gender = fieldValues.gender as 'male' | 'female' | 'other';
+      }
+
+      console.log('Brand Profile - handleSave data:', updateData);
       await dispatch(updateBrandProfile(updateData)).unwrap();
       setShowEditModal(false);
       toast.success("Perfil atualizado com sucesso");
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
-      toast.error("Erro ao atualizar perfil");
+      console.error('Error details:', error?.response?.data);
+      const errorMessage = error?.response?.data?.message || error?.message || "Erro ao atualizar perfil";
+      toast.error(errorMessage);
     }
   };
   
@@ -211,19 +250,50 @@ export default function BrandProfile() {
     fileInputRef.current?.click();
   };
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        // Update the fieldValues with the new avatar
-        setFieldValues(prev => ({
-          ...prev,
-          avatar: event.target?.result as string
-        }));
-        toast.success("Foto de perfil selecionada");
-      };
-      reader.readAsDataURL(file);
+      try {
+        console.log('Uploading avatar file:', file.name, file.type, file.size);
+        
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+          toast.error("Tipo de arquivo não suportado. Use JPG, PNG ou GIF.");
+          return;
+        }
+        
+        // Validate file size (2MB max)
+        const maxSize = 2 * 1024 * 1024; // 2MB
+        if (file.size > maxSize) {
+          toast.error("Arquivo muito grande. Tamanho máximo: 2MB.");
+          return;
+        }
+        
+        // Update the profile with the new avatar file
+        const updateData = {
+          username: fieldValues.username,
+          email: fieldValues.email,
+          company_name: fieldValues.companyName,
+          whatsapp_number: fieldValues.whatsappNumber,
+          gender: fieldValues.gender as 'male' | 'female' | 'other',
+          state: fieldValues.state,
+          avatar: file, // Pass the file directly
+        };
+
+        const result = await dispatch(updateBrandProfile(updateData)).unwrap();
+        console.log('Avatar upload result:', result);
+        
+        if (result && result.avatar_url) {
+          toast.success("Foto de perfil atualizada com sucesso");
+        } else {
+          toast.error("Erro: Avatar não foi atualizado corretamente");
+        }
+      } catch (error: any) {
+        console.error('Error uploading avatar:', error);
+        const errorMessage = error?.message || error || "Erro ao fazer upload da foto de perfil";
+        toast.error(errorMessage);
+      }
     }
   };
 
@@ -273,11 +343,16 @@ export default function BrandProfile() {
         <div className="flex items-center space-x-6 mb-8">
           <div className="relative">
             <Avatar className="w-24 h-24">
-              <AvatarImage src={fieldValues.avatar || displayProfile.avatar} alt="Profile" />
+              <AvatarImage src={displayProfile.avatar} alt="Profile" />
               <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-400 to-purple-600">
                 {displayProfile.username?.charAt(0)?.toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
+            {isUpdating && (
+              <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
           </div>
           <div className="flex-1">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -371,16 +446,21 @@ export default function BrandProfile() {
               <div className="flex flex-col items-center space-y-4">
                 <div className="relative">
                   <Avatar className="w-24 h-24">
-                    <AvatarImage src={fieldValues.avatar || profile?.avatar} alt="Profile" />
+                    <AvatarImage src={fieldValues.avatar || getAvatarUrl(profile?.avatar_url)} alt="Profile" />
                     <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-400 to-purple-600">
                       {fieldValues.username?.charAt(0)?.toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors"
+                    disabled={isUpdating}
+                    className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Camera className="w-4 h-4" />
+                    {isUpdating ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Camera className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center">

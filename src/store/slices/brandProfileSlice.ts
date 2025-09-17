@@ -7,10 +7,12 @@ export interface BrandProfile {
   name: string;
   email: string;
   avatar: string | null;
+  avatar_url?: string | null;
   company_name: string | null;
   whatsapp_number: string | null;
   gender: 'male' | 'female' | 'other' | null;
   state: string | null;
+  languages?: string[];
   role: string;
   created_at: string;
   updated_at: string;
@@ -23,7 +25,7 @@ export interface UpdateProfileData {
   whatsapp_number?: string;
   gender?: 'male' | 'female' | 'other';
   state?: string;
-  avatar?: string;
+  avatar?: File | string;
 }
 
 export interface ChangePasswordData {
@@ -69,9 +71,34 @@ export const updateBrandProfile = createAsyncThunk(
   'brandProfile/updateProfile',
   async (data: UpdateProfileData, { rejectWithValue }) => {
     try {
-      const response = await apiClient.put('/brand-profile', data);
+      // Create FormData to handle file uploads properly
+      const formData = new FormData();
+      
+      // Add all profile fields to FormData
+      Object.keys(data).forEach(key => {
+        if (key === 'avatar' && data.avatar instanceof File) {
+          formData.append('avatar', data.avatar);
+        } else if (key !== 'avatar' && data[key as keyof UpdateProfileData] !== undefined && data[key as keyof UpdateProfileData] !== null && data[key as keyof UpdateProfileData] !== '') {
+          formData.append(key, String(data[key as keyof UpdateProfileData]));
+        }
+      });
+      
+      // Log FormData contents
+      console.log('Brand Profile Update - FormData entries:');
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+      
+      const response = await apiClient.put('/brand-profile', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      console.log('Brand Profile Update - Response:', response.data);
       return response.data.data;
     } catch (error: any) {
+      console.error('Brand Profile Update - Error:', error);
       return rejectWithValue(error.response?.data?.message || 'Failed to update profile');
     }
   }
@@ -88,6 +115,8 @@ export const changePassword = createAsyncThunk(
     }
   }
 );
+
+// Remove the separate uploadAvatar thunk - we'll handle avatar upload in updateBrandProfile
 
 // Slice
 const brandProfileSlice = createSlice({
@@ -117,6 +146,11 @@ const brandProfileSlice = createSlice({
         state.isLoading = false;
         state.profile = action.payload;
         state.error = null;
+        console.log('Brand profile fetched:', action.payload);
+        console.log('Avatar data:', {
+          avatar: action.payload.avatar,
+          avatar_url: action.payload.avatar_url
+        });
       })
       .addCase(fetchBrandProfile.rejected, (state, action) => {
         state.isLoading = false;
@@ -153,6 +187,8 @@ const brandProfileSlice = createSlice({
         state.isChangingPassword = false;
         state.passwordError = action.payload as string;
       });
+
+    // Avatar upload is now handled in updateBrandProfile
   },
 });
 

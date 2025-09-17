@@ -150,7 +150,9 @@ export default function Chat() {
 
   // Auto-join room when selectedRoom changes
   useEffect(() => {
+    console.log('Socket connection status:', { isConnected, connectionError, selectedRoom: selectedRoom?.room_id });
     if (selectedRoom && isConnected) {
+      console.log('Joining room:', selectedRoom.room_id);
       joinRoom(selectedRoom.room_id);
     }
   }, [selectedRoom, isConnected, joinRoom]);
@@ -158,6 +160,9 @@ export default function Chat() {
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (!isMountedRef.current) return;
+
+    console.log('Messages state updated:', messages.length, 'messages');
+    console.log('Current messages:', messages.map(m => ({ id: m.id, message: m.message, sender: m.sender_name })));
 
     // Use requestAnimationFrame to ensure DOM is ready
     const scrollToBottom = () => {
@@ -219,6 +224,7 @@ export default function Chat() {
             return prev;
           }
           
+          console.log('Adding socket message to state:', newMessage, 'isFromCurrentUser:', isFromCurrentUser);
           return [...prev, newMessage];
         });
 
@@ -661,6 +667,7 @@ export default function Chat() {
             console.warn('Attempted to add duplicate sent message:', newMessage.id);
             return prev;
           }
+          console.log('Adding sent message to state:', newMessage);
           return [...prev, newMessage];
         });
         
