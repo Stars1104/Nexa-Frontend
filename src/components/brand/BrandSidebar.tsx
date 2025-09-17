@@ -95,7 +95,7 @@ const Sidebar = ({ setComponent, component }: SidebarProps) => {
                 {/* Sidebar */}
                 <aside
                     className={`fixed top-0 left-0 h-full w-72 max-w-full bg-background flex flex-col shadow-2xl z-0
-                        transition-transform transition-opacity duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
+                        transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
                         ${mobileSidebarOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'}
                         pointer-events-auto`}
                     style={{ willChange: 'transform, opacity' }}
@@ -131,10 +131,6 @@ const Sidebar = ({ setComponent, component }: SidebarProps) => {
                             );
                         })}
                     </nav>
-                    {/* Tip */}
-                    <div className="mt-auto mb-4 mx-4 text-xs rounded-md bg-pink-50 dark:bg-pink-900/40 text-pink-700 dark:text-pink-200 p-3">
-                        Dica: capriche no seu portfólio para aumentar suas chances <span role="img" aria-label="rocket">🚀</span>
-                    </div>
                 </aside>
             </div>
         );
@@ -171,10 +167,6 @@ const Sidebar = ({ setComponent, component }: SidebarProps) => {
                     );
                 })}
             </nav>
-            {/* Tip */}
-            <div className="mt-auto text-sm text-muted-foreground bg-gradient-to-r dark:from-[#1F1F1F] dark:to-[#20010F] from-[#FDF2F8] to-[#FAF5FF] rounded-md p-3">
-                Dica: Cuide do seu portfólio para aumentar suas chances <span role="img" aria-label="rocket">🚀</span>
-            </div>
         </aside>
     );
 }
