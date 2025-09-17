@@ -181,43 +181,55 @@ export default function Chat() {
     const handleNewMessage = (data: any) => {
       if (!isMountedRef.current) return;
 
+      console.log('Received socket message:', data, 'Current room:', selectedRoom?.room_id);
+
       if (data.roomId === selectedRoom?.room_id) {
-        // Only add message if it's from another user (not the current user)
-        if (data.senderId !== user?.id) {
-          const messageId = data.messageId || Date.now() + Math.floor(Math.random() * 1000);
-          const newMessage: Message = {
-            id: messageId,
-            message: data.message,
-            message_type: data.messageType || "text",
-            sender_id: data.senderId,
-            sender_name: data.senderName,
-            sender_avatar: data.senderAvatar,
-            is_sender: false, // This is from another user
-            file_path: data.fileData?.file_path,
-            file_name: data.fileData?.file_name,
-            file_size: data.fileData?.file_size,
-            file_type: data.fileData?.file_type,
-            file_url: data.fileData?.file_url,
-            is_read: false,
-            created_at: data.timestamp || new Date().toISOString(),
-            offer_data: data.offerData, // Map socket offerData to offer_data
-          };
+        // Add message from any user (including current user for synchronization)
+        const messageId = data.messageId || Date.now() + Math.floor(Math.random() * 1000);
+        const isFromCurrentUser = data.senderId === user?.id;
+        
+        const newMessage: Message = {
+          id: messageId,
+          message: data.message,
+          message_type: data.messageType || "text",
+          sender_id: data.senderId,
+          sender_name: data.senderName,
+          sender_avatar: data.senderAvatar,
+          is_sender: isFromCurrentUser, // Set based on whether it's from current user
+          file_path: data.fileData?.file_path,
+          file_name: data.fileData?.file_name,
+          file_size: data.fileData?.file_size,
+          file_type: data.fileData?.file_type,
+          file_url: data.fileData?.file_url,
+          is_read: isFromCurrentUser, // Mark as read if from current user
+          created_at: data.timestamp || new Date().toISOString(),
+          offer_data: data.offerData, // Map socket offerData to offer_data
+        };
 
-          setMessages((prev) => {
-            // Check if message already exists to prevent duplicates
-            if (prev.some(msg => msg.id === newMessage.id)) {
-              console.warn('Attempted to add duplicate socket message:', newMessage.id);
-              return prev;
-            }
-            return [...prev, newMessage];
-          });
+        setMessages((prev) => {
+          // Check if message already exists to prevent duplicates
+          if (prev.some(msg => msg.id === newMessage.id)) {
+            console.warn('Attempted to add duplicate socket message:', newMessage.id);
+            return prev;
+          }
+          
+          // Check if this is a recently sent message by current user to avoid duplicates
+          if (isFromCurrentUser && window.lastSentMessageId === newMessage.id) {
+            console.log('Ignoring socket message for recently sent message:', newMessage.id);
+            return prev;
+          }
+          
+          return [...prev, newMessage];
+        });
 
-          // Mark as read immediately if it's not from current user
+        // Mark as read immediately if it's not from current user
+        if (!isFromCurrentUser) {
           markMessagesAsRead(data.roomId, [messageId]).catch((error) => {
             console.warn("Error marking message as read:", error);
           });
         }
       } else {
+        console.log('Received message for different room:', data.roomId, 'Current room:', selectedRoom?.room_id);
       }
 
       // Update conversation list
@@ -651,6 +663,11 @@ export default function Chat() {
           }
           return [...prev, newMessage];
         });
+        
+        // Mark the message as sent via socket to prevent duplicate handling
+        if (newMessage.id) {
+          window.lastSentMessageId = newMessage.id;
+        }
         setInput("");
 
         // Stop typing indicator immediately when message is sent
