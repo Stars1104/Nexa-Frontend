@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "0.0.0.0",
     port: 5000,
-    allowedHosts: ["nexacreators.com.br"], // ← fixed
+    allowedHosts: ["nexacreators.com.br", "www.nexacreators.com.br"], // ← fixed
   },
   plugins: [
     react(),
