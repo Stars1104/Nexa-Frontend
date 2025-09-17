@@ -79,26 +79,21 @@ export default function ChatOfferMessage({
   if (!offer || !offer.sender || !offer.id || offer.id <= 0 || isNaN(offer.id)) {
     console.error('Invalid offer data in ChatOfferMessage:', offer);
     return (
-      <div className="flex gap-3 max-w-2xl">
-        <Avatar className="w-8 h-8 flex-shrink-0">
-          <AvatarFallback className="text-xs">U</AvatarFallback>
-        </Avatar>
-        <Card className="flex-1 border-2 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600">
-          <CardContent className="p-4">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Oferta não disponível
-            </p>
-            {offer && (
-              <div className="mt-2 p-2 bg-red-100 dark:bg-red-900/30 rounded text-xs">
-                <p><strong>Debug Info:</strong></p>
-                <p>Offer ID: {offer.id}</p>
-                <p>Has sender: {!!offer.sender}</p>
-                <p>Valid ID: {offer.id && offer.id > 0 && !isNaN(offer.id) ? 'Yes' : 'No'}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="flex-1 border-2 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600">
+        <CardContent className="p-4">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Oferta não disponível
+          </p>
+          {offer && (
+            <div className="mt-2 p-2 bg-red-100 dark:bg-red-900/30 rounded text-xs">
+              <p><strong>Debug Info:</strong></p>
+              <p>Offer ID: {offer.id}</p>
+              <p>Has sender: {!!offer.sender}</p>
+              <p>Valid ID: {offer.id && offer.id > 0 && !isNaN(offer.id) ? 'Yes' : 'No'}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     );
   }
 
@@ -177,24 +172,7 @@ export default function ChatOfferMessage({
   };
 
   return (
-    <div
-      className={cn(
-        "flex gap-3 max-w-2xl",
-        isSender ? "flex-row-reverse" : "flex-row"
-      )}
-    >
-      <Avatar className="w-8 h-8 flex-shrink-0">
-        <AvatarImage src={offer.sender?.avatar_url} />
-        <AvatarFallback className="text-xs">
-          {offer.sender?.name
-            ?.split(" ")
-            .map((n) => n[0])
-            .join("")
-            .toUpperCase() || "U"}
-        </AvatarFallback>
-      </Avatar>
-
-      <Card
+    <Card
         className={cn(
           "flex-1 border-2",
           isSender
@@ -472,6 +450,5 @@ export default function ChatOfferMessage({
 
         </CardContent>
       </Card>
-    </div>
   );
 }
