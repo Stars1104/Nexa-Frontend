@@ -58,21 +58,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
             }
         }
 
-        // const socket = io(`${import.meta.env.VITE_BACKEND_URL}`, {
-        //     path: '/socket.io',
-        //     transports: ['websocket', 'polling'],
-        //     autoConnect: true,
-        //     reconnection: true,
-        //     reconnectionAttempts: maxReconnectAttempts,
-        //     reconnectionDelay: 500, // Reduced from 1000ms
-        //     reconnectionDelayMax: 3000, // Reduced from 5000ms
-        //     timeout: 10000, // Reduced from 20000ms
-        //     forceNew: false,
-        //     upgrade: true,
-        //     rememberUpgrade: true
-        // });
-
-        const socket = io(`http://localhost:3001`, {
+        const socket = io(`${import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001'}`, {
             transports: ['websocket', 'polling'],
             autoConnect: true,
             reconnection: true,
@@ -172,7 +158,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
 
         // Listen for new notifications (only if enabled)
         if (enableNotifications) {
-            socket.on('new_notification', (notificationData: any) => {
+            const handleNotification = (notificationData: any) => {
                 if (!isMountedRef.current) return;
                 
                 // Add notification to Redux store
@@ -182,7 +168,14 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                 if (!notificationData.is_read) {
                     dispatch(incrementUnreadCount());
                 }
-            });
+            };
+            
+            socket.on('new_notification', handleNotification);
+            
+            // Store cleanup function
+            socket._cleanupNotification = () => {
+                socket.off('new_notification', handleNotification);
+            };
         }
 
         return socket;
@@ -204,6 +197,10 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
             // Disconnect socket
             if (socketRef.current) {
                 try {
+                    // Clean up notification listener if it exists
+                    if (socketRef.current._cleanupNotification) {
+                        socketRef.current._cleanupNotification();
+                    }
                     socketRef.current.disconnect();
                     socketRef.current = null;
                 } catch (error) {
