@@ -74,6 +74,12 @@ export default function SubscriptionModal({
     return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}`;
   };
 
+  const formatExpirationForBackend = (value: string) => {
+    // Convert MM/AA format to MMYY format for backend
+    const numbers = value.replace(/\D/g, "");
+    return numbers; // Return just the 4 digits
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let formattedValue = value;
@@ -150,6 +156,24 @@ export default function SubscriptionModal({
     return errors;
   };
 
+  const handleDebug = async () => {
+    try {
+      const response = await apiClient.get("/payment/debug-subscription");
+      console.log("🔵 Debug subscription data:", response.data);
+      toast({
+        title: "Debug Info",
+        description: "Check console for debug information",
+      });
+    } catch (error) {
+      console.error("Debug error:", error);
+      toast({
+        title: "Debug Error",
+        description: "Failed to get debug information",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handlePay = async () => {
     const token = getAuthToken();
     
@@ -193,7 +217,7 @@ export default function SubscriptionModal({
       const paymentData = {
         card_number: formData.card_number.replace(/\s/g, ""),
         card_holder_name: formData.card_holder_name.trim(),
-        card_expiration_date: formData.card_expiration_date.replace(/\D/g, ""), // Remove all non-digits
+        card_expiration_date: formatExpirationForBackend(formData.card_expiration_date), // Convert MM/AA to MMYY format
         card_cvv: formData.card_cvv,
         cpf: formData.cpf,
         subscription_plan_id: selectedPlan?.id,
@@ -217,6 +241,29 @@ export default function SubscriptionModal({
         return;
       }
 
+      // Additional validation for card expiration date format
+      const month = parseInt(paymentData.card_expiration_date.substring(0, 2));
+      const year = parseInt(paymentData.card_expiration_date.substring(2, 4));
+      
+      if (month < 1 || month > 12) {
+        toast({
+          title: "Erro de Validação",
+          description: "O mês deve estar entre 01 e 12",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const currentYear = new Date().getFullYear() % 100; // Get last 2 digits of current year
+      if (year < currentYear) {
+        toast({
+          title: "Erro de Validação",
+          description: `O ano deve ser ${currentYear} ou superior`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (paymentData.card_cvv.length < 3 || paymentData.card_cvv.length > 4) {
         toast({
           title: "Erro de Validação",
@@ -234,6 +281,13 @@ export default function SubscriptionModal({
         });
         return;
       }
+
+      // Debug: Log the payment data being sent
+      console.log("🔵 Sending payment data:", {
+        ...paymentData,
+        card_number: paymentData.card_number.replace(/\d(?=\d{4})/g, "*"), // Mask card number for security
+        card_cvv: "***" // Mask CVV for security
+      });
 
       const response = await paymentClient.post(
         "/payment/subscription",
@@ -548,6 +602,16 @@ export default function SubscriptionModal({
             >
               Cancelar
             </Button>
+            {import.meta.env.DEV && (
+              <Button
+                variant="secondary"
+                onClick={handleDebug}
+                disabled={isLoading}
+                className="flex-1"
+              >
+                Debug
+              </Button>
+            )}
             <Button onClick={handlePay} disabled={isLoading || !selectedPlan} className="flex-1">
               {isLoading ? "Processando..." : selectedPlan ? `Pagar R$ ${selectedPlan.price.toFixed(2).replace('.', ',')}` : "Selecione um plano"}
             </Button>
