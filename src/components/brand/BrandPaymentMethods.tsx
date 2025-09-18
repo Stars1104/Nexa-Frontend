@@ -165,7 +165,7 @@ export default function BrandPaymentMethods() {
       } else {
         toast({
           title: 'Erro',
-          description: response.error || 'Erro ao salvar método de pagamento',
+          description: response.error || response.message || 'Erro ao salvar método de pagamento',
           variant: 'destructive',
         });
       }

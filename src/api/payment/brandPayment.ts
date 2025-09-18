@@ -22,10 +22,11 @@ export interface SavePaymentMethodResponse {
   message: string;
   data?: {
     payment_method_id: string;
-    customer_id: string;
-    card_id: string;
-    card_info: string;
+    card_holder_name: string;
+    card_brand: string;
+    card_last4: string;
     is_default: boolean;
+    created_at: string;
   };
   error?: string;
 }
