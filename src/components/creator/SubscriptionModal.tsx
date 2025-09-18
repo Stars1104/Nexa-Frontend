@@ -193,7 +193,7 @@ export default function SubscriptionModal({
       const paymentData = {
         card_number: formData.card_number.replace(/\s/g, ""),
         card_holder_name: formData.card_holder_name.trim(),
-        card_expiration_date: formData.card_expiration_date.replace("/", ""),
+        card_expiration_date: formData.card_expiration_date.replace(/\D/g, ""), // Remove all non-digits
         card_cvv: formData.card_cvv,
         cpf: formData.cpf,
         subscription_plan_id: selectedPlan?.id,
@@ -208,10 +208,10 @@ export default function SubscriptionModal({
         return;
       }
 
-      if (paymentData.card_expiration_date.length !== 4) {
+      if (paymentData.card_expiration_date.length !== 4 || !/^\d{4}$/.test(paymentData.card_expiration_date)) {
         toast({
           title: "Erro de Validação",
-          description: "A data de validade deve estar no formato MMAA",
+          description: "A data de validade deve estar no formato MMAA (4 dígitos)",
           variant: "destructive",
         });
         return;
