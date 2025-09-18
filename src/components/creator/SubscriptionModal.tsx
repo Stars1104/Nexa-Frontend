@@ -156,23 +156,6 @@ export default function SubscriptionModal({
     return errors;
   };
 
-  const handleDebug = async () => {
-    try {
-      const response = await apiClient.get("/payment/debug-subscription");
-      console.log("🔵 Debug subscription data:", response.data);
-      toast({
-        title: "Debug Info",
-        description: "Check console for debug information",
-      });
-    } catch (error) {
-      console.error("Debug error:", error);
-      toast({
-        title: "Debug Error",
-        description: "Failed to get debug information",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handlePay = async () => {
     const token = getAuthToken();
@@ -602,16 +585,6 @@ export default function SubscriptionModal({
             >
               Cancelar
             </Button>
-            {import.meta.env.DEV && (
-              <Button
-                variant="secondary"
-                onClick={handleDebug}
-                disabled={isLoading}
-                className="flex-1"
-              >
-                Debug
-              </Button>
-            )}
             <Button onClick={handlePay} disabled={isLoading || !selectedPlan} className="flex-1">
               {isLoading ? "Processando..." : selectedPlan ? `Pagar R$ ${selectedPlan.price.toFixed(2).replace('.', ',')}` : "Selecione um plano"}
             </Button>
