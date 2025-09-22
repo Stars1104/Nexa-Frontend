@@ -1,5 +1,5 @@
 import { Button } from "../ui/button";
-import { Home, FileText, MessageCircle, User, BanknoteIcon, Bell, BookOpen } from "lucide-react";
+import { Home, FileText, MessageCircle, User, BanknoteIcon, Bell, BookOpen, Settings } from "lucide-react";
 import LightLogo from "../../assets/light-logo.png";
 import DarkLogo from "../../assets/dark-logo.png";
 import { useEffect, useState, useRef } from "react";
@@ -8,6 +8,7 @@ import { useIsMobile } from "../../hooks/use-mobile";
 const navLinks = [
     { label: "Minhas Campanhas", icon: Home, key: "Minhas campanhas" },
     { label: "Nova campanha criada", icon: FileText, key: "Nova campanha" },
+    { label: "Gerenciar Campanhas", icon: Settings, key: "Gerenciar Campanhas" },
     { label: "Chat", icon: MessageCircle, key: "Chat" },
     { label: "Meu Perfil", icon: User, key: "Meu perfil" },
     { label: "Pagamentos", icon: BanknoteIcon, key: "Pagamentos" },

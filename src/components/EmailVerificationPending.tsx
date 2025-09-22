@@ -17,22 +17,10 @@ const EmailVerificationPending: React.FC<EmailVerificationPendingProps> = ({
   onGoToLogin,
 }) => {
   const getRoleSpecificContent = () => {
-    if (userRole === 'creator') {
-      return {
-        subject: '🩷 Parabéns! Seu perfil foi selecionado!',
-        message: 'Parabéns! Você tem a cara da marca e foi selecionada para uma parceria de sucesso! Prepare-se para mostrar todo o seu talento e representar a NEXA com criatividade e profissionalismo. Estamos animados para ver o que você vai criar! Abra o site da NEXA e verifique o seu Chat com a marca.'
-      };
-    } else if (userRole === 'brand') {
-      return {
-        subject: '🩷 Parabéns! Sua campanha foi aprovada na NEXA!',
-        message: 'Agora é hora de dar início a uma parceria estratégica com criadores de alto nível para a sua marca. Acesse o site e confira sua campanha ativa.'
-      };
-    } else {
-      return {
+    return {
         subject: '🎉 Bem-vindo à Nexa!',
         message: 'Obrigado por se juntar à nossa comunidade! Verifique seu email para ativar sua conta e começar a usar todos os recursos incríveis da Nexa.'
       };
-    }
   };
 
   const content = getRoleSpecificContent();

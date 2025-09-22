@@ -15,6 +15,7 @@ import ChatPage from "./ChatPage";
 import ViewCreators from "@/components/brand/ViewCreators";
 import ViewApplication from "@/components/brand/ViewApplication";
 import CreateCampaign from "@/components/brand/CreateCampaign";
+import CampaignManagement from "@/components/brand/CampaignManagement";
 import BrandPaymentMethods from "@/components/brand/BrandPaymentMethods";
 import Notification from "@/components/Notification";
 import CreatorProfile from "@/components/brand/CreatorProfile";
@@ -47,6 +48,8 @@ function Index() {
                     return <ChatPage setComponent={setComponent} />
                 case "Nova campanha":
                     return <CreateCampaign />
+                case "Gerenciar Campanhas":
+                    return <CampaignManagement setComponent={setComponent} />
                 case "Pagamentos":
                     return <BrandPaymentMethods />
                 case "Notificações":

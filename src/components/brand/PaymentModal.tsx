@@ -115,7 +115,7 @@ export default function PaymentModal({
             Processar Pagamento
           </DialogTitle>
           <DialogDescription>
-            Confirme os detalhes do pagamento para {contract.creator.name}
+            Confirme os detalhes do pagamento para {contract.creator?.name || 'Criador'}
           </DialogDescription>
         </DialogHeader>
 
@@ -133,7 +133,7 @@ export default function PaymentModal({
                 <User className="h-4 w-4 text-gray-500" />
                 <span className="text-sm text-gray-600">
                   Criador:{" "}
-                  <span className="font-semibold">{contract.creator.name}</span>
+                  <span className="font-semibold">{contract.creator?.name || 'Criador'}</span>
                 </span>
               </div>
             </CardContent>
