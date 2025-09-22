@@ -743,7 +743,7 @@ export default function CreateCampaign() {
            <Button
              type="submit"
              disabled={isCreating}
-             className="bg-pink-500 hover:bg-pink-600 text-white font-semibold text-base py-3 px-6 rounded-lg shadow-lg flex items-center gap-2 disabled:opacity-50"
+             className="bg-[#e91e63] text-white hover:bg-[#e91e63]/90 font-semibold text-base py-3 px-6 rounded-lg shadow-lg flex items-center gap-2 disabled:opacity-50"
              style={{ minWidth: 180 }}
            >
              {isCreating ? (

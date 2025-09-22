@@ -81,7 +81,9 @@ export const GetPendingCampaigns = async (token: string) => {
 // Get user campaigns (for brands)
 export const GetUserCampaigns = async (userId: string, token: string) => {
     setAuthToken(token);
-    const response = await CampaignAPI.get(`/api/campaigns/user/${userId}`);
+    // Convert string userId to number for backend compatibility
+    const numericUserId = parseInt(userId, 10);
+    const response = await CampaignAPI.get(`/api/campaigns/user/${numericUserId}`);
     return response.data;
 };
 

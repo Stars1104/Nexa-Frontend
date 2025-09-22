@@ -530,7 +530,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3"
+              className="w-full bg-primary text-primary-foreground font-medium py-3 bg-[#e91e63] text-white hover:bg-[#e91e63]/90"
               disabled={isLoading}
             >
               {isLoading ? (
