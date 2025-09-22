@@ -83,6 +83,17 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
           const isApproved = status === 'approved';
           const isRejected = status === 'rejected';
           const creator = app.creator || {};
+          
+          // Debug logging
+          if (!app.creator) {
+            console.warn('Application missing creator data:', {
+              appId: app.id,
+              campaignId: app.campaignId,
+              creatorId: app.creatorId,
+              app: app
+            });
+          }
+          
           return (
             <div
               key={app.id}
@@ -173,16 +184,26 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
               </div>
               {/* Actions */}
               <div className="flex gap-2 w-full sm:w-auto justify-end">
-                {isApproved ? (
+                {isApproved && creator.id ? (
                   <button 
                     className="flex items-center gap-2 px-6 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors text-sm sm:text-base shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={async (e) => { 
                       e.stopPropagation(); 
                       setIsCreatingChat(true);
                       try {
-                        await navigateToChatWithRoom(campaignId, app.creator.id, setComponent);
+                        if (!creator.id) {
+                          console.error('Creator data missing:', {
+                            appId: app.id,
+                            creatorId: app.creatorId,
+                            creator: creator,
+                            app: app
+                          });
+                          throw new Error('Informações do criador não estão disponíveis. O criador pode ter sido removido da plataforma.');
+                        }
+                        await navigateToChatWithRoom(campaignId, creator.id, setComponent);
                       } catch (error) {
                         console.error('Error in Chat button click handler:', error);
+                        toast.error('Erro ao abrir chat: ' + (error instanceof Error ? error.message : 'Informações do criador não disponíveis'));
                       } finally {
                         setIsCreatingChat(false);
                       }
@@ -201,6 +222,10 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
                       </>
                     )}
                   </button>
+                ) : isApproved && !creator.id ? (
+                  <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+                    Criador removido da plataforma
+                  </div>
                 ) : (
                   <button 
                     className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base shadow-sm ${
@@ -264,7 +289,7 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
                   {selectedApp?.creator?.name}
                 </div>
                 {selectedApp?.creator?.email && (
-                  <div className="text-xs text-muted-foreground">{selectedApp.creator.email}</div>
+                  <div className="text-xs text-muted-foreground">{selectedApp?.creator?.email}</div>
                 )}
               </div>
             </div>

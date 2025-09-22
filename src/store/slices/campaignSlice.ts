@@ -41,7 +41,8 @@ export interface Campaign {
   briefing: string;
   budget: number;
   remunerationType?: 'paga' | 'permuta';
-
+  logo?: string;
+  image_url?: string;
   deadline: string;
   target_states: string[];
   requirements: string[];
@@ -57,7 +58,6 @@ export interface Campaign {
   status: 'pending' | 'approved' | 'rejected' | 'archived';
   created_at: string;
   approvedCreators: number;
-  logo?: string;
   attachments?: string[];
   is_featured?: boolean;
   is_favorited?: boolean;

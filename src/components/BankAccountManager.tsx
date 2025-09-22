@@ -340,7 +340,7 @@ const BankAccountManager: React.FC = () => {
           {/* Register Button */}
           <Button
             onClick={() => setShowRegistrationForm(true)}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3"
+            className="w-full bg-primary text-primary-foreground font-medium py-3 bg-[#e91e63] text-white hover:bg-[#e91e63]/90"
           >
             <Plus className="w-4 h-4 mr-2" />
             Cadastrar Informações Bancárias

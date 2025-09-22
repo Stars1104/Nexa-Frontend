@@ -283,7 +283,7 @@ export default function BrandPaymentMethods() {
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className='bg-[#e91e63] text-white hover:bg-[#e91e63]/90'>
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar Cartão
               </Button>
@@ -379,7 +379,7 @@ export default function BrandPaymentMethods() {
                   <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                     Cancelar
                   </Button>
-                  <Button type="submit" disabled={isSubmitting}>
+                  <Button type="submit" disabled={isSubmitting} className='bg-[#e91e63] text-white hover:bg-[#e91e63]/90'>
                     {isSubmitting ? 'Salvando...' : 'Salvar Cartão'}
                   </Button>
                 </DialogFooter>
