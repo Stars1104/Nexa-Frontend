@@ -140,9 +140,10 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
       
       // Close the modal
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to apply to campaign:", error);
-      toast.error("Erro ao enviar aplicação. Tente novamente.");
+      const errorMessage = error?.message || "Erro ao enviar aplicação. Tente novamente.";
+      toast.error(errorMessage);
     }
   };
 

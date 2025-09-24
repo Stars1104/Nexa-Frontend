@@ -417,7 +417,24 @@ export const applyToCampaign = createAsyncThunk<
     const response = await ApplyToCampaign(campaignId, applicationFormData, token);
     return response.data;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Falha ao se candidatar à campanha';
+    let errorMessage = 'Falha ao se candidatar à campanha';
+    
+    if (error instanceof Error) {
+      // Check if it's an axios error with response data
+      if ('response' in error && error.response && typeof error.response === 'object' && 'data' in error.response) {
+        const responseData = error.response.data as any;
+        if (responseData.message) {
+          errorMessage = responseData.message;
+        } else if (responseData.errors) {
+          // Handle validation errors
+          const errors = Object.values(responseData.errors).flat();
+          errorMessage = errors.join(', ');
+        }
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
     return rejectWithValue(errorMessage);
   }
 });

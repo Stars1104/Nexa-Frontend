@@ -204,7 +204,7 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
     premiumStatus,
     loading,
     refreshPremiumStatus,
-    hasPremium: premiumStatus?.has_premium || false,
+    hasPremium: premiumStatus?.has_premium || premiumStatus?.is_premium_active || false,
     isPremiumActive: premiumStatus?.is_premium_active || false,
   };
 

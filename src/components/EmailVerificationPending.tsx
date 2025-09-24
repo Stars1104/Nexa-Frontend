@@ -6,6 +6,8 @@ import { Mail, CheckCircle } from 'lucide-react';
 interface EmailVerificationPendingProps {
   userEmail: string;
   userRole?: string;
+  isStudent?: boolean;
+  redirectTo?: string;
   onResendEmail: () => void;
   onGoToLogin: () => void;
 }
@@ -13,10 +15,18 @@ interface EmailVerificationPendingProps {
 const EmailVerificationPending: React.FC<EmailVerificationPendingProps> = ({
   userEmail,
   userRole,
+  isStudent,
+  redirectTo,
   onResendEmail,
   onGoToLogin,
 }) => {
   const getRoleSpecificContent = () => {
+    if (isStudent) {
+      return {
+        subject: '🎓 Bem-vindo Estudante!',
+        message: 'Obrigado por se juntar à nossa comunidade como estudante! Verifique seu email para ativar sua conta e obter acesso gratuito por 1 mês.'
+      };
+    }
     return {
         subject: '🎉 Bem-vindo à Nexa!',
         message: 'Obrigado por se juntar à nossa comunidade! Verifique seu email para ativar sua conta e começar a usar todos os recursos incríveis da Nexa.'
@@ -46,7 +56,14 @@ const EmailVerificationPending: React.FC<EmailVerificationPendingProps> = ({
                 <ol className="list-decimal list-inside mt-2 space-y-1">
                   <li>Verifique sua caixa de entrada (e pasta de spam)</li>
                   <li>Clique no link de verificação no email</li>
-                  <li>Complete a configuração da sua conta</li>
+                  {isStudent ? (
+                    <>
+                      <li>Complete a verificação de estudante</li>
+                      <li>Obtenha acesso gratuito por 1 mês</li>
+                    </>
+                  ) : (
+                    <li>Complete a configuração da sua conta</li>
+                  )}
                 </ol>
               </div>
             </div>

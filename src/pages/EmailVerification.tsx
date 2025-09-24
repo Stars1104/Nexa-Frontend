@@ -59,10 +59,17 @@ const EmailVerification: React.FC = () => {
           // Redirect to appropriate dashboard after a short delay
           setTimeout(() => {
             const role = data.user.role;
+            const isStudent = data.user.isStudent;
+            
             if (role === 'brand') {
               navigate('/brand');
             } else if (role === 'creator') {
-              navigate('/creator');
+              // If user is a student, redirect to student verification
+              if (isStudent) {
+                navigate('/student-verify');
+              } else {
+                navigate('/creator');
+              }
             } else {
               navigate('/');
             }

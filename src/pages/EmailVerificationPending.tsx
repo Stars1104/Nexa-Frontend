@@ -7,7 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 const EmailVerificationPendingPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { userEmail, userRole } = location.state || {};
+  const { userEmail, userRole, isStudent, redirectTo } = location.state || {};
 
   const handleResendEmail = async () => {
     // This would typically call an API to resend verification email
@@ -49,6 +49,8 @@ const EmailVerificationPendingPage: React.FC = () => {
     <EmailVerificationPending
       userEmail={userEmail}
       userRole={userRole}
+      isStudent={isStudent}
+      redirectTo={redirectTo}
       onResendEmail={handleResendEmail}
       onGoToLogin={handleGoToLogin}
     />

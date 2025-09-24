@@ -1,10 +1,12 @@
 import { Button } from "../ui/button";
-import { CheckCircle2, Calendar, Lightbulb, Crown, AlertCircle, Loader2, Star } from "lucide-react";
+import { CheckCircle2, Calendar, Lightbulb, Crown, AlertCircle, Loader2, Star, GraduationCap } from "lucide-react";
 import { useState, useEffect } from "react";
 import SubscriptionModal from "./SubscriptionModal";
 import { paymentApi, SubscriptionStatus, SubscriptionPlan } from "../../api/payment";
 import { useToast } from "../../hooks/use-toast";
 import { dispatchPremiumStatusUpdate } from "../../utils/browserUtils";
+import { useAppSelector } from "../../store/hooks";
+import { apiClient } from "../../services/apiClient";
 
 const benefits = [
     "Aplicações ilimitadas em campanhas",
@@ -16,6 +18,7 @@ const benefits = [
 
 export default function Subscription() {
     const { toast } = useToast();
+    const { user } = useAppSelector((state) => state.auth);
     const [showCoupon, setShowCoupon] = useState(false);
     const [open, setOpen] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
@@ -24,6 +27,8 @@ export default function Subscription() {
     const [loading, setLoading] = useState(true);
     const [plansLoading, setPlansLoading] = useState(true);
     const [paymentProcessing, setPaymentProcessing] = useState(false);
+    const [studentStatus, setStudentStatus] = useState<any>(null);
+    const [studentLoading, setStudentLoading] = useState(false);
 
     useEffect(() => {
         // Load subscription plans first (public endpoint)
@@ -33,8 +38,12 @@ export default function Subscription() {
         const token = localStorage.getItem('token');
         if (token) {
             loadSubscriptionStatus();
+            // Load student status if user is a student
+            if (user?.role === 'student') {
+                loadStudentStatus();
+            }
         }
-    }, []);
+    }, [user?.role]);
 
     // Refresh subscription status when modal closes
     useEffect(() => {
@@ -90,6 +99,25 @@ export default function Subscription() {
         }
     };
 
+    const loadStudentStatus = async () => {
+        try {
+            setStudentLoading(true);
+            const response = await apiClient.get('/student/status');
+            setStudentStatus(response.data);
+        } catch (error: any) {
+            console.error('Error loading student status:', error);
+            if (error.response?.status !== 401) {
+                toast({
+                    title: "Erro",
+                    description: "Não foi possível carregar o status de estudante.",
+                    variant: "destructive",
+                });
+            }
+        } finally {
+            setStudentLoading(false);
+        }
+    };
+
     const loadSubscriptionPlans = async () => {
         try {
             setPlansLoading(true);
@@ -137,8 +165,31 @@ export default function Subscription() {
         return date.toLocaleDateString('pt-BR');
     };
 
+    const calculateTrialDaysRemaining = (expiresAt: string) => {
+        const now = new Date();
+        const expiry = new Date(expiresAt);
+        const diffTime = expiry.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return Math.max(0, diffDays);
+    };
+
     const getStatusBadge = () => {
         if (!subscriptionStatus) return null;
+
+        // Check if user is a student with active trial
+        if (user?.role === 'student' && (subscriptionStatus.is_on_trial || studentStatus?.is_on_trial)) {
+            const daysRemaining = subscriptionStatus.days_remaining || 
+                (studentStatus?.free_trial_expires_at 
+                    ? calculateTrialDaysRemaining(studentStatus.free_trial_expires_at)
+                    : 0);
+            
+            return (
+                <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs font-medium rounded-full">
+                    <GraduationCap className="w-3 h-3" />
+                    Estudante - {daysRemaining} dias restantes
+                </div>
+            );
+        }
 
         if (subscriptionStatus.is_premium_active) {
             return (
@@ -222,7 +273,9 @@ export default function Subscription() {
                                         {getStatusBadge()}
                                     </div>
                                     <div className="text-sm text-muted-foreground">
-                                        {subscriptionStatus?.is_premium_active 
+                                        {user?.role === 'student' && (subscriptionStatus?.is_on_trial || studentStatus?.is_on_trial)
+                                            ? `Seu acesso gratuito de estudante é válido até:`
+                                            : subscriptionStatus?.is_premium_active 
                                             ? `Sua assinatura premium é válida até:`
                                             : subscriptionStatus?.has_premium && subscriptionStatus.days_remaining <= 0
                                             ? "Sua assinatura premium expirou em:"
@@ -231,11 +284,24 @@ export default function Subscription() {
                                     </div>
                                 </div>
                                 <div className="text-base text-foreground font-medium sm:text-right">
-                                    {subscriptionStatus?.premium_expires_at 
+                                    {user?.role === 'student' && (subscriptionStatus?.free_trial_expires_at || studentStatus?.free_trial_expires_at)
+                                        ? formatDate(subscriptionStatus?.free_trial_expires_at || studentStatus?.free_trial_expires_at)
+                                        : subscriptionStatus?.premium_expires_at 
                                         ? formatDate(subscriptionStatus.premium_expires_at)
                                         : "Não disponível"
                                     }
                                 </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {user?.role === 'student' && studentStatus?.is_on_trial && studentStatus?.free_trial_expires_at && (
+                        <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                            <div className="flex items-center gap-2">
+                                <GraduationCap className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                <span className="text-sm text-blue-800 dark:text-blue-200">
+                                    <strong>{calculateTrialDaysRemaining(studentStatus.free_trial_expires_at)}</strong> dias restantes no seu acesso gratuito de estudante
+                                </span>
                             </div>
                         </div>
                     )}

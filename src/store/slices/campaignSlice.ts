@@ -499,7 +499,10 @@ const campaignSlice = createSlice({
       })
       .addCase(applyToCampaign.fulfilled, (state, action) => {
         state.isLoading = false;
-        // Handle successful application
+        // Add the new application to creatorApplications
+        if (action.payload && !state.creatorApplications.some(app => app.id === action.payload.id)) {
+          state.creatorApplications.push(action.payload);
+        }
       })
       .addCase(applyToCampaign.rejected, (state, action) => {
         state.isLoading = false;

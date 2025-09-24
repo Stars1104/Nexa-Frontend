@@ -100,21 +100,10 @@ export default function TransactionHistory() {
       return;
     }
 
-    // Validate token format and clean it if needed
+    // Clean token if needed (remove Bearer prefix if present)
     let cleanToken = token;
     if (token.startsWith('Bearer ')) {
       cleanToken = token.substring(7); // Remove 'Bearer ' prefix if present
-    }
-    
-    if (!cleanToken.includes('.')) {
-      console.error('TransactionHistory: Invalid token format after cleaning:', cleanToken);
-      toast({
-        title: "Erro de Token",
-        description: "Formato de token inválido. Por favor, faça login novamente.",
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
     }
 
     try {

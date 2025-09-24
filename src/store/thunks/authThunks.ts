@@ -56,11 +56,15 @@ export const signupUser = createAsyncThunk(
       // Check if email verification is required
       if (response.requires_email_verification) {
         dispatch(setEmailVerificationRequired(true));
+        // Store user data temporarily for after email verification
+        dispatch(loginSuccess({ user: response.user, token: response.token || '' }));
         return { requiresEmailVerification: true, user: response.user };
       }
       
       // Check if email verification failed
       if (response.email_verification_failed) {
+        // Store user data temporarily even if email verification failed
+        dispatch(loginSuccess({ user: response.user, token: response.token || '' }));
         return { emailVerificationFailed: true, user: response.user };
       }
 

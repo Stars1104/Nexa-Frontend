@@ -173,13 +173,26 @@ const CreatorSignUp = () => {
       // Check if email verification is required
       if (response.requiresEmailVerification) {
         toast.success("Conta criada com sucesso! Verifique seu email para ativar sua conta.");
-        // Show email verification pending screen
-        navigate('/email-verification-pending', { 
-          state: { 
-            userEmail: data.email,
-            userRole: role 
-          } 
-        });
+        
+        // If user is a student, redirect to student verification after email verification
+        if (data.isStudent) {
+          navigate('/email-verification-pending', { 
+            state: { 
+              userEmail: data.email,
+              userRole: role,
+              isStudent: true,
+              redirectTo: '/student-verify'
+            } 
+          });
+        } else {
+          // Show email verification pending screen
+          navigate('/email-verification-pending', { 
+            state: { 
+              userEmail: data.email,
+              userRole: role 
+            } 
+          });
+        }
         return;
       }
       
