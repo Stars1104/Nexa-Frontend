@@ -1,5 +1,5 @@
 import { Button } from "../ui/button";
-import { Home, FileText, User, Briefcase, Text, Bell, Shield, Waypoints, BookOpen, Trophy } from "lucide-react";
+import { Home, FileText, User, Briefcase, Text, Bell, Shield, Waypoints, BookOpen, Trophy, GraduationCap } from "lucide-react";
 import LightLogo from "../../assets/light-logo.png";
 import DarkLogo from "../../assets/dark-logo.png";
 import { useEffect, useState, useRef } from "react";
@@ -10,6 +10,7 @@ const navLinks = [
     { label: "Campanhas Pendentes", icon: FileText, key: "Campanhas Pendentes" },
     { label: "Todas as Campanhas", icon: Text, key: "Todas as Campanhas" },
     { label: "Usuários", icon: User, key: "Usuários" },
+    { label: "Estudantes", icon: GraduationCap, key: "Estudantes" },
     { label: "Rankings das Marcas", icon: Trophy, key: "Rankings das Marcas" },
     { label: "Verificação de Saques", icon: Shield, key: "Verificação de Saques" },
     { label: "Guia para", icon: Waypoints, key: "Guia para" },

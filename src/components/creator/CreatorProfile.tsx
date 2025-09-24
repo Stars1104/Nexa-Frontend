@@ -680,7 +680,7 @@ const handleRefreshProfile = useCallback(async () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {balance.balance.formatted_available_balance}
+                      {balance.balance?.formatted_available_balance || 'R$ 0,00'}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Disponível para saque
@@ -695,7 +695,7 @@ const handleRefreshProfile = useCallback(async () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {balance.earnings.formatted_this_month}
+                      {balance.earnings?.formatted_this_month || 'R$ 0,00'}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Este mês
@@ -710,7 +710,7 @@ const handleRefreshProfile = useCallback(async () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {balance.withdrawals.pending_count}
+                      {balance.withdrawals?.pending_count || 0}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Aguardando processamento

@@ -68,7 +68,10 @@ export interface Transaction {
 export interface SubscriptionStatus {
   has_premium: boolean;
   premium_expires_at?: string;
+  free_trial_expires_at?: string;
   is_premium_active: boolean;
+  is_on_trial?: boolean;
+  is_student?: boolean;
   days_remaining: number;
 }
 

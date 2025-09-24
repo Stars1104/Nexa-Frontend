@@ -16,6 +16,7 @@ import Dashboard from "@/components/admin/Dashboard";
 import PendingCampaign from "@/components/admin/PendingCampaign";
 import CampaignList from "@/components/admin/CampaignList";
 import UserList from "@/components/admin/UserList";
+import StudentList from "@/components/admin/StudentList";
 import BrandRankings from "@/components/admin/BrandRankings";
 import WithdrawalVerification from "@/components/admin/WithdrawalVerification";
 import Notification from "@/components/Notification";
@@ -61,6 +62,8 @@ const AdminIndex = () => {
                 return <CampaignList />;
             case "Usuários":
                 return <UserList />;
+            case "Estudantes":
+                return <StudentList />;
             case "Rankings das Marcas":
                 return <BrandRankings />;
             case "Verificação de Saques":
