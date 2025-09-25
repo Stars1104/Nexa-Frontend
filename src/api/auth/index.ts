@@ -129,16 +129,6 @@ export const signup = async (data: any) => {
     return response.data;
 };
 
-// Email verification functions
-export const verifyEmail = async (id: string, hash: string, signature: string, expires: string) => {
-    const response = await AuthAPI.get(`/api/verify-email/${id}/${hash}?signature=${signature}&expires=${expires}`);
-    return response.data;
-};
-
-export const resendVerificationEmail = async () => {
-    const response = await AuthAPI.post('/api/resend-verification');
-    return response.data;
-};
 
 // Health check function to test backend connectivity
 export const healthCheck = async () => {

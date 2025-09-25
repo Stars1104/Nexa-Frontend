@@ -72,7 +72,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         //     rememberUpgrade: true
         // });
 
-        const socket = io(`http://localhost:3001`, {
+        const socket = io(`http://localhost:3000`, {
             transports: ['websocket', 'polling'],
             autoConnect: true,
             reconnection: true,

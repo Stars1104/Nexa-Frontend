@@ -11,6 +11,7 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { fetchApprovedCampaigns } from "../../store/thunks/campaignThunks";
 import { clearError, clearAllCampaignData } from "../../store/slices/campaignSlice";
 import { toast } from "../ui/sonner";
+import { useSafeToast } from "../../hooks/useSafeToast";
 import { Skeleton } from "../ui/skeleton";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -129,7 +130,7 @@ export default function Dashboard({
   );
   const { creatorApplications } = useAppSelector((state) => state.campaign);
   const { user } = useAppSelector((state) => state.auth);
-  // const safeToast = useSafeToast();
+  const safeToast = useSafeToast();
 
   // Ensure creatorApplications is always an array
   const safeCreatorApplications = Array.isArray(creatorApplications)
@@ -161,7 +162,7 @@ export default function Dashboard({
 
   // Fetch approved campaigns on component mount
   useEffect(() => {
-    if (user?.role === "creator") {
+    if (user?.role === "creator" || user?.role === "student") {
       // Sequential API calls to prevent rate limiting
       const fetchDataSequentially = async () => {
         try {

@@ -170,42 +170,8 @@ const CreatorSignUp = () => {
       // Check if component is still mounted before updating state
       if (!isMountedRef.current) return;
       
-      // Check if email verification is required
-      if (response.requiresEmailVerification) {
-        toast.success("Conta criada com sucesso! Verifique seu email para ativar sua conta.");
-        
-        // If user is a student, redirect to student verification after email verification
-        if (data.isStudent) {
-          navigate('/email-verification-pending', { 
-            state: { 
-              userEmail: data.email,
-              userRole: role,
-              isStudent: true,
-              redirectTo: '/student-verify'
-            } 
-          });
-        } else {
-          // Show email verification pending screen
-          navigate('/email-verification-pending', { 
-            state: { 
-              userEmail: data.email,
-              userRole: role 
-            } 
-          });
-        }
-        return;
-      }
-      
-      // Check if email verification failed
-      if (response.emailVerificationFailed) {
-        toast.success("Conta criada com sucesso! Mas não foi possível enviar o email de verificação. Entre em contato com o suporte.");
-        // Redirect to login since email verification failed
-        navigate('/auth');
-        return;
-      }
-      
       if (response.user !== null) {
-        toast.success("Conta criada com sucesso!");
+        toast.success("Conta criada com sucesso! Você foi automaticamente logado.");
         setIsNewRegistration(true); // Set flag for new registration
         
         // For new users, automatically log them in after successful registration
@@ -532,6 +498,7 @@ const CreatorSignUp = () => {
               </div>
               <GoogleOAuthButton
                 role={role as 'creator' | 'brand'}
+                isStudent={form.watch('isStudent')}
                 disabled={isSigningUp}
                 className="py-2 text-base font-medium rounded-full"
               >

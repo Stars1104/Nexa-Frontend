@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 interface GoogleOAuthButtonProps {
   role?: 'creator' | 'brand';
+  isStudent?: boolean;
   variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'link' | 'destructive';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   className?: string;
@@ -16,6 +17,7 @@ interface GoogleOAuthButtonProps {
 
 const GoogleOAuthButton: React.FC<GoogleOAuthButtonProps> = ({
   role,
+  isStudent = false,
   variant = 'outline',
   size = 'default',
   className = '',
@@ -26,7 +28,7 @@ const GoogleOAuthButton: React.FC<GoogleOAuthButtonProps> = ({
 
   const handleGoogleOAuth = async () => {
     try {
-      await dispatch(initiateGoogleOAuthFlow(role)).unwrap();
+      await dispatch(initiateGoogleOAuthFlow({ role, isStudent })).unwrap();
     } catch (error: any) {
       toast.error(error.message || 'Failed to initiate Google sign-in');
     }

@@ -22,11 +22,14 @@ export const getGoogleOAuthURL = async () => {
 };
 
 // Handle Google OAuth callback
-export const handleGoogleCallback = async (code: string, role?: 'creator' | 'brand') => {
+export const handleGoogleCallback = async (code: string, role?: 'creator' | 'brand', isStudent?: boolean) => {
     try {
         const params = new URLSearchParams({ code });
         if (role) {
             params.append('role', role);
+        }
+        if (isStudent) {
+            params.append('is_student', 'true');
         }
         const response = await GoogleAuthAPI.get(`/api/google/callback?${params.toString()}`);
         return response.data;
@@ -46,16 +49,20 @@ export const handleGoogleAuthWithRole = async (role: 'creator' | 'brand') => {
 };
 
 // Google OAuth flow helper
-export const initiateGoogleOAuth = async (role?: 'creator' | 'brand') => {
+export const initiateGoogleOAuth = async (role?: 'creator' | 'brand', isStudent?: boolean) => {
     try {
         // Get the OAuth URL
         const { redirect_url } = await getGoogleOAuthURL();
 
-        // Store the role in sessionStorage for later use
+        // Store the role and student status in sessionStorage for later use
         if (role) {
             sessionStorage.setItem('google_oauth_role', role);
+        }
+        
+        if (isStudent) {
+            sessionStorage.setItem('google_oauth_is_student', 'true');
         } else {
-
+            sessionStorage.removeItem('google_oauth_is_student');
         }
 
         // Redirect to Google OAuth
@@ -80,17 +87,20 @@ export const handleOAuthCallback = async () => {
             throw new Error('Nenhum código de autorização recebido');
         }
 
-        // Get the stored role
+        // Get the stored role and student status
         const role = sessionStorage.getItem('google_oauth_role') as 'creator' | 'brand' | null;
+        const isStudent = sessionStorage.getItem('google_oauth_is_student') === 'true';
 
         let authData;
         if (role) {
-            // Pass the role as a query parameter to the callback
-            authData = await handleGoogleCallback(code, role);
+            // Pass the role and student status as query parameters to the callback
+            authData = await handleGoogleCallback(code, role, isStudent);
             sessionStorage.removeItem('google_oauth_role');
+            sessionStorage.removeItem('google_oauth_is_student');
         } else {
             // Use default callback (defaults to creator)
-            authData = await handleGoogleCallback(code);
+            authData = await handleGoogleCallback(code, undefined, isStudent);
+            sessionStorage.removeItem('google_oauth_is_student');
         }
 
         return authData;
