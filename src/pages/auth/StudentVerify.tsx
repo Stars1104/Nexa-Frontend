@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '../../components/ui/alert';
@@ -29,6 +29,16 @@ export default function StudentVerify() {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
   
+  // Check if user is already verified as a student
+  useEffect(() => {
+    if (user?.student_verified) {
+      toast.success('Você já está verificado como estudante! Redirecionando para o dashboard...');
+      setTimeout(() => {
+        navigateToRoleDashboard('creator');
+      }, 2000);
+    }
+  }, [user, navigateToRoleDashboard]);
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     // Clear error when user starts typing
@@ -39,6 +49,13 @@ export default function StudentVerify() {
     e.preventDefault();
     
     if (isSubmitting) return;
+    
+    // Check if user is already verified
+    if (user?.student_verified) {
+      toast.info('Você já está verificado como estudante!');
+      navigateToRoleDashboard('creator');
+      return;
+    }
     
     setIsSubmitting(true);
     setError(null);
@@ -149,9 +166,12 @@ export default function StudentVerify() {
           <ThemeToggle />
         </div>
         <div className="w-full max-w-2xl bg-background rounded-xl shadow-lg p-8 md:p-12 relative border">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">Verify your student status for free access</h1>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">Complete your student verification</h1>
           <p className="text-muted-foreground mb-6 max-w-2xl text-sm md:text-base">
-            Fill in the information below to validate your access as a student of the course. This guarantees access free for up to 12 months.
+            {user?.student_verified 
+              ? "You are already verified as a student! Redirecting to dashboard..."
+              : "Fill in your education information below to verify your student status and get free access for up to 12 months."
+            }
           </p>
           <Alert className="mb-8 flex flex-col md:flex-row items-start md:items-center gap-2 bg-[#FAF5FF] dark:bg-[#30253d]">
             <div className="flex-1">
@@ -164,6 +184,15 @@ export default function StudentVerify() {
             </AlertDescription>
           </Alert>
 
+          {/* Success Alert for Already Verified Students */}
+          {user?.student_verified && (
+            <Alert className="mb-6 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
+              <AlertDescription className="text-green-600 dark:text-green-400">
+                ✅ Você já está verificado como estudante! Redirecionando para o dashboard...
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Error Alert */}
           {error && (
             <Alert className="mb-6 border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
@@ -173,7 +202,7 @@ export default function StudentVerify() {
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${user?.student_verified ? 'opacity-50 pointer-events-none' : ''}`}>
           <div className="flex flex-col gap-1">
             <label htmlFor="fullName" className="text-xs text-muted-foreground">Nome completo</label>
               <Input

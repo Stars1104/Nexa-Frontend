@@ -295,7 +295,7 @@ export default function Subscription() {
                         </div>
                     )}
                     
-                    {user?.role === 'student' && studentStatus?.is_on_trial && studentStatus?.free_trial_expires_at && (
+                    {user?.role === 'student' && studentStatus?.is_on_trial && studentStatus?.free_trial_expires_at && !subscriptionStatus?.is_premium_active && (
                         <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                             <div className="flex items-center gap-2">
                                 <GraduationCap className="w-4 h-4 text-blue-600 dark:text-blue-400" />

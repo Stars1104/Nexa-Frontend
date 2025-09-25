@@ -13,7 +13,7 @@ const GoogleOAuthCallback: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { navigateToRoleDashboard, navigateToSubscription } = useRoleNavigation();
+  const { navigateToRoleDashboard, navigateToSubscription, navigateToStudentVerification } = useRoleNavigation();
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState<string>('');
@@ -57,14 +57,21 @@ const GoogleOAuthCallback: React.FC = () => {
           const isNewUser = !result.user.has_premium && result.user.role === 'creator';
           setIsNewRegistration(isNewUser);
           
-          toast.success(isNewUser ? 'Conta criada com sucesso!' : 'Login realizado com sucesso com Google!');
+          if (result.user.role === 'student') {
+            toast.success('Conta de estudante criada! Complete o formulário de verificação para obter acesso gratuito.');
+          } else {
+            toast.success(isNewUser ? 'Conta criada com sucesso!' : 'Login realizado com sucesso com Google!');
+          }
           
           // Clean up URL parameters
           window.history.replaceState({}, document.title, window.location.pathname);
           
           // Navigate to appropriate page
           setTimeout(() => {
-            if (isNewUser) {
+            if (result.user.role === 'student') {
+              // Redirect students to student verification page
+              navigateToStudentVerification();
+            } else if (isNewUser) {
               // Redirect new Creator registrations to subscription page
               navigateToSubscription();
             } else {

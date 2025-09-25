@@ -45,7 +45,7 @@ export default function PremiumAccessGuard({
 
   // Only refresh premium status when user changes, not on every location change
   useEffect(() => {
-    if (user && user.role === "creator" && !premiumLoading) {
+    if (user && (user.role === "creator" || user.role === "student") && !premiumLoading) {
       // Only refresh if we don't have premium status yet
       if (!hasPremium) {
         refreshPremiumStatus();
@@ -89,8 +89,8 @@ export default function PremiumAccessGuard({
       const response = await apiClient.get("/user");
       const userData = response.data;
 
-      // Only check premium for creators
-      if (userData.role === "creator") {
+      // Check premium for creators and students
+      if (userData.role === "creator" || userData.role === "student") {
         // Premium status is now handled by the hook
         if (!hasPremium && !premiumLoading) {
           showPremiumWarning();
@@ -160,11 +160,13 @@ export default function PremiumAccessGuard({
     );
   }
 
-  // If user is not a creator, or has premium, show children
-  // Check both hook premium status and user's has_premium field
-  const userHasPremium = hasPremium || user?.has_premium;
+  // If user is not a creator or student, or has premium access, show children
+  // For students, check if they have premium access (includes free trial)
+  // For creators, check if they have premium access (premium only)
+  // hasPremium from context already includes is_premium_active logic
+  const userHasPremiumAccess = hasPremium;
 
-  if (!user || user.role !== "creator" || userHasPremium) {
+  if (!user || (user.role !== "creator" && user.role !== "student") || userHasPremiumAccess) {
     return <>{children}</>;
   }
 

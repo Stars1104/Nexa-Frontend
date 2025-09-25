@@ -64,8 +64,8 @@ function Index() {
         const premiumRequiredComponents = ["Painel", "Detalhes do Projeto", "Minha Aplicação", "Chat", "Notificações"];
         const isPremiumRequired = premiumRequiredComponents.includes(component || "");
         
-        // Check both PremiumContext and Redux user state for premium access
-        const userHasPremium = hasPremium || user?.has_premium;
+        // Use the premium context which includes proper student trial logic
+        const userHasPremium = hasPremium;
         
         // If premium is required and user doesn't have it, show premium guard
         if (isPremiumRequired && !userHasPremium && !premiumLoading) {

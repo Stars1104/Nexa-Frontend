@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { loginStart, loginSuccess, loginFailure, signupStart, signupSuccess, signupFailure, logout, setEmailVerificationRequired } from '../slices/authSlice';
+import { loginStart, loginSuccess, loginFailure, signupStart, signupSuccess, signupFailure, logout } from '../slices/authSlice';
 import { signup, signin, logout as logoutAPI, updatePassword } from '../../api/auth';
 import { handleApiError } from '../../lib/api-error-handler';
 import { initiateGoogleOAuth, handleOAuthCallback } from '../../api/auth/googleAuth';
@@ -51,21 +51,6 @@ export const signupUser = createAsyncThunk(
       
       if (!response.success) {
         throw new Error(response.message || 'Falha no cadastro');
-      }
-
-      // Check if email verification is required
-      if (response.requires_email_verification) {
-        dispatch(setEmailVerificationRequired(true));
-        // Store user data temporarily for after email verification
-        dispatch(loginSuccess({ user: response.user, token: response.token || '' }));
-        return { requiresEmailVerification: true, user: response.user };
-      }
-      
-      // Check if email verification failed
-      if (response.email_verification_failed) {
-        // Store user data temporarily even if email verification failed
-        dispatch(loginSuccess({ user: response.user, token: response.token || '' }));
-        return { emailVerificationFailed: true, user: response.user };
       }
 
       const authData: AuthResponse = {
@@ -153,9 +138,21 @@ export const updateUserPassword = createAsyncThunk(
 // Async thunk for Google OAuth initiation
 export const initiateGoogleOAuthFlow = createAsyncThunk(
   'auth/googleOAuthInit',
-  async (role: 'creator' | 'brand' | undefined, { rejectWithValue }: any) => {
+  async (params: { role?: 'creator' | 'brand'; isStudent?: boolean } | 'creator' | 'brand' | undefined, { rejectWithValue }: any) => {
     try {
-      await initiateGoogleOAuth(role);
+      // Handle both old and new parameter formats for backward compatibility
+      let role: 'creator' | 'brand' | undefined;
+      let isStudent = false;
+      
+      if (typeof params === 'object' && params !== null) {
+        role = params.role;
+        isStudent = params.isStudent || false;
+      } else {
+        role = params;
+        isStudent = false;
+      }
+      
+      await initiateGoogleOAuth(role, isStudent);
     } catch (error: unknown) {
       const apiError = handleApiError(error);
       return rejectWithValue(apiError.message);

@@ -34,7 +34,6 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   isSigningUp: boolean;
-  requiresEmailVerification: boolean;
 }
 
 const initialState: AuthState = {
@@ -44,7 +43,6 @@ const initialState: AuthState = {
   isLoading: false,
   error: null,
   isSigningUp: false,
-  requiresEmailVerification: false,
 };
 
 // Async thunk for checking authentication status
@@ -141,7 +139,6 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
-      state.requiresEmailVerification = false;
       
       // Clear localStorage as well
       localStorage.removeItem('token');
@@ -149,12 +146,6 @@ const authSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
-    },
-    setEmailVerificationRequired: (state, action: PayloadAction<boolean>) => {
-      state.requiresEmailVerification = action.payload;
-    },
-    clearEmailVerificationRequired: (state) => {
-      state.requiresEmailVerification = false;
     },
     // Toggle premium status (for testing)
     togglePremium: (state) => {
@@ -214,8 +205,6 @@ export const {
   signupFailure, 
   logout, 
   clearError,
-  setEmailVerificationRequired,
-  clearEmailVerificationRequired,
   togglePremium,
   toggleAdminRole,
   updateUser,
