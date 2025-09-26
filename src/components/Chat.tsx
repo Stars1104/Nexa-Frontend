@@ -186,7 +186,15 @@ export default function Chat() {
     const handleNewMessage = (data: any) => {
       if (!isMountedRef.current) return;
 
-      console.log('Received socket message:', data, 'Current room:', selectedRoom?.room_id);
+      console.log('📨 Received socket message:', data, 'Current room:', selectedRoom?.room_id);
+      console.log('📨 Message details:', {
+        roomId: data.roomId,
+        messageId: data.messageId,
+        message: data.message,
+        senderId: data.senderId,
+        senderName: data.senderName,
+        isFromCurrentUser: data.senderId === user?.id
+      });
 
       if (data.roomId === selectedRoom?.room_id) {
         // Add message from any user (including current user for synchronization)
@@ -219,7 +227,7 @@ export default function Chat() {
           }
           
           // Check if this is a recently sent message by current user to avoid duplicates
-          if (isFromCurrentUser && window.lastSentMessageId === newMessage.id) {
+          if (isFromCurrentUser && (window as any).lastSentMessageId === newMessage.id) {
             console.log('Ignoring socket message for recently sent message:', newMessage.id);
             return prev;
           }
@@ -673,7 +681,7 @@ export default function Chat() {
         
         // Mark the message as sent via socket to prevent duplicate handling
         if (newMessage.id) {
-          window.lastSentMessageId = newMessage.id;
+          (window as any).lastSentMessageId = newMessage.id;
         }
         setInput("");
 

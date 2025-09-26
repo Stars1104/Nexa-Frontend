@@ -90,6 +90,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         socket.on('connect', () => {
             if (!isMountedRef.current) return;
             
+            console.log('🔌 Socket connected successfully!', { socketId: socket.id, userId: user?.id });
             setIsConnected(true);
             setConnectionError(null);
             reconnectAttemptsRef.current = 0;
@@ -100,6 +101,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                     userId: user.id,
                     userRole: user.role,
                 });
+                console.log('👤 User joined socket with ID:', user.id, 'Role:', user.role);
 
                 // Auto-join all chat rooms when connected for persistent message receiving
                 // Note: This is now handled by the Chat component to avoid duplicate API calls
@@ -260,10 +262,17 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         
         if (socketRef.current && isConnected) {
             try {
+                console.log('🚪 Joining room:', roomId, 'Socket connected:', isConnected);
                 socketRef.current.emit('join_room', roomId);
             } catch (error) {
                 console.warn('Error joining room:', error);
             }
+        } else {
+            console.warn('Cannot join room - socket not connected or chat disabled', { 
+                hasSocket: !!socketRef.current, 
+                isConnected, 
+                enableChat 
+            });
         }
     }, [isConnected, enableChat]);
 
@@ -287,6 +296,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         }
 
         try {
+            console.log('📤 Sending message:', { roomId, message: message.substring(0, 50), hasFile: !!file });
             let messageData: Message;
 
             if (file) {
@@ -312,11 +322,12 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                 messageData = response.data.data;
             }
 
+            console.log('✅ Message sent successfully:', { messageId: messageData.id, roomId });
             // Socket event is now handled by backend for better reliability
 
             return messageData;
         } catch (error) {
-            console.error('Error sending message:', error);
+            console.error('❌ Error sending message:', error);
             throw error;
         }
     }, [isConnected, user, enableChat]);
