@@ -43,7 +43,7 @@ export const SESSION_CONFIG = {
     ENABLED: true,
     
     // Whether to clear session when tab becomes hidden (switches to another tab)
-    CLEAR_ON_TAB_HIDE: true,
+    CLEAR_ON_TAB_HIDE: false,
     
     // Whether to clear session on page refresh
     CLEAR_ON_REFRESH: false,

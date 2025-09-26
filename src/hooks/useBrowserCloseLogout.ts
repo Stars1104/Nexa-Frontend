@@ -52,7 +52,8 @@ export const useBrowserCloseLogout = (options: UseBrowserCloseLogoutOptions = {}
     };
 
     const handleVisibilityChange = () => {
-      // Clear session when tab becomes hidden (user switches tabs or minimizes)
+      // Only clear session when tab becomes hidden if explicitly enabled
+      // This prevents users from being logged out when switching tabs
       if (SESSION_CONFIG.BROWSER_CLOSE_LOGOUT.CLEAR_ON_TAB_HIDE && 
           document.hidden && 
           !hasLoggedOutRef.current) {
