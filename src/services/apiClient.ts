@@ -1,5 +1,7 @@
 import axios from 'axios';
 import { safeGetLocalStorage } from '../utils/browserUtils';
+import { sessionManager } from '../utils/sessionManager';
+import { SESSION_CONFIG } from '../config/sessionConfig';
 
 // Utility function to handle authentication failures
 const handleAuthFailure = () => {
@@ -109,6 +111,10 @@ export const createAuthenticatedClient = (token: string) => {
     // Add response interceptor for error handling
     client.interceptors.response.use(
         (response) => {
+            // Extend session on successful API calls
+            if (SESSION_CONFIG.EXTEND_ON_API_CALLS) {
+                sessionManager.extendSession();
+            }
             return response;
         },
         async (error) => {
@@ -193,6 +199,10 @@ paymentClient.interceptors.request.use(addAuthToken, (error) => {
 
 // Response interceptor to handle errors
 const handleResponse = (response: any) => {
+    // Extend session on successful API calls
+    if (SESSION_CONFIG.EXTEND_ON_API_CALLS) {
+        sessionManager.extendSession();
+    }
     return response;
 };
 

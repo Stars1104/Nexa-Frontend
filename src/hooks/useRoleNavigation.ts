@@ -22,8 +22,10 @@ export const useRoleNavigation = () => {
 
   const navigateToRoleDashboard = (role?: string, options?: { replace?: boolean }) => {
     const userRole = role || user?.role;
+    console.log('navigateToRoleDashboard called', { userRole, user: user?.role });
     if (userRole) {
       const dashboard = getDefaultDashboard(userRole);
+      console.log('Navigating to dashboard', { dashboard, replace: options?.replace ?? false });
       // Use replace: false by default to add to browser history
       // This allows the back button to work properly within the dashboard
       navigate(dashboard, { replace: options?.replace ?? false });

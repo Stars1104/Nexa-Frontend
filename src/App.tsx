@@ -6,6 +6,9 @@ import { ThemeProvider } from "./components/ThemeProvider";
 import { PremiumProvider } from "./contexts/PremiumContext";
 import { useAuthRehydration } from "./hooks/useAuthRehydration";
 import { useSocket } from "./hooks/useSocket";
+import { useSessionTimeout } from "./hooks/useSessionTimeout";
+import { useBrowserCloseLogout } from "./hooks/useBrowserCloseLogout";
+import SessionWarningModal from "./components/SessionWarningModal";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Index from "./pages/Index";
@@ -36,6 +39,24 @@ const App = () => {
   
   // Initialize global socket connection for real-time notifications
   useSocket();
+  
+  // Initialize session timeout
+  const sessionTimeout = useSessionTimeout({
+    onTimeout: () => {
+      console.log('Session expired - user logged out');
+    },
+    onWarning: () => {
+      console.log('Session warning shown');
+    }
+  });
+
+  // Initialize browser close logout
+  useBrowserCloseLogout({
+    enabled: true,
+    onLogout: () => {
+      console.log('User session cleared due to browser/tab close');
+    }
+  });
 
   // Set app as ready after authentication is properly initialized
   useEffect(() => {
@@ -88,6 +109,13 @@ const App = () => {
                 <Sonner />
                 {/* <DebugUserState /> */}
                 <BrowserRouter>
+                  {/* Session Warning Modal */}
+                  <SessionWarningModal
+                    isOpen={sessionTimeout.isWarningShown}
+                    remainingMinutes={sessionTimeout.remainingMinutes}
+                    onExtendSession={sessionTimeout.onExtendSession}
+                    onLogout={sessionTimeout.onLogout}
+                  />
                   <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<AuthStep />} />

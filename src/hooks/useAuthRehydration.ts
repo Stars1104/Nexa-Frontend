@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { checkAuthStatus } from '../store/slices/authSlice';
+import { hasSessionData, clearUserSession } from '../utils/sessionCleanup';
+import { SESSION_CONFIG } from '../config/sessionConfig';
 
 export const useAuthRehydration = () => {
   const dispatch = useAppDispatch();
@@ -14,6 +16,22 @@ export const useAuthRehydration = () => {
       if (!hasInitialized.current && !isAuthenticated && !token && !user) {
         hasInitialized.current = true;
         
+        // Don't auto-login if user is on auth/signup pages
+        const currentPath = window.location.pathname;
+        const isAuthPage = currentPath.includes('/auth') || 
+                          currentPath.includes('/signup') || 
+                          currentPath.includes('/forgot-password');
+        
+        if (isAuthPage) {
+          // On auth pages, clear any existing session data to prevent auto-login
+          if (SESSION_CONFIG.BROWSER_CLOSE_LOGOUT.CLEAR_ON_AUTH_PAGES && hasSessionData()) {
+            console.log('Clearing session data on auth page');
+            clearUserSession();
+          }
+          setIsRehydrating(false);
+          return;
+        }
+        
         // Check localStorage for existing auth data
         const storedToken = localStorage.getItem('token');
         const storedUser = localStorage.getItem('user');
@@ -24,8 +42,7 @@ export const useAuthRehydration = () => {
             await dispatch(checkAuthStatus()).unwrap();
           } catch (error) {
             // Token validation failed, clear stored data
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
+            clearUserSession();
           }
         } else {
         }
