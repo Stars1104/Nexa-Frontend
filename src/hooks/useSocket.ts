@@ -187,7 +187,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
             socket.on('new_notification', handleNotification);
             
             // Store cleanup function
-            socket._cleanupNotification = () => {
+            (socket as any)._cleanupNotification = () => {
                 socket.off('new_notification', handleNotification);
             };
         }
@@ -212,8 +212,8 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
             if (socketRef.current) {
                 try {
                     // Clean up notification listener if it exists
-                    if (socketRef.current._cleanupNotification) {
-                        socketRef.current._cleanupNotification();
+                    if ((socketRef.current as any)._cleanupNotification) {
+                        (socketRef.current as any)._cleanupNotification();
                     }
                     socketRef.current.disconnect();
                     socketRef.current = null;
