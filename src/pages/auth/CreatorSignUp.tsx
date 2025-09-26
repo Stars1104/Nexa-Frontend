@@ -84,20 +84,26 @@ const CreatorSignUp = () => {
     dispatch(resetLoadingStates());
   }, [dispatch]);
 
+
   // Effect to handle successful authentication
   useEffect(() => {
     if (isAuthenticated && user) {
+      console.log('User authenticated, navigating...', { user: user.role, isNewRegistration, isStudent: user.isStudent });
+      
       // Prevent multiple navigation calls
       const timeoutId = setTimeout(() => {
         // Handle student verification flow
         if (user.isStudent && user.role === 'creator') {
+          console.log('Navigating to student verification');
           navigateToStudentVerification();
         } else if (isNewRegistration && user.role === 'creator') {
           // Redirect new Creator registrations to subscription page
+          console.log('Navigating to subscription');
           navigateToSubscription();
         } else {
           // Check if there's a redirect location from ProtectedRoute
           const from = location.state?.from?.pathname;
+          console.log('Navigating to role dashboard', { from, role: user.role });
           if (from) {
             navigate(from, { replace: true });
           } else {
@@ -332,16 +338,16 @@ const CreatorSignUp = () => {
           {/* Account type toggle */}
           <div className="flex w-full mb-2 border border-[#E2E2E2] p-1 rounded-full">
             <button
-              className={`flex-1 py-2 rounded-full text-base font-semibold transition-colors ${authType === "signup" ? "bg-[#E91E63] text-white" : "bg-background text-foreground"} ${(isSigningUp || isLoading) ? "opacity-50 cursor-not-allowed" : ""}`}
-              onClick={() => handleAuthTypeChange("signup")}
+              className={`flex-1 py-2 rounded-full text-base font-semibold transition-colors ${authType === "signin" ? "bg-[#E91E63] text-white" : "bg-background text-foreground"} ${(isSigningUp || isLoading) ? "opacity-50 cursor-not-allowed" : ""}`}
+              onClick={() => handleAuthTypeChange("signin")}
               type="button"
               disabled={isSigningUp || isLoading}
             >
               {isLoading && authType === "signin" ? "Entrando..." : "Entrar"}
             </button>
             <button
-              className={`flex-1 py-2 rounded-full border-border text-base font-semibold transition-colors ${authType === "signin" ? "bg-[#E91E63] text-white" : "bg-background text-foreground"} ${(isSigningUp || isLoading) ? "opacity-50 cursor-not-allowed" : ""}`}
-              onClick={() => handleAuthTypeChange("signin")}
+              className={`flex-1 py-2 rounded-full border-border text-base font-semibold transition-colors ${authType === "signup" ? "bg-[#E91E63] text-white" : "bg-background text-foreground"} ${(isSigningUp || isLoading) ? "opacity-50 cursor-not-allowed" : ""}`}
+              onClick={() => handleAuthTypeChange("signup")}
               type="button"
               disabled={isSigningUp || isLoading}
             >
@@ -349,7 +355,7 @@ const CreatorSignUp = () => {
             </button>
           </div>
 
-          {authType === "signup" ? (
+          {authType === "signin" ? (
             <>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSignIn)} className="w-full flex flex-col gap-3">
