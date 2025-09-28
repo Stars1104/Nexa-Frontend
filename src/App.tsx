@@ -52,7 +52,7 @@ const App = () => {
 
   // Initialize browser close logout
   useBrowserCloseLogout({
-    enabled: true,
+    enabled: false, // Disabled to prevent aggressive logout
     onLogout: () => {
       console.log('User session cleared due to browser/tab close');
     }
@@ -64,6 +64,11 @@ const App = () => {
       // Only set app as ready if authentication rehydration is complete
       // This prevents routes from rendering before auth state is restored
       if (!authState.isRehydrating) {
+        console.log('App ready - Auth state:', { 
+          isAuthenticated: authState.isAuthenticated, 
+          hasToken: !!authState.token, 
+          hasUser: !!authState.user 
+        });
         setIsAppReady(true);
       }
     }, 1000);

@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { getProfile } from '../../api/auth';
+import { createAuthenticatedClient } from '../../services/apiClient';
 
 interface User {
   id: string;
@@ -59,15 +60,18 @@ export const checkAuthStatus = createAsyncThunk(
       
       if (storedToken && storedUser) {
         try {
-          // Validate token with backend
-          const response = await getProfile();
-          if (response.success) {
+          // Create authenticated client with stored token
+          const authenticatedClient = createAuthenticatedClient(storedToken);
+          const response = await authenticatedClient.get('/user');
+          
+          if (response.data.success) {
             return {
-              user: response.profile,
+              user: response.data.profile,
               token: storedToken
             };
           }
         } catch (error) {
+          console.log('Token validation failed:', error);
           // Token is invalid, clear localStorage
           localStorage.removeItem('token');
           localStorage.removeItem('user');
@@ -79,14 +83,17 @@ export const checkAuthStatus = createAsyncThunk(
     
     // If token exists in state, validate it
     try {
-      const response = await getProfile();
-      if (response.success) {
+      const authenticatedClient = createAuthenticatedClient(token);
+      const response = await authenticatedClient.get('/user');
+      
+      if (response.data.success) {
         return {
-          user: response.profile,
+          user: response.data.profile,
           token: token
         };
       }
     } catch (error) {
+      console.log('Token validation failed:', error);
       // Token is invalid, clear state
       dispatch(logout());
       throw new Error('Token inválido');
@@ -210,4 +217,5 @@ export const {
   updateUser,
   resetLoadingStates
 } = authSlice.actions;
+
 export default authSlice.reducer; 

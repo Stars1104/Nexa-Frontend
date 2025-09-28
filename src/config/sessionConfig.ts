@@ -1,10 +1,10 @@
 // Session timeout configuration
 export const SESSION_CONFIG = {
   // Session timeout in minutes
-  TIMEOUT_MINUTES: 30,
+  TIMEOUT_MINUTES: 120, // 2 hours
   
   // Warning time in minutes before timeout
-  WARNING_MINUTES: 5,
+  WARNING_MINUTES: 10, // 10 minutes warning
   
   // Minimum activity interval in milliseconds (to prevent excessive timer resets)
   MIN_ACTIVITY_INTERVAL: 1000,
@@ -40,7 +40,7 @@ export const SESSION_CONFIG = {
   // Browser close logout settings
   BROWSER_CLOSE_LOGOUT: {
     // Whether to clear session when browser/tab closes
-    ENABLED: true,
+    ENABLED: false, // Disabled to prevent aggressive logout
     
     // Whether to clear session when tab becomes hidden (switches to another tab)
     CLEAR_ON_TAB_HIDE: false,
@@ -49,7 +49,7 @@ export const SESSION_CONFIG = {
     CLEAR_ON_REFRESH: false,
     
     // Whether to clear session when navigating to auth pages
-    CLEAR_ON_AUTH_PAGES: true
+    CLEAR_ON_AUTH_PAGES: false // Disabled to prevent clearing on auth pages
   }
 } as const;
 
