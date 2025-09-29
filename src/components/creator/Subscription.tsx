@@ -109,7 +109,7 @@ export default function Subscription() {
             if (error.response?.status !== 401) {
                 toast({
                     title: "Erro",
-                    description: "Não foi possível carregar o status de estudante.",
+                    description: "Não foi possível carregar o status de aluno.",
                     variant: "destructive",
                 });
             }
@@ -186,7 +186,7 @@ export default function Subscription() {
             return (
                 <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs font-medium rounded-full">
                     <GraduationCap className="w-3 h-3" />
-                    Estudante - {daysRemaining} dias restantes
+                    aluno - {daysRemaining} dias restantes
                 </div>
             );
         }
@@ -274,7 +274,7 @@ export default function Subscription() {
                                     </div>
                                     <div className="text-sm text-muted-foreground">
                                         {user?.role === 'student' && (subscriptionStatus?.is_on_trial || studentStatus?.is_on_trial)
-                                            ? `Seu acesso gratuito de estudante é válido até:`
+                                            ? `Seu acesso gratuito de aluno é válido até:`
                                             : subscriptionStatus?.is_premium_active 
                                             ? `Sua assinatura premium é válida até:`
                                             : subscriptionStatus?.has_premium && subscriptionStatus.days_remaining <= 0
@@ -300,7 +300,7 @@ export default function Subscription() {
                             <div className="flex items-center gap-2">
                                 <GraduationCap className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                                 <span className="text-sm text-blue-800 dark:text-blue-200">
-                                    <strong>{calculateTrialDaysRemaining(studentStatus.free_trial_expires_at)}</strong> dias restantes no seu acesso gratuito de estudante
+                                    <strong>{calculateTrialDaysRemaining(studentStatus.free_trial_expires_at)}</strong> dias restantes no seu acesso gratuito de aluno
                                 </span>
                             </div>
                         </div>

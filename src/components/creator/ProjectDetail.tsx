@@ -320,7 +320,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             </button>
             {!canApplyToCampaigns && (
               <div className="mt-2 text-sm text-muted-foreground text-center">
-                Apenas criadores e estudantes podem se candidatar a campanhas.
+                Apenas criadores e alunos podem se candidatar a campanhas.
               </div>
             )}
             {alreadyApplied && (

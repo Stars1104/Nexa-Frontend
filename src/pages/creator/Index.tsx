@@ -22,6 +22,7 @@ import { usePremiumContext } from "../../contexts/PremiumContext";
 import { useAppSelector } from "../../store/hooks";
 import BankRegistrationDemo from "../BankRegistrationDemo";
 import GuideEmbedded from "@/components/GuideEmbedded";
+import StudentVerify from "../auth/StudentVerify";
 import { Helmet } from "react-helmet-async";
 
 function Index() {
@@ -103,6 +104,8 @@ function Index() {
                 return <TransactionHistory />;
             case "Cadastro Bancário":
                 return <BankRegistrationDemo />;
+            case "Verificação de Aluno":
+                return <StudentVerify setComponent={handleComponentChange} />;
             case "Guia da Plataforma":
                 return <GuideEmbedded audience="Creator" />;
             default:

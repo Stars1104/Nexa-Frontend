@@ -3,7 +3,7 @@ import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '../../components/ui/alert';
 import { ThemeToggle } from '../../components/ThemeToggle';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useRoleNavigation } from '../../hooks/useRoleNavigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
@@ -17,28 +17,54 @@ const initialState = {
   courseName: '',
 };
 
-export default function StudentVerify() {
+interface StudentVerifyProps {
+  setComponent?: (component: string) => void;
+}
+
+export default function StudentVerify({ setComponent }: StudentVerifyProps = {}) {
   const [form, setForm] = useState(initialState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { navigateToRoleDashboard } = useRoleNavigation();
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Check if we're inside the Creator dashboard
+  const isInsideCreatorDashboard = location.pathname === '/creator' && setComponent;
   
   // Check if user is already verified as a student
   useEffect(() => {
     if (user?.student_verified) {
-      toast.success('Você já está verificado como estudante! Redirecionando para o dashboard...');
-      setTimeout(() => {
-        navigateToRoleDashboard('creator');
-      }, 2000);
+      toast.success('Você já está verificado como aluno!');
+      if (isInsideCreatorDashboard) {
+        // If inside Creator dashboard, just show success message
+        return;
+      } else {
+        // If on standalone page, redirect to dashboard
+        setTimeout(() => {
+          navigateToRoleDashboard('creator');
+        }, 2000);
+      }
     }
-  }, [user, navigateToRoleDashboard]);
+  }, [user, navigateToRoleDashboard, isInsideCreatorDashboard]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     // Clear error when user starts typing
     if (error) setError(null);
+  };
+
+  const handleSkip = () => {
+    toast.info('Pulando verificação de aluno. Você pode verificar seu status posteriormente no dashboard.');
+    if (isInsideCreatorDashboard) {
+      // If inside Creator dashboard, navigate to main dashboard
+      setComponent?.('Painel');
+    } else {
+      // If on standalone page, redirect to dashboard
+      navigateToRoleDashboard('creator');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,8 +74,12 @@ export default function StudentVerify() {
     
     // Check if user is already verified
     if (user?.student_verified) {
-      toast.info('Você já está verificado como estudante!');
-      navigateToRoleDashboard('creator');
+      toast.info('Você já está verificado como aluno!');
+      if (isInsideCreatorDashboard) {
+        setComponent?.('Painel');
+      } else {
+        navigateToRoleDashboard('creator');
+      }
       return;
     }
     
@@ -102,11 +132,11 @@ export default function StudentVerify() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || 'Erro ao verificar status de estudante');
+        throw new Error(result.message || 'Erro ao verificar status de aluno');
       }
 
       if (result.success) {
-        toast.success('Verificação de estudante enviada com sucesso! Você receberá acesso gratuito por 1 mês.');
+        toast.success('Verificação de aluno enviada com sucesso! Você receberá acesso gratuito por 1 mês.');
         
         // Update user state to reflect student verification
         if (user) {
@@ -121,14 +151,18 @@ export default function StudentVerify() {
         }
 
         // Navigate to creator dashboard
-        navigateToRoleDashboard('creator');
+        if (isInsideCreatorDashboard) {
+          setComponent?.('Painel');
+        } else {
+          navigateToRoleDashboard('creator');
+        }
       } else {
         throw new Error(result.message || 'Falha na verificação');
       }
 
     } catch (err: any) {
       console.error('Student verification error:', err);
-      setError(err.message || 'Erro ao verificar status de estudante. Tente novamente.');
+      setError(err.message || 'Erro ao verificar status de aluno. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
@@ -142,22 +176,28 @@ export default function StudentVerify() {
 
   return (
     <>
-      <Helmet>
-        <title>Nexa - Verificação de Estudante</title>
-        <meta name="description" content="Verifique seu status de estudante para obter acesso gratuito à plataforma Nexa." />
-        {canonical && <link rel="canonical" href={canonical} />}
-        <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
-      </Helmet>
-      <div className="min-h-screen flex items-center justify-center bg-muted py-8 px-2 dark:bg-background relative">
-        <div className="absolute top-6 right-6">
-          <ThemeToggle />
-        </div>
-        <div className="w-full max-w-2xl bg-background rounded-xl shadow-lg p-8 md:p-12 relative border">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">Preencha os dados se você for aluna do Build Creators</h1>
+      {!isInsideCreatorDashboard && (
+        <Helmet>
+          <title>Nexa - Verificação de aluno</title>
+          <meta name="description" content="Verifique seu status de aluno para obter acesso gratuito à plataforma Nexa." />
+          {canonical && <link rel="canonical" href={canonical} />}
+          <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
+        </Helmet>
+      )}
+      <div className={`${isInsideCreatorDashboard ? 'p-6 w-full min-h-[92vh] flex justify-center items-center' : 'min-h-screen flex items-center justify-center bg-muted py-8 px-2 dark:bg-background relative'}`}>
+        {!isInsideCreatorDashboard && (
+          <div className="absolute top-6 right-6">
+            <ThemeToggle />
+          </div>
+        )}
+        <div className={`w-full max-w-2xl bg-background rounded-xl shadow-lg relative border ${isInsideCreatorDashboard ? 'p-6' : 'p-8 md:p-12'}`}>
+          <h1 className={`font-bold mb-2 text-foreground ${isInsideCreatorDashboard ? 'text-xl' : 'text-2xl md:text-3xl'}`}>
+          Preencha os dados se você for aluna do Build Creators
+          </h1>
           <p className="text-muted-foreground mb-6 max-w-2xl text-sm md:text-base">
             {user?.student_verified 
               ? "Você já foi verificado como aluno! Redirecionando para o painel..."
-              : "Preencha suas informações educacionais abaixo para verificar seu status de estudante e obter acesso gratuito por até 12 meses."
+              : "Preencha suas informações educacionais abaixo para verificar seu status de aluno e obter acesso gratuito por até 12 meses."
             }
           </p>
           <Alert className="mb-8 flex flex-col md:flex-row items-start md:items-center gap-2 bg-[#FAF5FF] dark:bg-[#30253d]">
@@ -175,7 +215,7 @@ export default function StudentVerify() {
           {user?.student_verified && (
             <Alert className="mb-6 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
               <AlertDescription className="text-green-600 dark:text-green-400">
-                ✅ Você já está verificado como estudante! Redirecionando para o dashboard...
+                ✅ Você já está verificado como aluno! Redirecionando para o dashboard...
               </AlertDescription>
             </Alert>
           )}
@@ -246,10 +286,10 @@ export default function StudentVerify() {
               disabled={isSubmitting}
             />
           </div>
-          <div className="md:col-span-2 mt-4">
+          <div className="md:col-span-2 mt-4 flex flex-col sm:flex-row gap-3">
             <Button 
               type="submit" 
-              className="w-full md:w-auto bg-[#E91E63] text-white font-semibold px-6 py-2 rounded-lg shadow hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto bg-[#E91E63] text-white font-semibold px-6 py-2 rounded-lg shadow hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
@@ -260,6 +300,15 @@ export default function StudentVerify() {
               ) : (
                 'Enviar para verificação'
               )}
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={handleSkip}
+              className="w-full sm:w-auto font-semibold px-6 py-2 rounded-lg border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+              disabled={isSubmitting}
+            >
+              Pular por enquanto
             </Button>
           </div>
         </form>

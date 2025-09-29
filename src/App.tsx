@@ -42,20 +42,14 @@ const App = () => {
   
   // Initialize session timeout
   const sessionTimeout = useSessionTimeout({
-    onTimeout: () => {
-      console.log('Session expired - user logged out');
-    },
-    onWarning: () => {
-      console.log('Session warning shown');
-    }
+    onTimeout: () => {},
+    onWarning: () => {}
   });
 
   // Initialize browser close logout
   useBrowserCloseLogout({
     enabled: false, // Disabled to prevent aggressive logout
-    onLogout: () => {
-      console.log('User session cleared due to browser/tab close');
-    }
+    onLogout: () => {}
   });
 
   // Set app as ready after authentication is properly initialized
@@ -64,11 +58,6 @@ const App = () => {
       // Only set app as ready if authentication rehydration is complete
       // This prevents routes from rendering before auth state is restored
       if (!authState.isRehydrating) {
-        console.log('App ready - Auth state:', { 
-          isAuthenticated: authState.isAuthenticated, 
-          hasToken: !!authState.token, 
-          hasUser: !!authState.user 
-        });
         setIsAppReady(true);
       }
     }, 1000);

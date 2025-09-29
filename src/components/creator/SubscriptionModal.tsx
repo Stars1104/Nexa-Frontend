@@ -265,13 +265,6 @@ export default function SubscriptionModal({
         return;
       }
 
-      // Debug: Log the payment data being sent
-      console.log("🔵 Sending payment data:", {
-        ...paymentData,
-        card_number: paymentData.card_number.replace(/\d(?=\d{4})/g, "*"), // Mask card number for security
-        card_cvv: "***" // Mask CVV for security
-      });
-
       const response = await paymentClient.post(
         "/payment/subscription",
         paymentData

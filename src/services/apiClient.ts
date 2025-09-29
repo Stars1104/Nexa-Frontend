@@ -127,7 +127,6 @@ export const createAuthenticatedClient = (token: string) => {
             
             // Handle 401 Unauthorized - Token expired or invalid
             if (error.response?.status === 401) {
-                console.log('401 Unauthorized - clearing auth data');
                 handleAuthFailure();
                 
                 // Set a custom error message
@@ -142,12 +141,10 @@ export const createAuthenticatedClient = (token: string) => {
             // Handle 419 CSRF Token Mismatch with retry
             if (error.response?.status === 419) {
                 try {
-                    console.log('419 CSRF Token Mismatch - attempting refresh');
                     await client.get('/user');
                     const originalRequest = error.config;
                     return client.request(originalRequest);
                 } catch (refreshError) {
-                    console.log('CSRF refresh failed:', refreshError);
                     error.message = 'Sessão expirada. Por favor, atualize a página e tente novamente.';
                 }
             }

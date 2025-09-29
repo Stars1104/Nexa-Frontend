@@ -12,8 +12,6 @@ export const clearUserSession = () => {
   
   // Clear sessionStorage as well
   sessionStorage.clear();
-  
-  console.log('User session cleared completely');
 };
 
 // Check if session data exists

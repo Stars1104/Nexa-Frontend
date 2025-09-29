@@ -71,8 +71,6 @@ export const checkAuthStatus = createAsyncThunk(
             };
           }
         } catch (error) {
-          console.log('Token validation failed:', error);
-          // Token is invalid, clear localStorage
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           throw new Error('Token inválido');
@@ -93,8 +91,6 @@ export const checkAuthStatus = createAsyncThunk(
         };
       }
     } catch (error) {
-      console.log('Token validation failed:', error);
-      // Token is invalid, clear state
       dispatch(logout());
       throw new Error('Token inválido');
     }

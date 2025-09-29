@@ -89,7 +89,7 @@ describe('CreatorSignUp', () => {
         </TestWrapper>
       )
 
-      expect(screen.getByText('Sou um estudante e quero verificar meu status')).toBeInTheDocument()
+      expect(screen.getByText('Sou um aluno e quero verificar meu status')).toBeInTheDocument()
       expect(screen.getByRole('checkbox')).toBeInTheDocument()
     })
 

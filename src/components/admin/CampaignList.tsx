@@ -210,8 +210,8 @@ const CampaignList: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((c, i) => (
-                      <tr key={i} className="border-t border-gray-100 dark:border-gray-800">
+                    {filtered.map((c) => (
+                      <tr key={c.id} className="border-t border-gray-100 dark:border-gray-800">
                         <td className="py-4 px-2 text-sm font-medium text-gray-900 dark:text-gray-100">{c.title}</td>
                         <td className="py-4 px-2">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[c.status]}`}>

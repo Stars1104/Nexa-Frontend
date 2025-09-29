@@ -1,7 +1,7 @@
 import { ThemeProvider } from "../../components/ThemeProvider";
 import ComponentNavbar from "../../components/ComponentNavbar";
 import { useIsMobile } from "../../hooks/use-mobile";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "../../store";
 import { Alert, AlertTitle, AlertDescription } from "../../components/ui/alert";
@@ -52,7 +52,7 @@ const AdminIndex = () => {
         toast.success("Função de administrador ativada para testes.");
     };
 
-    const CreatorComponent = () => {
+    const CreatorComponent = useMemo(() => {
         switch (component) {
             case "Painel":
                 return <Dashboard />;
@@ -62,7 +62,7 @@ const AdminIndex = () => {
                 return <CampaignList />;
             case "Usuários":
                 return <UserList />;
-            case "Estudantes":
+            case "alunos":
                 return <StudentList />;
             case "Rankings das Marcas":
                 return <BrandRankings />;
@@ -71,11 +71,11 @@ const AdminIndex = () => {
             case "Guia para":
                 return <NexaGuide />;
             case "Notificações":
-                return <Notification />
+                return <Notification />;
             default:
                 return <NotFound />;
         }
-    }
+    }, [component]);
 
     // Show access denied message if user doesn't have admin role
     if (accessDenied || (user && user.role !== 'admin')) {
@@ -109,7 +109,7 @@ const AdminIndex = () => {
                 <div className="flex-1 flex flex-col min-w-0">
                     <ComponentNavbar title={component || "Dashboard"} />
                     <main className={`flex-1 overflow-y-auto bg-muted/50 ${isMobile ? 'pb-20' : ''}`}>
-                        <CreatorComponent />
+                        {CreatorComponent}
                     </main>
                 </div>
                 {isMobile && <AdminSidebar setComponent={setComponent} component={component} />}
