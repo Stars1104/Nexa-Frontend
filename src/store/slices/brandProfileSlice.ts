@@ -83,19 +83,12 @@ export const updateBrandProfile = createAsyncThunk(
         }
       });
       
-      // Log FormData contents
-      console.log('Brand Profile Update - FormData entries:');
-      for (let [key, value] of formData.entries()) {
-        console.log(key, value);
-      }
-      
       const response = await apiClient.put('/brand-profile', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
       
-      console.log('Brand Profile Update - Response:', response.data);
       return response.data.data;
     } catch (error: any) {
       console.error('Brand Profile Update - Error:', error);
@@ -146,11 +139,6 @@ const brandProfileSlice = createSlice({
         state.isLoading = false;
         state.profile = action.payload;
         state.error = null;
-        console.log('Brand profile fetched:', action.payload);
-        console.log('Avatar data:', {
-          avatar: action.payload.avatar,
-          avatar_url: action.payload.avatar_url
-        });
       })
       .addCase(fetchBrandProfile.rejected, (state, action) => {
         state.isLoading = false;

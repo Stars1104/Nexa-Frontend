@@ -24,8 +24,8 @@ export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
   
   const [showWarning, setShowWarning] = useState(false);
   
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<number | null>(null);
+  const warningTimeoutRef = useRef<number | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
   const isWarningShownRef = useRef<boolean>(false);
 
@@ -63,7 +63,6 @@ export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
         isWarningShownRef.current = true;
         setShowWarning(true);
         onWarning?.();
-        console.log(`Session will expire in ${warningMinutes} minutes`);
       }
     }, warningTime);
 
@@ -71,18 +70,14 @@ export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
     const timeoutTime = timeoutMinutes * 60 * 1000;
     timeoutRef.current = setTimeout(() => {
       if (isAuthenticated && user && !isExcludedRoute()) {
-        console.log('Session expired due to inactivity');
         handleSessionTimeout();
       }
     }, timeoutTime);
     
-    console.log(`Session timeout reset - ${timeoutMinutes} minutes until timeout`);
   }, [isAuthenticated, user, timeoutMinutes, warningMinutes, onTimeout, onWarning, isExcludedRoute]);
 
   // Handle session timeout
   const handleSessionTimeout = useCallback(() => {
-    console.log('Session timeout - logging out user');
-    
     // Clear all timers
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);

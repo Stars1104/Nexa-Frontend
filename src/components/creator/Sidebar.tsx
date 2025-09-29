@@ -1,5 +1,5 @@
 import { Button } from "../ui/button";
-import { Home, FileText, MessageCircle, User, Briefcase, Bell, CreditCard, Receipt, BanknoteIcon, Wallet, BookOpen } from "lucide-react";
+import { Home, FileText, MessageCircle, User, Briefcase, Bell, CreditCard, Receipt, BanknoteIcon, Wallet, BookOpen, GraduationCap } from "lucide-react";
 import LightLogo from "../../assets/light-logo.png";
 import DarkLogo from "../../assets/dark-logo.png";
 import { useEffect, useState, useRef } from "react";
@@ -16,6 +16,7 @@ const navLinks = [
     { label: "Assinatura", icon: CreditCard, key: "Assinatura" },
     { label: "Histórico de Pagamentos", icon: Receipt, key: "Histórico de Pagamentos" },
     { label: "Cadastro Bancário", icon: BanknoteIcon, key: "Cadastro Bancário" },
+    { label: "Verificação de Aluno", icon: GraduationCap, key: "Verificação de Aluno" },
     { label: "Guia da Plataforma", icon: BookOpen, key: "Guia da Plataforma" },
 ];
 

@@ -88,22 +88,17 @@ const CreatorSignUp = () => {
   // Effect to handle successful authentication
   useEffect(() => {
     if (isAuthenticated && user) {
-      console.log('User authenticated, navigating...', { user: user.role, isNewRegistration, isStudent: user.isStudent });
-      
       // Prevent multiple navigation calls
       const timeoutId = setTimeout(() => {
         // Handle student verification flow
         if (user.isStudent && user.role === 'creator') {
-          console.log('Navigating to student verification');
           navigateToStudentVerification();
         } else if (isNewRegistration && user.role === 'creator') {
           // Redirect new Creator registrations to subscription page
-          console.log('Navigating to subscription');
           navigateToSubscription();
         } else {
           // Check if there's a redirect location from ProtectedRoute
           const from = location.state?.from?.pathname;
-          console.log('Navigating to role dashboard', { from, role: user.role });
           if (from) {
             navigate(from, { replace: true });
           } else {
@@ -564,7 +559,7 @@ const CreatorSignUp = () => {
                             />
                           </FormControl>
                           <FormLabel className="font-normal">
-                            Sou um estudante e quero verificar meu status
+                            Sou um aluno e quero verificar meu status
                           </FormLabel>
                         </FormItem>
                       )}

@@ -150,9 +150,7 @@ export default function Chat() {
 
   // Auto-join room when selectedRoom changes
   useEffect(() => {
-    console.log('Socket connection status:', { isConnected, connectionError, selectedRoom: selectedRoom?.room_id });
     if (selectedRoom && isConnected) {
-      console.log('Joining room:', selectedRoom.room_id);
       joinRoom(selectedRoom.room_id);
     }
   }, [selectedRoom, isConnected, joinRoom]);
@@ -160,9 +158,6 @@ export default function Chat() {
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (!isMountedRef.current) return;
-
-    console.log('Messages state updated:', messages.length, 'messages');
-    console.log('Current messages:', messages.map(m => ({ id: m.id, message: m.message, sender: m.sender_name })));
 
     // Use requestAnimationFrame to ensure DOM is ready
     const scrollToBottom = () => {
@@ -185,16 +180,6 @@ export default function Chat() {
     // Listen for new messages from other users
     const handleNewMessage = (data: any) => {
       if (!isMountedRef.current) return;
-
-      console.log('📨 Received socket message:', data, 'Current room:', selectedRoom?.room_id);
-      console.log('📨 Message details:', {
-        roomId: data.roomId,
-        messageId: data.messageId,
-        message: data.message,
-        senderId: data.senderId,
-        senderName: data.senderName,
-        isFromCurrentUser: data.senderId === user?.id
-      });
 
       if (data.roomId === selectedRoom?.room_id) {
         // Add message from any user (including current user for synchronization)
@@ -228,11 +213,9 @@ export default function Chat() {
           
           // Check if this is a recently sent message by current user to avoid duplicates
           if (isFromCurrentUser && (window as any).lastSentMessageId === newMessage.id) {
-            console.log('Ignoring socket message for recently sent message:', newMessage.id);
             return prev;
           }
           
-          console.log('Adding socket message to state:', newMessage, 'isFromCurrentUser:', isFromCurrentUser);
           return [...prev, newMessage];
         });
 
@@ -242,8 +225,6 @@ export default function Chat() {
             console.warn("Error marking message as read:", error);
           });
         }
-      } else {
-        console.log('Received message for different room:', data.roomId, 'Current room:', selectedRoom?.room_id);
       }
 
       // Update conversation list
@@ -675,7 +656,6 @@ export default function Chat() {
             console.warn('Attempted to add duplicate sent message:', newMessage.id);
             return prev;
           }
-          console.log('Adding sent message to state:', newMessage);
           return [...prev, newMessage];
         });
         

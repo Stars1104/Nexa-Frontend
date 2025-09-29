@@ -66,11 +66,8 @@ export default function StudentList() {
         setLoading(true);
         setError(null);
         try {
-            console.log('Fetching students from admin API...');
             const result = await adminApi.getStudents();
-            console.log('Students API result:', result);
             setStudents(result.data);
-            console.log('Students data set:', result.data);
         } catch (err: any) {
             console.error('Error fetching students:', err);
             setError('Failed to fetch students data');
@@ -86,7 +83,6 @@ export default function StudentList() {
 
     // Load data when component mounts
     useEffect(() => {
-        console.log('StudentList component mounted, fetching students...');
         fetchStudents();
     }, []);
 
@@ -110,11 +106,7 @@ export default function StudentList() {
         
         setUpdatingStudent(studentId);
         try {
-            console.log('Updating trial period for student:', studentId, 'period:', period);
-            
             const result = await adminApi.updateStudentTrial(studentId, period);
-            
-            console.log('Trial update result:', result);
             
             toast({
                 title: "Success",
@@ -141,11 +133,7 @@ export default function StudentList() {
         
         setActionLoading(studentId);
         try {
-            console.log('Updating student status:', studentId, 'action:', action);
-            
             const result = await adminApi.updateStudentStatus(studentId, action);
-            
-            console.log('Status update result:', result);
             
             toast({
                 title: "Success",
@@ -221,8 +209,8 @@ export default function StudentList() {
     return (
         <>
             <Helmet>
-                <title>Nexa - Admin Estudantes</title>
-                <meta name="description" content="Gerencie estudantes e seus períodos de teste gratuito na plataforma Nexa." />
+                <title>Nexa - Admin alunos</title>
+                <meta name="description" content="Gerencie alunos e seus períodos de teste gratuito na plataforma Nexa." />
                 {canonical && <link rel="canonical" href={canonical} />}
                 <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
             </Helmet>
@@ -232,10 +220,10 @@ export default function StudentList() {
                         <GraduationCap className="w-8 h-8 text-[#E91E63]" />
                         <div>
                             <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
-                                Gerenciar Estudantes
+                                Gerenciar alunos
                             </h1>
                             <p className="text-gray-500 dark:text-gray-300 text-sm md:text-base">
-                                Gerencie estudantes verificados e seus períodos de teste gratuito
+                                Gerencie alunos verificados e seus períodos de teste gratuito
                             </p>
                         </div>
                     </div>
@@ -295,7 +283,7 @@ export default function StudentList() {
                                             <thead className="bg-gray-50 dark:bg-neutral-800">
                                                 <tr>
                                                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                                        Estudante
+                                                        aluno
                                                     </th>
                                                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden sm:table-cell">
                                                         Instituição
@@ -318,7 +306,7 @@ export default function StudentList() {
                                                 {filteredPaginated.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={6} className="px-3 py-8 text-center text-gray-400 dark:text-gray-500">
-                                                            Nenhum estudante encontrado.
+                                                            Nenhum aluno encontrado.
                                                         </td>
                                                     </tr>
                                                 ) : (
@@ -437,9 +425,9 @@ export default function StudentList() {
                                                                                         Confirmar Remoção
                                                                                     </AlertDialogTitle>
                                                                                     <AlertDialogDescription>
-                                                                                        Tem certeza que deseja remover o estudante <strong>{student.name}</strong> da plataforma?
+                                                                                        Tem certeza que deseja remover o aluno <strong>{student.name}</strong> da plataforma?
                                                                                         <br /><br />
-                                                                                        Esta ação não pode ser desfeita e todos os dados do estudante serão permanentemente removidos.
+                                                                                        Esta ação não pode ser desfeita e todos os dados do aluno serão permanentemente removidos.
                                                                                     </AlertDialogDescription>
                                                                                 </AlertDialogHeader>
                                                                                 <AlertDialogFooter>
@@ -448,7 +436,7 @@ export default function StudentList() {
                                                                                         onClick={() => updateStudentStatus(student.id, 'remove')}
                                                                                         className="bg-red-600 hover:bg-red-700"
                                                                                     >
-                                                                                        Remover Estudante
+                                                                                        Remover aluno
                                                                                     </AlertDialogAction>
                                                                                 </AlertDialogFooter>
                                                                             </AlertDialogContent>

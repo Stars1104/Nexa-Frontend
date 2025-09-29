@@ -198,7 +198,6 @@ export default function BrandProfile() {
         updateData.gender = fieldValues.gender as 'male' | 'female' | 'other';
       }
 
-      console.log('Brand Profile - handleSave data:', updateData);
       await dispatch(updateBrandProfile(updateData)).unwrap();
       setShowEditModal(false);
       toast.success("Perfil atualizado com sucesso");
@@ -254,8 +253,6 @@ export default function BrandProfile() {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        console.log('Uploading avatar file:', file.name, file.type, file.size);
-        
         // Validate file type
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
         if (!allowedTypes.includes(file.type)) {
@@ -282,8 +279,6 @@ export default function BrandProfile() {
         };
 
         const result = await dispatch(updateBrandProfile(updateData)).unwrap();
-        console.log('Avatar upload result:', result);
-        
         if (result && result.avatar_url) {
           toast.success("Foto de perfil atualizada com sucesso");
         } else {

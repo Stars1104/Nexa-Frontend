@@ -58,7 +58,7 @@ const GoogleOAuthCallback: React.FC = () => {
           setIsNewRegistration(isNewUser);
           
           if (result.user.role === 'student') {
-            toast.success('Conta de estudante criada! Complete o formulário de verificação para obter acesso gratuito.');
+            toast.success('Conta de aluno criada! Complete o formulário de verificação para obter acesso gratuito.');
           } else {
             toast.success(isNewUser ? 'Conta criada com sucesso!' : 'Login realizado com sucesso com Google!');
           }

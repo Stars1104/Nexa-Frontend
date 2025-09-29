@@ -20,7 +20,7 @@ const statusColors = {
 const tabs = [
     { label: "Criadores", key: "creators" },
     { label: "Marcas", key: "brands" },
-    { label: "Estudantes", key: "students" },
+    { label: "alunos", key: "students" },
 ];
 
 
@@ -327,7 +327,7 @@ export default function UserList() {
                                                 {paginated.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={6} className="px-3 py-8 text-center text-gray-400 dark:text-gray-500">
-                                                            Nenhum estudante encontrado.
+                                                            Nenhum aluno encontrado.
                                                         </td>
                                                     </tr>
                                                 ) : (

@@ -34,8 +34,6 @@ export const useBrowserCloseLogout = (options: UseBrowserCloseLogoutOptions = {}
         
         // Call custom logout handler
         onLogout?.();
-        
-        console.log('Session cleared due to browser/tab close');
       }
     };
 
@@ -46,8 +44,6 @@ export const useBrowserCloseLogout = (options: UseBrowserCloseLogoutOptions = {}
         
         // Clear all session data
         clearUserSession();
-        
-        console.log('Session cleared due to browser/tab close (unload)');
       }
     };
 
@@ -67,8 +63,6 @@ export const useBrowserCloseLogout = (options: UseBrowserCloseLogoutOptions = {}
         
         // Call custom logout handler
         onLogout?.();
-        
-        console.log('Session cleared due to tab visibility change');
       }
     };
 
