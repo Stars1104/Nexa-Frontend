@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { AlertTriangle, Clock } from 'lucide-react';
-import { useSessionTimeout } from '../hooks/useSessionTimeout';
+import React from 'react';
+import { AlertTriangle, Clock, LogOut, RefreshCw } from 'lucide-react';
 
 interface SessionWarningModalProps {
   isOpen: boolean;
@@ -17,75 +14,48 @@ export const SessionWarningModal: React.FC<SessionWarningModalProps> = ({
   onExtendSession,
   onLogout
 }) => {
-  const [countdown, setCountdown] = useState(remainingMinutes * 60); // Convert to seconds
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    setCountdown(remainingMinutes * 60);
-    
-    const interval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isOpen, remainingMinutes]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-md mx-4">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-2">
-            <AlertTriangle className="h-12 w-12 text-amber-500" />
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+        <div className="flex items-center mb-4">
+          <AlertTriangle className="h-6 w-6 text-yellow-500 mr-3" />
+          <h2 className="text-xl font-semibold text-gray-900">
+            Sessão Expirando
+          </h2>
+        </div>
+        
+        <div className="mb-6">
+          <p className="text-gray-600 mb-2">
+            Sua sessão expirará em:
+          </p>
+          <div className="flex items-center text-2xl font-bold text-red-600">
+            <Clock className="h-6 w-6 mr-2" />
+            {remainingMinutes} minuto{remainingMinutes !== 1 ? 's' : ''}
           </div>
-          <CardTitle className="text-xl">Sessão Expirando</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-center">
-            <p className="text-muted-foreground mb-2">
-              Sua sessão expirará em:
-            </p>
-            <div className="flex items-center justify-center gap-2 text-2xl font-bold text-amber-600">
-              <Clock className="h-6 w-6" />
-              {formatTime(countdown)}
-            </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Clique em "Estender Sessão" para continuar ou "Fazer Logout" para sair.
-            </p>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button 
-              onClick={onExtendSession}
-              className="flex-1"
-              variant="default"
-            >
-              Estender Sessão
-            </Button>
-            <Button 
-              onClick={onLogout}
-              className="flex-1"
-              variant="outline"
-            >
-              Fazer Logout
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          <p className="text-sm text-gray-500 mt-2">
+            Para manter sua sessão ativa, clique em "Estender Sessão" ou faça login novamente.
+          </p>
+        </div>
+
+        <div className="flex space-x-3">
+          <button
+            onClick={onExtendSession}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center transition-colors"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Estender Sessão
+          </button>
+          <button
+            onClick={onLogout}
+            className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center justify-center transition-colors"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sair
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

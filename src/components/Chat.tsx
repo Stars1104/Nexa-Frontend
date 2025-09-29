@@ -2080,7 +2080,7 @@ export default function Chat() {
     }
 
     return (
-      <p className="text-sm text-slate-700 dark:text-slate-300">
+      <p className={`text-sm ${message.is_sender ? 'text-white' : 'text-slate-700 dark:text-slate-300'}`}>
         {message.message}
       </p>
     );
@@ -2555,17 +2555,17 @@ export default function Chat() {
                     </svg>
                   </button>
 
-                                      {/* Timeline Button */}
-                    {activeContract && (
-                      <Button
-                        onClick={() => setShowTimelineSidebar(true)}
-                        variant="outline"
-                        className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700 hover:text-blue-800"
-                      >
-                        <Clock className="w-4 h-4 mr-2" />
-                        Linha do Tempo
-                      </Button>
-                    )}
+                  {/* Timeline Button */}
+                  {activeContract && (
+                    <Button
+                      onClick={() => setShowTimelineSidebar(true)}
+                      variant="outline"
+                      className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700 hover:text-blue-800"
+                    >
+                      <Clock className="w-4 h-4 mr-2" />
+                      Linha do Tempo
+                    </Button>
+                  )}
 
                   {/* Review Button for Creators */}
                   {user?.role === "creator" && contracts.some(contract => 

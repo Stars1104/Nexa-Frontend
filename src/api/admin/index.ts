@@ -45,6 +45,7 @@ export interface AdminStudent {
   free_trial_expires_at: string | null;
   has_premium: boolean;
   created_at: string;
+  email_verified_at: string | null;
   status: 'active' | 'expired' | 'premium';
   trial_status: 'active' | 'expired' | 'premium';
   days_remaining: number;
@@ -309,6 +310,19 @@ export const adminApi = {
   ): Promise<{ success: boolean; message: string; student: AdminStudent }> => {
     const response = await apiClient.patch(`/admin/students/${studentId}/trial`, {
       period,
+    });
+    return response.data;
+  },
+
+  /**
+   * Update student status (activate, block, remove)
+   */
+  updateStudentStatus: async (
+    studentId: number,
+    action: 'activate' | 'block' | 'remove'
+  ): Promise<{ success: boolean; message: string; student: AdminStudent }> => {
+    const response = await apiClient.patch(`/admin/students/${studentId}/status`, {
+      action,
     });
     return response.data;
   },

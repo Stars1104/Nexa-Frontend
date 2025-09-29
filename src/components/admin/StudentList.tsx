@@ -11,29 +11,23 @@ import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
 import { useToast } from "../../hooks/use-toast";
 import { Helmet } from "react-helmet-async";
-import { GraduationCap, Calendar, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
-import { adminApi } from "../../api/admin";
-
-interface Student {
-    id: number;
-    name: string;
-    email: string;
-    academic_email?: string;
-    institution?: string;
-    course_name?: string;
-    student_verified: boolean;
-    student_expires_at: string | null;
-    free_trial_expires_at: string | null;
-    has_premium: boolean;
-    created_at: string;
-    status: 'active' | 'expired' | 'premium';
-    trial_status: 'active' | 'expired' | 'premium';
-    days_remaining: number;
-}
+import { GraduationCap, Calendar, Clock, CheckCircle, XCircle, AlertCircle, Ban, Trash2, Shield } from "lucide-react";
+import { adminApi, AdminStudent } from "../../api/admin";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "../ui/alert-dialog";
 
 interface StudentsResponse {
     success: boolean;
-    data: Student[];
+    data: AdminStudent[];
     pagination: {
         current_page: number;
         last_page: number;
@@ -56,12 +50,13 @@ function usePagination(data: any[], initialRowsPerPage = 10) {
 }
 
 export default function StudentList() {
-    const [students, setStudents] = useState<Student[]>([]);
+    const [students, setStudents] = useState<AdminStudent[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [updatingStudent, setUpdatingStudent] = useState<number | null>(null);
+    const [actionLoading, setActionLoading] = useState<number | null>(null);
     const { toast } = useToast();
 
     const { page, setPage, rowsPerPage, setRowsPerPage, totalPages, paginated } = usePagination(students);
@@ -140,7 +135,38 @@ export default function StudentList() {
         }
     };
 
-    const getStatusBadge = (student: Student) => {
+    // Update student status (activate, block, remove)
+    const updateStudentStatus = async (studentId: number, action: 'activate' | 'block' | 'remove') => {
+        if (actionLoading === studentId) return; // Prevent multiple clicks
+        
+        setActionLoading(studentId);
+        try {
+            console.log('Updating student status:', studentId, 'action:', action);
+            
+            const result = await adminApi.updateStudentStatus(studentId, action);
+            
+            console.log('Status update result:', result);
+            
+            toast({
+                title: "Success",
+                description: result.message || "Student status updated successfully",
+            });
+
+            // Refresh the data
+            await fetchStudents();
+        } catch (err: any) {
+            console.error('Error updating student status:', err);
+            toast({
+                title: "Error",
+                description: err?.message || "Failed to update student status",
+                variant: "destructive",
+            });
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const getStatusBadge = (student: AdminStudent) => {
         if (student.has_premium) {
             return <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200">Premium</Badge>;
         }
@@ -156,7 +182,7 @@ export default function StudentList() {
         return <Badge className="bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-200">No Trial</Badge>;
     };
 
-    const getTrialStatusIcon = (student: Student) => {
+    const getTrialStatusIcon = (student: AdminStudent) => {
         if (student.has_premium) {
             return <CheckCircle className="w-4 h-4 text-green-500" />;
         }
@@ -348,7 +374,7 @@ export default function StudentList() {
                                                                 </div>
                                                             </td>
                                                             <td className="px-3 py-4 whitespace-nowrap">
-                                                                <div className="flex flex-col gap-1">
+                                                                <div className="flex flex-col gap-2">
                                                                     <Select 
                                                                         onValueChange={(value) => updateTrialPeriod(student.id, value as any)}
                                                                         disabled={updatingStudent === student.id}
@@ -362,6 +388,72 @@ export default function StudentList() {
                                                                             <SelectItem value="1year">1 Ano</SelectItem>
                                                                         </SelectContent>
                                                                     </Select>
+                                                                    <div className="flex gap-1">
+                                                                        {/* Activate Button */}
+                                                                        {!student.email_verified_at && (
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="outline"
+                                                                                className="h-7 px-2 text-xs"
+                                                                                onClick={() => updateStudentStatus(student.id, 'activate')}
+                                                                                disabled={actionLoading === student.id}
+                                                                            >
+                                                                                <Shield className="w-3 h-3 mr-1" />
+                                                                                Ativar
+                                                                            </Button>
+                                                                        )}
+                                                                        
+                                                                        {/* Block Button */}
+                                                                        {student.email_verified_at && (
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="outline"
+                                                                                className="h-7 px-2 text-xs text-orange-600 border-orange-200 hover:bg-orange-50"
+                                                                                onClick={() => updateStudentStatus(student.id, 'block')}
+                                                                                disabled={actionLoading === student.id}
+                                                                            >
+                                                                                <Ban className="w-3 h-3 mr-1" />
+                                                                                Bloquear
+                                                                            </Button>
+                                                                        )}
+                                                                        
+                                                                        {/* Remove Button */}
+                                                                        <AlertDialog>
+                                                                            <AlertDialogTrigger asChild>
+                                                                                <Button
+                                                                                    size="sm"
+                                                                                    variant="outline"
+                                                                                    className="h-7 px-2 text-xs text-red-600 border-red-200 hover:bg-red-50"
+                                                                                    disabled={actionLoading === student.id}
+                                                                                >
+                                                                                    <Trash2 className="w-3 h-3 mr-1" />
+                                                                                    Remover
+                                                                                </Button>
+                                                                            </AlertDialogTrigger>
+                                                                            <AlertDialogContent>
+                                                                                <AlertDialogHeader>
+                                                                                    <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+                                                                                        <Trash2 className="w-5 h-5" />
+                                                                                        Confirmar Remoção
+                                                                                    </AlertDialogTitle>
+                                                                                    <AlertDialogDescription>
+                                                                                        Tem certeza que deseja remover o estudante <strong>{student.name}</strong> da plataforma?
+                                                                                        <br /><br />
+                                                                                        Esta ação não pode ser desfeita e todos os dados do estudante serão permanentemente removidos.
+                                                                                    </AlertDialogDescription>
+                                                                                </AlertDialogHeader>
+                                                                                <AlertDialogFooter>
+                                                                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                                                    <AlertDialogAction
+                                                                                        onClick={() => updateStudentStatus(student.id, 'remove')}
+                                                                                        className="bg-red-600 hover:bg-red-700"
+                                                                                    >
+                                                                                        Remover Estudante
+                                                                                    </AlertDialogAction>
+                                                                                </AlertDialogFooter>
+                                                                            </AlertDialogContent>
+                                                                        </AlertDialog>
+                                                                    </div>
                                                                 </div>
                                                             </td>
                                                         </tr>

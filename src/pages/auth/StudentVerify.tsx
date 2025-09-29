@@ -12,19 +12,15 @@ import { Helmet } from 'react-helmet-async';
 
 const initialState = {
   fullName: '',
-  academicEmail: '',
+  purchaseEmail: '',
   cpf: '',
-  enrollment: '',
-  dob: '',
   courseName: '',
-  institution: '',
 };
 
 export default function StudentVerify() {
   const [form, setForm] = useState(initialState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
   const { navigateToRoleDashboard } = useRoleNavigation();
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
@@ -62,7 +58,7 @@ export default function StudentVerify() {
 
     try {
       // Validate required fields
-      const requiredFields = ['fullName', 'academicEmail', 'cpf', 'enrollment', 'dob', 'courseName', 'institution'];
+      const requiredFields = ['fullName', 'purchaseEmail', 'cpf', 'courseName'];
       const missingFields = requiredFields.filter(field => !form[field as keyof typeof form].trim());
       
       if (missingFields.length > 0) {
@@ -72,8 +68,8 @@ export default function StudentVerify() {
 
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(form.academicEmail)) {
-        setError('Por favor, insira um email acadêmico válido.');
+      if (!emailRegex.test(form.purchaseEmail)) {
+        setError('Por favor, insira um e-mail de compra válido.');
         return;
       }
 
@@ -84,22 +80,13 @@ export default function StudentVerify() {
         return;
       }
 
-      // Validate date format
-      const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
-      if (!dateRegex.test(form.dob)) {
-        setError('Por favor, insira a data no formato DD/MM/AAAA.');
-        return;
-      }
 
       // Prepare submission data
       const submissionData = {
         full_name: form.fullName,
-        academic_email: form.academicEmail,
+        purchase_email: form.purchaseEmail,
         cpf: form.cpf.replace(/\D/g, ''), // Remove non-digits
-        enrollment: form.enrollment,
-        date_of_birth: form.dob,
         course_name: form.courseName,
-        institution: form.institution,
       };
 
       // Call API to submit student verification
@@ -166,21 +153,21 @@ export default function StudentVerify() {
           <ThemeToggle />
         </div>
         <div className="w-full max-w-2xl bg-background rounded-xl shadow-lg p-8 md:p-12 relative border">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">Complete your student verification</h1>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">Preencha os dados se você for aluna do Build Creators</h1>
           <p className="text-muted-foreground mb-6 max-w-2xl text-sm md:text-base">
             {user?.student_verified 
-              ? "You are already verified as a student! Redirecting to dashboard..."
-              : "Fill in your education information below to verify your student status and get free access for up to 12 months."
+              ? "Você já foi verificado como aluno! Redirecionando para o painel..."
+              : "Preencha suas informações educacionais abaixo para verificar seu status de estudante e obter acesso gratuito por até 12 meses."
             }
           </p>
           <Alert className="mb-8 flex flex-col md:flex-row items-start md:items-center gap-2 bg-[#FAF5FF] dark:bg-[#30253d]">
             <div className="flex-1">
               <AlertTitle className="font-semibold text-primary text-sm md:text-base">
-                <span className="mr-2 text-[#A873E9]">ⓘ</span>Course students receive 100% free access!
+                <span className="mr-2 text-[#A873E9]">ⓘ</span>Os alunos do curso recebem acesso 100% gratuito!
               </AlertTitle>
             </div>
             <AlertDescription className="text-xs md:text-sm text-muted-foreground">
-              Don't miss it.
+              Não perca.
             </AlertDescription>
           </Alert>
 
@@ -218,13 +205,13 @@ export default function StudentVerify() {
               />
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="academicEmail" className="text-xs text-muted-foreground">Academic email (course)</label>
+            <label htmlFor="purchaseEmail" className="text-xs text-muted-foreground">E-mail de compra</label>
             <Input
-              id="academicEmail"
-              name="academicEmail"
+              id="purchaseEmail"
+              name="purchaseEmail"
               type="email"
               placeholder="email@exemplo.com"
-              value={form.academicEmail}
+              value={form.purchaseEmail}
               onChange={handleChange}
               required
               autoComplete="email"
@@ -246,58 +233,16 @@ export default function StudentVerify() {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="enrollment" className="text-xs text-muted-foreground">Enrollment / RA</label>
-            <Input
-              id="enrollment"
-              name="enrollment"
-              type="text"
-              placeholder="Student registration number"
-              value={form.enrollment}
-              onChange={handleChange}
-              required
-              autoComplete="off"
-              disabled={isSubmitting}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="dob" className="text-xs text-muted-foreground">Date of birth</label>
-            <Input
-              id="dob"
-              name="dob"
-              type="text"
-              placeholder="DD/MM/AAAA"
-              value={form.dob}
-              onChange={handleChange}
-              required
-              autoComplete="bday"
-              disabled={isSubmitting}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="courseName" className="text-xs text-muted-foreground">Course name</label>
+            <label htmlFor="courseName" className="text-xs text-muted-foreground">Nome do curso</label>
             <Input
               id="courseName"
               name="courseName"
               type="text"
-              placeholder="Digital Marketing Course, for example"
+              placeholder="Nome do curso que você comprou"
               value={form.courseName}
               onChange={handleChange}
               required
               autoComplete="off"
-              disabled={isSubmitting}
-            />
-          </div>
-          <div className="md:col-span-2 flex flex-col gap-1">
-            <label htmlFor="institution" className="text-xs text-muted-foreground">Nome da instituição</label>
-            <Input
-              id="institution"
-              name="institution"
-              type="text"
-              placeholder="Nome completo da escola/plataforma"
-              value={form.institution}
-              onChange={handleChange}
-              required
-              autoComplete="organization"
               disabled={isSubmitting}
             />
           </div>
@@ -313,7 +258,7 @@ export default function StudentVerify() {
                   Verificando...
                 </div>
               ) : (
-                'Submit for verification'
+                'Enviar para verificação'
               )}
             </Button>
           </div>

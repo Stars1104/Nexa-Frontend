@@ -75,6 +75,8 @@ export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
         handleSessionTimeout();
       }
     }, timeoutTime);
+    
+    console.log(`Session timeout reset - ${timeoutMinutes} minutes until timeout`);
   }, [isAuthenticated, user, timeoutMinutes, warningMinutes, onTimeout, onWarning, isExcludedRoute]);
 
   // Handle session timeout
