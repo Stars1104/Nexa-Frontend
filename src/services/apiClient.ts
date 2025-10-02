@@ -105,6 +105,10 @@ export const createAuthenticatedClient = (token: string) => {
 
     // Add request interceptor for debugging
     client.interceptors.request.use((config) => {
+        // Don't set Content-Type for FormData requests - let the browser set it with boundary
+        if (config.data instanceof FormData) {
+            delete config.headers['Content-Type'];
+        }
         return config;
     });
 
@@ -191,6 +195,12 @@ const addAuthToken = (config: any) => {
     } else {
         console.warn('API Request Debug: No token found for request to', config.url);
     }
+    
+    // Don't set Content-Type for FormData requests - let the browser set it with boundary
+    if (config.data instanceof FormData) {
+        delete config.headers['Content-Type'];
+    }
+    
     return config;
 };
 

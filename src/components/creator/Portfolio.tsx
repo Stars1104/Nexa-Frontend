@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { useAppDispatch } from '../../store/hooks';
 import { fetchPortfolio, updatePortfolioProfile, uploadPortfolioMedia, deletePortfolioItem } from '../../store/slices/portfolioSlice';
+import { testUpload, testUpdate } from '../../api/portfolio';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '../ui/dialog';
 import { Camera, Loader2, Plus } from 'lucide-react';
@@ -12,7 +13,7 @@ import { getAvatarUrl } from '../../lib/utils';
 const MAX_BIO_LENGTH = 500;
 const MAX_FILES_PER_UPLOAD = 5;
 const MAX_TOTAL_FILES = 12;
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "video/mp4", "video/quicktime"];
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/jpg", "video/mp4", "video/quicktime", "video/mov", "video/avi", "video/mpeg", "video/x-msvideo", "video/webm", "video/ogg", "video/x-matroska", "video/x-flv", "video/3gpp", "video/x-ms-wmv", "application/octet-stream"];
 
 // Function to get user initials from name
 const getInitials = (name: string) => {
@@ -52,6 +53,10 @@ export default function Portfolio() {
     // State for image modal
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+
+    // State for video modal
+    const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+    const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
     // State for saving
     const [isSaving, setIsSaving] = useState(false);
@@ -111,9 +116,13 @@ export default function Portfolio() {
     };
 
     const addMediaFiles = (files: File[]) => {
+        console.log('addMediaFiles called with:', files);
+        
         let validFiles = files.filter(
             (file) => ACCEPTED_TYPES.includes(file.type)
         );
+        
+        console.log('Valid files after filtering:', validFiles);
 
         const currentMediaCount = media.length + (portfolio?.items?.length || 0);
         if (currentMediaCount + validFiles.length > MAX_TOTAL_FILES) {
@@ -126,7 +135,13 @@ export default function Portfolio() {
             url: URL.createObjectURL(file),
             type: getFileType(file),
         }));
-        setMedia((prev) => [...prev, ...newMedia]);
+        
+        console.log('New media to add:', newMedia);
+        setMedia((prev) => {
+            const updated = [...prev, ...newMedia];
+            console.log('Updated media state:', updated);
+            return updated;
+        });
     };
 
     const handleRemoveMedia = (idx: number) => {
@@ -170,13 +185,18 @@ export default function Portfolio() {
             formData.append('bio', bioToSend);
 
             // Add project links
+            let validLinks = [];
             if (projectLinks && projectLinks.length > 0) {
-                const validLinks = projectLinks.filter(link => link.title.trim() !== '' && link.url.trim() !== '');
-                if (validLinks.length > 0) {
-                    formData.append('project_links', JSON.stringify(validLinks));
-                }
+                validLinks = projectLinks.filter(link =>
+                    link &&
+                    link.title &&
+                    link.url &&
+                    link.title.trim() !== '' &&
+                    link.url.trim() !== ''
+                );
             }
-
+            // Always append project_links, even if empty, to allow clearing
+            formData.append('project_links', JSON.stringify(validLinks));
 
             if (profilePic && profilePic.startsWith('blob:')) {
                 const response = await fetch(profilePic);
@@ -184,7 +204,12 @@ export default function Portfolio() {
                 formData.append('profile_picture', blob, 'profile.jpg');
             }
 
+            console.log("123123", formData);
+
             const result = await dispatch(updatePortfolioProfile({ token, data: formData })).unwrap();
+            
+            // Refresh portfolio data to ensure UI is up to date
+            await dispatch(fetchPortfolio(token));
 
             setIsEditDialogOpen(false);
             toast({
@@ -209,8 +234,103 @@ export default function Portfolio() {
         }
     };
 
+    const handleTestUpdate = async () => {
+        if (!user?.id) return;
+
+        console.log('handleTestUpdate called with:', {
+            profileTitle,
+            bio,
+            projectLinks
+        });
+
+        setIsSaving(true);
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) throw new Error('Token de autenticação não encontrado');
+
+            const formData = new FormData();
+            formData.append('title', profileTitle?.trim() || '');
+            formData.append('bio', bio?.trim() || '');
+
+            const result = await testUpdate(token, formData);
+            console.log('Test update result:', result);
+            
+            toast({
+                title: "Teste de Update Concluído",
+                description: "Teste de update realizado com sucesso! Verifique o console para detalhes.",
+                duration: 3000,
+            });
+        } catch (error) {
+            console.error('Test update error:', error);
+            toast({
+                title: "Erro no Teste de Update",
+                description: "Falha no teste de update. Verifique o console para detalhes.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleTestUpload = async () => {
+        if (!user?.id || !portfolio) return;
+
+        console.log('handleTestUpload called with media:', media);
+
+        // Check if there are files to upload
+        if (media.length === 0) {
+            console.log('No media files to upload');
+            toast({
+                title: "Aviso",
+                description: "Nenhum arquivo selecionado para upload.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) throw new Error('Token de autenticação não encontrado');
+
+            // Test upload
+            const files = media.map(item => item.file);
+            console.log('Files to test upload:', files);
+            const result = await testUpload(token, files);
+            console.log('Test upload result:', result);
+            
+            toast({
+                title: "Teste Concluído",
+                description: "Teste de upload realizado com sucesso!",
+                duration: 3000,
+            });
+        } catch (error) {
+            console.error('Test upload error:', error);
+            toast({
+                title: "Erro no Teste",
+                description: "Falha no teste de upload. Verifique o console para detalhes.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const handleSavePortfolio = async () => {
         if (!user?.id || !portfolio) return;
+
+        console.log('handleSavePortfolio called with media:', media);
+
+        // Check if there are files to upload
+        if (media.length === 0) {
+            console.log('No media files to upload');
+            toast({
+                title: "Aviso",
+                description: "Nenhum arquivo selecionado para upload.",
+                variant: "destructive",
+            });
+            return;
+        }
 
         setIsSaving(true);
         try {
@@ -219,6 +339,7 @@ export default function Portfolio() {
 
             // Upload new media files
             const files = media.map(item => item.file);
+            console.log('Files to upload:', files);
             await dispatch(uploadPortfolioMedia({ token, files })).unwrap();
 
             setMedia([]);
@@ -274,12 +395,18 @@ export default function Portfolio() {
             formData.append('bio', bio);
 
             // Add project links
+            let validLinks = [];
             if (projectLinks && projectLinks.length > 0) {
-                const validLinks = projectLinks.filter(link => link.title.trim() !== '' && link.url.trim() !== '');
-                if (validLinks.length > 0) {
-                    formData.append('project_links', JSON.stringify(validLinks));
-                }
+                validLinks = projectLinks.filter(link =>
+                    link &&
+                    link.title &&
+                    link.url &&
+                    link.title.trim() !== '' &&
+                    link.url.trim() !== ''
+                );
             }
+            // Always append project_links, even if empty, to allow clearing
+            formData.append('project_links', JSON.stringify(validLinks));
 
             if (profilePic && profilePic.startsWith('blob:')) {
                 const response = await fetch(profilePic);
@@ -351,6 +478,17 @@ export default function Portfolio() {
         setSelectedImage(null);
     };
 
+    // Video modal handlers
+    const handleVideoClick = (videoUrl: string) => {
+        setSelectedVideo(videoUrl);
+        setIsVideoModalOpen(true);
+    };
+
+    const handleCloseVideoModal = () => {
+        setIsVideoModalOpen(false);
+        setSelectedVideo(null);
+    };
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -418,7 +556,7 @@ export default function Portfolio() {
                             <h3 className="font-semibold text-base">Projetos Anteriores</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {projectLinks
-                                    .filter(link => {
+                                    .filter((link: any) => {
                                         if (typeof link === 'string') {
                                             return link && link.trim() !== '';
                                         }
@@ -461,14 +599,18 @@ export default function Portfolio() {
                     )}
                     
                     <div className="flex flex-col gap-2 mt-6">
-                        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                            <DialogTrigger asChild>
-                                <button className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-8 py-2 rounded-md text-base">Editar Perfil</button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                        <div className="flex gap-2">
+                            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <button className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-8 py-2 rounded-md text-base">Editar Perfil</button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto" aria-describedby="edit-profile-description">
                                 <DialogHeader>
                                     <DialogTitle>Editar Perfil</DialogTitle>
                                 </DialogHeader>
+                                <div id="edit-profile-description" className="sr-only">
+                                    Edite seu perfil de portfólio incluindo título, biografia e links de projetos
+                                </div>
                                 <div className="flex flex-col gap-4 py-4">
                                     <div>
                                         <label className="block text-sm font-medium mb-1" htmlFor="profileTitle">Perfil Título</label>
@@ -568,6 +710,7 @@ export default function Portfolio() {
                         </Dialog>
                     </div>
                 </div>
+                </div>
             </section>
 
             {/* Portfolio Section */}
@@ -580,10 +723,13 @@ export default function Portfolio() {
                                 Add Portfólio
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+                        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto" aria-describedby="add-portfolio-description">
                             <DialogHeader>
                                 <DialogTitle>Adicionar Trabalhos ao Portfólio</DialogTitle>
                             </DialogHeader>
+                            <div id="add-portfolio-description" className="sr-only">
+                                Adicione trabalhos ao seu portfólio fazendo upload de imagens e vídeos
+                            </div>
                             <div className="flex flex-col gap-6 py-4">
                                 <div>
                                     <h3 className="font-semibold text-base mb-4">Upload de Mídia</h3>
@@ -596,7 +742,7 @@ export default function Portfolio() {
                                         <div className="flex flex-col items-center gap-2">
                                             <Camera className="w-10 h-10 text-muted-foreground mb-2" />
                                             <div className="font-semibold text-base text-foreground">Arraste arquivos para cá</div>
-                                            <div className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG, MP4, MOV</div>
+                                            <div className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG, MP4, MOV, AVI, MPEG, WMV, WEBM, OGG, MKV, FLV, 3GP</div>
                                             <Button
                                                 className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-6 py-2 rounded-md mt-2"
                                                 onClick={() => mediaInputRef.current?.click()}
@@ -605,7 +751,7 @@ export default function Portfolio() {
                                             <input
                                                 ref={mediaInputRef}
                                                 type="file"
-                                                accept="image/png, image/jpeg,video/mp4,video/quicktime"
+                                                accept="image/png, image/jpeg, image/jpg, video/mp4, video/quicktime, video/mov, video/avi, video/mpeg, video/x-msvideo, video/webm, video/ogg, video/x-matroska, video/x-flv, video/3gpp, video/x-ms-wmv"
                                                 className="hidden"
                                                 multiple
                                                 onChange={handleMediaChange}
@@ -742,9 +888,24 @@ export default function Portfolio() {
                                             }}
                                         />
                                     ) : (
-                                        <div className="flex flex-col items-center justify-center w-full h-full">
-                                            <VideoIcon />
-                                        </div>
+                                        <video
+                                            src={item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`}
+                                            className="object-cover w-full h-full rounded-md cursor-pointer"
+                                            controls
+                                            preload="metadata"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleVideoClick(item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`);
+                                            }}
+                                            onError={(e) => {
+                                                console.error('Video failed to load:', item.file_url || item.file_path);
+                                                e.currentTarget.style.display = 'none';
+                                                const parent = e.currentTarget.parentElement;
+                                                if (parent) {
+                                                    parent.innerHTML = '<div class="flex flex-col items-center justify-center w-full h-full"><svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="mx-auto text-blue-500"><rect x="3" y="5" width="15" height="14" rx="2" fill="currentColor" opacity="0.1" /><rect x="3" y="5" width="15" height="14" rx="2" stroke="currentColor" strokeWidth="2" /><path d="M21 7v10l-4-3.5V10.5L21 7z" fill="currentColor" /></svg></div>';
+                                                }
+                                            }}
+                                        />
                                     )}
                                     <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
                                         <button
@@ -769,9 +930,23 @@ export default function Portfolio() {
                                             onClick={() => handleImageClick(item.url)}
                                         />
                                     ) : (
-                                        <div className="flex flex-col items-center justify-center w-full h-full">
-                                            <VideoIcon />
-                                        </div>
+                                        <video
+                                            src={item.url}
+                                            className="object-cover w-full h-full rounded-md cursor-pointer"
+                                            controls
+                                            preload="metadata"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleVideoClick(item.url);
+                                            }}
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                                const parent = e.currentTarget.parentElement;
+                                                if (parent) {
+                                                    parent.innerHTML = '<div class="flex flex-col items-center justify-center w-full h-full"><svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="mx-auto text-blue-500"><rect x="3" y="5" width="15" height="14" rx="2" fill="currentColor" strokeWidth="2" /><path d="M21 7v10l-4-3.5V10.5L21 7z" fill="currentColor" /></svg></div>';
+                                                }
+                                            }}
+                                        />
                                     )}
                                     <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
                                         <button
@@ -818,6 +993,30 @@ export default function Portfolio() {
                         />
                         <button
                             onClick={handleCloseImageModal}
+                            className="absolute top-2 right-2 text-white text-4xl hover:text-gray-300 transition-colors"
+                        >
+                            &times;
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Video Modal */}
+            {isVideoModalOpen && selectedVideo && (
+                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={handleCloseVideoModal}>
+                    <div className="relative max-w-4xl max-h-full p-4">
+                        <video
+                            src={selectedVideo}
+                            className="max-w-full max-h-full object-contain"
+                            controls
+                            autoPlay
+                            onClick={(e) => e.stopPropagation()}
+                            onError={(e) => {
+                                console.error('Video modal failed to load:', selectedVideo);
+                            }}
+                        />
+                        <button
+                            onClick={handleCloseVideoModal}
                             className="absolute top-2 right-2 text-white text-4xl hover:text-gray-300 transition-colors"
                         >
                             &times;

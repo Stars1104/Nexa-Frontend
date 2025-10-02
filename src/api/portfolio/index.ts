@@ -71,8 +71,8 @@ export const updatePortfolioProfile = async (
 ): Promise<Portfolio> => {
   
   
-  const response = await apiClient.put('/portfolio/profile', data, {
-    headers: { 
+  const response = await apiClient.post('/portfolio/profile', data, {
+    headers: {
       Authorization: `Bearer ${token}`,
       // Don't set Content-Type for FormData - let the browser set it with boundary
     }
@@ -81,20 +81,79 @@ export const updatePortfolioProfile = async (
   return response.data.data;
 };
 
+// Test update endpoint
+export const testUpdate = async (
+  token: string, 
+  data: FormData
+): Promise<any> => {
+  console.log('Testing update:', { data });
+  
+  const response = await apiClient.post('/portfolio/test-update', data, {
+    headers: { 
+      Authorization: `Bearer ${token}`,
+      // Don't set Content-Type for FormData - let the browser set it with boundary
+    }
+  });
+  return response.data;
+};
+
+// Test upload endpoint
+export const testUpload = async (
+  token: string, 
+  files: File[]
+): Promise<any> => {
+  console.log('Testing upload:', { filesCount: files.length, files });
+  
+  if (files.length === 0) {
+    throw new Error('No files provided for upload');
+  }
+
+  const formData = new FormData();
+  files.forEach((file, index) => {
+    console.log(`Adding file ${index}:`, { name: file.name, type: file.type, size: file.size });
+    formData.append('files[]', file);
+  });
+
+  console.log('FormData entries:');
+  for (let [key, value] of formData.entries()) {
+    console.log(key, value);
+  }
+
+  const response = await apiClient.post('/portfolio/test-upload', formData, {
+    headers: { 
+      Authorization: `Bearer ${token}`,
+      // Don't set Content-Type for FormData - let the browser set it with boundary
+    }
+  });
+  return response.data;
+};
+
 // Upload portfolio media
 export const uploadPortfolioMedia = async (
   token: string, 
   files: File[]
 ): Promise<{ items: PortfolioItem[]; total_items: number }> => {
+  console.log('Uploading portfolio media:', { filesCount: files.length, files });
+  
+  if (files.length === 0) {
+    throw new Error('No files provided for upload');
+  }
+
   const formData = new FormData();
-  files.forEach(file => {
+  files.forEach((file, index) => {
+    console.log(`Adding file ${index}:`, { name: file.name, type: file.type, size: file.size });
     formData.append('files[]', file);
   });
+
+  console.log('FormData entries:');
+  for (let [key, value] of formData.entries()) {
+    console.log(key, value);
+  }
 
   const response = await apiClient.post('/portfolio/media', formData, {
     headers: { 
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'multipart/form-data'
+      // Don't set Content-Type for FormData - let the browser set it with boundary
     }
   });
   return response.data.data;
