@@ -261,11 +261,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                 console.warn('Error joining room:', error);
             }
         } else {
-            console.warn('Cannot join room - socket not connected or chat disabled', { 
-                hasSocket: !!socketRef.current, 
-                isConnected, 
-                enableChat 
-            });
+            
         }
     }, [isConnected, enableChat]);
 
@@ -356,10 +352,6 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         if (!user || !isMountedRef.current || !enableChat) {
             console.warn('Cannot mark messages as read: user not authenticated or chat disabled');
             return;
-        }
-
-        if (!socketRef.current || !isConnected) {
-            console.warn('Socket not connected, marking messages as read via API only');
         }
 
         try {
