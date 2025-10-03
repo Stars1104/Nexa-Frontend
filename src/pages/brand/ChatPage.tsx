@@ -345,8 +345,53 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         }
       }
 
-      // Update conversation list
-      loadChatRooms();
+      // Update the specific room's last message in the chat rooms list
+      // Create a new message object for room list update
+      const roomUpdateMessage: Message = {
+        id: data.messageId || Date.now(),
+        message: data.message,
+        message_type: data.messageType,
+        sender_id: data.senderId,
+        sender_name: data.senderName,
+        sender_avatar: data.senderAvatar,
+        is_sender: data.senderId === user?.id,
+        file_path: data.fileData?.file_path,
+        file_name: data.fileData?.file_name,
+        file_size: data.fileData?.file_size,
+        file_type: data.fileData?.file_type,
+        file_url: data.fileData?.file_url,
+        is_read: false,
+        created_at: data.timestamp || new Date().toISOString(),
+        offer_data: data.offerData,
+      };
+
+      setChatRooms((prevRooms) => {
+        const updatedRooms = prevRooms.map((room) => {
+          if (room.room_id === data.roomId) {
+            return {
+              ...room,
+              last_message: {
+                id: roomUpdateMessage.id,
+                message: roomUpdateMessage.message,
+                message_type: roomUpdateMessage.message_type,
+                sender_id: roomUpdateMessage.sender_id,
+                is_sender: roomUpdateMessage.is_sender,
+                created_at: roomUpdateMessage.created_at,
+              },
+              last_message_at: roomUpdateMessage.created_at,
+              unread_count: room.unread_count + (roomUpdateMessage.is_sender ? 0 : 1),
+            };
+          }
+          return room;
+        });
+        
+        // Sort rooms by last_message_at timestamp (most recent first)
+        return updatedRooms.sort((a, b) => {
+          const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+          const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+          return bTime - aTime;
+        });
+      });
     };
 
     // Listen for typing indicators
@@ -683,11 +728,17 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       const response = await chatService.getChatRooms();
       if (isMountedRef.current) {
         const roomsData = response || [];
-        setChatRooms(roomsData);
+        // Sort rooms by last_message_at timestamp (most recent first)
+        const sortedRooms = roomsData.sort((a, b) => {
+          const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+          const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+          return bTime - aTime;
+        });
+        setChatRooms(sortedRooms);
 
         // Auto-select first room if none selected and rooms exist
-        if (!selectedRoom && roomsData.length > 0) {
-          handleConversationSelect(roomsData[0]);
+        if (!selectedRoom && sortedRooms.length > 0) {
+          handleConversationSelect(sortedRooms[0]);
         }
       }
     } catch (error) {
@@ -1213,11 +1264,18 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     return mimeTypes[extension] || "application/octet-stream";
   };
 
-  const filteredRooms = chatRooms.filter(
-    (room) =>
-      room.other_user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      room.campaign_title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredRooms = chatRooms
+    .filter(
+      (room) =>
+        room.other_user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        room.campaign_title.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      // Sort by last_message_at timestamp (most recent first)
+      const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+      const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+      return bTime - aTime;
+    });
 
   const formatMessageTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -3093,11 +3151,6 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                           </p>
                         )}
                       </div>
-                      {room.unread_count > 0 && (
-                        <Badge className="ml-auto bg-pink-500 text-white text-xs">
-                          {room.unread_count}
-                        </Badge>
-                      )}
                     </div>
                   ))
                 )}
