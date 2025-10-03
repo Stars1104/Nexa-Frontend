@@ -353,7 +353,6 @@ export default function Chat() {
       const response = await chatService.getChatRooms();
       if (isMountedRef.current) {
         const roomsData = response || [];
-        console.log("roomsData------------->", roomsData);
         setChatRooms(roomsData);
 
         // Auto-select first room if none selected and rooms exist
