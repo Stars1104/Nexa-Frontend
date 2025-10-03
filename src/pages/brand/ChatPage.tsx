@@ -66,24 +66,6 @@ interface ChatPageProps {
 }
 
 export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPageProps) {
-  // Custom CSS to hide scrollbars
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      .scrollbar-hide {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
-      .scrollbar-hide::-webkit-scrollbar {
-        display: none;
-      }
-    `;
-    document.head.appendChild(style);
-    
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
   const { user } = useAppSelector((state) => state.auth);
   const { toast } = useToast();
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
@@ -3097,7 +3079,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             </div>
 
             {/* Conversation List */}
-            <div className="flex-1 overflow-y-auto scrollbar-hide">
+            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-pink-500 scrollbar-track-transparent hover:scrollbar-thumb-pink-600">
               <div className="p-2 w-[383px]">
                 {isLoading ? (
                   <div className="flex items-center justify-center py-8">
