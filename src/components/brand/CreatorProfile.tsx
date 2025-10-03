@@ -89,6 +89,10 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
       dispatch(fetchCreatorProfile(creatorProfileId))
         .unwrap()
         .then((data) => {
+          console.log('Creator profile data received:', data);
+          if (data?.creator?.avatar) {
+            console.log('Avatar URL:', data.creator.avatar);
+          }
           setCreatorData(data);
         })
         .catch((error) => {
@@ -162,7 +166,26 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
     );
   }
 
-  const { creator, portfolio, portfolio_items, reviews } = creatorData;
+  const { creator, portfolio, portfolio_items, reviews } = creatorData || {};
+
+  // Additional safety check for creator object
+  if (!creator) {
+    return (
+      <div className="min-h-screen bg-background p-4 sm:p-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-xl font-semibold text-foreground mb-2">
+            Dados do criador não disponíveis
+          </h2>
+          <p className="text-muted-foreground mb-4">
+            Os dados do criador não foram carregados corretamente.
+          </p>
+          <Button onClick={handleBack}>
+            Voltar
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background w-full">
@@ -184,7 +207,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                 Perfil do Criador
               </h1>
               <p className="text-muted-foreground mt-1">
-                Informações sobre {creator.name}
+                Informações sobre {creator.name || 'Criador'}
               </p>
             </div>
           </div>
@@ -198,17 +221,25 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
               <CardHeader className="text-center pb-4">
                 <div className="flex justify-center mb-4">
                   <Avatar className="h-24 w-24">
-                    {creator.avatar ? (
-                      <AvatarImage src={creator.avatar} alt={creator.name} />
-                    ) : (
-                      <AvatarFallback className="text-2xl bg-gradient-to-br from-pink-500 to-purple-600 text-white">
-                        {getInitials(creator.name)}
-                      </AvatarFallback>
-                    )}
+                    {creator.avatar && creator.avatar !== 'null' && creator.avatar.trim() !== '' && !creator.avatar.includes('null') ? (
+                      <AvatarImage 
+                        src={creator.avatar} 
+                        alt={creator.name || 'Criador'}
+                        onError={(e) => {
+                          console.warn('Avatar image failed to load:', creator.avatar);
+                          // Hide the image and show fallback
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                    ) : null}
+                    <AvatarFallback className="text-2xl bg-gradient-to-br from-pink-500 to-purple-600 text-white">
+                      {getInitials(creator.name || 'Criador')}
+                    </AvatarFallback>
                   </Avatar>
                 </div>
                 
-                <CardTitle className="text-xl">{creator.name}</CardTitle>
+                <CardTitle className="text-xl">{creator.name || 'Criador'}</CardTitle>
                 
                 {portfolio?.title && (
                   <p className="text-sm text-muted-foreground mt-1">
@@ -236,12 +267,12 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                 )}
                 
                 <div className="flex items-center justify-center gap-1 mt-2">
-                  <Star className={`h-4 w-4 ${getRatingColor(creator.rating)} fill-current`} />
-                  <span className={`font-semibold ${getRatingColor(creator.rating)}`}>
-                    {creator.rating}
+                  <Star className={`h-4 w-4 ${getRatingColor(creator.rating || 0)} fill-current`} />
+                  <span className={`font-semibold ${getRatingColor(creator.rating || 0)}`}>
+                    {creator.rating || 0}
                   </span>
                   <span className="text-muted-foreground text-sm">
-                    ({creator.total_reviews} avaliações)
+                    ({creator.total_reviews || 0} avaliações)
                   </span>
                 </div>
               </CardHeader>
@@ -259,7 +290,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                   <div className="flex items-center gap-3">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">
-                      Membro desde {format(new Date(creator.join_date), 'MMMM yyyy', { locale: ptBR })}
+                      Membro desde {creator.join_date ? format(new Date(creator.join_date), 'MMMM yyyy', { locale: ptBR }) : 'Data não disponível'}
                     </span>
                   </div>
                 </div>
@@ -269,11 +300,11 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-foreground">{creator.total_campaigns}</div>
+                    <div className="text-2xl font-bold text-foreground">{creator.total_campaigns || 0}</div>
                     <div className="text-xs text-muted-foreground">Campanhas</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-foreground">{creator.completed_campaigns}</div>
+                    <div className="text-2xl font-bold text-foreground">{creator.completed_campaigns || 0}</div>
                     <div className="text-xs text-muted-foreground">Concluídas</div>
                   </div>
                 </div>
@@ -372,7 +403,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                             <div>
                               <div className="text-sm font-medium">Data de Nascimento</div>
                               <div className="text-sm text-muted-foreground">
-                                {format(new Date(creator.birth_date), 'dd/MM/yyyy', { locale: ptBR })}
+                                {creator.birth_date ? format(new Date(creator.birth_date), 'dd/MM/yyyy', { locale: ptBR }) : 'Data não disponível'}
                                 {creator.age && ` (${creator.age} anos)`}
                               </div>
                             </div>
@@ -629,7 +660,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                               {review.brand_name}
                             </h4>
                             <p className="text-sm text-muted-foreground">
-                              {format(new Date(review.created_at), 'dd/MM/yyyy')}
+                              {review.created_at ? format(new Date(review.created_at), 'dd/MM/yyyy') : 'Data não disponível'}
                             </p>
                           </div>
                           <div className="flex items-center gap-1">
