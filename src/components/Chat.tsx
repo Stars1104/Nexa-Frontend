@@ -1314,9 +1314,9 @@ export default function Chat() {
           avatar_url: message.offer_data.sender?.avatar_url || null,
         },
         can_be_accepted:
-          message.offer_data.status === "pending" && user?.role === "creator",
+          message.offer_data.status === "pending" && (user?.role === "creator" || user?.role === "student"),
         can_be_rejected:
-          message.offer_data.status === "pending" && user?.role === "creator",
+          message.offer_data.status === "pending" && (user?.role === "creator" || user?.role === "student"),
         can_be_cancelled:
           message.offer_data.status === "pending" && user?.role === "brand",
         contract_id: message.offer_data.contract_id,
@@ -1333,7 +1333,7 @@ export default function Chat() {
           onCancel={handleCancelOffer}
           onEndContract={handleEndContract}
           onTerminateContract={undefined} // Not implemented in general Chat component
-          isCreator={user?.role === "creator"}
+          isCreator={user?.role === "creator" || user?.role === "student"}
         />
       );
     }
@@ -1382,7 +1382,7 @@ export default function Chat() {
               });
             }
           }}
-          isCreator={user?.role === "creator"}
+          isCreator={user?.role === "creator" || user?.role === "student"}
           contractData={message.offer_data}
         />
       );
@@ -1465,7 +1465,7 @@ export default function Chat() {
                                       message.message?.includes("completed") ||
                                       message.message?.includes("aguardando avaliação");
       
-      const canReview = isContractRelatedMessage && user?.role === "creator" && contracts.some(
+      const canReview = isContractRelatedMessage && (user?.role === "creator" || user?.role === "student") && contracts.some(
         (contract) =>
           contract.status === "completed" && !contract.has_creator_review
       );
@@ -2073,7 +2073,7 @@ export default function Chat() {
                   )}
 
                   {/* Review Button for Creators */}
-                  {user?.role === "creator" && contracts.some(contract => 
+                  {(user?.role === "creator" || user?.role === "student") && contracts.some(contract => 
                     contract.status === "completed" && !contract.has_creator_review
                   ) && (
                     <Button
