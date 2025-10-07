@@ -446,8 +446,8 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             days_until_expiry: data.offerData.days_until_expiry,
             is_expiring_soon: data.offerData.days_until_expiry <= 1,
             is_expired: data.offerData.status === 'expired',
-            can_be_accepted: data.offerData.status === 'pending' && user?.role === 'creator',
-            can_be_rejected: data.offerData.status === 'pending' && user?.role === 'creator',
+            can_be_accepted: false, // Brand cannot accept their own offers
+            can_be_rejected: false, // Brand cannot reject their own offers
             can_be_cancelled: data.offerData.status === 'pending' && user?.role === 'brand',
             other_user: {
               id: user?.role === 'brand' ? data.offerData.creator_id : data.offerData.brand_id,
@@ -2597,10 +2597,8 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           name: message.offer_data.sender?.name || "Usuário",
           avatar_url: message.offer_data.sender?.avatar_url || null,
         },
-        can_be_accepted:
-          message.offer_data.status === "pending" && user?.role === "creator",
-        can_be_rejected:
-          message.offer_data.status === "pending" && user?.role === "creator",
+        can_be_accepted: false, // Brand cannot accept their own offers
+        can_be_rejected: false, // Brand cannot reject their own offers
         can_be_cancelled:
           message.offer_data.status === "pending" && user?.role === "brand",
         contract_id: message.offer_data.contract_id,
@@ -2646,7 +2644,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             onCancel={handleCancelOffer}
             onEndContract={handleEndContract}
             onTerminateContract={handleTerminateContract}
-            isCreator={user?.role === "creator"}
+            isCreator={false} // Brand is not a creator
           />
         );
     }
@@ -2702,7 +2700,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
               });
             }
           }}
-          isCreator={user?.role === "creator"}
+          isCreator={false} // Brand is not a creator
           contractData={message.offer_data}
         />
       );
