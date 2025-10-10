@@ -313,9 +313,6 @@ export default function BrandProfile() {
       <div className="w-full px-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Informações do Perfil
-          </h1>
           <div className="flex space-x-4">
             <button
               onClick={() => setShowPasswordDialog(true)}
