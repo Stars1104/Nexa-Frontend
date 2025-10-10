@@ -71,8 +71,7 @@ const CreatorNavbar = ({ title }: CreatorNavbarProps) => {
               // Then, fetch creator applications after the first call completes
               await dispatch(fetchCreatorApplications()).unwrap();
             } catch (error) {
-              console.error('Error fetching dashboard data:', error);
-              toast.error("Falha ao carregar campanhas. Tente recarregar a página.");
+              console.error('Error fetching dashboard data:', error)
             }
           }; 
              fetchDataSequentially();}
