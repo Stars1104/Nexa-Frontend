@@ -1,8 +1,13 @@
 import { Play, ArrowRight } from "lucide-react";
 import { Button } from "../ui/button";
 import HeroRightImg from "../../assets/landing/hero-img.png";
+import { useNavigate } from "react-router-dom";
 
 export const Hero = () => {
+     const navigate = useNavigate();
+     const handleCompany = () => {
+        navigate("/signup/brand");
+    };
     return (
         <section className="relative overflow-hidden mt-[88px]">
             <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 via-purple-500/10 to-orange-500/10"></div>
@@ -22,11 +27,7 @@ export const Hero = () => {
                             Fature R$ 5.000+ Por Mês Criando Vídeos de até 60 Segundos! sem precisar ter seguidores ou se expor, com as conexões certas. 
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 w-full sm:w-auto rounded-full">
-                                Começar minha jornada
-                                <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="lg" className="px-8 w-full sm:w-auto rounded-full">
+                            <Button variant="outline" size="lg" className="px-8 w-full sm:w-auto rounded-full" onClick={handleCompany}>
                                 <Play className="mr-2 h-4 w-4" />
                                 Conhecer a plataforma
                             </Button>
