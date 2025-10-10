@@ -116,7 +116,6 @@ export default function BrandProfile() {
         toast.error("Erro ao carregar perfil");
       }
     };
-    
     fetchProfile();
   }, [dispatch]);
 
@@ -156,6 +155,7 @@ export default function BrandProfile() {
   // Update fieldValues when profile data changes
   useEffect(() => {
     setFieldValues(displayProfile);
+    console.log("hey in this page")
   }, [profile]);
 
   // Update fieldValues when avatar is uploaded
