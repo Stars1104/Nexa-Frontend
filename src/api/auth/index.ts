@@ -236,5 +236,7 @@ export const updatePassword = async (user_id: string, newPassword: string, curre
 // Logout Function
 export const logout = async () => {
     const response = await AuthAPI.post("/api/logout");
+    localStorage.clear();
+    localStorage.removeItem("persist:root");
 };
 

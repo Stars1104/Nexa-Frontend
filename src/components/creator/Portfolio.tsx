@@ -925,6 +925,7 @@ export default function Portfolio() {
                                     {item.type === 'image' ? (
                                         <img
                                             src={item.url}
+                                            key={`new-${idx}`}
                                             alt="media"
                                             className="object-cover w-full h-full rounded-md cursor-pointer"
                                             onClick={() => handleImageClick(item.url)}
