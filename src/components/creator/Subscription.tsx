@@ -33,15 +33,14 @@ export default function Subscription() {
     useEffect(() => {
         // Load subscription plans first (public endpoint)
         loadSubscriptionPlans();
-        
         // Load subscription status only if user is authenticated
         const token = localStorage.getItem('token');
         if (token) {
-            loadSubscriptionStatus();
-            // Load student status if user is a student
-            if (user?.role === 'student') {
+             if (user?.role ==="student") {
                 loadStudentStatus();
             }
+            loadSubscriptionStatus();
+            // Load student status if user is a student
         }
     }, [user?.role]);
 
@@ -175,12 +174,10 @@ export default function Subscription() {
 
     const getStatusBadge = () => {
         if (!subscriptionStatus) return null;
-
         // Check if user is a student with active trial
-        if (user?.role === 'student' && (subscriptionStatus.is_on_trial || studentStatus?.is_on_trial)) {
-            const daysRemaining = subscriptionStatus.days_remaining || 
-                (studentStatus?.free_trial_expires_at 
-                    ? calculateTrialDaysRemaining(studentStatus.free_trial_expires_at)
+        if (user?.role === "student" && (subscriptionStatus.is_on_trial || studentStatus?.is_on_trial)) {
+            const daysRemaining = (studentStatus?.student_expires_at 
+                    ? calculateTrialDaysRemaining(studentStatus.student_expires_at)
                     : 0);
             
             return (
@@ -273,7 +270,7 @@ export default function Subscription() {
                                         {getStatusBadge()}
                                     </div>
                                     <div className="text-sm text-muted-foreground">
-                                        {user?.role === 'student' && (subscriptionStatus?.is_on_trial || studentStatus?.is_on_trial)
+                                        {user?.role ==="student" && (subscriptionStatus?.is_on_trial || studentStatus?.is_on_trial)
                                             ? `Seu acesso gratuito de aluno é válido até:`
                                             : subscriptionStatus?.is_premium_active 
                                             ? `Sua assinatura premium é válida até:`
@@ -284,7 +281,7 @@ export default function Subscription() {
                                     </div>
                                 </div>
                                 <div className="text-base text-foreground font-medium sm:text-right">
-                                    {user?.role === 'student' && (subscriptionStatus?.free_trial_expires_at || studentStatus?.free_trial_expires_at)
+                                    {user?.role ==="student" && (subscriptionStatus?.free_trial_expires_at || studentStatus?.free_trial_expires_at)
                                         ? formatDate(subscriptionStatus?.free_trial_expires_at || studentStatus?.free_trial_expires_at)
                                         : subscriptionStatus?.premium_expires_at 
                                         ? formatDate(subscriptionStatus.premium_expires_at)
@@ -295,12 +292,12 @@ export default function Subscription() {
                         </div>
                     )}
                     
-                    {user?.role === 'student' && studentStatus?.is_on_trial && studentStatus?.free_trial_expires_at && !subscriptionStatus?.is_premium_active && (
+                    {user?.role ==="student" && studentStatus?.is_on_trial && studentStatus?.free_trial_expires_at && !subscriptionStatus?.is_premium_active && (
                         <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                             <div className="flex items-center gap-2">
                                 <GraduationCap className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                                 <span className="text-sm text-blue-800 dark:text-blue-200">
-                                    <strong>{calculateTrialDaysRemaining(studentStatus.free_trial_expires_at)}</strong> dias restantes no seu acesso gratuito de aluno
+                                    <strong>{calculateTrialDaysRemaining(studentStatus.student_expires_at)}</strong> dias restantes no seu acesso gratuito de aluno
                                 </span>
                             </div>
                         </div>
@@ -311,7 +308,7 @@ export default function Subscription() {
                             <div className="flex items-center gap-2">
                                 <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
                                 <span className="text-sm text-green-800 dark:text-green-200">
-                                    <strong>{subscriptionStatus.days_remaining}</strong> dias restantes na sua assinatura premium
+                                    <strong>{calculateTrialDaysRemaining(studentStatus.student_expires_at)}</strong> dias restantes na sua assinatura premium
                                 </span>
                             </div>
                         </div>
