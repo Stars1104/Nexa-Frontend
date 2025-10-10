@@ -388,27 +388,6 @@ const handleRefreshProfile = useCallback(async () => {
   return (
     <div className="min-h-[92vh] bg-gray-50 dark:bg-[#171717] p-6">
       <div className="w-full">
-        {/* Premium Subscription Alert */}
-        {!displayProfile.has_premium && (
-          <div className="mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
-              <div className="flex-1">
-                <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                  Assine o Premium
-                </h3>
-                <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                  Desbloqueie recursos premium e melhore sua experiência como
-                  criador
-                </p>
-              </div>
-              <button className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-sm font-medium rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all duration-200">
-                Fazer Upgrade
-              </button>
-            </div>
-          </div>
-        )}
-
         <div className="bg-background rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700 p-6">
           <div className="flex justify-between items-start mb-6">
             <span className="font-semibold text-base text-gray-900 dark:text-white">
