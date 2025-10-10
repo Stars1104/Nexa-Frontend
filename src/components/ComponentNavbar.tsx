@@ -8,6 +8,8 @@ import { useAppSelector, useAppDispatch } from "../store/hooks";
 import { logoutUser } from "../store/thunks/authThunks";
 import { useNavigate } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
+import { fetchApprovedCampaigns, fetchCreatorApplications } from "@/store/thunks/campaignThunks";
+import { toast } from "sonner";
 
 interface CreatorNavbarProps {
   title: string;
@@ -24,6 +26,7 @@ const CreatorNavbar = ({ title }: CreatorNavbarProps) => {
 
   // Use profile data if available, otherwise fall back to auth user data
   const userData = profile || user;
+  console.log("userData=======", userData);
 
   // Handle logout
   const handleLogout = async (e: React.MouseEvent) => {
@@ -55,6 +58,25 @@ const CreatorNavbar = ({ title }: CreatorNavbarProps) => {
         setShowUserMenu(false);
       }
     };
+    if (user?.role === "creator" || user?.role === "student") {
+          // Sequential API calls to prevent rate limiting
+          const fetchDataSequentially = async () => {
+            try {
+              // First, fetch approved campaigns
+              await dispatch(fetchApprovedCampaigns()).unwrap();
+              
+              // Add a longer delay to respect backend rate limiting
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              
+              // Then, fetch creator applications after the first call completes
+              await dispatch(fetchCreatorApplications()).unwrap();
+            } catch (error) {
+              console.error('Error fetching dashboard data:', error);
+              toast.error("Falha ao carregar campanhas. Tente recarregar a página.");
+            }
+          }; 
+             fetchDataSequentially();}
+      
 
     if (showUserMenu) {
       document.addEventListener('mousedown', handleClickOutside);
@@ -63,7 +85,7 @@ const CreatorNavbar = ({ title }: CreatorNavbarProps) => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showUserMenu]);
+  }, [showUserMenu,user?.role]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -91,16 +113,16 @@ const CreatorNavbar = ({ title }: CreatorNavbarProps) => {
             onClick={() => setShowUserMenu(!showUserMenu)}
           >
             <Avatar className="w-8 h-8 sm:w-10 sm:h-10">
-              {(userData as any)?.avatar ? (
-                <AvatarImage src={(userData as any).avatar} alt={userData.name} />
+              {(user as any)?.avatar ? (
+                <AvatarImage src={(user as any).avatar} alt={user.name} />
               ) : null}
               <AvatarFallback className="text-sm sm:text-base text-start">
-                {userData?.name ? getInitials(userData.name) : "U"}
+                {user?.name ? getInitials(user.name) : "U"}
               </AvatarFallback>
             </Avatar>
             <div className="hidden md:flex flex-col text-start">
               <span className="font-medium leading-none">
-                {userData?.name || "User"}
+                {user?.name || "User"}
               </span>
             </div>
             <ChevronDown className="w-4 h-4 hidden sm:block" />
@@ -115,14 +137,14 @@ const CreatorNavbar = ({ title }: CreatorNavbarProps) => {
                     <div className="flex items-center gap-3">
                       <Avatar className="w-12 h-12">
                         {(userData as any)?.avatar ? (
-                          <AvatarImage src={(userData as any).avatar} alt={userData.name} />
+                          <AvatarImage src={(userData as any).avatar} alt={user.name} />
                         ) : null}
                         <AvatarFallback className="text-base">
-                          {userData?.name ? getInitials(userData.name) : "U"}
+                          {userData?.name ? getInitials(user.name) : "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-sm">{userData?.name || "User"}</h3>
+                        <h3 className="font-semibold text-sm">{user?.name || "User"}</h3>
                       </div>
                     </div>
                   </div>
