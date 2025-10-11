@@ -743,6 +743,12 @@ export default function Portfolio() {
                                             <Camera className="w-10 h-10 text-muted-foreground mb-2" />
                                             <div className="font-semibold text-base text-foreground">Arraste arquivos para cá</div>
                                             <div className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG, MP4, MOV, AVI, MPEG, WMV, WEBM, OGG, MKV, FLV, 3GP</div>
+                                            <input 
+                                                        type="url"
+                                                        className="w-full rounded-md border px-3 py-2 text-sm bg-background text-foreground outline-none transition placeholder:text-muted-foreground"
+                                                        placeholder="https://meu-portfóli"
+                                                    />
+                                            
                                             <Button
                                                 className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-6 py-2 rounded-md mt-2"
                                                 onClick={() => mediaInputRef.current?.click()}
