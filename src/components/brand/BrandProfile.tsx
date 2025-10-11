@@ -94,7 +94,7 @@ const initialProfile = {
 
 export default function BrandProfile() {
   const dispatch = useAppDispatch();
-  
+   const { user } = useAppSelector((state) => state.auth);
   // Get profile data from Redux store
   const { profile, isLoading, error, isUpdating, isChangingPassword } = useAppSelector((state) => state.brandProfile);
   
@@ -155,7 +155,6 @@ export default function BrandProfile() {
   // Update fieldValues when profile data changes
   useEffect(() => {
     setFieldValues(displayProfile);
-    console.log("hey in this page")
   }, [profile]);
 
   // Update fieldValues when avatar is uploaded
@@ -396,7 +395,7 @@ export default function BrandProfile() {
               {/* Role */}
               <div className="bg-gray-50 dark:bg-background rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                 <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">FUNÇÃO</div>
-                <div className="text-gray-900 dark:text-white font-medium">creator</div>
+                <div className="text-gray-900 dark:text-white font-medium">{user?.role}</div>
               </div>
 
               {/* Gender */}

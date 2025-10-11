@@ -5,7 +5,7 @@ import SubscriptionModal from "./SubscriptionModal";
 import { paymentApi, SubscriptionStatus, SubscriptionPlan } from "../../api/payment";
 import { useToast } from "../../hooks/use-toast";
 import { dispatchPremiumStatusUpdate } from "../../utils/browserUtils";
-import { useAppSelector } from "../../store/hooks";
+import { useAppSelector} from "../../store/hooks";
 import { apiClient } from "../../services/apiClient";
 
 const benefits = [
@@ -19,6 +19,8 @@ const benefits = [
 export default function Subscription() {
     const { toast } = useToast();
     const { user } = useAppSelector((state) => state.auth);
+    const { profile } = useAppSelector((state) => state.user);
+    const userData = profile||user;
     const [showCoupon, setShowCoupon] = useState(false);
     const [open, setOpen] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
@@ -38,6 +40,7 @@ export default function Subscription() {
         if (token) {
              if (user?.role ==="student") {
                 loadStudentStatus();
+                
             }
             loadSubscriptionStatus();
             // Load student status if user is a student
@@ -164,7 +167,7 @@ export default function Subscription() {
         return date.toLocaleDateString('pt-BR');
     };
 
-    const calculateTrialDaysRemaining = (expiresAt: string) => {
+    const calculateTrialDaysRemaining = (expiresAt: string) => {        
         const now = new Date();
         const expiry = new Date(expiresAt);
         const diffTime = expiry.getTime() - now.getTime();
@@ -297,7 +300,7 @@ export default function Subscription() {
                             <div className="flex items-center gap-2">
                                 <GraduationCap className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                                 <span className="text-sm text-blue-800 dark:text-blue-200">
-                                    <strong>{calculateTrialDaysRemaining(studentStatus.student_expires_at)}</strong> dias restantes no seu acesso gratuito de aluno
+                                    <strong>{calculateTrialDaysRemaining(user.role=== "student"?studentStatus.student_expires_at:userData.premium_expires_at)}</strong> dias restantes no seu acesso gratuito de aluno
                                 </span>
                             </div>
                         </div>
@@ -308,7 +311,7 @@ export default function Subscription() {
                             <div className="flex items-center gap-2">
                                 <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
                                 <span className="text-sm text-green-800 dark:text-green-200">
-                                    <strong>{calculateTrialDaysRemaining(studentStatus.student_expires_at)}</strong> dias restantes na sua assinatura premium
+                                    <strong>{calculateTrialDaysRemaining(user.role=== "student"?studentStatus.student_expires_at:userData.premium_expires_at)}</strong> dias restantes na sua assinatura premium
                                 </span>
                             </div>
                         </div>
