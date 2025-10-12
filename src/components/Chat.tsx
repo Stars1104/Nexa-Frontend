@@ -55,7 +55,10 @@ export default function Chat() {
   const [isCurrentUserTyping, setIsCurrentUserTyping] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [dragActive, setDragActive] = useState(false);
 
   // Contract-related state
   const [contracts, setContracts] = useState<any[]>([]);
@@ -113,7 +116,15 @@ export default function Chat() {
     onMessagesRead,
     sendOfferAcceptanceMessage,
   } = useSocket({ enableNotifications: false, enableChat: true });
-
+  //In Mobile case, small screen
+  useEffect(() => {
+  // prevent body scroll when mobile sidebar is open
+    const original = document.body.style.overflow;
+    document.body.style.overflow = sidebarOpen ? "hidden" : original;
+    return () => {
+      document.body.style.overflow = original;
+    };
+}, [sidebarOpen]);
   // Component mount/unmount tracking
   useEffect(() => {
     isMountedRef.current = true;
@@ -624,20 +635,38 @@ export default function Chat() {
     }, 100);
   };
 
-  // Handle sending message
+  // Handle sending message with upload progress
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedRoom || (!input.trim() && !selectedFile)) return;
+    if (!selectedRoom || (!input.trim() && !selectedFile) || isUploading) return;
 
     try {
       let newMessage: Message;
 
       if (selectedFile) {
+        setIsUploading(true);
+        setUploadProgress(0);
+        
+        // Simulate progress for better UX
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => {
+            if (prev >= 90) {
+              clearInterval(progressInterval);
+              return prev;
+            }
+            return prev + Math.random() * 20;
+          });
+        }, 200);
+
         newMessage = await sendMessage(
           selectedRoom.room_id,
           input.trim() || selectedFile.name,
           selectedFile
         );
+        
+        clearInterval(progressInterval);
+        setUploadProgress(100);
+        
         if (isMountedRef.current) {
           setSelectedFile(null);
           setFilePreview(null);
@@ -681,15 +710,59 @@ export default function Chat() {
       }
     } catch (error) {
       console.error("Error sending message:", error);
+      toast({
+        title: "Erro ao enviar mensagem",
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado",
+        variant: "destructive",
+      });
+    } finally {
+      if (isMountedRef.current) {
+        setIsUploading(false);
+        setUploadProgress(0);
+      }
     }
   };
 
-  // Handle file selection
+  // Handle file selection with validation
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!isMountedRef.current) return;
 
     const file = event.target.files?.[0];
     if (file) {
+      // Validate file size (10MB max)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "O tamanho máximo permitido é 10MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = [
+        'image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain',
+        'application/zip',
+        'application/x-rar-compressed',
+        'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/flac',
+        'video/mp4', 'video/avi', 'video/quicktime', 'video/x-msvideo',
+        'text/javascript', 'text/typescript', 'text/html', 'text/css', 'application/json'
+      ];
+      
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Tipo de arquivo não suportado",
+          description: "Por favor, selecione um arquivo de imagem, documento, áudio, vídeo ou código",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setSelectedFile(file);
 
       // Create preview for images
@@ -702,6 +775,32 @@ export default function Chat() {
         };
         reader.readAsDataURL(file);
       }
+    }
+  };
+
+  // Handle drag and drop
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragActive(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragActive(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      // Create a synthetic event for handleFileSelect
+      const syntheticEvent = {
+        target: { files: [file] }
+      } as React.ChangeEvent<HTMLInputElement>;
+      handleFileSelect(syntheticEvent);
     }
   };
 
@@ -1868,218 +1967,218 @@ export default function Chat() {
   );
 
   return (
-    <div className="flex h-full bg-background">
-      <style>{`
-        .shadow-3xl {
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  <div className="flex h-full bg-background">
+    <style>{`
+      .shadow-3xl {
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      }
+      .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @keyframes pulse {
+        0%, 100% {
+          opacity: 1;
         }
-        .animate-pulse {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        50% {
+          opacity: 0.8;
         }
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.8;
-          }
-        }
-      `}</style>
-      
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <div
-          data-sidebar
-          className={cn(
-            "flex flex-col w-full max-w-sm border-r bg-background transition-all duration-500 ease-out",
-            "md:relative md:translate-x-0 md:shadow-none",
-            sidebarOpen
-              ? "fixed inset-0 z-50 translate-x-0 shadow-2xl border-r border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm scale-100 opacity-100"
-              : "fixed inset-0 z-50 -translate-x-full md:relative md:translate-x-0 scale-95 opacity-0 md:scale-100 md:opacity-100"
-          )}
-        >
-          {/* Sidebar Header */}
-          <div className="flex items-center justify-between gap-2 px-6 py-5 border-b bg-background">
-            <div className="flex flex-col">
-              <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
-                Conversas
+      }
+    `}</style>
+
+    <div className="flex flex-1 overflow-hidden">
+      {/* Sidebar */}
+      <div
+        data-sidebar
+        className={cn(
+          // Use full width on mobile, constrained (max-w-sm) on md+
+          "flex flex-col w-full max-w-full md:max-w-sm border-r bg-background transition-all duration-500 ease-out",
+          "md:relative md:translate-x-0 md:shadow-none",
+          sidebarOpen
+            ? "fixed inset-0 z-50 translate-x-0 shadow-2xl border-r border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm scale-100 opacity-100"
+            : "fixed inset-0 z-50 -translate-x-full md:relative md:translate-x-0 scale-95 opacity-0 md:scale-100 md:opacity-100"
+        )}
+      >
+        {/* Sidebar Header */}
+        <div className="flex items-center justify-between gap-2 px-6 py-5 border-b bg-background">
+          <div className="flex flex-col">
+            <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
+              Conversas
+            </span>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {chatRooms.length} conversas
               </span>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {chatRooms.length} conversas
-                </span>
-                {connectionError && (
-                  <div className="flex items-center gap-1 text-red-500">
-                    <WifiOff className="w-3 h-3" />
-                    <span className="text-xs">Offline</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            {connectionError && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={reconnect}
-                className="p-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </Button>
-            )}
-            <button
-              className="md:hidden p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:scale-105 hover:shadow-lg"
-              onClick={() => setSidebarOpen(false)}
-              aria-label="Close conversations"
-            >
-              <X className="w-5 h-5 text-slate-700 dark:text-slate-300" />
-            </button>
-          </div>
-
-          {/* Search */}
-          <div className="p-4 pb-3 bg-background">
-            <div className="relative">
-              <Input
-                placeholder="Buscar conversas..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-800 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200"
-              />
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-            </div>
-          </div>
-
-          {/* Conversation List */}
-          <ScrollArea className="flex-1 bg-background">
-            <div className="p-2 w-[383px]">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
+              {connectionError && (
+                <div className="flex items-center gap-1 text-red-500">
+                  <WifiOff className="w-3 h-3" />
+                  <span className="text-xs">Offline</span>
                 </div>
-              ) : filteredRooms.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                  <div className="text-4xl mb-2">💬</div>
-                  <p className="text-sm">Nenhuma conversa encontrada</p>
-                </div>
-              ) : (
-                filteredRooms.map((room) => (
-                  <div
-                    key={room.id}
-                    onClick={() => handleConversationSelect(room)}
-                    className={cn(
-                      "w-[350px] ml-1 flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 mb-2",
-                      selectedRoom?.id === room.id
-                        ? "bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800"
-                        : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                    )}
-                  >
-                    <Avatar className="w-12 h-12">
-                      <AvatarImage src={room.other_user.avatar} />
-                      <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400">
-                        {room.other_user.name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-slate-900 dark:text-white truncate">
-                          {room.other_user.name}
-                        </h3>
-                        {room.last_message_at && (
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {formatMessageTime(room.last_message_at)}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-300 truncate">
-                        {room.campaign_title}
-                      </p>
-                      {room.last_message && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                          {room.last_message.is_sender ? "Você: " : ""}
-                          {room.last_message.message}
-                        </p>
-                      )}
-                    </div>
-                    {room.unread_count > 0 && (
-                      <Badge className="ml-auto bg-pink-500 text-white text-xs">
-                        {room.unread_count}
-                      </Badge>
-                    )}
-                  </div>
-                ))
               )}
             </div>
-          </ScrollArea>
+          </div>
+          {connectionError && (
+            <Button variant="outline" size="sm" onClick={reconnect} className="p-2">
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+          )}
+          <button
+            className="md:hidden p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:scale-105 hover:shadow-lg"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close conversations"
+          >
+            <X className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+          </button>
         </div>
 
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
-          {selectedRoom ? (
-            <>
-              {/* Chat Header */}
-              <div className="flex items-center justify-between p-4 border-b bg-background">
-                <div className="flex items-center gap-3">
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage src={selectedRoom.other_user.avatar} />
+        {/* Search */}
+        <div className="p-4 pb-3 bg-background">
+          <div className="relative">
+            <Input
+              placeholder="Buscar conversas..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-800 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200"
+            />
+            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+          </div>
+        </div>
+
+        {/* Conversation List */}
+        <ScrollArea className="flex-1 bg-background overflow-auto">
+          <div className="p-2 w-full">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : filteredRooms.length === 0 ? (
+              <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                <div className="text-4xl mb-2">💬</div>
+                <p className="text-sm">Nenhuma conversa encontrada</p>
+              </div>
+            ) : (
+              filteredRooms.map((room) => (
+                <div
+                  key={room.id}
+                  onClick={() => handleConversationSelect(room)}
+                  className={cn(
+                    // Make each item responsive (full width of sidebar)
+                    "w-full flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 mb-2",
+                    selectedRoom?.id === room.id
+                      ? "bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800"
+                      : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  )}
+                >
+                  <Avatar className="w-12 h-12">
+                    <AvatarImage src={room.other_user?.avatar} />
                     <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400">
-                      {selectedRoom.other_user.name.charAt(0).toUpperCase()}
+                      {(room.other_user?.name || "").charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <h2 className="font-semibold text-slate-900 dark:text-white">
-                      {selectedRoom.other_user.name}
-                    </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {selectedRoom.campaign_title}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-slate-900 dark:text-white truncate">
+                        {room.other_user?.name}
+                      </h3>
+                      {room.last_message_at && (
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {formatMessageTime(room.last_message_at)}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-600 dark:text-slate-300 truncate">
+                      {room.campaign_title}
                     </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {/* Mobile Hamburger Button */}
-                  <button
-                    data-hamburger
-                    className={cn(
-                      "md:hidden p-2 rounded-xl bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm shadow-lg border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800 hover:shadow-xl transition-all duration-300 hover:scale-105",
-                      !sidebarOpen && "animate-pulse"
+                    {room.last_message && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                        {room.last_message.is_sender ? "Você: " : ""}
+                        {room.last_message.message}
+                      </p>
                     )}
-                    onClick={() => setSidebarOpen(true)}
-                    aria-label="Open conversations"
-                  >
-                    <svg
-                      width="18"
-                      height="18"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-slate-700 dark:text-slate-300"
-                    >
-                      <line x1="3" y1="12" x2="21" y2="12" />
-                      <line x1="3" y1="6" x2="21" y2="6" />
-                      <line x1="3" y1="18" x2="21" y2="18" />
-                    </svg>
-                  </button>
-
-                  {/* Timeline Button */}
-                  {activeContract && (
-                    <Button
-                      onClick={() => setShowTimelineSidebar(true)}
-                      variant="outline"
-                      className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700 hover:text-blue-800"
-                    >
-                      <Clock className="w-4 h-4 mr-2" />
-                      Linha do Tempo
-                    </Button>
+                  </div>
+                  {room.unread_count > 0 && (
+                    <Badge className="ml-auto bg-pink-500 text-white text-xs">
+                      {room.unread_count}
+                    </Badge>
                   )}
+                </div>
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </div>
 
-                  {/* Review Button for Creators */}
-                  {(user?.role === "creator" || user?.role === "student") && contracts.some(contract => 
-                    contract.status === "completed" && !contract.has_creator_review
+      {/* Chat Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {selectedRoom ? (
+          <>
+            {/* Chat Header */}
+            <div className="flex items-center justify-between p-4 border-b bg-background">
+              <div className="flex items-center gap-3">
+                <Avatar className="w-10 h-10">
+                  <AvatarImage src={selectedRoom.other_user?.avatar} />
+                  <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400">
+                    {(selectedRoom.other_user?.name || "").charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h2 className="font-semibold text-slate-900 dark:text-white">
+                    {selectedRoom.other_user?.name}
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {selectedRoom.campaign_title}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Mobile Hamburger Button */}
+                <button
+                  data-hamburger
+                  className={cn(
+                    "md:hidden p-2 rounded-xl bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm shadow-lg border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800 hover:shadow-xl transition-all duration-300 hover:scale-105",
+                    !sidebarOpen && "animate-pulse"
+                  )}
+                  onClick={() => setSidebarOpen(true)}
+                  aria-label="Open conversations"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-slate-700 dark:text-slate-300"
+                  >
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                  </svg>
+                </button>
+
+                {/* Timeline Button */}
+                {activeContract && (
+                  <Button
+                    onClick={() => setShowTimelineSidebar(true)}
+                    variant="outline"
+                    className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700 hover:text-blue-800"
+                  >
+                    <Clock className="w-4 h-4 mr-2" />
+                    Linha do Tempo
+                  </Button>
+                )}
+
+                {/* Review Buttons */}
+                {(user?.role === "creator" || user?.role === "student") &&
+                  contracts.some(
+                    (contract) =>
+                      contract.status === "completed" && !contract.has_creator_review
                   ) && (
                     <Button
                       onClick={() => {
-                        const contractToReview = contracts.find(contract => 
-                          contract.status === "completed" && !contract.has_creator_review
+                        const contractToReview = contracts.find(
+                          (contract) =>
+                            contract.status === "completed" && !contract.has_creator_review
                         );
                         if (contractToReview) {
                           setContractToReview(contractToReview);
@@ -2099,14 +2198,15 @@ export default function Chat() {
                     </Button>
                   )}
 
-                  {/* Review Button for Brands */}
-                  {user?.role === "brand" && contracts.some(contract => 
-                    contract.status === "completed" && !contract.has_brand_review
+                {user?.role === "brand" &&
+                  contracts.some(
+                    (contract) => contract.status === "completed" && !contract.has_brand_review
                   ) && (
                     <Button
                       onClick={() => {
-                        const contractToReview = contracts.find(contract => 
-                          contract.status === "completed" && !contract.has_brand_review
+                        const contractToReview = contracts.find(
+                          (contract) =>
+                            contract.status === "completed" && !contract.has_brand_review
                         );
                         if (contractToReview) {
                           setBrandContractToReview(contractToReview);
@@ -2126,31 +2226,31 @@ export default function Chat() {
                     </Button>
                   )}
 
-                  {isConnected ? (
-                    <div className="flex items-center gap-1 text-green-500">
-                      <Wifi className="w-4 h-4" />
-                      <span className="text-xs">Online</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1 text-red-500">
-                      <WifiOff className="w-4 h-4" />
-                      <span className="text-xs">Offline</span>
-                    </div>
-                  )}
-                </div>
+                {isConnected ? (
+                  <div className="flex items-center gap-1 text-green-500">
+                    <Wifi className="w-4 h-4" />
+                    <span className="text-xs">Online</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-red-500">
+                    <WifiOff className="w-4 h-4" />
+                    <span className="text-xs">Offline</span>
+                  </div>
+                )}
               </div>
+            </div>
 
-              {/* Messages */}
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4">
-                  {messages.map((message, index) => {
-                    // Debug logging for duplicate detection
-                    if (messages.filter(m => m.id === message.id).length > 1) {
-                      console.warn('Rendering duplicate message ID:', message.id, 'at index:', index);
-                    }
-                    return (
+            {/* Messages */}
+            <ScrollArea className="flex-1 p-4 overflow-y-auto">
+              <div className="space-y-4">
+                {messages.map((message, index) => {
+                  // Debug logging for duplicate detection
+                  if (messages.filter((m) => m.id === message.id).length > 1) {
+                    console.warn("Rendering duplicate message ID:", message.id, "at index:", index);
+                  }
+                  return (
                     <div
-                      key={`msg-${message.id}-${index}`}
+                      key={`msg-${message.id ?? index}-${index}`}
                       className={cn(
                         "flex gap-3",
                         message.message_type === "system"
@@ -2160,17 +2260,14 @@ export default function Chat() {
                           : "justify-start"
                       )}
                     >
-                      {!message.is_sender &&
-                        message.message_type !== "system" && (
-                          <Avatar className="w-8 h-8">
-                            <AvatarImage src={selectedRoom.other_user.avatar} />
-                            <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400 text-xs">
-                              {selectedRoom.other_user.name
-                                .charAt(0)
-                                .toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
+                      {!message.is_sender && message.message_type !== "system" && (
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={selectedRoom.other_user?.avatar} />
+                          <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400 text-xs">
+                            {(selectedRoom.other_user?.name || "").charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
                       <div
                         className={cn(
                           message.message_type === "system"
@@ -2205,57 +2302,79 @@ export default function Chat() {
                         )}
                       </div>
                     </div>
-                    );
-                  })}
-                  <div ref={messagesEndRef} />
-                </div>
-              </ScrollArea>
+                  );
+                })}
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
 
-              {/* Message Input */}
-              <form
-                className="flex items-end gap-3 px-4 py-4 border-t bg-background"
-                onSubmit={handleSendMessage}
+            {/* Message Input */}
+            <form
+              className={`flex items-end gap-3 px-4 py-4 border-t bg-background transition-colors ${
+                dragActive ? 'bg-pink-50 dark:bg-pink-900/10' : ''
+              }`}
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendMessage(e as any);
+              }}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              {/* File attachment button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
+                aria-label="Attach file"
               >
-                {/* File attachment button */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
-                  aria-label="Attach file"
-                >
-                  <Paperclip className="w-5 h-5 text-slate-500" />
-                </button>
+                <Paperclip className="w-5 h-5 text-slate-500" />
+              </button>
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  accept="image/*,.pdf,.doc,.docx,.txt"
-                />
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileSelect}
+                className="hidden"
+                accept="image/*,.pdf,.doc,.docx,.txt,.zip,.rar,.mp3,.mp4,.wav,.flac,.avi,.mov,.wmv,.js,.ts,.jsx,.tsx,.html,.css,.json"
+              />
 
-                {/* File preview */}
-                {selectedFile && (
-                  <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-xl border border-pink-200 dark:border-pink-800 shadow-sm">
-                    {filePreview ? (
-                      <img
-                        src={filePreview}
-                        alt="Preview"
-                        className="w-10 h-10 rounded-lg object-cover border border-pink-200 dark:border-pink-700"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900/30 rounded-lg flex items-center justify-center border border-pink-200 dark:border-pink-700">
-                        <File className="w-5 h-5 text-pink-600 dark:text-pink-400" />
+              {/* File preview with upload progress */}
+              {selectedFile && (
+                <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-xl border border-pink-200 dark:border-pink-800 shadow-sm max-w-full">
+                  {filePreview ? (
+                    <img
+                      src={filePreview}
+                      alt="Preview"
+                      className="w-10 h-10 rounded-lg object-cover border border-pink-200 dark:border-pink-700"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900/30 rounded-lg flex items-center justify-center border border-pink-200 dark:border-pink-700">
+                      <File className="w-5 h-5 text-pink-600 dark:text-pink-400" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                      {selectedFile.name}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      {formatFileSize(selectedFile.size)}
+                    </div>
+                    {isUploading && (
+                      <div className="mt-1">
+                        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5">
+                          <div 
+                            className="bg-pink-500 h-1.5 rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          Enviando... {Math.round(uploadProgress)}%
+                        </div>
                       </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                        {selectedFile.name}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {formatFileSize(selectedFile.size)}
-                      </div>
-                    </div>
+                  </div>
+                  {!isUploading && (
                     <button
                       type="button"
                       onClick={() => {
@@ -2266,141 +2385,142 @@ export default function Chat() {
                     >
                       <X className="w-4 h-4" />
                     </button>
-                  </div>
-                )}
-
-                <div className="flex-1 relative">
-                  <Input
-                    ref={inputRef}
-                    className="w-full bg-background border-slate-200 dark:border-slate-700 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200 resize-none rounded-2xl px-4 py-3"
-                    placeholder="Digite uma mensagem..."
-                    value={input}
-                    onChange={handleInputChange}
-                    autoComplete="off"
-                    aria-label="Digite uma mensagem"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage(e as any);
-                      }
-                    }}
-                    onKeyUp={handleKeyUp}
-                    onBlur={handleInputBlur}
-                  />
-
-                  {/* Typing Indicator */}
-                  {typingUsers.size > 0 && (
-                    <div className="absolute -top-8 left-0 right-0 flex items-center gap-2 px-4 py-2">
-                      <div className="flex items-center gap-2">
-                        <div className="flex space-x-1">
-                          <div
-                            className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
-                            style={{ animationDelay: "0ms" }}
-                          ></div>
-                          <div
-                            className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
-                            style={{ animationDelay: "150ms" }}
-                          ></div>
-                          <div
-                            className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
-                            style={{ animationDelay: "300ms" }}
-                          ></div>
-                        </div>
-                        <span className="text-sm text-slate-600 dark:text-slate-300">
-                          {Array.from(typingUsers).length === 1
-                            ? `${Array.from(typingUsers)[0]} está digitando...`
-                            : `${Array.from(typingUsers).join(
-                                ", "
-                              )} estão digitando...`}
-                        </span>
-                      </div>
-                    </div>
                   )}
                 </div>
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={(!input.trim() && !selectedFile) || !selectedRoom}
-                  className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 h-10 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl"
-                >
-                  <Send />
-                  <span className="hidden md:inline font-medium">Enviar</span>
-                </Button>
-              </form>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center text-slate-500 dark:text-slate-400">
-                <div className="text-6xl mb-6">💬</div>
-                <p className="text-lg font-medium mb-2">
-                  Selecione uma conversa
-                </p>
-                <p className="text-sm">
-                  Escolha uma conversa da barra lateral para começar a conversar
-                </p>
+              )}
+
+              <div className="flex-1 relative min-w-0">
+                <Input
+                  ref={inputRef}
+                  className="w-full bg-background border-slate-200 dark:border-slate-700 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200 resize-none rounded-2xl px-4 py-3"
+                  placeholder="Digite uma mensagem..."
+                  value={input}
+                  onChange={handleInputChange}
+                  autoComplete="off"
+                  aria-label="Digite uma mensagem"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(e as any);
+                    }
+                  }}
+                  onKeyUp={handleKeyUp}
+                  onBlur={handleInputBlur}
+                />
+
+                {/* Typing Indicator */}
+                {typingUsers.size > 0 && (
+                  <div className="absolute -top-8 left-0 right-0 flex items-center gap-2 px-4 py-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex space-x-1">
+                        <div
+                          className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
+                          style={{ animationDelay: "0ms" }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
+                          style={{ animationDelay: "150ms" }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
+                          style={{ animationDelay: "300ms" }}
+                        ></div>
+                      </div>
+                      <span className="text-sm text-slate-600 dark:text-slate-300">
+                        {Array.from(typingUsers).length === 1
+                          ? `${Array.from(typingUsers)[0]} está digitando...`
+                          : `${Array.from(typingUsers).join(", ")} estão digitando...`}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={(!input.trim() && !selectedFile) || !selectedRoom || isUploading}
+                className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 h-10 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl"
+              >
+                {isUploading ? (
+                  <RefreshCw className="animate-spin" />
+                ) : (
+                  <Send />
+                )}
+                <span className="hidden md:inline font-medium">
+                  {isUploading ? "Enviando..." : "Enviar"}
+                </span>
+              </Button>
+            </form>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center text-slate-500 dark:text-slate-400">
+              <div className="text-6xl mb-6">💬</div>
+              <p className="text-lg font-medium mb-2">Selecione uma conversa</p>
+              <p className="text-sm">Escolha uma conversa da barra lateral para começar a conversar</p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Image Viewer */}
-      <ImageViewer />
-
-      {/* Review Modal */}
-      {showReviewModal && contractToReview && (
-        <div className="w-full h-screen flex justify-center items-center bg-black/60 backdrop-blur-sm">
-          <ReviewModal
-            isOpen={showReviewModal}
-            onClose={handleReviewModalClose}
-            contract={contractToReview}
-            onReviewSubmitted={handleReviewSubmitted}
-          />
-        </div>
-      )}
-
-      {/* Campaign Finalization Modal */}
-      {showCampaignFinalizationModal && contractToFinalize && (
-        <CampaignFinalizationModal
-          isOpen={showCampaignFinalizationModal}
-          onClose={() => {
-            setShowCampaignFinalizationModal(false);
-            setContractToFinalize(null);
-          }}
-          contract={contractToFinalize}
-          onCampaignFinalized={handleCampaignFinalized}
-        />
-      )}
-
-      {/* Campaign Timeline Sidebar */}
-      {showTimelineSidebar && activeContract && (
-        <CampaignTimelineSidebar
-          contractId={activeContract.id}
-          isOpen={showTimelineSidebar}
-          onClose={() => setShowTimelineSidebar(false)}
-        />
-      )}
-
-      {/* Brand Review Modal */}
-      {showBrandReviewModal && brandContractToReview && (
-        <BrandReviewModal
-          isOpen={showBrandReviewModal}
-          onClose={() => {
-            setShowBrandReviewModal(false);
-            setBrandContractToReview(null);
-          }}
-          contract={brandContractToReview}
-          onReviewSubmitted={handleBrandReviewSubmitted}
-        />
-      )}
     </div>
-  );
+
+    {/* Mobile Overlay */}
+    {sidebarOpen && (
+      <div
+        className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+        onClick={() => setSidebarOpen(false)}
+      />
+    )}
+
+    {/* Image Viewer */}
+    <ImageViewer />
+
+    {/* Review Modal */}
+    {showReviewModal && contractToReview && (
+      <div className="w-full h-screen flex justify-center items-center bg-black/60 backdrop-blur-sm">
+        <ReviewModal
+          isOpen={showReviewModal}
+          onClose={handleReviewModalClose}
+          contract={contractToReview}
+          onReviewSubmitted={handleReviewSubmitted}
+        />
+      </div>
+    )}
+
+    {/* Campaign Finalization Modal */}
+    {showCampaignFinalizationModal && contractToFinalize && (
+      <CampaignFinalizationModal
+        isOpen={showCampaignFinalizationModal}
+        onClose={() => {
+          setShowCampaignFinalizationModal(false);
+          setContractToFinalize(null);
+        }}
+        contract={contractToFinalize}
+        onCampaignFinalized={handleCampaignFinalized}
+      />
+    )}
+
+    {/* Campaign Timeline Sidebar */}
+    {showTimelineSidebar && activeContract && (
+      <CampaignTimelineSidebar
+        contractId={activeContract.id}
+        isOpen={showTimelineSidebar}
+        onClose={() => setShowTimelineSidebar(false)}
+      />
+    )}
+
+    {/* Brand Review Modal */}
+    {showBrandReviewModal && brandContractToReview && (
+      <BrandReviewModal
+        isOpen={showBrandReviewModal}
+        onClose={() => {
+          setShowBrandReviewModal(false);
+          setBrandContractToReview(null);
+        }}
+        contract={brandContractToReview}
+        onReviewSubmitted={handleBrandReviewSubmitted}
+      />
+    )}
+  </div>
+);
 }

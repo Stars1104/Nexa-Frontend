@@ -86,7 +86,6 @@ export const testUpdate = async (
   token: string, 
   data: FormData
 ): Promise<any> => {
-  console.log('Testing update:', { data });
   
   const response = await apiClient.post('/portfolio/test-update', data, {
     headers: { 
@@ -101,22 +100,17 @@ export const testUpdate = async (
 export const testUpload = async (
   token: string, 
   files: File[]
-): Promise<any> => {
-  console.log('Testing upload:', { filesCount: files.length, files });
-  
+): Promise<any> => {  
   if (files.length === 0) {
     throw new Error('No files provided for upload');
   }
 
   const formData = new FormData();
   files.forEach((file, index) => {
-    console.log(`Adding file ${index}:`, { name: file.name, type: file.type, size: file.size });
     formData.append('files[]', file);
   });
 
-  console.log('FormData entries:');
   for (let [key, value] of formData.entries()) {
-    console.log(key, value);
   }
 
   const response = await apiClient.post('/portfolio/test-upload', formData, {
@@ -133,7 +127,6 @@ export const uploadPortfolioMedia = async (
   token: string, 
   files: File[]
 ): Promise<{ items: PortfolioItem[]; total_items: number }> => {
-  console.log('Uploading portfolio media:', { filesCount: files.length, files });
   
   if (files.length === 0) {
     throw new Error('No files provided for upload');
@@ -141,13 +134,10 @@ export const uploadPortfolioMedia = async (
 
   const formData = new FormData();
   files.forEach((file, index) => {
-    console.log(`Adding file ${index}:`, { name: file.name, type: file.type, size: file.size });
     formData.append('files[]', file);
   });
 
-  console.log('FormData entries:');
   for (let [key, value] of formData.entries()) {
-    console.log(key, value);
   }
 
   const response = await apiClient.post('/portfolio/media', formData, {
@@ -169,6 +159,7 @@ export const updatePortfolioItem = async (
     order?: number;
   }
 ): Promise<PortfolioItem> => {
+  console.log("This is axios",data);
   const response = await apiClient.put(`/portfolio/items/${itemId}`, data, {
     headers: { Authorization: `Bearer ${token}` }
   });
