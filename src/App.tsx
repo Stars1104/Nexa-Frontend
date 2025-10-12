@@ -94,7 +94,6 @@ const App = () => {
   }
 
   return (
-    <ErrorBoundary>
       <HelmetProvider>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider defaultTheme="system" storageKey="nexa-ui-theme">
@@ -171,7 +170,6 @@ const App = () => {
           </ThemeProvider>
         </QueryClientProvider>
       </HelmetProvider>
-    </ErrorBoundary>
   );
 };
 

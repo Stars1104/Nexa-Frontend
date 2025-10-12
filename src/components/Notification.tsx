@@ -300,7 +300,7 @@ const Notification = () => {
                         ) : (
                             filteredNotifications.map((notification, index) => (
                                 <Card 
-                                    key={notification.id} 
+                                    key={`notif-${notification.id}`} 
                                     className={`transition-all duration-200 hover:shadow-md ${
                                         notification.unread ? 'border-l-4 border-l-primary bg-accent/20' : ''
                                     }`}

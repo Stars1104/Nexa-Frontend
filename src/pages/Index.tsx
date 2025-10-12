@@ -9,6 +9,8 @@ import { CTA } from "../components/landing/CTA";
 import { FAQ } from "../components/landing/FAQ";
 import { Footer } from "../components/landing/Footer";
 import { Helmet } from "react-helmet-async";
+import { SectionProvider } from "@/components/SectionContext";
+import { VirtualSection } from "@/components/VirtualSection";
 
 const Index = () => {
 
@@ -28,14 +30,16 @@ const Index = () => {
       </Helmet>
 
       <Navbar />
-      <Hero />
-      <WhyNexaSection />
-      <HowItWorks />
-      <Community />
-      <Benefits />
-      <Pricing />
-      <CTA />
-      <FAQ />
+      <SectionProvider>
+           <VirtualSection id="hero"><Hero /></VirtualSection>
+           <VirtualSection id="why-nexa"><WhyNexaSection /></VirtualSection>
+           <VirtualSection id="how-it-works"><HowItWorks /></VirtualSection>
+           <VirtualSection id="community"><Community /></VirtualSection>
+           <VirtualSection id="benefits"><Benefits /></VirtualSection>
+           <VirtualSection id="pricing"><Pricing /></VirtualSection>
+           <VirtualSection id="cta"><CTA /></VirtualSection>
+           <VirtualSection id="faq"><FAQ /></VirtualSection>
+      </SectionProvider>
       <Footer />
     </div>
   );

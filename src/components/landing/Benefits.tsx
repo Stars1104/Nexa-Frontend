@@ -19,8 +19,8 @@ export const Benefits = () => {
     },
     {
       icon: Heart,
-      title: "Acesso Vitalício para Alunos Certificados",
-      description: "Membros da NEXA UGC têm acesso permanente à plataforma, incluindo todas as novas funcionalidades e oportunidades que surgirem."
+      title: "Acesso para Alunos Certificados",
+      description: "Membros da NEXA UGC têm acesso à plataforma, incluindo todas as novas funcionalidades e oportunidades que surgirem."
     },
     {
       icon: Eye,
