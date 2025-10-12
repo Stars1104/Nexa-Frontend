@@ -109,21 +109,16 @@ export default function Portfolio() {
     }, [error, toast]);
 
     // --- Media Upload Logic ---
+    //-----this is Input change function------------
     const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         addMediaFiles(files);
-        e.target.value = ""; // reset input
+        e.preventDefault; // reset input
     };
-
-    const addMediaFiles = (files: File[]) => {
-        console.log('addMediaFiles called with:', files);
-        
+    const addMediaFiles = (files: File[]) => {    
         let validFiles = files.filter(
             (file) => ACCEPTED_TYPES.includes(file.type)
         );
-        
-        console.log('Valid files after filtering:', validFiles);
-
         const currentMediaCount = media.length + (portfolio?.items?.length || 0);
         if (currentMediaCount + validFiles.length > MAX_TOTAL_FILES) {
             validFiles = validFiles.slice(0, MAX_TOTAL_FILES - currentMediaCount);
@@ -135,11 +130,8 @@ export default function Portfolio() {
             url: URL.createObjectURL(file),
             type: getFileType(file),
         }));
-        
-        console.log('New media to add:', newMedia);
         setMedia((prev) => {
             const updated = [...prev, ...newMedia];
-            console.log('Updated media state:', updated);
             return updated;
         });
     };
@@ -169,7 +161,6 @@ export default function Portfolio() {
 
     const handleSaveProfile = async () => {
         if (!user?.id) return;
-
         setIsSaving(true);
         try {
             const token = localStorage.getItem('token');
@@ -203,9 +194,7 @@ export default function Portfolio() {
                 const blob = await response.blob();
                 formData.append('profile_picture', blob, 'profile.jpg');
             }
-
-            console.log("123123", formData);
-
+            console.log("Axios data--------->",formData);
             const result = await dispatch(updatePortfolioProfile({ token, data: formData })).unwrap();
             
             // Refresh portfolio data to ensure UI is up to date
@@ -233,131 +222,8 @@ export default function Portfolio() {
             setIsSaving(false);
         }
     };
-
-    const handleTestUpdate = async () => {
-        if (!user?.id) return;
-
-        console.log('handleTestUpdate called with:', {
-            profileTitle,
-            bio,
-            projectLinks
-        });
-
-        setIsSaving(true);
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) throw new Error('Token de autenticação não encontrado');
-
-            const formData = new FormData();
-            formData.append('title', profileTitle?.trim() || '');
-            formData.append('bio', bio?.trim() || '');
-
-            const result = await testUpdate(token, formData);
-            console.log('Test update result:', result);
-            
-            toast({
-                title: "Teste de Update Concluído",
-                description: "Teste de update realizado com sucesso! Verifique o console para detalhes.",
-                duration: 3000,
-            });
-        } catch (error) {
-            console.error('Test update error:', error);
-            toast({
-                title: "Erro no Teste de Update",
-                description: "Falha no teste de update. Verifique o console para detalhes.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const handleTestUpload = async () => {
-        if (!user?.id || !portfolio) return;
-
-        console.log('handleTestUpload called with media:', media);
-
-        // Check if there are files to upload
-        if (media.length === 0) {
-            console.log('No media files to upload');
-            toast({
-                title: "Aviso",
-                description: "Nenhum arquivo selecionado para upload.",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        setIsSaving(true);
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) throw new Error('Token de autenticação não encontrado');
-
-            // Test upload
-            const files = media.map(item => item.file);
-            console.log('Files to test upload:', files);
-            const result = await testUpload(token, files);
-            console.log('Test upload result:', result);
-            
-            toast({
-                title: "Teste Concluído",
-                description: "Teste de upload realizado com sucesso!",
-                duration: 3000,
-            });
-        } catch (error) {
-            console.error('Test upload error:', error);
-            toast({
-                title: "Erro no Teste",
-                description: "Falha no teste de upload. Verifique o console para detalhes.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
     const handleSavePortfolio = async () => {
-        if (!user?.id || !portfolio) return;
-
-        console.log('handleSavePortfolio called with media:', media);
-
-        // Check if there are files to upload
-        if (media.length === 0) {
-            console.log('No media files to upload');
-            toast({
-                title: "Aviso",
-                description: "Nenhum arquivo selecionado para upload.",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        setIsSaving(true);
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) throw new Error('Token de autenticação não encontrado');
-
-            // Upload new media files
-            const files = media.map(item => item.file);
-            console.log('Files to upload:', files);
-            await dispatch(uploadPortfolioMedia({ token, files })).unwrap();
-
-            setMedia([]);
             setIsPortfolioEditDialogOpen(false);
-            toast({
-                title: "Sucesso!",
-                description: "Portfólio adicionado com sucesso!",
-                duration: 3000,
-            });
-        } catch (error) {
-            toast({
-                title: "Erro",
-                description: "Falha ao adicionar portfólio. Tente novamente.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsSaving(false);
-        }
     };
 
     const handleRemovePortfolioItem = async (itemId: number) => {
@@ -468,7 +334,7 @@ export default function Portfolio() {
     };
 
     // Image modal handlers
-    const handleImageClick = (imageUrl: string) => {
+    const handleImageClick = (imageUrl: string) => {    
         setSelectedImage(imageUrl);
         setIsImageModalOpen(true);
     };
@@ -553,7 +419,7 @@ export default function Portfolio() {
                     {/* Project Links Display */}
                     {projectLinks && projectLinks.length > 0 && (
                         <div className="flex flex-col gap-2 mt-4">
-                            <h3 className="font-semibold text-base">Projetos Anteriores</h3>
+                            <h3 className="font-semibold text-base"></h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {projectLinks
                                     .filter((link: any) => {
@@ -740,15 +606,14 @@ export default function Portfolio() {
                                         onDrop={handleDrop}
                                     >
                                         <div className="flex flex-col items-center gap-2">
-                                            <Camera className="w-10 h-10 text-muted-foreground mb-2" />
-                                            <div className="font-semibold text-base text-foreground">Arraste arquivos para cá</div>
-                                            <div className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG, MP4, MOV, AVI, MPEG, WMV, WEBM, OGG, MKV, FLV, 3GP</div>
                                             <input 
                                                         type="url"
                                                         className="w-full rounded-md border px-3 py-2 text-sm bg-background text-foreground outline-none transition placeholder:text-muted-foreground"
                                                         placeholder="https://meu-portfóli"
                                                     />
-                                            
+                                            <Camera className="w-10 h-10 text-muted-foreground mb-2" />
+                                            <div className="font-semibold text-base text-foreground">Arraste arquivos para cá</div>
+                                            <div className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG, MP4, MOV, AVI, MPEG, WMV, WEBM, OGG, MKV, FLV, 3GP</div>
                                             <Button
                                                 className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-6 py-2 rounded-md mt-2"
                                                 onClick={() => mediaInputRef.current?.click()}
@@ -770,12 +635,13 @@ export default function Portfolio() {
                                 <div>
                                     <h3 className="font-semibold text-base mb-2">Meu Trabalho ({getTotalMediaCount()}/{MAX_TOTAL_FILES})</h3>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                        {/* Existing portfolio items */}
+                                
                                         {portfolio?.items?.map((item: any) => (
                                             <div key={`existing-${item.id}`} className="rounded-lg bg-background flex flex-col items-start justify-between aspect-[4/3] p-2 relative overflow-hidden group">
                                                 <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${item.media_type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.media_type === 'image' ? 'Foto' : 'Vídeo'}</span>
                                                 {item.media_type === 'image' ? (
-                                                    <img
+                                                
+                                                     <img
                                                         src={item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`}
                                                         alt={item.title}
                                                         className="object-cover w-full h-full rounded-md cursor-pointer"
@@ -785,6 +651,7 @@ export default function Portfolio() {
                                                             e.currentTarget.style.display = 'none';
                                                         }}
                                                     />
+                                                   
                                                 ) : (
                                                     <div className="flex flex-col items-center justify-center w-full h-full">
                                                         <VideoIcon />
@@ -802,7 +669,7 @@ export default function Portfolio() {
                                             </div>
                                         ))}
                                         {/* New media items */}
-                                        {media.map((item, idx) => (
+                                        {media?.map((item, idx) => (
                                             <div key={`new-${idx}`} className="rounded-lg bg-background flex flex-col items-start justify-between aspect-[4/3] p-2 relative overflow-hidden group">
                                                 <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${item.type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.type === 'image' ? 'Foto' : 'Vídeo'}</span>
                                                 {item.type === 'image' ? (
@@ -977,7 +844,7 @@ export default function Portfolio() {
             </section>
 
             {/* Save Button */}
-            {/* <div className="flex justify-end mt-6">
+            <div className="flex justify-end mt-6">
                 <Button
                     className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-8 py-2 rounded-md text-base"
                     onClick={handleSavePortfolioComplete}
@@ -986,7 +853,7 @@ export default function Portfolio() {
                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                     Salvar Portfólio
                 </Button>
-            </div> */}
+            </div>
 
             {/* Image Modal */}
             {isImageModalOpen && selectedImage && (
