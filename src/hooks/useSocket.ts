@@ -292,6 +292,11 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                 const formData = new FormData();
                 formData.append('room_id', roomId);
                 formData.append('file', file);
+                
+                // Include text message if provided
+                if (message && message.trim()) {
+                    formData.append('message', message.trim());
+                }
 
                 const response = await apiClient.post('/chat/messages', formData, {
                     headers: {

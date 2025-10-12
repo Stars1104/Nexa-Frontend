@@ -617,15 +617,17 @@ export default function Chat() {
     }
 
     setSelectedRoom(room);
-    setSidebarOpen(false);
+    
+    // Auto-close sidebar on mobile for WhatsApp-like behavior
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
 
     // Load messages for the selected room
     await loadMessages(room);
 
     // Load contracts for the selected room
     await loadContracts(room.room_id);
-
-
 
     // Focus input
     setTimeout(() => {
@@ -660,7 +662,7 @@ export default function Chat() {
 
         newMessage = await sendMessage(
           selectedRoom.room_id,
-          input.trim() || selectedFile.name,
+          input.trim(), // Send the actual text message, not filename
           selectedFile
         );
         
@@ -1967,7 +1969,7 @@ export default function Chat() {
   );
 
   return (
-  <div className="flex h-full bg-background">
+  <div className="flex h-full bg-background overflow-hidden">
     <style>{`
       .shadow-3xl {
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05);
@@ -1983,6 +1985,12 @@ export default function Chat() {
           opacity: 0.8;
         }
       }
+      /* Prevent horizontal scroll on mobile */
+      @media (max-width: 768px) {
+        body {
+          overflow-x: hidden;
+        }
+      }
     `}</style>
 
     <div className="flex flex-1 overflow-hidden">
@@ -1991,11 +1999,11 @@ export default function Chat() {
         data-sidebar
         className={cn(
           // Use full width on mobile, constrained (max-w-sm) on md+
-          "flex flex-col w-full max-w-full md:max-w-sm border-r bg-background transition-all duration-500 ease-out",
+          "flex flex-col w-full max-w-full md:max-w-sm border-r bg-background transition-all duration-300 ease-in-out",
           "md:relative md:translate-x-0 md:shadow-none",
           sidebarOpen
-            ? "fixed inset-0 z-50 translate-x-0 shadow-2xl border-r border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm scale-100 opacity-100"
-            : "fixed inset-0 z-50 -translate-x-full md:relative md:translate-x-0 scale-95 opacity-0 md:scale-100 md:opacity-100"
+            ? "fixed inset-0 z-50 translate-x-0 shadow-2xl border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 scale-100 opacity-100"
+            : "fixed inset-0 z-50 -translate-x-full md:relative md:translate-x-0 scale-100 opacity-100 md:opacity-100"
         )}
       >
         {/* Sidebar Header */}
@@ -2113,18 +2121,38 @@ export default function Chat() {
           <>
             {/* Chat Header */}
             <div className="flex items-center justify-between p-4 border-b bg-background">
-              <div className="flex items-center gap-3">
-                <Avatar className="w-10 h-10">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                {/* Mobile Back Button */}
+                <button
+                  className="md:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 flex-shrink-0"
+                  onClick={() => setSidebarOpen(true)}
+                  aria-label="Back to conversations"
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-slate-700 dark:text-slate-300"
+                  >
+                    <path d="m15 18-6-6 6-6"/>
+                  </svg>
+                </button>
+                
+                <Avatar className="w-10 h-10 flex-shrink-0">
                   <AvatarImage src={selectedRoom.other_user?.avatar} />
                   <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400">
                     {(selectedRoom.other_user?.name || "").charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <h2 className="font-semibold text-slate-900 dark:text-white">
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-semibold text-slate-900 dark:text-white truncate">
                     {selectedRoom.other_user?.name}
                   </h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
                     {selectedRoom.campaign_title}
                   </p>
                 </div>
@@ -2310,7 +2338,7 @@ export default function Chat() {
 
             {/* Message Input */}
             <form
-              className={`flex items-end gap-3 px-4 py-4 border-t bg-background transition-colors ${
+              className={`flex items-end gap-3 px-3 sm:px-4 py-3 sm:py-4 border-t bg-background transition-colors ${
                 dragActive ? 'bg-pink-50 dark:bg-pink-900/10' : ''
               }`}
               onSubmit={(e) => {
@@ -2341,7 +2369,7 @@ export default function Chat() {
 
               {/* File preview with upload progress */}
               {selectedFile && (
-                <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-xl border border-pink-200 dark:border-pink-800 shadow-sm max-w-full">
+                <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-xl border border-pink-200 dark:border-pink-800 shadow-sm max-w-full">
                   {filePreview ? (
                     <img
                       src={filePreview}
@@ -2392,7 +2420,7 @@ export default function Chat() {
               <div className="flex-1 relative min-w-0">
                 <Input
                   ref={inputRef}
-                  className="w-full bg-background border-slate-200 dark:border-slate-700 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200 resize-none rounded-2xl px-4 py-3"
+                  className="w-full bg-background border-slate-200 dark:border-slate-700 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200 resize-none rounded-2xl px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base"
                   placeholder="Digite uma mensagem..."
                   value={input}
                   onChange={handleInputChange}
@@ -2439,14 +2467,14 @@ export default function Chat() {
                 type="submit"
                 size="sm"
                 disabled={(!input.trim() && !selectedFile) || !selectedRoom || isUploading}
-                className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 h-10 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl"
+                className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed px-3 sm:px-4 py-2 h-9 sm:h-10 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl flex-shrink-0"
               >
                 {isUploading ? (
-                  <RefreshCw className="animate-spin" />
+                  <RefreshCw className="animate-spin w-4 h-4 sm:w-5 sm:h-5" />
                 ) : (
-                  <Send />
+                  <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                 )}
-                <span className="hidden md:inline font-medium">
+                <span className="hidden sm:inline font-medium ml-1">
                   {isUploading ? "Enviando..." : "Enviar"}
                 </span>
               </Button>
