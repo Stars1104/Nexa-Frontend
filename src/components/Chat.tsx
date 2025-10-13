@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { Badge } from "./ui/badge";
@@ -95,11 +96,12 @@ export default function Chat() {
   const [imageRotation, setImageRotation] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
   const imageViewerRef = useRef<HTMLDivElement>(null);
+  const [viewportOffset, setViewportOffset] = useState(0);
 
   // Socket.IO hook
   const {
@@ -128,6 +130,7 @@ export default function Chat() {
   // Component mount/unmount tracking
   useEffect(() => {
     isMountedRef.current = true;
+      console.log("this is message======>",messages)
 
     return () => {
       isMountedRef.current = false;
@@ -182,6 +185,30 @@ export default function Chat() {
 
     requestAnimationFrame(scrollToBottom);
   }, [messages]);
+
+  // Visual viewport handling to keep input visible above mobile keyboard
+  useEffect(() => {
+    const vv = (window as any).visualViewport as VisualViewport | undefined;
+    if (!vv) return;
+
+    const handleResize = () => {
+      // Calculate how much of the viewport is occluded by the on-screen keyboard
+      const bottomInset = Math.max(0, window.innerHeight - (vv.height + Math.round(vv.offsetTop)));
+      setViewportOffset(bottomInset);
+      // Ensure the input stays in view
+      if (inputRef.current) {
+        inputRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    };
+
+    vv.addEventListener("resize", handleResize);
+    vv.addEventListener("scroll", handleResize);
+    handleResize();
+    return () => {
+      vv.removeEventListener("resize", handleResize);
+      vv.removeEventListener("scroll", handleResize);
+    };
+  }, []);
 
   // Socket event listeners
   useEffect(() => {
@@ -537,6 +564,7 @@ export default function Chat() {
             console.warn('Failed to mark messages as read:', error);
             // Don't show toast for this error as it's not critical
           }
+      
         }
       }
     } catch (error) {
@@ -628,7 +656,6 @@ export default function Chat() {
 
     // Load contracts for the selected room
     await loadContracts(room.room_id);
-
     // Focus input
     setTimeout(() => {
       if (inputRef.current && isMountedRef.current) {
@@ -641,10 +668,10 @@ export default function Chat() {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRoom || (!input.trim() && !selectedFile) || isUploading) return;
-
+    
     try {
       let newMessage: Message;
-
+      
       if (selectedFile) {
         setIsUploading(true);
         setUploadProgress(0);
@@ -665,10 +692,9 @@ export default function Chat() {
           input.trim(), // Send the actual text message, not filename
           selectedFile
         );
-        
+        console.log(newMessage)
         clearInterval(progressInterval);
-        setUploadProgress(100);
-        
+        setUploadProgress(100)
         if (isMountedRef.current) {
           setSelectedFile(null);
           setFilePreview(null);
@@ -693,6 +719,7 @@ export default function Chat() {
         if (newMessage.id) {
           (window as any).lastSentMessageId = newMessage.id;
         }
+      
         setInput("");
 
         // Stop typing indicator immediately when message is sent
@@ -764,7 +791,7 @@ export default function Chat() {
         });
         return;
       }
-
+      
       setSelectedFile(file);
 
       // Create preview for images
@@ -794,8 +821,8 @@ export default function Chat() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragActive(false);
-    
-    const files = e.dataTransfer.files;
+  
+   const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
       // Create a synthetic event for handleFileSelect
@@ -807,10 +834,13 @@ export default function Chat() {
   };
 
   // Handle input change with typing indicators
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!isMountedRef.current) return;
-
     setInput(e.target.value);
+    // Auto-resize textarea height
+    const el = e.currentTarget;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`; // cap ~200px
 
     // Handle typing indicators
     if (selectedRoom) {
@@ -1337,6 +1367,9 @@ export default function Chat() {
             <span className="text-sm font-medium">{message.file_name}</span>
             <span className="text-xs text-gray-500">
               {message.formatted_file_size}
+            </span>
+            <span className="text-xs text-white-500">
+              {message.message}
             </span>
           </div>
         </div>
@@ -2348,6 +2381,7 @@ export default function Chat() {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
+              style={{ paddingBottom: viewportOffset ? viewportOffset + 8 : undefined }}
             >
               {/* File attachment button */}
               <button
@@ -2418,14 +2452,21 @@ export default function Chat() {
               )}
 
               <div className="flex-1 relative min-w-0">
-                <Input
+                <Textarea
                   ref={inputRef}
-                  className="w-full bg-background border-slate-200 dark:border-slate-700 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200 resize-none rounded-2xl px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base"
+                  rows={1}
+                  className="w-full bg-background border-slate-200 dark:border-slate-700 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200 resize-none rounded-2xl px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base leading-6 max-h-52"
                   placeholder="Digite uma mensagem..."
                   value={input}
                   onChange={handleInputChange}
                   autoComplete="off"
                   aria-label="Digite uma mensagem"
+                  onFocus={() => {
+                    // Ensure caret is visible above keyboard on mobile
+                    setTimeout(() => {
+                      inputRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                    }, 50);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
