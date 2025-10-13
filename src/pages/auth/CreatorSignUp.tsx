@@ -18,6 +18,7 @@ import { clearError, resetLoadingStates } from "../../store/slices/authSlice";
 import { toast } from "sonner";
 import { useRoleNavigation } from "../../hooks/useRoleNavigation";
 import GoogleOAuthButton from "../../components/GoogleOAuthButton";
+import { AccountRestorationModal } from "../../components/AccountRestorationModal";
 import { Helmet } from "react-helmet-async";
 import { loginSuccess } from "../../store/slices/authSlice";
 
@@ -41,6 +42,8 @@ const CreatorSignUp = () => {
   const isDarkMode = theme === "dark" || (theme === "system" && systemTheme);
   const [authType, setAuthType] = useState("signin");
   const [isNewRegistration, setIsNewRegistration] = useState(false);
+  const [showRestorationModal, setShowRestorationModal] = useState(false);
+  const [restorationData, setRestorationData] = useState<any>(null);
   const { role } = useParams<{ role: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -217,6 +220,11 @@ const CreatorSignUp = () => {
         const errorMessage = error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
         toast.error(errorMessage);
       }
+      // Handle account restoration case
+      else if (error.type === 'account_removed_restorable') {
+        setRestorationData(error);
+        return;
+      }
       // Handle other errors
       else {
         const errorMessage = error.response?.data?.message || error.message || "Erro ao criar conta. Tente novamente.";
@@ -252,6 +260,9 @@ const CreatorSignUp = () => {
         // Navigation will be handled by useEffect after successful login
       }
     } catch (error: any) {
+      if(error === "account_removed_restorable"){
+          setShowRestorationModal(true)
+      }
       // Check if component is still mounted before updating state
       if (!isMountedRef.current) return;
       
@@ -278,6 +289,12 @@ const CreatorSignUp = () => {
       else if (error.response?.status === 422) {
         const errorMessage = error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
         toast.error(errorMessage);
+      }
+      // Handle account restoration case
+      else if ( error.type === 'account_removed_restorable') {
+        setRestorationData(error);
+        setShowRestorationModal(true);
+        return;
       }
       // Handle other errors
       else {
@@ -608,6 +625,21 @@ const CreatorSignUp = () => {
           )}
         </div>
       </div>
+
+      {/* Account Restoration Modal */}
+      <AccountRestorationModal
+        isOpen={showRestorationModal}
+        onClose={() => {
+          setShowRestorationModal(false);
+          setRestorationData(null);
+        }}
+        email={restorationData?.can_restore ? form.getValues('email') : undefined}
+        onSuccess={() => {
+          setShowRestorationModal(false);
+          setRestorationData(null);
+          // Navigation will be handled by the modal
+        }}
+      />
     </>
   );
 };

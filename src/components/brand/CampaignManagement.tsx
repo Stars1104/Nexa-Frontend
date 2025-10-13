@@ -67,8 +67,8 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
   }, [dispatch]);
 
   const filteredCampaigns = userCampaigns.filter((campaign) => {
-    const matchesSearch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = campaign.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         campaign.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || campaign.status === statusFilter;
     return matchesSearch && matchesStatus;
   });

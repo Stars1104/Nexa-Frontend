@@ -32,19 +32,32 @@ export function ThemeProvider({
   );
   const systemTheme = useSystemTheme();
 
-  useEffect(() => {
-    const root = window.document.documentElement;
+  // useEffect(() => {
+  //   const root = window.document.documentElement;
 
-    root.classList.remove("light", "dark");
+  //   root.classList.remove("light", "dark");
 
-    if (theme === "system") {
-      const currentSystemTheme = systemTheme ? "dark" : "light";
-      root.classList.add(currentSystemTheme);
-      return;
-    }
+  //   if (theme === "system") {
+  //     const currentSystemTheme = systemTheme ? "dark" : "light";
+  //     root.classList.add(currentSystemTheme);
+  //     return;
+  //   }
 
-    root.classList.add(theme);
-  }, [theme, systemTheme]);
+  //   root.classList.add(theme);
+  // }, [theme, systemTheme]);
+useEffect(() => {
+  const root = document.documentElement;
+  const isDark = theme === "dark" || (theme === "system" && systemTheme);
+
+  // Only update if theme actually changes
+  if (isDark && !root.classList.contains("dark")) {
+    root.classList.remove("light");
+    root.classList.add("dark");
+  } else if (!isDark && !root.classList.contains("light")) {
+    root.classList.remove("dark");
+    root.classList.add("light");
+  }
+}, [theme, systemTheme]);
 
   const value = {
     theme,

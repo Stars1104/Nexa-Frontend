@@ -8,7 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Label } from "../ui/label";
 import { toast } from "../ui/sonner";
-import { Camera, Edit, Key, DollarSign } from "lucide-react";
+import { AccountRemovalModal } from "../AccountRemovalModal";
+import { Camera, Edit, Key, DollarSign, Trash2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -102,6 +103,7 @@ export default function BrandProfile() {
   const [fieldValues, setFieldValues] = useState(initialProfile);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwords, setPasswords] = useState({ old: "", new: "", confirm: "" });
+  const [showAccountRemovalModal, setShowAccountRemovalModal] = useState(false);
   
   // Add a ref for the file input
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -326,6 +328,13 @@ export default function BrandProfile() {
             >
               <Edit className="w-4 h-4" />
               <span>Editar Perfil</span>
+            </button>
+            <button
+              onClick={() => setShowAccountRemovalModal(true)}
+              className="flex items-center space-x-2 text-red-500 hover:text-red-400 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Remover Conta</span>
             </button>
           </div>
         </div>
@@ -632,6 +641,12 @@ export default function BrandProfile() {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Account Removal Modal */}
+        <AccountRemovalModal
+          isOpen={showAccountRemovalModal}
+          onClose={() => setShowAccountRemovalModal(false)}
+        />
       </div>
     </div>
   );

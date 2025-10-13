@@ -61,6 +61,20 @@ export const signupUser = createAsyncThunk(
       return authData;
     } catch (error: unknown) {
       const apiError = handleApiError(error);
+      
+      // Check if this is an account restoration case
+      if (apiError.response?.data?.can_restore) {
+        const restorationData = apiError.response.data;
+        dispatch(signupFailure('account_removed_restorable'));
+        return rejectWithValue({
+          type: 'account_removed_restorable',
+          message: restorationData.message,
+          can_restore: restorationData.can_restore,
+          removed_at: restorationData.removed_at,
+          days_since_deletion: restorationData.days_since_deletion,
+        });
+      }
+      
       dispatch(signupFailure(apiError.message));
       return rejectWithValue(apiError.message);
     }
@@ -89,6 +103,19 @@ export const loginUser = createAsyncThunk(
       return authData;
     } catch (error: unknown) {
       const apiError = handleApiError(error);
+      
+      // Check if this is an account restoration case
+      if (apiError.response?.data?.errors?.email === 'account_removed_restorable') {
+        const restorationData = apiError.response.data.errors;
+        dispatch(loginFailure('account_removed_restorable'));
+        return rejectWithValue({
+          type: 'account_removed_restorable',
+          message: 'Sua conta foi removida. Você pode restaurá-la.',
+          removed_at: restorationData.removed_at,
+          days_since_deletion: restorationData.days_since_deletion,
+        });
+      }
+      
       dispatch(loginFailure(apiError.message));
       return rejectWithValue(apiError.message);
     }

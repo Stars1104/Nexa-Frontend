@@ -6,12 +6,13 @@ import {
 } from "../../store/thunks/userThunks";
 import { clearProfile } from "../../store/slices/userSlice";
 import { updateUserPassword } from "../../store/thunks/authThunks";
-import { Crown, Key, AlertTriangle, DollarSign, Wallet, TrendingUp, Clock, RefreshCw } from "lucide-react";
+import { Crown, Key, AlertTriangle, DollarSign, Wallet, TrendingUp, Clock, RefreshCw, Trash2 } from "lucide-react";
 import { useSafeToast } from "../../hooks/useSafeToast";
 import EditProfile from "./EditProfile";
 import UpdatePasswordModal from "../ui/UpdatePasswordModal";
 import Reviews from "../Reviews";
 import WithdrawalModal from "./WithdrawalModal";
+import { AccountRemovalModal } from "../AccountRemovalModal";
 import { hiringApi, CreatorBalance as CreatorBalanceType } from "@/api/hiring";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -144,6 +145,7 @@ export const CreatorProfile = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [balance, setBalance] = useState<CreatorBalanceType | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
+  const [showAccountRemovalModal, setShowAccountRemovalModal] = useState(false);
 
   // Get profile data from Redux store
   const { profile, isLoading, error } = useAppSelector((state) => state.user);
@@ -423,6 +425,14 @@ const handleRefreshProfile = useCallback(async () => {
                   />
                 </svg>
                 Editar Perfil
+              </button>
+              <button
+                className="flex items-center gap-1 text-red-500 hover:text-red-600 text-sm font-medium focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => setShowAccountRemovalModal(true)}
+                disabled={isUpdating}
+              >
+                <Trash2 className="w-4 h-4" />
+                Remover Conta
               </button>
             </div>
           </div>
@@ -723,6 +733,12 @@ const handleRefreshProfile = useCallback(async () => {
           onWithdrawalCreated={handleWithdrawalCreated}
         />
       )}
+
+      {/* Account Removal Modal */}
+      <AccountRemovalModal
+        isOpen={showAccountRemovalModal}
+        onClose={() => setShowAccountRemovalModal(false)}
+      />
     </div>
   );
 };
