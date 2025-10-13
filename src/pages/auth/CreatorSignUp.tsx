@@ -512,11 +512,18 @@ const CreatorSignUp = () => {
                   <FormField
                     control={form.control}
                     name="whatsapp"
+                     rules={{
+                        required: "Número de WhatsApp é obrigatório",
+                        pattern: {
+                                  value:  /^\+3519\d{8}$/,
+                                message: "Insira um número de WhatsApp válido (ex: +351912345678)"
+                                  }
+                          }}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>WhatsApp</FormLabel>
                         <FormControl>
-                          <Input placeholder="(00) 00000-0000" {...field} disabled={isSigningUp} />
+                          <Input placeholder="+351912345678"  type="tel" inputMode="tel" {...field} disabled={isSigningUp} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
