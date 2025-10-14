@@ -230,6 +230,7 @@ const CreatorSignUp = () => {
         const errorMessage = error.response?.data?.message || error.message || "Erro ao criar conta. Tente novamente.";
         toast.error(errorMessage);
       }
+      toast.error('Sign up error:', error);
       console.error('Sign up error:', error);
     }
   };
