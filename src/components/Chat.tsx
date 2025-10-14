@@ -130,8 +130,6 @@ export default function Chat() {
   // Component mount/unmount tracking
   useEffect(() => {
     isMountedRef.current = true;
-      console.log("this is message======>",messages)
-
     return () => {
       isMountedRef.current = false;
       // Clear any pending timeouts

@@ -471,8 +471,8 @@ const CreatorSignUp = () => {
                         message: "Nome deve ter pelo menos 5 caracteres"
                       },
                       maxLength: {
-                        value: 30,
-                        message: "Nome deve ter menos de 15 caracteres"
+                        value: 40,
+                        message: "Nome deve ter menos de 40 caracteres"
                       },
                       pattern: {
                         value: /\s/,

@@ -5,6 +5,7 @@ import DarkLogo from "../../assets/dark-logo.png";
 import { useTheme } from "../../components/ThemeProvider";
 import { ThemeToggle } from "../../components/ThemeToggle";
 import { useSystemTheme } from "../../hooks/use-system-theme";
+import { accountApi } from "@/api/account";
 
 const ForgotPassword: React.FC = () => {
     const [email, setEmail] = useState("");
@@ -14,8 +15,20 @@ const ForgotPassword: React.FC = () => {
     const isDarkMode = theme === "dark" || (theme === "system" && systemTheme);
     const navigate = useNavigate();
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (e: React.FormEvent) => {
+            e.preventDefault()
+        try {
+            console.log("this is my function")
+            const response = await accountApi.checkAccount({email})
+            if(response.exists){
+                setSubmitted(true)
+            }else{
+                alert("You must register an account first.")
+            }
+        } catch (error) {
+            console.error("Error checking account:", error);
+            alert("Something went wrong. Please try again later.");
+        }
         setSubmitted(true);
     };
 
@@ -46,7 +59,7 @@ const ForgotPassword: React.FC = () => {
                         <p className="text-center text-gray-500 dark:text-gray-300 text-sm mb-6">
                             Não se preocupe, isso acontece com todo mundo. Digite seu email e enviaremos um link para redefinir sua senha.
                         </p>
-                        <form className="w-full" onSubmit={handleSubmit}>
+                        <form className="w-full">
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 Email
                             </label>
@@ -63,6 +76,7 @@ const ForgotPassword: React.FC = () => {
                             <button
                                 type="submit"
                                 className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 rounded-full transition-colors mb-2 focus:outline-none focus:ring-2 focus:ring-pink-400"
+                                onClick={handleSubmit}
                             >
                                 Enviar
                             </button>
