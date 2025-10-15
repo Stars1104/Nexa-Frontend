@@ -152,16 +152,10 @@ const CreatorSignUp = () => {
       if (isSigningUp) {
         return;
       }
-      console.log(data.whatsapp)
-      if (phone(data.whatsapp).isValid){
-        setWhatsapp(phone(data.whatsapp).phoneNumber);
-      }else{
-        toast.error("you must re-enter Whatsapp number")
-      }
       const signupData = {
         name: data.name,
         email: data.email,
-        whatsapp:whatsapp ,
+        whatsapp:data.whatsapp ,
         password: data.password,
         password_confirmation: data.confirmPassword,
         isStudent: data.isStudent,
@@ -479,7 +473,7 @@ const CreatorSignUp = () => {
                       },
                       maxLength: {
                         value: 30,
-                        message: "Nome deve ter menos de 15 caracteres"
+                        message: "Nome deve ter menos de 30 caracteres"
                       },
                       pattern: {
                         value: /\s/,
@@ -522,8 +516,8 @@ const CreatorSignUp = () => {
                      rules={{
                         required: "Número de WhatsApp é obrigatório",
                         pattern: {
-                                    value: /^\+\(\d{1,4}\)\s?\d{3}[-\s]?\d{4,5}$/,
-                                  message: "Insira um número válido (ex: +(351) 912-5678 ou +(1) 800 12345)"
+                                    value:  /^\+(\(?\d{1,4}\)?)[\s-]?\d{2,4}[\s-]?\d{3,4}[\s-]?\d{0,4}$/,
+                                  message: "Insira um número válido (ex: +(351) 912-5678, +(351) 912 56783, +351912345678)"
                                 }}}
                     render={({ field }) => (
                       <FormItem>
