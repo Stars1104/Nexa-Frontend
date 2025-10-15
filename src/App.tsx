@@ -27,6 +27,7 @@ import Guide from "./pages/Guide";
 import Documentation from "./pages/Documentation";
 import { HelmetProvider } from "react-helmet-async";
 import { useState, useEffect } from "react";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient();
 
@@ -156,6 +157,7 @@ const App = () => {
                   
                           {/* Guide route - accessible to everyone */}
         <Route path="/guides" element={<Guide />} />
+         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         
         {/* Documentation route - accessible to everyone */}
         <Route path="/docs" element={<Documentation />} />

@@ -230,6 +230,7 @@ const CreatorSignUp = () => {
         const errorMessage = error.response?.data?.message || error.message || "Erro ao criar conta. Tente novamente.";
         toast.error(errorMessage);
       }
+      toast.error('Sign up error:', error);
       console.error('Sign up error:', error);
     }
   };
@@ -471,8 +472,8 @@ const CreatorSignUp = () => {
                         message: "Nome deve ter pelo menos 5 caracteres"
                       },
                       maxLength: {
-                        value: 30,
-                        message: "Nome deve ter menos de 15 caracteres"
+                        value: 40,
+                        message: "Nome deve ter menos de 40 caracteres"
                       },
                       pattern: {
                         value: /\s/,
@@ -512,11 +513,19 @@ const CreatorSignUp = () => {
                   <FormField
                     control={form.control}
                     name="whatsapp"
+                     rules={{
+                        required: "Número de WhatsApp é obrigatório",
+                        pattern: {
+                                      value: /^\+?\(?\d{1,3}\)?[\s.-]?\d{1,4}([\s.-]?\d{2,4}){2,3}$/,
+                                      message: "Enter a valid WhatsApp number (e.g., +351 912-345-678 or (+351) 912 345 678)"
+                              }
+
+                          }}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>WhatsApp</FormLabel>
                         <FormControl>
-                          <Input placeholder="(00) 00000-0000" {...field} disabled={isSigningUp} />
+                          <Input placeholder="+351912345678"  type="tel" inputMode="tel" {...field} disabled={isSigningUp} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -539,7 +548,7 @@ const CreatorSignUp = () => {
                           <Input placeholder="Crie uma senha segura" type="password" {...field} disabled={isSigningUp} />
                         </FormControl>
                         <FormMessage />
-                      </FormItem>
+                      </FormItem>                                   
                     )}
                   />
                   <FormField

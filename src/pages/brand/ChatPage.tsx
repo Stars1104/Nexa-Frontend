@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Input } from "../../components/ui/input";
+import { Textarea } from "../../components/ui/textarea";
 import { Button } from "../../components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../../components/ui/dialog";
 import { Label } from "../../components/ui/label";
-import { Textarea } from "../../components/ui/textarea";
 import CampaignTimelineSidebar from "../../components/CampaignTimelineSidebar";
 import {
   Avatar,
@@ -128,10 +128,32 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
   const [showTimelineSidebar, setShowTimelineSidebar] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
+  const [viewportOffset, setViewportOffset] = useState(0);
+
+  useEffect(() => {
+    const vv = (window as any).visualViewport as VisualViewport | undefined;
+    if (!vv) return;
+
+    const handleResize = () => {
+      const bottomInset = Math.max(0, window.innerHeight - (vv.height + Math.round(vv.offsetTop)));
+      setViewportOffset(bottomInset);
+      if (inputRef.current) {
+        inputRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    };
+
+    vv.addEventListener("resize", handleResize);
+    vv.addEventListener("scroll", handleResize);
+    handleResize();
+    return () => {
+      vv.removeEventListener("resize", handleResize);
+      vv.removeEventListener("scroll", handleResize);
+    };
+  }, []);
   const imageViewerRef = useRef<HTMLDivElement>(null);
 
 
@@ -1142,10 +1164,14 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!isMountedRef.current) return;
 
     setInput(e.target.value);
+
+    const el = e.currentTarget;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
 
     // Handle typing indicators
     if (selectedRoom) {
@@ -3585,6 +3611,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
+            style={{ paddingBottom: viewportOffset ? viewportOffset + 8 : undefined }}
           >
             {/* File attachment button */}
             <button
@@ -3687,15 +3714,21 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
               </div>
             )}
 
-            <div className="flex-1 relative min-w-0">
-              <Input
+            <div className="flex-1 relative min-w-0" style={{ paddingBottom: viewportOffset ? viewportOffset + 8 : undefined }}>
+              <Textarea
                 ref={inputRef}
-                className="w-full bg-background border-slate-200 dark:border-slate-700 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200 resize-none rounded-2xl px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base"
+                rows={1}
+                className="w-full bg-background border-slate-200 dark:border-slate-700 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200 resize-none rounded-2xl px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base leading-6 max-h-52"
                 placeholder="Digite uma mensagem..."
                 value={input}
                 onChange={handleInputChange}
                 autoComplete="off"
                 aria-label="Digite uma mensagem"
+                onFocus={() => {
+                  setTimeout(() => {
+                    inputRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                  }, 50);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();

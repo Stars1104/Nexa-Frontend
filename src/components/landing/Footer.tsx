@@ -1,5 +1,6 @@
 import LightLogo from "../../assets/light-logo.png";
 import { Button } from "../ui/button";
+import { Link } from "react-router-dom";
 
 // Utility function for smooth scroll
 const scrollToSection = (id: string) => {
@@ -95,8 +96,13 @@ export const Footer = () => {
               <li className="cursor-pointer hover:text-primary transition-colors">
                 Termos de uso
               </li>
-              <li className="cursor-pointer hover:text-primary transition-colors">
-                Política de privacidade
+              <li>
+                <Link 
+                  to="/privacy-policy" 
+                  className="hover:text-primary transition-colors"
+                >
+                  Política de privacidade
+                </Link>
               </li>
               <li className="cursor-pointer hover:text-primary transition-colors">
                 Política de cookies
