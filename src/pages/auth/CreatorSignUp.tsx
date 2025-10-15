@@ -21,6 +21,7 @@ import GoogleOAuthButton from "../../components/GoogleOAuthButton";
 import { AccountRestorationModal } from "../../components/AccountRestorationModal";
 import { Helmet } from "react-helmet-async";
 import { loginSuccess } from "../../store/slices/authSlice";
+import {phone} from 'phone'
 
 interface SignUpFormData {
   name: string;
@@ -43,6 +44,7 @@ const CreatorSignUp = () => {
   const [authType, setAuthType] = useState("signin");
   const [isNewRegistration, setIsNewRegistration] = useState(false);
   const [showRestorationModal, setShowRestorationModal] = useState(false);
+  const [whatsapp, setWhatsapp] = useState("")
   const [restorationData, setRestorationData] = useState<any>(null);
   const { role } = useParams<{ role: string }>();
   const navigate = useNavigate();
@@ -150,11 +152,16 @@ const CreatorSignUp = () => {
       if (isSigningUp) {
         return;
       }
-
+      console.log(data.whatsapp)
+      if (phone(data.whatsapp).isValid){
+        setWhatsapp(phone(data.whatsapp).phoneNumber);
+      }else{
+        toast.error("you must re-enter Whatsapp number")
+      }
       const signupData = {
         name: data.name,
         email: data.email,
-        whatsapp: data.whatsapp,
+        whatsapp:whatsapp ,
         password: data.password,
         password_confirmation: data.confirmPassword,
         isStudent: data.isStudent,
@@ -515,15 +522,14 @@ const CreatorSignUp = () => {
                      rules={{
                         required: "Número de WhatsApp é obrigatório",
                         pattern: {
-                                  value:  /^\+3519\d{8}$/,
-                                message: "Insira um número de WhatsApp válido (ex: +351912345678)"
-                                  }
-                          }}
+                                    value: /^\+\(\d{1,4}\)\s?\d{3}[-\s]?\d{4,5}$/,
+                                  message: "Insira um número válido (ex: +(351) 912-5678 ou +(1) 800 12345)"
+                                }}}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>WhatsApp</FormLabel>
                         <FormControl>
-                          <Input placeholder="+351912345678"  type="tel" inputMode="tel" {...field} disabled={isSigningUp} />
+                          <Input placeholder="+(351) 912-5678"  type="tel" inputMode="tel" {...field} disabled={isSigningUp} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
