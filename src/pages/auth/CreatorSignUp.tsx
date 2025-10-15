@@ -516,9 +516,10 @@ const CreatorSignUp = () => {
                      rules={{
                         required: "Número de WhatsApp é obrigatório",
                         pattern: {
-                                  value:  /^\+3519\d{8}$/,
-                                message: "Insira um número de WhatsApp válido (ex: +351912345678)"
-                                  }
+                                      value: /^\+?\(?\d{1,3}\)?[\s.-]?\d{1,4}([\s.-]?\d{2,4}){2,3}$/,
+                                      message: "Enter a valid WhatsApp number (e.g., +351 912-345-678 or (+351) 912 345 678)"
+                              }
+
                           }}
                     render={({ field }) => (
                       <FormItem>
@@ -547,7 +548,7 @@ const CreatorSignUp = () => {
                           <Input placeholder="Crie uma senha segura" type="password" {...field} disabled={isSigningUp} />
                         </FormControl>
                         <FormMessage />
-                      </FormItem>
+                      </FormItem>                                   
                     )}
                   />
                   <FormField
