@@ -21,6 +21,7 @@ import GoogleOAuthButton from "../../components/GoogleOAuthButton";
 import { AccountRestorationModal } from "../../components/AccountRestorationModal";
 import { Helmet } from "react-helmet-async";
 import { loginSuccess } from "../../store/slices/authSlice";
+import {phone} from 'phone'
 
 interface SignUpFormData {
   name: string;
@@ -43,6 +44,7 @@ const CreatorSignUp = () => {
   const [authType, setAuthType] = useState("signin");
   const [isNewRegistration, setIsNewRegistration] = useState(false);
   const [showRestorationModal, setShowRestorationModal] = useState(false);
+  const [whatsapp, setWhatsapp] = useState("")
   const [restorationData, setRestorationData] = useState<any>(null);
   const { role } = useParams<{ role: string }>();
   const navigate = useNavigate();
@@ -150,11 +152,10 @@ const CreatorSignUp = () => {
       if (isSigningUp) {
         return;
       }
-
       const signupData = {
         name: data.name,
         email: data.email,
-        whatsapp: data.whatsapp,
+        whatsapp:data.whatsapp ,
         password: data.password,
         password_confirmation: data.confirmPassword,
         isStudent: data.isStudent,
@@ -472,8 +473,8 @@ const CreatorSignUp = () => {
                         message: "Nome deve ter pelo menos 5 caracteres"
                       },
                       maxLength: {
-                        value: 40,
-                        message: "Nome deve ter menos de 40 caracteres"
+                        value: 30,
+                        message: "Nome deve ter menos de 30 caracteres"
                       },
                       pattern: {
                         value: /\s/,
@@ -516,16 +517,14 @@ const CreatorSignUp = () => {
                      rules={{
                         required: "Número de WhatsApp é obrigatório",
                         pattern: {
-                                      value: /^\+?\(?\d{1,3}\)?[\s.-]?\d{1,4}([\s.-]?\d{2,4}){2,3}$/,
-                                      message: "Enter a valid WhatsApp number (e.g., +351 912-345-678 or (+351) 912 345 678)"
-                              }
-
-                          }}
+                                    value:  /^\+(\(?\d{1,4}\)?)[\s-]?\d{2,4}[\s-]?\d{3,4}[\s-]?\d{0,4}$/,
+                                  message: "Insira um número válido (ex: +(351) 912-5678, +(351) 912 56783, +351912345678)"
+                                }}}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>WhatsApp</FormLabel>
                         <FormControl>
-                          <Input placeholder="+351912345678"  type="tel" inputMode="tel" {...field} disabled={isSigningUp} />
+                          <Input placeholder="+(351) 912-5678"  type="tel" inputMode="tel" {...field} disabled={isSigningUp} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
