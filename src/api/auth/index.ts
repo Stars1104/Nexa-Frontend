@@ -1,3 +1,4 @@
+import { persistor } from "@/store";
 import axios from "axios";
 
 const BackendURL = import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br";
@@ -237,6 +238,6 @@ export const updatePassword = async (user_id: string, newPassword: string, curre
 export const logout = async () => {
     const response = await AuthAPI.post("/api/logout");
     localStorage.clear();
-    localStorage.removeItem("persist:root");
+    persistor.purge();
 };
 

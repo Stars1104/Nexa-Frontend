@@ -26,8 +26,6 @@ const CreatorNavbar = ({ title }: CreatorNavbarProps) => {
 
   // Use profile data if available, otherwise fall back to auth user data
   const userData = profile || user;
-  console.log("userData=======", userData);
-
   // Handle logout
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();

@@ -292,7 +292,6 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                 const formData = new FormData();
                 formData.append('room_id', roomId);
                 formData.append('file', file);
-                
                 // Include text message if provided
                 if (message && message.trim()) {
                     formData.append('message', message.trim());
@@ -303,7 +302,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                         'Content-Type': 'multipart/form-data',
                     },
                 });
-
+                    console.log("I am in here=====>",response.data.data);
                 messageData = response.data.data;
             } else {
                 // Send text message using apiClient

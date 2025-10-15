@@ -14,6 +14,10 @@ export interface CheckRemovedAccountRequest {
   email: string;
 }
 
+export interface CheckAccountRequest {
+  email: string;
+}
+
 export interface RemoveAccountResponse {
   success: boolean;
   message: string;
@@ -42,7 +46,10 @@ export interface CheckRemovedAccountResponse {
   deleted_at: string;
   message?: string;
 }
-
+export interface CheckAccountResponse {
+  success: boolean;
+  message?: string;
+}
 export const accountApi = {
   /**
    * Remove user account
@@ -67,4 +74,11 @@ export const accountApi = {
     const response = await apiClient.post('/account/check-removed', data);
     return response.data;
   },
+  /**
+   * Check if email exists in accounts
+   */
+  checkAccount: async (data: CheckAccountRequest): Promise<CheckAccountResponse> => {
+    const response = await apiClient.post('/account/checked', data);
+    return response.data;
+  }
 };
