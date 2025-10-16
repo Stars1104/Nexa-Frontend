@@ -36,6 +36,7 @@
     "clsx": "^2.0.0",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.6.0",
+    "intl-tel-input": "^25.11.3",
     "lovable-tagger": "^1.1.8",
     "lucide-react": "^0.294.0",
     "pagar": "^0.0.0",

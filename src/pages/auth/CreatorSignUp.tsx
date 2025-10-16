@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import intlTelInput from "intl-tel-input";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "../../components/ui/form";
@@ -18,10 +19,8 @@ import { clearError, resetLoadingStates } from "../../store/slices/authSlice";
 import { toast } from "sonner";
 import { useRoleNavigation } from "../../hooks/useRoleNavigation";
 import GoogleOAuthButton from "../../components/GoogleOAuthButton";
-import { AccountRestorationModal } from "../../components/AccountRestorationModal";
 import { Helmet } from "react-helmet-async";
 import { loginSuccess } from "../../store/slices/authSlice";
-import {phone} from 'phone'
 
 interface SignUpFormData {
   name: string;
@@ -37,15 +36,15 @@ interface SignInFormData {
   password: string;
 }
 
+// Validação simples E.164 como fallback
+const E164_REGEX = /^\+?[1-9]\d{1,14}$/;
+
 const CreatorSignUp = () => {
   const { theme } = useTheme();
   const systemTheme = useSystemTheme();
   const isDarkMode = theme === "dark" || (theme === "system" && systemTheme);
   const [authType, setAuthType] = useState("signin");
   const [isNewRegistration, setIsNewRegistration] = useState(false);
-  const [showRestorationModal, setShowRestorationModal] = useState(false);
-  const [whatsapp, setWhatsapp] = useState("")
-  const [restorationData, setRestorationData] = useState<any>(null);
   const { role } = useParams<{ role: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -69,6 +68,26 @@ const CreatorSignUp = () => {
     },
     mode: "onChange",
   });
+
+  // intl-tel-input: ref para o input e instância para formatação/validação
+  const whatsappInputRef = useRef<HTMLInputElement | null>(null);
+  const itiRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!whatsappInputRef.current) return;
+    // Inicializa com BR e separador nacional, mantendo UI atual do Input
+    itiRef.current = intlTelInput(whatsappInputRef.current, {
+      initialCountry: "br",
+      nationalMode: true,
+      allowDropdown: false,
+      separateDialCode: false,
+      autoPlaceholder: "off",
+    });
+    return () => {
+      // Algumas versões expõem destroy
+      try { itiRef.current?.destroy?.(); } catch {}
+    };
+  }, []);
 
   useEffect(() => {
     if (loginType === "login") setAuthType("signin");
@@ -152,10 +171,21 @@ const CreatorSignUp = () => {
       if (isSigningUp) {
         return;
       }
+
+      // Obtém valor E.164 do intl-tel-input se disponível
+      const e164 = itiRef.current?.getNumber ? itiRef.current.getNumber() : data.whatsapp;
+      if (data.whatsapp) {
+        const isValid = itiRef.current?.isValidNumber ? itiRef.current.isValidNumber() : E164_REGEX.test(e164 || "");
+        if (!isValid) {
+          toast.error("Insira um WhatsApp válido. Ex.: +55 11 99999-9999");
+          return;
+        }
+      }
+
       const signupData = {
         name: data.name,
         email: data.email,
-        whatsapp:data.whatsapp ,
+        whatsapp: e164 || data.whatsapp,
         password: data.password,
         password_confirmation: data.confirmPassword,
         isStudent: data.isStudent,
@@ -221,17 +251,11 @@ const CreatorSignUp = () => {
         const errorMessage = error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
         toast.error(errorMessage);
       }
-      // Handle account restoration case
-      else if (error.type === 'account_removed_restorable') {
-        setRestorationData(error);
-        return;
-      }
       // Handle other errors
       else {
         const errorMessage = error.response?.data?.message || error.message || "Erro ao criar conta. Tente novamente.";
         toast.error(errorMessage);
       }
-      toast.error('Sign up error:', error);
       console.error('Sign up error:', error);
     }
   };
@@ -262,9 +286,6 @@ const CreatorSignUp = () => {
         // Navigation will be handled by useEffect after successful login
       }
     } catch (error: any) {
-      if(error === "account_removed_restorable"){
-          setShowRestorationModal(true)
-      }
       // Check if component is still mounted before updating state
       if (!isMountedRef.current) return;
       
@@ -291,12 +312,6 @@ const CreatorSignUp = () => {
       else if (error.response?.status === 422) {
         const errorMessage = error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
         toast.error(errorMessage);
-      }
-      // Handle account restoration case
-      else if ( error.type === 'account_removed_restorable') {
-        setRestorationData(error);
-        setShowRestorationModal(true);
-        return;
       }
       // Handle other errors
       else {
@@ -474,7 +489,7 @@ const CreatorSignUp = () => {
                       },
                       maxLength: {
                         value: 30,
-                        message: "Nome deve ter menos de 30 caracteres"
+                        message: "Nome deve ter menos de 15 caracteres"
                       },
                       pattern: {
                         value: /\s/,
@@ -514,17 +529,30 @@ const CreatorSignUp = () => {
                   <FormField
                     control={form.control}
                     name="whatsapp"
-                     rules={{
-                        required: "Número de WhatsApp é obrigatório",
-                        pattern: {
-                                    value:  /^\+(\(?\d{1,4}\)?)[\s-]?\d{2,4}[\s-]?\d{3,4}[\s-]?\d{0,4}$/,
-                                  message: "Insira um número válido (ex: +(351) 912-5678, +(351) 912 56783, +351912345678)"
-                                }}}
+                    rules={{
+                      validate: (value) => {
+                        if (!value) return true;
+                        const e164Try = itiRef.current?.getNumber ? itiRef.current.getNumber() : value;
+                        const isValid = itiRef.current?.isValidNumber ? itiRef.current.isValidNumber() : E164_REGEX.test(e164Try || "");
+                        return isValid || "Insira um WhatsApp válido. Ex.: +55 11 99999-9999";
+                      }
+                    }}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>WhatsApp</FormLabel>
                         <FormControl>
-                          <Input placeholder="+(351) 912-5678"  type="tel" inputMode="tel" {...field} disabled={isSigningUp} />
+                          <Input
+                            placeholder="(00) 00000-0000"
+                            {...field}
+                            // mantém UI e classes originais; conecta ref para intl-tel-input
+                            ref={(el) => {
+                              whatsappInputRef.current = el;
+                              // react-hook-form ref forwarding
+                              if (typeof field.ref === 'function') field.ref(el);
+                              else (field as any).ref = el;
+                            }}
+                            disabled={isSigningUp}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -547,7 +575,7 @@ const CreatorSignUp = () => {
                           <Input placeholder="Crie uma senha segura" type="password" {...field} disabled={isSigningUp} />
                         </FormControl>
                         <FormMessage />
-                      </FormItem>                                   
+                      </FormItem>
                     )}
                   />
                   <FormField
@@ -633,21 +661,6 @@ const CreatorSignUp = () => {
           )}
         </div>
       </div>
-
-      {/* Account Restoration Modal */}
-      <AccountRestorationModal
-        isOpen={showRestorationModal}
-        onClose={() => {
-          setShowRestorationModal(false);
-          setRestorationData(null);
-        }}
-        email={restorationData?.can_restore ? form.getValues('email') : undefined}
-        onSuccess={() => {
-          setShowRestorationModal(false);
-          setRestorationData(null);
-          // Navigation will be handled by the modal
-        }}
-      />
     </>
   );
 };
