@@ -41,7 +41,8 @@ export interface Campaign {
   briefing: string;
   budget: number;
   remunerationType?: 'paga' | 'permuta';
-
+  logo?: string;
+  image_url?: string;
   deadline: string;
   target_states: string[];
   requirements: string[];
@@ -57,7 +58,6 @@ export interface Campaign {
   status: 'pending' | 'approved' | 'rejected' | 'archived';
   created_at: string;
   approvedCreators: number;
-  logo?: string;
   attachments?: string[];
   is_featured?: boolean;
   is_favorited?: boolean;
@@ -499,7 +499,10 @@ const campaignSlice = createSlice({
       })
       .addCase(applyToCampaign.fulfilled, (state, action) => {
         state.isLoading = false;
-        // Handle successful application
+        // Add the new application to creatorApplications
+        if (action.payload && !state.creatorApplications.some(app => app.id === action.payload.id)) {
+          state.creatorApplications.push(action.payload);
+        }
       })
       .addCase(applyToCampaign.rejected, (state, action) => {
         state.isLoading = false;
@@ -776,9 +779,14 @@ const campaignSlice = createSlice({
         state.userCampaigns = state.userCampaigns.map(campaign =>
           campaign.id === approvedCampaign.id ? { ...campaign, status: 'approved' } : campaign
         );
-        state.approvedCampaigns = state.approvedCampaigns.map(campaign =>
-          campaign.id === approvedCampaign.id ? { ...campaign, status: 'approved' } : campaign
-        );
+        
+        // Add the approved campaign to approvedCampaigns if it's not already there
+        const existingIndex = state.approvedCampaigns.findIndex(campaign => campaign.id === approvedCampaign.id);
+        if (existingIndex >= 0) {
+          state.approvedCampaigns[existingIndex] = { ...approvedCampaign, status: 'approved' };
+        } else {
+          state.approvedCampaigns = [...state.approvedCampaigns, { ...approvedCampaign, status: 'approved' }];
+        }
       })
       .addCase(approveCampaign.rejected, (state, action) => {
         state.isLoading = false;

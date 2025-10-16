@@ -1,82 +1,261 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '../../components/ui/alert';
 import { ThemeToggle } from '../../components/ThemeToggle';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useRoleNavigation } from '../../hooks/useRoleNavigation';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '../../store';
+import { toast } from 'sonner';
+import { Helmet } from 'react-helmet-async';
 
 const initialState = {
   fullName: '',
-  academicEmail: '',
+  purchaseEmail: '',
   cpf: '',
-  enrollment: '',
-  dob: '',
   courseName: '',
-  institution: '',
 };
 
-export default function StudentVerify() {
+interface StudentVerifyProps {
+  setComponent?: (component: string) => void;
+}
+
+export default function StudentVerify({ setComponent }: StudentVerifyProps = {}) {
   const [form, setForm] = useState(initialState);
-  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { navigateToRoleDashboard } = useRoleNavigation();
+  const dispatch = useDispatch<AppDispatch>();
+  const { user } = useSelector((state: RootState) => state.auth);
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Check if we're inside the Creator dashboard
+  const isInsideCreatorDashboard = location.pathname === '/creator' && setComponent;
+  
+  // Check if user is already verified as a student
+  useEffect(() => {
+    if (user?.student_verified) {
+      toast.success('Você já está verificado como aluno!');
+      if (isInsideCreatorDashboard) {
+        // If inside Creator dashboard, just show success message
+        return;
+      } else {
+        // If on standalone page, redirect to dashboard
+        setTimeout(() => {
+          navigateToRoleDashboard('creator');
+        }, 2000);
+      }
+    }
+  }, [user, navigateToRoleDashboard, isInsideCreatorDashboard]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    // Clear error when user starts typing
+    if (error) setError(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSkip = () => {
+    toast.info('Pulando verificação de aluno. Você pode verificar seu status posteriormente no dashboard.');
+    if (isInsideCreatorDashboard) {
+      // If inside Creator dashboard, navigate to main dashboard
+      setComponent?.('Painel');
+    } else {
+      // If on standalone page, redirect to dashboard
+      navigateToRoleDashboard('creator');
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // After student verification, redirect to creator dashboard
-    navigateToRoleDashboard('creator');
-    // Handle form submission logic here
+    
+    if (isSubmitting) return;
+    
+    // Check if user is already verified
+    if (user?.student_verified) {
+      toast.info('Você já está verificado como aluno!');
+      if (isInsideCreatorDashboard) {
+        setComponent?.('Painel');
+      } else {
+        navigateToRoleDashboard('creator');
+      }
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      // Validate required fields
+      const requiredFields = ['fullName', 'purchaseEmail', 'cpf', 'courseName'];
+      const missingFields = requiredFields.filter(field => !form[field as keyof typeof form].trim());
+      
+      if (missingFields.length > 0) {
+        setError('Por favor, preencha todos os campos obrigatórios.');
+        return;
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(form.purchaseEmail)) {
+        setError('Por favor, insira um e-mail de compra válido.');
+        return;
+      }
+
+      // Validate CPF format (basic validation)
+      const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{11}$/;
+      if (!cpfRegex.test(form.cpf.replace(/\D/g, ''))) {
+        setError('Por favor, insira um CPF válido.');
+        return;
+      }
+
+
+      // Prepare submission data
+      const submissionData = {
+        full_name: form.fullName,
+        purchase_email: form.purchaseEmail,
+        cpf: form.cpf.replace(/\D/g, ''), // Remove non-digits
+        course_name: form.courseName,
+      };
+
+      // Call API to submit student verification
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/api/student/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(submissionData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Erro ao verificar status de aluno');
+      }
+
+      if (result.success) {
+        toast.success('Verificação de aluno enviada com sucesso! Você receberá acesso gratuito por 1 mês.');
+        
+        // Update user state to reflect student verification
+        if (user) {
+          dispatch({
+            type: 'auth/updateUser',
+            payload: {
+              student_verified: true,
+              student_expires_at: result.student_expires_at,
+              free_trial_expires_at: result.free_trial_expires_at,
+            }
+          });
+        }
+
+        // Navigate to creator dashboard
+        if (isInsideCreatorDashboard) {
+          setComponent?.('Painel');
+        } else {
+          navigateToRoleDashboard('creator');
+        }
+      } else {
+        throw new Error(result.message || 'Falha na verificação');
+      }
+
+    } catch (err: any) {
+      console.error('Student verification error:', err);
+      setError(err.message || 'Erro ao verificar status de aluno. Tente novamente.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const canonical = typeof window !== "undefined" ? window.location.href : "";
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted py-8 px-2 dark:bg-background relative">
-        <div className="absolute top-6 right-6">
-          <ThemeToggle />
-        </div>
-      <div className="w-full max-w-2xl bg-background rounded-xl shadow-lg p-8 md:p-12 relative border">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">Verify your student status for free access</h1>
-        <p className="text-muted-foreground mb-6 max-w-2xl text-sm md:text-base">
-          Fill in the information below to validate your access as a student of the course. This guarantees access free for up to 12 months.
-        </p>
-        <Alert className="mb-8 flex flex-col md:flex-row items-start md:items-center gap-2 bg-[#FAF5FF] dark:bg-[#30253d]">
-          <div className="flex-1">
-            <AlertTitle className="font-semibold text-primary text-sm md:text-base">
-              <span className="mr-2 text-[#A873E9]">ⓘ</span>Course students receive 100% free access!
-            </AlertTitle>
+    <>
+      {!isInsideCreatorDashboard && (
+        <Helmet>
+          <title>Nexa - Verificação de aluno</title>
+          <meta name="description" content="Verifique seu status de aluno para obter acesso gratuito à plataforma Nexa." />
+          {canonical && <link rel="canonical" href={canonical} />}
+          <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
+        </Helmet>
+      )}
+      <div className={`${isInsideCreatorDashboard ? 'p-6 w-full min-h-[92vh] flex justify-center items-center' : 'min-h-screen flex items-center justify-center bg-muted py-8 px-2 dark:bg-background relative'}`}>
+        {!isInsideCreatorDashboard && (
+          <div className="absolute top-6 right-6">
+            <ThemeToggle />
           </div>
-          <AlertDescription className="text-xs md:text-sm text-muted-foreground">
-            Don't miss it.
-          </AlertDescription>
-        </Alert>
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        )}
+        <div className={`w-full max-w-2xl bg-background rounded-xl shadow-lg relative border ${isInsideCreatorDashboard ? 'p-6' : 'p-8 md:p-12'}`}>
+          <h1 className={`font-bold mb-2 text-foreground ${isInsideCreatorDashboard ? 'text-xl' : 'text-2xl md:text-3xl'}`}>
+          Preencha os dados se você for aluna do Build Creators
+          </h1>
+          <p className="text-muted-foreground mb-6 max-w-2xl text-sm md:text-base">
+            {user?.student_verified 
+              ? "Você já foi verificado como aluno! Redirecionando para o painel..."
+              : "Preencha suas informações educacionais abaixo para verificar seu status de aluno e obter acesso gratuito por até 12 meses."
+            }
+          </p>
+          <Alert className="mb-8 flex flex-col md:flex-row items-start md:items-center gap-2 bg-[#FAF5FF] dark:bg-[#30253d]">
+            <div className="flex-1">
+              <AlertTitle className="font-semibold text-primary text-sm md:text-base">
+                <span className="mr-2 text-[#A873E9]">ⓘ</span>Os alunos do curso recebem acesso 100% gratuito!
+              </AlertTitle>
+            </div>
+            <AlertDescription className="text-xs md:text-sm text-muted-foreground">
+              Não perca.
+            </AlertDescription>
+          </Alert>
+
+          {/* Success Alert for Already Verified Students */}
+          {user?.student_verified && (
+            <Alert className="mb-6 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
+              <AlertDescription className="text-green-600 dark:text-green-400">
+                ✅ Você já está verificado como aluno! Redirecionando para o dashboard...
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Error Alert */}
+          {error && (
+            <Alert className="mb-6 border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+              <AlertDescription className="text-red-600 dark:text-red-400">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <form onSubmit={handleSubmit} className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${user?.student_verified ? 'opacity-50 pointer-events-none' : ''}`}>
           <div className="flex flex-col gap-1">
             <label htmlFor="fullName" className="text-xs text-muted-foreground">Nome completo</label>
-            <Input
-              id="fullName"
-              name="fullName"
-              type="text"
-              placeholder="Your name as it appears on the course"
-              value={form.fullName}
-              onChange={handleChange}
-              required
-              autoComplete="name"
-            />
+              <Input
+                id="fullName"
+                name="fullName"
+                type="text"
+                placeholder="Your name as it appears on the course"
+                value={form.fullName}
+                onChange={handleChange}
+                required
+                autoComplete="name"
+                disabled={isSubmitting}
+              />
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="academicEmail" className="text-xs text-muted-foreground">Academic email (course)</label>
+            <label htmlFor="purchaseEmail" className="text-xs text-muted-foreground">E-mail de compra</label>
             <Input
-              id="academicEmail"
-              name="academicEmail"
+              id="purchaseEmail"
+              name="purchaseEmail"
               type="email"
               placeholder="email@exemplo.com"
-              value={form.academicEmail}
+              value={form.purchaseEmail}
               onChange={handleChange}
               required
               autoComplete="email"
+              disabled={isSubmitting}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -90,67 +269,51 @@ export default function StudentVerify() {
               onChange={handleChange}
               required
               autoComplete="off"
+              disabled={isSubmitting}
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="enrollment" className="text-xs text-muted-foreground">Enrollment / RA</label>
-            <Input
-              id="enrollment"
-              name="enrollment"
-              type="text"
-              placeholder="Student registration number"
-              value={form.enrollment}
-              onChange={handleChange}
-              required
-              autoComplete="off"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="dob" className="text-xs text-muted-foreground">Date of birth</label>
-            <Input
-              id="dob"
-              name="dob"
-              type="text"
-              placeholder="DD/MM/AAAA"
-              value={form.dob}
-              onChange={handleChange}
-              required
-              autoComplete="bday"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="courseName" className="text-xs text-muted-foreground">Course name</label>
+            <label htmlFor="courseName" className="text-xs text-muted-foreground">Nome do curso</label>
             <Input
               id="courseName"
               name="courseName"
               type="text"
-              placeholder="Digital Marketing Course, for example"
+              placeholder="Nome do curso que você comprou"
               value={form.courseName}
               onChange={handleChange}
               required
               autoComplete="off"
+              disabled={isSubmitting}
             />
           </div>
-          <div className="md:col-span-2 flex flex-col gap-1">
-            <label htmlFor="institution" className="text-xs text-muted-foreground">Nome da instituição</label>
-            <Input
-              id="institution"
-              name="institution"
-              type="text"
-              placeholder="Nome completo da escola/plataforma"
-              value={form.institution}
-              onChange={handleChange}
-              required
-              autoComplete="organization"
-            />
-          </div>
-          <div className="md:col-span-2 mt-4">
-            <Button type="submit" className="w-full md:w-auto bg-[#E91E63] text-white font-semibold px-6 py-2 rounded-lg shadow hover:bg-pink-600">
-              Submit for verification
+          <div className="md:col-span-2 mt-4 flex flex-col sm:flex-row gap-3">
+            <Button 
+              type="submit" 
+              className="w-full sm:w-auto bg-[#E91E63] text-white font-semibold px-6 py-2 rounded-lg shadow hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Verificando...
+                </div>
+              ) : (
+                'Enviar para verificação'
+              )}
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={handleSkip}
+              className="w-full sm:w-auto font-semibold px-6 py-2 rounded-lg border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+              disabled={isSubmitting}
+            >
+              Pular por enquanto
             </Button>
           </div>
         </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

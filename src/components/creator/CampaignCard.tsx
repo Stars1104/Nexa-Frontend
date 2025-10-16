@@ -178,16 +178,48 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                 {/* States badges */}
                 {Array.isArray(campaign.target_states) && campaign.target_states.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-3">
-                        {campaign.target_states.map((uf: string, i: number) => (
+                        {campaign.target_states.length === 27 ? (
+                            // Show "All states" when all 27 Brazilian states are selected
                             <Badge
-                                key={uf}
                                 variant="secondary"
-                                className={`text-xs ${statesColors[i % statesColors.length]}`}
+                                className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
                             >
                                 <MapPin className="h-3 w-3 mr-1" />
-                                {uf}
+                                Todos os estados
                             </Badge>
-                        ))}
+                        ) : campaign.target_states.length > 5 ? (
+                            // Show first few states + count when more than 5 states
+                            <>
+                                {campaign.target_states.slice(0, 3).map((uf: string, i: number) => (
+                                    <Badge
+                                        key={uf}
+                                        variant="secondary"
+                                        className={`text-xs ${statesColors[i % statesColors.length]}`}
+                                    >
+                                        <MapPin className="h-3 w-3 mr-1" />
+                                        {uf}
+                                    </Badge>
+                                ))}
+                                <Badge
+                                    variant="outline"
+                                    className="text-xs text-muted-foreground"
+                                >
+                                    +{campaign.target_states.length - 3} mais
+                                </Badge>
+                            </>
+                        ) : (
+                            // Show all states when 5 or fewer
+                            campaign.target_states.map((uf: string, i: number) => (
+                                <Badge
+                                    key={uf}
+                                    variant="secondary"
+                                    className={`text-xs ${statesColors[i % statesColors.length]}`}
+                                >
+                                    <MapPin className="h-3 w-3 mr-1" />
+                                    {uf}
+                                </Badge>
+                            ))
+                        )}
                     </div>
                 )}
 

@@ -164,12 +164,12 @@ const portfolioSlice = createSlice({
         state.isLoading = false;
         state.portfolio = action.payload.portfolio;
         state.stats = {
-          total_items: action.payload.items_count,
-          images_count: action.payload.images_count,
-          videos_count: action.payload.videos_count,
-          is_complete: action.payload.is_complete,
-          has_minimum_items: action.payload.items_count >= 3,
-          profile_complete: !!(action.payload.portfolio.title && action.payload.portfolio.bio),
+          total_items: action.payload.items_count || 0,
+          images_count: action.payload.images_count || 0,
+          videos_count: action.payload.videos_count || 0,
+          is_complete: action.payload.is_complete || false,
+          has_minimum_items: (action.payload.items_count || 0) >= 3,
+          profile_complete: !!(action.payload.portfolio?.title && action.payload.portfolio?.bio),
         };
       })
       .addCase(fetchPortfolio.rejected, (state, action) => {
@@ -185,8 +185,12 @@ const portfolioSlice = createSlice({
       })
       .addCase(updatePortfolioProfile.fulfilled, (state, action) => {
         state.isLoading = false;
+        // Always update the portfolio state, even if it was null before
         if (state.portfolio) {
           state.portfolio = { ...state.portfolio, ...action.payload };
+        } else {
+          // If portfolio was null, create a new one with the updated data
+          state.portfolio = action.payload;
         }
       })
       .addCase(updatePortfolioProfile.rejected, (state, action) => {
@@ -206,10 +210,10 @@ const portfolioSlice = createSlice({
         state.uploadProgress = 100;
         if (state.portfolio) {
           state.portfolio.items = state.portfolio.items || [];
-          state.portfolio.items.push(...action.payload.items);
+          state.portfolio.items.push(...(action.payload.items || []));
         }
         if (state.stats) {
-          state.stats.total_items = action.payload.total_items;
+          state.stats.total_items = action.payload.total_items || 0;
         }
       })
       .addCase(uploadPortfolioMedia.rejected, (state, action) => {

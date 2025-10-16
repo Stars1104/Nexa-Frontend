@@ -47,6 +47,7 @@ export default function Reviews({
       const reviewsData = response.data.reviews.data.slice(0, maxReviews);
       const statsData = response.data.stats;
 
+
       setReviews(reviewsData);
       setStats(statsData);
     } catch (error: any) {

@@ -4,15 +4,18 @@ import {
   fetchUserProfile,
   updateUserProfile,
 } from "../../store/thunks/userThunks";
+import { clearProfile } from "../../store/slices/userSlice";
 import { updateUserPassword } from "../../store/thunks/authThunks";
-import { Crown, Key, AlertTriangle, DollarSign, Wallet, TrendingUp, Clock } from "lucide-react";
+import { Crown, Key, AlertTriangle, DollarSign, Wallet, TrendingUp, Clock, RefreshCw, Trash2 } from "lucide-react";
 import { useSafeToast } from "../../hooks/useSafeToast";
 import EditProfile from "./EditProfile";
 import UpdatePasswordModal from "../ui/UpdatePasswordModal";
 import Reviews from "../Reviews";
 import WithdrawalModal from "./WithdrawalModal";
+import { AccountRemovalModal } from "../AccountRemovalModal";
 import { hiringApi, CreatorBalance as CreatorBalanceType } from "@/api/hiring";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getAvatarUrl } from "@/lib/utils";
@@ -25,13 +28,96 @@ const getInitials = (name: string) => {
     .toUpperCase();
 };
 
+// Language mapping for proper display
+const LANGUAGE_MAP: { [key: string]: string } = {
+  'pt': 'Português',
+  'en': 'Inglês',
+  'es': 'Espanhol',
+  'fr': 'Francês',
+  'de': 'Alemão',
+  'it': 'Italiano',
+  'ja': 'Japonês',
+  'zh': 'Chinês',
+  'ko': 'Coreano',
+  'ru': 'Russo',
+  'ar': 'Árabe',
+  'hi': 'Hindi',
+  'nl': 'Holandês',
+  'sv': 'Sueco',
+  'no': 'Norueguês',
+  'da': 'Dinamarquês',
+  'fi': 'Finlandês',
+  'pl': 'Polonês',
+  'cs': 'Tcheco',
+  'hu': 'Húngaro',
+  'ro': 'Romeno',
+  'bg': 'Búlgaro',
+  'hr': 'Croata',
+  'sr': 'Sérvio',
+  'sk': 'Eslovaco',
+  'sl': 'Esloveno',
+  'el': 'Grego',
+  'tr': 'Turco',
+  'he': 'Hebraico',
+  'fa': 'Persa',
+  'ur': 'Urdu',
+  'bn': 'Bengali',
+  'ta': 'Tamil',
+  'te': 'Telugu',
+  'mr': 'Marathi',
+  'gu': 'Gujarati',
+  'pa': 'Punjabi',
+  // Also handle full names in case they're already stored correctly
+  'Português': 'Português',
+  'Inglês': 'Inglês',
+  'Espanhol': 'Espanhol',
+  'Francês': 'Francês',
+  'Alemão': 'Alemão',
+  'Italiano': 'Italiano',
+  'Japonês': 'Japonês',
+  'Chinês': 'Chinês',
+  'Coreano': 'Coreano',
+  'Russo': 'Russo',
+  'Árabe': 'Árabe',
+  'Hindi': 'Hindi',
+  'Holandês': 'Holandês',
+  'Sueco': 'Sueco',
+  'Norueguês': 'Norueguês',
+  'Dinamarquês': 'Dinamarquês',
+  'Finlandês': 'Finlandês',
+  'Polonês': 'Polonês',
+  'Tcheco': 'Tcheco',
+  'Húngaro': 'Húngaro',
+  'Romeno': 'Romeno',
+  'Búlgaro': 'Búlgaro',
+  'Croata': 'Croata',
+  'Sérvio': 'Sérvio',
+  'Eslovaco': 'Eslovaco',
+  'Esloveno': 'Esloveno',
+  'Grego': 'Grego',
+  'Turco': 'Turco',
+  'Hebraico': 'Hebraico',
+  'Persa': 'Persa',
+  'Urdu': 'Urdu',
+  'Bengali': 'Bengali',
+  'Tamil': 'Tamil',
+  'Telugu': 'Telugu',
+  'Marathi': 'Marathi',
+  'Gujarati': 'Gujarati',
+  'Punjabi': 'Punjabi',
+  'Outros': 'Outros'
+};
+
+const getLanguageDisplayName = (language: string): string => {
+  return LANGUAGE_MAP[language] || language;
+};
+
 // Fallback profile data if no user data is available
 const defaultProfile = {
   name: "Usuário",
   email: "usuario@exemplo.com",
   state: "Não especificado",
   role: "Influenciador",
-  languages: ["Português"],
   gender: "Não especificado",
   categories: ["Geral"],
   image: null,
@@ -44,7 +130,8 @@ const defaultProfile = {
   youtube_channel: null,
   facebook_page: null,
   twitter_handle: null,
-  industry: null,
+  niche: "Não informado",
+  languages: [],
 };
 
 export const CreatorProfile = () => {
@@ -56,9 +143,9 @@ export const CreatorProfile = () => {
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [balance, setBalance] = useState<CreatorBalanceType | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
+  const [showAccountRemovalModal, setShowAccountRemovalModal] = useState(false);
 
   // Get profile data from Redux store
   const { profile, isLoading, error } = useAppSelector((state) => state.user);
@@ -86,6 +173,8 @@ export const CreatorProfile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        // Clear any cached profile data first
+        dispatch(clearProfile());
         await dispatch(fetchUserProfile()).unwrap();
       } catch (error: any) {
         console.error("Error fetching profile:", error);
@@ -112,7 +201,6 @@ export const CreatorProfile = () => {
     email: profile?.email || user?.email || defaultProfile.email,
     state: profile?.location || profile?.state || defaultProfile.state,
     role: profile?.role || user?.role || defaultProfile.role,
-    languages: profile?.languages || defaultProfile.languages,
     gender: profile?.gender || defaultProfile.gender,
     categories: profile?.categories || defaultProfile.categories,
     image: profile?.avatar || profile?.avatar_url || null,
@@ -126,7 +214,8 @@ export const CreatorProfile = () => {
     youtube_channel: profile?.youtube_channel || user?.youtube_channel || defaultProfile.youtube_channel,
     facebook_page: profile?.facebook_page || user?.facebook_page || defaultProfile.facebook_page,
     twitter_handle: profile?.twitter_handle || user?.twitter_handle || defaultProfile.twitter_handle,
-    industry: profile?.industry || user?.industry || defaultProfile.industry,
+    niche: profile?.niche || user?.niche || profile?.industry || user?.industry || "Não informado",
+    languages: profile?.languages || user?.languages || defaultProfile.languages,
   };
 
   const handleSaveProfile = useCallback(
@@ -148,7 +237,9 @@ export const CreatorProfile = () => {
           youtube_channel: updatedProfile.youtube_channel,
           facebook_page: updatedProfile.facebook_page,
           twitter_handle: updatedProfile.twitter_handle,
-          industry: updatedProfile.industry,
+          niche: updatedProfile.niche,
+          industry: updatedProfile.niche, // Send niche value to both fields for compatibility
+          languages: updatedProfile.languages,
         };
 
         // Avatar: backend expects 'avatar' (file), not 'avatar_url'
@@ -156,15 +247,6 @@ export const CreatorProfile = () => {
           profileData.avatar = updatedProfile.image;
         }
 
-        // Languages: backend expects JSON string
-        if (Array.isArray(updatedProfile.languages)) {
-          profileData.languages = JSON.stringify(updatedProfile.languages);
-        } else if (typeof updatedProfile.languages === "string") {
-          // If it's a comma-separated string, split and stringify
-          profileData.languages = JSON.stringify(
-            updatedProfile.languages.split(",").map((l: string) => l.trim())
-          );
-        }
 
         // Update profile
         await dispatch(updateUserProfile(profileData)).unwrap();
@@ -209,12 +291,23 @@ export const CreatorProfile = () => {
       } catch (error: any) {
         console.error("Password update failed:", error);
         safeToast.error(error?.message || error || "Falha ao atualizar senha");
-      } finally {
-        setIsPasswordLoading(false);
-      }
-    },
-    [dispatch, user?.id]
-  );
+    } finally {
+      setIsPasswordLoading(false);
+    }
+  },
+  [dispatch, user?.id]
+);
+
+const handleRefreshProfile = useCallback(async () => {
+  try {
+    dispatch(clearProfile());
+    await dispatch(fetchUserProfile()).unwrap();
+    safeToast.success("Perfil atualizado!");
+  } catch (error: any) {
+    console.error("Profile refresh failed:", error);
+    safeToast.error("Falha ao atualizar perfil");
+  }
+}, [dispatch]);
 
   const handleWithdrawalCreated = () => {
     setShowWithdrawalModal(false);
@@ -245,7 +338,6 @@ export const CreatorProfile = () => {
           email: displayProfile.email,
           state: displayProfile.state,
           role: displayProfile.role,
-          languages: displayProfile.languages,
           gender: displayProfile.gender,
           categories: displayProfile.categories,
           image: displayProfile.image,
@@ -256,7 +348,8 @@ export const CreatorProfile = () => {
           youtube_channel: displayProfile.youtube_channel,
           facebook_page: displayProfile.facebook_page,
           twitter_handle: displayProfile.twitter_handle,
-          industry: displayProfile.industry,
+          niche: displayProfile.niche,
+          languages: displayProfile.languages,
         }}
         onCancel={() => setEditMode(false)}
         onSave={handleSaveProfile}
@@ -297,34 +390,6 @@ export const CreatorProfile = () => {
   return (
     <div className="min-h-[92vh] bg-gray-50 dark:bg-[#171717] p-6">
       <div className="w-full">
-        <h1 className="text-2xl font-bold mb-1 text-gray-900 dark:text-white">
-          Minha Conta
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-          Gerencie suas informações pessoais
-        </p>
-
-        {/* Premium Subscription Alert */}
-        {!displayProfile.has_premium && (
-          <div className="mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
-              <div className="flex-1">
-                <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                  Assine o Premium
-                </h3>
-                <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                  Desbloqueie recursos premium e melhore sua experiência como
-                  criador
-                </p>
-              </div>
-              <button className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-sm font-medium rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all duration-200">
-                Fazer Upgrade
-              </button>
-            </div>
-          </div>
-        )}
-
         <div className="bg-background rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700 p-6">
           <div className="flex justify-between items-start mb-6">
             <span className="font-semibold text-base text-gray-900 dark:text-white">
@@ -360,6 +425,14 @@ export const CreatorProfile = () => {
                   />
                 </svg>
                 Editar Perfil
+              </button>
+              <button
+                className="flex items-center gap-1 text-red-500 hover:text-red-600 text-sm font-medium focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => setShowAccountRemovalModal(true)}
+                disabled={isUpdating}
+              >
+                <Trash2 className="w-4 h-4" />
+                Remover Conta
               </button>
             </div>
           </div>
@@ -436,16 +509,6 @@ export const CreatorProfile = () => {
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    Idiomas Falados
-                  </div>
-                  <div className="text-gray-900 dark:text-white font-medium">
-                    {Array.isArray(displayProfile.languages)
-                      ? displayProfile.languages.join(", ")
-                      : displayProfile.languages}
-                  </div>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
                     Gênero
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
@@ -481,10 +544,20 @@ export const CreatorProfile = () => {
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    Indústria
+                    Nicho
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
-                    {displayProfile.industry || 'Não informado'}
+                    {displayProfile.niche || 'Não informado'}
+                  </div>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
+                    Idiomas
+                  </div>
+                  <div className="text-gray-900 dark:text-white font-medium">
+                    {displayProfile.languages && displayProfile.languages.length > 0 
+                      ? displayProfile.languages.map(getLanguageDisplayName).join(', ') 
+                      : 'Não informado'}
                   </div>
                 </div>
 
@@ -504,7 +577,7 @@ export const CreatorProfile = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 text-sm">
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    Instagram
+                    INSTAGRAM
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
                     {displayProfile.instagram_handle || 'Não informado'}
@@ -512,7 +585,7 @@ export const CreatorProfile = () => {
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    TikTok
+                    TIKTOK
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
                     {displayProfile.tiktok_handle || 'Não informado'}
@@ -520,7 +593,7 @@ export const CreatorProfile = () => {
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    YouTube
+                    YOUTUBE
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
                     {displayProfile.youtube_channel || 'Não informado'}
@@ -528,7 +601,7 @@ export const CreatorProfile = () => {
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    Facebook
+                    FACEBOOK
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
                     {displayProfile.facebook_page || 'Não informado'}
@@ -536,7 +609,7 @@ export const CreatorProfile = () => {
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    Twitter
+                    TWITTER
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
                     {displayProfile.twitter_handle || 'Não informado'}
@@ -596,7 +669,7 @@ export const CreatorProfile = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {balance.balance.formatted_available_balance}
+                      {balance.balance?.formatted_available_balance || 'R$ 0,00'}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Disponível para saque
@@ -611,7 +684,7 @@ export const CreatorProfile = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {balance.earnings.formatted_this_month}
+                      {balance.earnings?.formatted_this_month || 'R$ 0,00'}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Este mês
@@ -626,7 +699,7 @@ export const CreatorProfile = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {balance.withdrawals.pending_count}
+                      {balance.withdrawals?.pending_count || 0}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Aguardando processamento
@@ -660,6 +733,12 @@ export const CreatorProfile = () => {
           onWithdrawalCreated={handleWithdrawalCreated}
         />
       )}
+
+      {/* Account Removal Modal */}
+      <AccountRemovalModal
+        isOpen={showAccountRemovalModal}
+        onClose={() => setShowAccountRemovalModal(false)}
+      />
     </div>
   );
 };

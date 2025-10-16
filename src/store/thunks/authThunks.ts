@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { loginStart, loginSuccess, loginFailure, signupStart, signupSuccess, signupFailure, logout, setEmailVerificationRequired } from '../slices/authSlice';
+import { loginStart, loginSuccess, loginFailure, signupStart, signupSuccess, signupFailure, logout } from '../slices/authSlice';
 import { signup, signin, logout as logoutAPI, updatePassword } from '../../api/auth';
 import { handleApiError } from '../../lib/api-error-handler';
 import { initiateGoogleOAuth, handleOAuthCallback } from '../../api/auth/googleAuth';
@@ -53,17 +53,6 @@ export const signupUser = createAsyncThunk(
         throw new Error(response.message || 'Falha no cadastro');
       }
 
-      // Check if email verification is required
-      if (response.requires_email_verification) {
-        dispatch(setEmailVerificationRequired(true));
-        return { requiresEmailVerification: true, user: response.user };
-      }
-      
-      // Check if email verification failed
-      if (response.email_verification_failed) {
-        return { emailVerificationFailed: true, user: response.user };
-      }
-
       const authData: AuthResponse = {
         user: response.user,
         token: response.token,
@@ -72,6 +61,20 @@ export const signupUser = createAsyncThunk(
       return authData;
     } catch (error: unknown) {
       const apiError = handleApiError(error);
+      
+      // Check if this is an account restoration case
+      if (apiError.response?.data?.can_restore) {
+        const restorationData = apiError.response.data;
+        dispatch(signupFailure('account_removed_restorable'));
+        return rejectWithValue({
+          type: 'account_removed_restorable',
+          message: restorationData.message,
+          can_restore: restorationData.can_restore,
+          removed_at: restorationData.removed_at,
+          days_since_deletion: restorationData.days_since_deletion,
+        });
+      }
+      
       dispatch(signupFailure(apiError.message));
       return rejectWithValue(apiError.message);
     }
@@ -100,6 +103,19 @@ export const loginUser = createAsyncThunk(
       return authData;
     } catch (error: unknown) {
       const apiError = handleApiError(error);
+      
+      // Check if this is an account restoration case
+      if (apiError.response?.data?.errors?.email === 'account_removed_restorable') {
+        const restorationData = apiError.response.data.errors;
+        dispatch(loginFailure('account_removed_restorable'));
+        return rejectWithValue({
+          type: 'account_removed_restorable',
+          message: 'Sua conta foi removida. Você pode restaurá-la.',
+          removed_at: restorationData.removed_at,
+          days_since_deletion: restorationData.days_since_deletion,
+        });
+      }
+      
       dispatch(loginFailure(apiError.message));
       return rejectWithValue(apiError.message);
     }
@@ -149,9 +165,21 @@ export const updateUserPassword = createAsyncThunk(
 // Async thunk for Google OAuth initiation
 export const initiateGoogleOAuthFlow = createAsyncThunk(
   'auth/googleOAuthInit',
-  async (role: 'creator' | 'brand' | undefined, { rejectWithValue }: any) => {
+  async (params: { role?: 'creator' | 'brand'; isStudent?: boolean } | 'creator' | 'brand' | undefined, { rejectWithValue }: any) => {
     try {
-      await initiateGoogleOAuth(role);
+      // Handle both old and new parameter formats for backward compatibility
+      let role: 'creator' | 'brand' | undefined;
+      let isStudent = false;
+      
+      if (typeof params === 'object' && params !== null) {
+        role = params.role;
+        isStudent = params.isStudent || false;
+      } else {
+        role = params;
+        isStudent = false;
+      }
+      
+      await initiateGoogleOAuth(role, isStudent);
     } catch (error: unknown) {
       const apiError = handleApiError(error);
       return rejectWithValue(apiError.message);

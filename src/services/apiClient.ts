@@ -1,7 +1,14 @@
 import axios from 'axios';
+import { safeGetLocalStorage } from '../utils/browserUtils';
+import { sessionManager } from '../utils/sessionManager';
+import { SESSION_CONFIG } from '../config/sessionConfig';
 
 // Utility function to handle authentication failures
 const handleAuthFailure = () => {
+    // Only run in browser environment
+    if (typeof window === 'undefined') {
+        return;
+    }
     
     // Clear all authentication data
     localStorage.removeItem('token');
@@ -98,16 +105,29 @@ export const createAuthenticatedClient = (token: string) => {
 
     // Add request interceptor for debugging
     client.interceptors.request.use((config) => {
+        // Don't set Content-Type for FormData requests - let the browser set it with boundary
+        if (config.data instanceof FormData) {
+            delete config.headers['Content-Type'];
+        }
         return config;
     });
 
     // Add response interceptor for error handling
     client.interceptors.response.use(
         (response) => {
+            // Extend session on successful API calls
+            if (SESSION_CONFIG.EXTEND_ON_API_CALLS) {
+                sessionManager.extendSession();
+            }
             return response;
         },
         async (error) => {
-            console.error('API Client: Response error:', error.response?.status, error.response?.data);
+            console.error('API Client: Response error:', {
+                status: error.response?.status,
+                data: error.response?.data,
+                url: error.config?.url,
+                method: error.config?.method
+            });
             
             // Handle 401 Unauthorized - Token expired or invalid
             if (error.response?.status === 401) {
@@ -153,23 +173,34 @@ const addAuthToken = (config: any) => {
     // Try to get token from Redux store first
     try {
         // Access Redux store directly if possible
-        const reduxState = JSON.parse(localStorage.getItem('persist:root') || '{}');
-        const authState = JSON.parse(reduxState.auth || '{}');
-        if (authState.token) {
-            token = JSON.parse(authState.token);
+        const reduxState = safeGetLocalStorage('persist:root');
+        if (reduxState) {
+            const parsedState = JSON.parse(reduxState);
+            const authState = JSON.parse(parsedState.auth || '{}');
+            if (authState.token) {
+                token = JSON.parse(authState.token);
+            }
         }
     } catch (e) {
+        // Silently continue to fallback
     }
     
     // Fallback to localStorage if Redux state doesn't have token
     if (!token) {
-        token = localStorage.getItem('token');
+        token = safeGetLocalStorage('token');
     }
     
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     } else {
+        console.warn('API Request Debug: No token found for request to', config.url);
     }
+    
+    // Don't set Content-Type for FormData requests - let the browser set it with boundary
+    if (config.data instanceof FormData) {
+        delete config.headers['Content-Type'];
+    }
+    
     return config;
 };
 
@@ -183,6 +214,10 @@ paymentClient.interceptors.request.use(addAuthToken, (error) => {
 
 // Response interceptor to handle errors
 const handleResponse = (response: any) => {
+    // Extend session on successful API calls
+    if (SESSION_CONFIG.EXTEND_ON_API_CALLS) {
+        sessionManager.extendSession();
+    }
     return response;
 };
 

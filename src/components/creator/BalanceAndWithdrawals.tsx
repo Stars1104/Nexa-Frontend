@@ -190,7 +190,7 @@ export default function BalanceAndWithdrawals() {
         </div>
         <Button 
           onClick={() => setShowWithdrawalModal(true)}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-[#e91e63] text-white hover:bg-[#e91e63]/90"
           disabled={!balance || balance.balance.available_balance <= 0}
         >
           <Wallet className="h-4 w-4" />

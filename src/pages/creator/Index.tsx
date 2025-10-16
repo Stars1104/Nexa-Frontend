@@ -22,6 +22,7 @@ import { usePremiumContext } from "../../contexts/PremiumContext";
 import { useAppSelector } from "../../store/hooks";
 import BankRegistrationDemo from "../BankRegistrationDemo";
 import GuideEmbedded from "@/components/GuideEmbedded";
+import StudentVerify from "../auth/StudentVerify";
 import { Helmet } from "react-helmet-async";
 
 function Index() {
@@ -64,8 +65,8 @@ function Index() {
         const premiumRequiredComponents = ["Painel", "Detalhes do Projeto", "Minha Aplicação", "Chat", "Notificações"];
         const isPremiumRequired = premiumRequiredComponents.includes(component || "");
         
-        // Check both PremiumContext and Redux user state for premium access
-        const userHasPremium = hasPremium || user?.has_premium;
+        // Use the premium context which includes proper student trial logic
+        const userHasPremium = hasPremium;
         
         // If premium is required and user doesn't have it, show premium guard
         if (isPremiumRequired && !userHasPremium && !premiumLoading) {
@@ -103,6 +104,8 @@ function Index() {
                 return <TransactionHistory />;
             case "Cadastro Bancário":
                 return <BankRegistrationDemo />;
+            case "Verificação de Aluno":
+                return <StudentVerify setComponent={handleComponentChange} />;
             case "Guia da Plataforma":
                 return <GuideEmbedded audience="Creator" />;
             default:

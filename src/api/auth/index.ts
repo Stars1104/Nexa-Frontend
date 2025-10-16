@@ -1,3 +1,4 @@
+import { persistor } from "@/store";
 import axios from "axios";
 
 const BackendURL = import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br";
@@ -9,6 +10,7 @@ const AuthAPI = axios.create({
         "Content-Type": "application/json",
     },
     withCredentials: false, // Don't send cookies for API requests
+    timeout: 30000, // 30 second timeout for all requests
 });
 
 // Request interceptor to add token dynamically
@@ -103,22 +105,31 @@ function getTokenFromStore(): string | null {
     }
 }
 
+// Retry utility for failed requests
+const retryRequest = async (requestFn: () => Promise<any>, maxRetries = 2, delay = 1000) => {
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            return await requestFn();
+        } catch (error: any) {
+            // Don't retry on client errors (4xx) or if it's the last attempt
+            if (error.response?.status >= 400 && error.response?.status < 500) {
+                throw error;
+            }
+            if (i === maxRetries - 1) {
+                throw error;
+            }
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+        }
+    }
+};
+
 // Signup Function
 export const signup = async (data: any) => {
-    const response = await AuthAPI.post("/api/register", data);
+    const response = await retryRequest(() => AuthAPI.post("/api/register", data));
     return response.data;
 };
 
-// Email verification functions
-export const verifyEmail = async (id: string, hash: string, signature: string, expires: string) => {
-    const response = await AuthAPI.get(`/api/verify-email/${id}/${hash}?signature=${signature}&expires=${expires}`);
-    return response.data;
-};
-
-export const resendVerificationEmail = async () => {
-    const response = await AuthAPI.post('/api/resend-verification');
-    return response.data;
-};
 
 // Health check function to test backend connectivity
 export const healthCheck = async () => {
@@ -135,11 +146,11 @@ export const healthCheck = async () => {
 // Signin Function
 export const signin = async (data: any) => {
     try {
-        const response = await AuthAPI.post("/api/login", data, {
+        const response = await retryRequest(() => AuthAPI.post("/api/login", data, {
             headers: {
                 'Content-Type': 'application/json',
             }
-        });
+        }));
         return response.data;
     } catch (error: any) {
         throw error;
@@ -176,7 +187,9 @@ export const profileUpdate = async (data: any) => {
 // Get Profile Function
 export const getProfile = async () => {
     try {
-        const response = await AuthAPI.get("/api/profile");
+        // Add cache-busting parameter to force fresh data
+        const timestamp = Date.now();
+        const response = await AuthAPI.get(`/api/profile?t=${timestamp}`);
         if (!response.data.success) {
             throw new Error(response.data.message || 'Falha ao buscar perfil');
         }
@@ -224,5 +237,7 @@ export const updatePassword = async (user_id: string, newPassword: string, curre
 // Logout Function
 export const logout = async () => {
     const response = await AuthAPI.post("/api/logout");
+    localStorage.clear();
+    persistor.purge();
 };
 

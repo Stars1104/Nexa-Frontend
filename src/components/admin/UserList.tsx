@@ -20,6 +20,7 @@ const statusColors = {
 const tabs = [
     { label: "Criadores", key: "creators" },
     { label: "Marcas", key: "brands" },
+    { label: "alunos", key: "students" },
 ];
 
 
@@ -40,13 +41,16 @@ export default function UserList() {
     // State for API data
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [brands, setBrands] = useState<AdminBrand[]>([]);
+    const [students, setStudents] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
 
     const [activeTab, setActiveTab] = useState("creators");
     const isCreators = activeTab === "creators";
-    const data = isCreators ? users : brands;
+    const isBrands = activeTab === "brands";
+    const isStudents = activeTab === "students";
+    const data = isCreators ? users : isBrands ? brands : students;
     const { page, setPage, rowsPerPage, setRowsPerPage, totalPages, paginated } = usePagination(data);
 
 
@@ -61,12 +65,18 @@ export default function UserList() {
                     page: page
                 });
                 setUsers(response.data as AdminUser[]);
-            } else {
+            } else if (isBrands) {
                 const response = await adminApi.getBrands({
                     per_page: rowsPerPage,
                     page: page
                 });
                 setBrands(response.data as AdminBrand[]);
+            } else if (isStudents) {
+                const response = await adminApi.getStudents({
+                    per_page: rowsPerPage,
+                    page: page
+                });
+                setStudents(response.data as any[]);
             }
         } catch (err) {
             setError('Failed to fetch data');
@@ -218,7 +228,7 @@ export default function UserList() {
                                                 )}
                                             </tbody>
                                         </table>
-                                    ) : (
+                                    ) : isBrands ? (
                                         <table className="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
                                             <thead className="bg-gray-50 dark:bg-neutral-800">
                                                 <tr>
@@ -289,7 +299,86 @@ export default function UserList() {
                                                 )}
                                             </tbody>
                                         </table>
-                                    )}
+                                    ) : isStudents ? (
+                                        <table className="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
+                                            <thead className="bg-gray-50 dark:bg-neutral-800">
+                                                <tr>
+                                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                        Nome
+                                                    </th>
+                                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden sm:table-cell">
+                                                        E-mail
+                                                    </th>
+                                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">
+                                                        Instituição
+                                                    </th>
+                                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                        Status
+                                                    </th>
+                                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">
+                                                        Trial
+                                                    </th>
+                                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                        Verificado
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white dark:bg-neutral-900 divide-y divide-gray-200 dark:divide-neutral-700">
+                                                {paginated.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={6} className="px-3 py-8 text-center text-gray-400 dark:text-gray-500">
+                                                            Nenhum aluno encontrado.
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    paginated.map((student) => (
+                                                        <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                                                            <td className="px-3 py-4 whitespace-nowrap">
+                                                                <div className="flex flex-col">
+                                                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                        {student.name}
+                                                                    </div>
+                                                                    <div className="text-sm text-gray-500 dark:text-gray-400 sm:hidden">
+                                                                        {student.email}
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 hidden sm:table-cell">
+                                                                {student.email}
+                                                            </td>
+                                                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 hidden md:table-cell">
+                                                                {student.institution || 'N/A'}
+                                                            </td>
+                                                            <td className="px-3 py-4 whitespace-nowrap">
+                                                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                                                    student.trial_status === 'active' 
+                                                                        ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200'
+                                                                        : student.trial_status === 'expired'
+                                                                        ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200'
+                                                                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                                                                }`}>
+                                                                    {student.trial_status === 'active' ? 'Ativo' : 
+                                                                     student.trial_status === 'expired' ? 'Expirado' : 'Premium'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 hidden lg:table-cell">
+                                                                {student.days_remaining > 0 ? `${student.days_remaining} dias` : 'N/A'}
+                                                            </td>
+                                                            <td className="px-3 py-4 whitespace-nowrap">
+                                                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                                                    student.student_verified 
+                                                                        ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200'
+                                                                        : 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-200'
+                                                                }`}>
+                                                                    {student.student_verified ? 'Sim' : 'Não'}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    ) : null}
                                 </div>
                             </div>
                         </div>

@@ -188,7 +188,7 @@ export default function CreatorBalance() {
         <Dialog open={showWithdrawalDialog} onOpenChange={setShowWithdrawalDialog}>
           <DialogTrigger asChild>
             <Button 
-              className="flex-1" 
+              className="flex-1 bg-[#e91e63] text-white hover:bg-[#e91e63]/90" 
               disabled={balance.balance.available_balance <= 0}
             >
               <Plus className="h-4 w-4 mr-2" />

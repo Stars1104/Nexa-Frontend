@@ -6,6 +6,9 @@ import { ThemeProvider } from "./components/ThemeProvider";
 import { PremiumProvider } from "./contexts/PremiumContext";
 import { useAuthRehydration } from "./hooks/useAuthRehydration";
 import { useSocket } from "./hooks/useSocket";
+import { useSessionTimeout } from "./hooks/useSessionTimeout";
+import { useBrowserCloseLogout } from "./hooks/useBrowserCloseLogout";
+import SessionWarningModal from "./components/SessionWarningModal";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Index from "./pages/Index";
@@ -15,8 +18,6 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import Signup from "./pages/auth/CreatorSignUp";
 import StudentVerify from "./pages/auth/StudentVerify";
 import GoogleOAuthCallback from "./components/GoogleOAuthCallback";
-import EmailVerification from "./pages/EmailVerification";
-import EmailVerificationPending from "./pages/EmailVerificationPending";
 import CreatorIndex from "./pages/creator/Index";
 import BrandIndex from "./pages/brand/Index";
 import AdminIndex from "./pages/admin";
@@ -26,6 +27,7 @@ import Guide from "./pages/Guide";
 import Documentation from "./pages/Documentation";
 import { HelmetProvider } from "react-helmet-async";
 import { useState, useEffect } from "react";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +40,18 @@ const App = () => {
   
   // Initialize global socket connection for real-time notifications
   useSocket();
+  
+  // Initialize session timeout
+  const sessionTimeout = useSessionTimeout({
+    onTimeout: () => {},
+    onWarning: () => {}
+  });
+
+  // Initialize browser close logout
+  useBrowserCloseLogout({
+    enabled: false, // Disabled to prevent aggressive logout
+    onLogout: () => {}
+  });
 
   // Set app as ready after authentication is properly initialized
   useEffect(() => {
@@ -81,7 +95,6 @@ const App = () => {
   }
 
   return (
-    <ErrorBoundary>
       <HelmetProvider>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider defaultTheme="system" storageKey="nexa-ui-theme">
@@ -90,6 +103,13 @@ const App = () => {
                 <Sonner />
                 {/* <DebugUserState /> */}
                 <BrowserRouter>
+                  {/* Session Warning Modal */}
+                  <SessionWarningModal
+                    isOpen={sessionTimeout.isWarningShown}
+                    remainingMinutes={sessionTimeout.remainingMinutes}
+                    onExtendSession={sessionTimeout.onExtendSession}
+                    onLogout={sessionTimeout.onLogout}
+                  />
                   <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<AuthStep />} />
@@ -98,8 +118,6 @@ const App = () => {
                   <Route path="/signup/:role" element={<Signup />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />
-                  <Route path="/verify-email" element={<EmailVerification />} />
-                  <Route path="/email-verification-pending" element={<EmailVerificationPending />} />
                   <Route path="/student-verify" element={
                     <ProtectedRoute allowedRoles={['creator', 'student']}>
                       <StudentVerify />
@@ -139,6 +157,7 @@ const App = () => {
                   
                           {/* Guide route - accessible to everyone */}
         <Route path="/guides" element={<Guide />} />
+         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         
         {/* Documentation route - accessible to everyone */}
         <Route path="/docs" element={<Documentation />} />
@@ -153,7 +172,6 @@ const App = () => {
           </ThemeProvider>
         </QueryClientProvider>
       </HelmetProvider>
-    </ErrorBoundary>
   );
 };
 

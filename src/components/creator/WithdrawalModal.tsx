@@ -124,7 +124,7 @@ export default function WithdrawalModal({
     setIsLoadingMethods(true);
     try {
       const response = await apiClient.get(
-        "/creator-balance/withdrawal-methods"
+        "/freelancer/withdrawal-methods"
       );
       if (response.data.success) {
         setWithdrawalMethods(response.data.data);
@@ -202,7 +202,7 @@ export default function WithdrawalModal({
         withdrawal_details: withdrawalDetails,
       };
       
-      const response = await apiClient.post("/withdrawals", requestData);
+      const response = await apiClient.post("/freelancer/withdrawals", requestData);
 
       if (response.data.success) {
         toast({

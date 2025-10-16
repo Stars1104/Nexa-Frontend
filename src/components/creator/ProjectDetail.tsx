@@ -89,11 +89,13 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
   // Check if user is eligible to apply
   const isCreator = user?.role === "creator";
+  const isStudent = user?.role === "student";
+  const canApplyToCampaigns = isCreator || isStudent;
   const alreadyApplied = safeCreatorApplications.some(
     (app) => app.campaign_id === project?.id && app.creator_id === user?.id
   );
   const canApply =
-    isCreator && project && project.status === "approved" && !alreadyApplied;
+    canApplyToCampaigns && project && project.status === "approved" && !alreadyApplied;
 
   if (isLoading) {
     return (
@@ -316,9 +318,9 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             >
               Aplicar para esta campanha
             </button>
-            {!isCreator && (
+            {!canApplyToCampaigns && (
               <div className="mt-2 text-sm text-muted-foreground text-center">
-                Apenas criadores podem se candidatar a campanhas.
+                Apenas criadores e alunos podem se candidatar a campanhas.
               </div>
             )}
             {alreadyApplied && (

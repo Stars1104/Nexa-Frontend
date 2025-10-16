@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { Badge } from "./ui/badge";
@@ -55,8 +56,10 @@ export default function Chat() {
   const [isCurrentUserTyping, setIsCurrentUserTyping] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [openDropdowns, setOpenDropdowns] = useState<Set<number>>(new Set());
+  const [dragActive, setDragActive] = useState(false);
 
   // Contract-related state
   const [contracts, setContracts] = useState<any[]>([]);
@@ -93,11 +96,12 @@ export default function Chat() {
   const [imageRotation, setImageRotation] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
   const imageViewerRef = useRef<HTMLDivElement>(null);
+  const [viewportOffset, setViewportOffset] = useState(0);
 
   // Socket.IO hook
   const {
@@ -114,11 +118,18 @@ export default function Chat() {
     onMessagesRead,
     sendOfferAcceptanceMessage,
   } = useSocket({ enableNotifications: false, enableChat: true });
-
+  //In Mobile case, small screen
+  useEffect(() => {
+  // prevent body scroll when mobile sidebar is open
+    const original = document.body.style.overflow;
+    document.body.style.overflow = sidebarOpen ? "hidden" : original;
+    return () => {
+      document.body.style.overflow = original;
+    };
+}, [sidebarOpen]);
   // Component mount/unmount tracking
   useEffect(() => {
     isMountedRef.current = true;
-
     return () => {
       isMountedRef.current = false;
       // Clear any pending timeouts
@@ -173,6 +184,30 @@ export default function Chat() {
     requestAnimationFrame(scrollToBottom);
   }, [messages]);
 
+  // Visual viewport handling to keep input visible above mobile keyboard
+  useEffect(() => {
+    const vv = (window as any).visualViewport as VisualViewport | undefined;
+    if (!vv) return;
+
+    const handleResize = () => {
+      // Calculate how much of the viewport is occluded by the on-screen keyboard
+      const bottomInset = Math.max(0, window.innerHeight - (vv.height + Math.round(vv.offsetTop)));
+      setViewportOffset(bottomInset);
+      // Ensure the input stays in view
+      if (inputRef.current) {
+        inputRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    };
+
+    vv.addEventListener("resize", handleResize);
+    vv.addEventListener("scroll", handleResize);
+    handleResize();
+    return () => {
+      vv.removeEventListener("resize", handleResize);
+      vv.removeEventListener("scroll", handleResize);
+    };
+  }, []);
+
   // Socket event listeners
   useEffect(() => {
     if (!socket || !isMountedRef.current) return;
@@ -182,42 +217,49 @@ export default function Chat() {
       if (!isMountedRef.current) return;
 
       if (data.roomId === selectedRoom?.room_id) {
-        // Only add message if it's from another user (not the current user)
-        if (data.senderId !== user?.id) {
-          const messageId = data.messageId || Date.now() + Math.floor(Math.random() * 1000);
-          const newMessage: Message = {
-            id: messageId,
-            message: data.message,
-            message_type: data.messageType || "text",
-            sender_id: data.senderId,
-            sender_name: data.senderName,
-            sender_avatar: data.senderAvatar,
-            is_sender: false, // This is from another user
-            file_path: data.fileData?.file_path,
-            file_name: data.fileData?.file_name,
-            file_size: data.fileData?.file_size,
-            file_type: data.fileData?.file_type,
-            file_url: data.fileData?.file_url,
-            is_read: false,
-            created_at: data.timestamp || new Date().toISOString(),
-            offer_data: data.offerData, // Map socket offerData to offer_data
-          };
+        // Add message from any user (including current user for synchronization)
+        const messageId = data.messageId || Date.now() + Math.floor(Math.random() * 1000);
+        const isFromCurrentUser = data.senderId === user?.id;
+        
+        const newMessage: Message = {
+          id: messageId,
+          message: data.message,
+          message_type: data.messageType || "text",
+          sender_id: data.senderId,
+          sender_name: data.senderName,
+          sender_avatar: data.senderAvatar,
+          is_sender: isFromCurrentUser, // Set based on whether it's from current user
+          file_path: data.fileData?.file_path,
+          file_name: data.fileData?.file_name,
+          file_size: data.fileData?.file_size,
+          file_type: data.fileData?.file_type,
+          file_url: data.fileData?.file_url,
+          is_read: isFromCurrentUser, // Mark as read if from current user
+          created_at: data.timestamp || new Date().toISOString(),
+          offer_data: data.offerData, // Map socket offerData to offer_data
+        };
 
-          setMessages((prev) => {
-            // Check if message already exists to prevent duplicates
-            if (prev.some(msg => msg.id === newMessage.id)) {
-              console.warn('Attempted to add duplicate socket message:', newMessage.id);
-              return prev;
-            }
-            return [...prev, newMessage];
-          });
+        setMessages((prev) => {
+          // Check if message already exists to prevent duplicates
+          if (prev.some(msg => msg.id === newMessage.id)) {
+            console.warn('Attempted to add duplicate socket message:', newMessage.id);
+            return prev;
+          }
+          
+          // Check if this is a recently sent message by current user to avoid duplicates
+          if (isFromCurrentUser && (window as any).lastSentMessageId === newMessage.id) {
+            return prev;
+          }
+          
+          return [...prev, newMessage];
+        });
 
-          // Mark as read immediately if it's not from current user
+        // Mark as read immediately if it's not from current user
+        if (!isFromCurrentUser) {
           markMessagesAsRead(data.roomId, [messageId]).catch((error) => {
             console.warn("Error marking message as read:", error);
           });
         }
-      } else {
       }
 
       // Update conversation list
@@ -520,6 +562,7 @@ export default function Chat() {
             console.warn('Failed to mark messages as read:', error);
             // Don't show toast for this error as it's not critical
           }
+      
         }
       }
     } catch (error) {
@@ -600,16 +643,17 @@ export default function Chat() {
     }
 
     setSelectedRoom(room);
-    setSidebarOpen(false);
+    
+    // Auto-close sidebar on mobile for WhatsApp-like behavior
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
 
     // Load messages for the selected room
     await loadMessages(room);
 
     // Load contracts for the selected room
     await loadContracts(room.room_id);
-
-
-
     // Focus input
     setTimeout(() => {
       if (inputRef.current && isMountedRef.current) {
@@ -618,20 +662,37 @@ export default function Chat() {
     }, 100);
   };
 
-  // Handle sending message
+  // Handle sending message with upload progress
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedRoom || (!input.trim() && !selectedFile)) return;
-
+    if (!selectedRoom || (!input.trim() && !selectedFile) || isUploading) return;
+    
     try {
       let newMessage: Message;
-
+      
       if (selectedFile) {
+        setIsUploading(true);
+        setUploadProgress(0);
+        
+        // Simulate progress for better UX
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => {
+            if (prev >= 90) {
+              clearInterval(progressInterval);
+              return prev;
+            }
+            return prev + Math.random() * 20;
+          });
+        }, 200);
+
         newMessage = await sendMessage(
           selectedRoom.room_id,
-          input.trim() || selectedFile.name,
+          input.trim(), // Send the actual text message, not filename
           selectedFile
         );
+        console.log(newMessage)
+        clearInterval(progressInterval);
+        setUploadProgress(100)
         if (isMountedRef.current) {
           setSelectedFile(null);
           setFilePreview(null);
@@ -651,6 +712,12 @@ export default function Chat() {
           }
           return [...prev, newMessage];
         });
+        
+        // Mark the message as sent via socket to prevent duplicate handling
+        if (newMessage.id) {
+          (window as any).lastSentMessageId = newMessage.id;
+        }
+      
         setInput("");
 
         // Stop typing indicator immediately when message is sent
@@ -670,15 +737,59 @@ export default function Chat() {
       }
     } catch (error) {
       console.error("Error sending message:", error);
+      toast({
+        title: "Erro ao enviar mensagem",
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado",
+        variant: "destructive",
+      });
+    } finally {
+      if (isMountedRef.current) {
+        setIsUploading(false);
+        setUploadProgress(0);
+      }
     }
   };
 
-  // Handle file selection
+  // Handle file selection with validation
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!isMountedRef.current) return;
 
     const file = event.target.files?.[0];
     if (file) {
+      // Validate file size (10MB max)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "O tamanho máximo permitido é 10MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = [
+        'image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain',
+        'application/zip',
+        'application/x-rar-compressed',
+        'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/flac',
+        'video/mp4', 'video/avi', 'video/quicktime', 'video/x-msvideo',
+        'text/javascript', 'text/typescript', 'text/html', 'text/css', 'application/json'
+      ];
+      
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Tipo de arquivo não suportado",
+          description: "Por favor, selecione um arquivo de imagem, documento, áudio, vídeo ou código",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setSelectedFile(file);
 
       // Create preview for images
@@ -694,11 +805,40 @@ export default function Chat() {
     }
   };
 
-  // Handle input change with typing indicators
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isMountedRef.current) return;
+  // Handle drag and drop
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragActive(true);
+  };
 
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragActive(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragActive(false);
+  
+   const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      // Create a synthetic event for handleFileSelect
+      const syntheticEvent = {
+        target: { files: [file] }
+      } as React.ChangeEvent<HTMLInputElement>;
+      handleFileSelect(syntheticEvent);
+    }
+  };
+
+  // Handle input change with typing indicators
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (!isMountedRef.current) return;
     setInput(e.target.value);
+    // Auto-resize textarea height
+    const el = e.currentTarget;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`; // cap ~200px
 
     // Handle typing indicators
     if (selectedRoom) {
@@ -1190,480 +1330,6 @@ export default function Chat() {
     });
   };
 
-  // File Dropdown Component
-  const FileDropdown = ({ message }: { message: Message }) => {
-    const dropdownRef = useRef<HTMLDivElement>(null);
-    const isOpen = openDropdowns.has(message.id);
-    const [isDownloading, setIsDownloading] = useState(false);
-    const [downloadProgress, setDownloadProgress] = useState<number>(0);
-    const [dropdownPosition, setDropdownPosition] = useState<"top" | "bottom">(
-      "bottom"
-    );
-
-    const toggleDropdown = (e: React.MouseEvent) => {
-      e.stopPropagation();
-
-      // Check available space and determine dropdown position
-      const buttonRect = e.currentTarget.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const dropdownHeight = 150; // Increased height estimate
-
-      // If there's not enough space below, show above
-      const spaceBelow = viewportHeight - buttonRect.bottom;
-      const spaceAbove = buttonRect.top;
-
-      // More aggressive positioning - prefer top if there's any doubt
-      if (spaceBelow < dropdownHeight + 20 || spaceAbove > spaceBelow) {
-        setDropdownPosition("top");
-      } else {
-        setDropdownPosition("bottom");
-      }
-
-      setOpenDropdowns((prev) => {
-        const newSet = new Set(prev);
-        if (newSet.has(message.id)) {
-          newSet.delete(message.id);
-        } else {
-          newSet.add(message.id);
-        }
-        return newSet;
-      });
-    };
-
-    const handleOpen = () => {
-      if (message.file_url) {
-        if (message.message_type === "image") {
-          // Use image viewer for images
-          setImageViewer({
-            isOpen: true,
-            imageUrl: message.file_url,
-            imageName: message.file_name || "Image",
-            imageSize: message.file_size
-              ? formatFileSize(parseInt(message.file_size))
-              : undefined,
-          });
-        } else {
-          // Open in new tab for other file types
-          window.open(message.file_url, "_blank");
-        }
-      }
-      setOpenDropdowns((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(message.id);
-        return newSet;
-      });
-    };
-
-    const handleDownload = async () => {
-      if (message.file_url && !isDownloading) {
-        setIsDownloading(true);
-        setDownloadProgress(0);
-        try {
-          const fileSize = message.file_size ? parseInt(message.file_size) : 0;
-
-          const downloadUrl = message.file_url.replace(
-            "/storage/",
-            "/api/download/"
-          );
-
-          try {
-            const link = document.createElement("a");
-            link.href = downloadUrl;
-            link.download = message.file_name || "download";
-            link.style.display = "none";
-            link.setAttribute("download", message.file_name || "download");
-            link.setAttribute("target", "_blank");
-            link.setAttribute("rel", "noopener noreferrer");
-
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          } catch (directError) {
-            console.warn(
-              "Direct download failed, trying enhanced methods:",
-              directError
-            );
-
-            if (message.message_type === "image") {
-              await downloadImageToLocal(
-                message.file_url,
-                message.file_name || "image"
-              );
-            } else {
-              await downloadFileToLocal(message);
-            }
-          }
-        } catch (error) {
-          toast({
-            title: "Erro",
-            description: "Falha ao baixar arquivo",
-            variant: "destructive",
-          });
-
-          try {
-            const downloadUrl = message.file_url.replace(
-              "/storage/",
-              "/api/download/"
-            );
-            window.open(downloadUrl, "_blank", "noopener,noreferrer");
-          } catch (fallbackError) {
-            toast({
-              title: "Erro",
-              description: "Método alternativo também falhou",
-              variant: "destructive",
-            });
-          }
-        } finally {
-          setIsDownloading(false);
-          setDownloadProgress(0);
-        }
-      }
-      setOpenDropdowns((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(message.id);
-        return newSet;
-      });
-    };
-
-    // Enhanced file download function with multiple fallback methods
-    const downloadFileToLocal = async (message: Message): Promise<void> => {
-      const fileName = message.file_name || "download";
-      const fileSize = message.file_size ? parseInt(message.file_size) : 0;
-
-      // Convert storage URL to API download URL
-      const downloadUrl = message.file_url.replace(
-        "/storage/",
-        "/api/download/"
-      );
-
-      // Method 1: Try fetch with proper headers for better compatibility
-      try {
-        const response = await fetch(downloadUrl, {
-          method: "GET",
-          mode: "cors",
-          credentials: "same-origin",
-          headers: {
-            Accept: "*/*",
-            "Cache-Control": "no-cache",
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const blob = await response.blob();
-
-        // Validate blob size if we have file size info
-        if (fileSize > 0 && blob.size !== fileSize) {
-          console.warn(
-            `File size mismatch: expected ${fileSize}, got ${blob.size}`
-          );
-        }
-
-        // Create a blob URL with proper MIME type
-        const mimeType = getMimeType(fileName);
-        const blobUrl = window.URL.createObjectURL(
-          new Blob([blob], { type: mimeType })
-        );
-
-        // Method 1a: Modern browser download API
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = fileName;
-        link.style.display = "none";
-        link.setAttribute("download", fileName);
-        link.setAttribute("type", mimeType);
-        link.setAttribute(
-          "data-downloadurl",
-          `${mimeType}:${fileName}:${blobUrl}`
-        );
-
-        // Ensure the link is properly configured for download
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-
-        // Trigger download
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        // Clean up the blob URL after a short delay
-        setTimeout(() => {
-          window.URL.revokeObjectURL(blobUrl);
-        }, 1000);
-
-        return;
-      } catch (fetchError) {
-        console.warn(
-          "Fetch method failed, trying fallback methods:",
-          fetchError
-        );
-
-        // Method 2: For images, try canvas method
-        if (message.message_type === "image") {
-          try {
-            await downloadImageViaCanvas(message.file_url, fileName);
-            return;
-          } catch (canvasError) {
-            console.warn("Canvas method failed:", canvasError);
-          }
-        }
-
-        // Method 3: Direct link method with proper attributes
-        try {
-          const link = document.createElement("a");
-          link.href = downloadUrl;
-          link.download = fileName;
-          link.style.display = "none";
-          link.setAttribute("download", fileName);
-          link.setAttribute("type", getMimeType(fileName));
-          link.setAttribute("target", "_blank");
-          link.setAttribute("rel", "noopener noreferrer");
-
-          // Add timestamp to prevent caching issues
-          const url = new URL(downloadUrl);
-          url.searchParams.set("download", Date.now().toString());
-          url.searchParams.set("filename", fileName);
-
-          link.href = url.toString();
-
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-
-          return;
-        } catch (directError) {
-          console.warn("Direct link method failed:", directError);
-        }
-
-        // Method 4: Open in new tab as last resort
-        try {
-          window.open(downloadUrl, "_blank", "noopener,noreferrer");
-          return;
-        } catch (openError) {
-          console.warn("Open in new tab failed:", openError);
-        }
-
-        // If all methods fail, throw error
-        throw new Error("All download methods failed");
-      }
-    };
-
-    // Helper function for downloading images via canvas
-    const downloadImageViaCanvas = (
-      imageUrl: string,
-      fileName: string
-    ): Promise<void> => {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-
-        img.onload = () => {
-          try {
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-
-            if (!ctx) {
-              reject(new Error("Could not get canvas context"));
-              return;
-            }
-
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-
-            // Use utility function to get proper MIME type
-            const mimeType = getMimeType(fileName);
-
-            canvas.toBlob(
-              (blob) => {
-                if (blob) {
-                  const url = window.URL.createObjectURL(blob);
-                  const link = document.createElement("a");
-                  link.href = url;
-                  link.download = fileName;
-                  link.style.display = "none";
-                  link.setAttribute("download", fileName);
-                  link.setAttribute("type", mimeType);
-                  link.setAttribute(
-                    "data-downloadurl",
-                    `${mimeType}:${fileName}:${url}`
-                  );
-
-                  // Ensure the link is properly configured for download
-                  link.target = "_blank";
-                  link.rel = "noopener noreferrer";
-
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-
-                  // Clean up the blob URL after a short delay
-                  setTimeout(() => {
-                    window.URL.revokeObjectURL(url);
-                  }, 1000);
-
-                  resolve();
-                } else {
-                  reject(new Error("Failed to create blob from canvas"));
-                }
-              },
-              mimeType,
-              0.9
-            );
-          } catch (error) {
-            reject(error);
-          }
-        };
-
-        img.onerror = () => {
-          reject(new Error("Failed to load image for canvas download"));
-        };
-
-        img.src = imageUrl;
-      });
-    };
-
-    // Close dropdown when clicking outside
-    useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
-        if (
-          dropdownRef.current &&
-          !dropdownRef.current.contains(event.target as Node)
-        ) {
-          setOpenDropdowns((prev) => {
-            const newSet = new Set(prev);
-            newSet.delete(message.id);
-            return newSet;
-          });
-        }
-      };
-
-      if (isOpen) {
-        document.addEventListener("mousedown", handleClickOutside);
-      }
-
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }, [isOpen, message.id]);
-
-    return (
-      <div className="relative" ref={dropdownRef}>
-        <button
-          onClick={toggleDropdown}
-          className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-          aria-label="File options"
-        >
-          <MoreVertical className="w-4 h-4 text-slate-500" />
-        </button>
-
-        {isOpen &&
-          createPortal(
-            <div
-              className="fixed w-56 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-[9999] backdrop-blur-sm"
-              style={{
-                left: dropdownRef.current
-                  ? Math.max(
-                      10,
-                      dropdownRef.current.getBoundingClientRect().right - 224
-                    )
-                  : 0,
-                top: dropdownRef.current
-                  ? Math.max(
-                      10,
-                      dropdownRef.current.getBoundingClientRect().top - 180
-                    )
-                  : 0,
-                maxHeight: "240px",
-                overflow: "visible",
-              }}
-            >
-              {/* File Info Header */}
-              <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 rounded-t-xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900/20 rounded-lg flex items-center justify-center">
-                    {message.message_type === "image" ? (
-                      <img
-                        src={message.file_url}
-                        alt="Preview"
-                        className="w-5 h-5 rounded object-cover"
-                      />
-                    ) : (
-                      <File className="w-5 h-5 text-pink-600 dark:text-pink-400" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                      {message.file_name}
-                    </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {message.formatted_file_size ||
-                        (message.file_size
-                          ? formatFileSize(parseInt(message.file_size))
-                          : "Tamanho desconhecido")}
-                    </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 capitalize">
-                      {message.message_type === "image"
-                        ? "Image"
-                        : `${getFileExtension(message.file_name || "")} file`}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="p-2 space-y-1">
-                <button
-                  onClick={handleOpen}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-200 hover:shadow-sm"
-                >
-                  {message.message_type === "image" ? (
-                    <Maximize2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  ) : (
-                    <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  )}
-                  <span className="font-medium">
-                    {message.message_type === "image"
-                      ? "Ver Imagem"
-                      : "Abrir Arquivo"}
-                  </span>
-                </button>
-                <button
-                  onClick={handleDownload}
-                  disabled={isDownloading}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
-                >
-                  {isDownloading ? (
-                    <div className="w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Download className="w-4 h-4 text-green-600 dark:text-green-400" />
-                  )}
-                  <span className="font-medium">
-                    {isDownloading
-                      ? downloadProgress > 0
-                        ? `Baixando ${downloadProgress}%`
-                        : "Baixando..."
-                      : message.message_type === "image"
-                      ? "Baixar Imagem"
-                      : "Baixar Arquivo"}
-                  </span>
-                  {isDownloading && downloadProgress > 0 && (
-                    <div
-                      className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-pink-500 to-purple-600 transition-all duration-300 rounded-b-lg"
-                      style={{ width: `${downloadProgress}%` }}
-                    />
-                  )}
-                </button>
-              </div>
-            </div>,
-            document.body
-          )}
-      </div>
-    );
-  };
-
   const renderMessageContent = (message: Message) => {
     if (message.message_type === "file") {
       return (
@@ -1699,6 +1365,9 @@ export default function Chat() {
             <span className="text-sm font-medium">{message.file_name}</span>
             <span className="text-xs text-gray-500">
               {message.formatted_file_size}
+            </span>
+            <span className="text-xs text-white-500">
+              {message.message}
             </span>
           </div>
         </div>
@@ -1777,9 +1446,9 @@ export default function Chat() {
           avatar_url: message.offer_data.sender?.avatar_url || null,
         },
         can_be_accepted:
-          message.offer_data.status === "pending" && user?.role === "creator",
+          message.offer_data.status === "pending" && (user?.role === "creator" || user?.role === "student"),
         can_be_rejected:
-          message.offer_data.status === "pending" && user?.role === "creator",
+          message.offer_data.status === "pending" && (user?.role === "creator" || user?.role === "student"),
         can_be_cancelled:
           message.offer_data.status === "pending" && user?.role === "brand",
         contract_id: message.offer_data.contract_id,
@@ -1796,7 +1465,7 @@ export default function Chat() {
           onCancel={handleCancelOffer}
           onEndContract={handleEndContract}
           onTerminateContract={undefined} // Not implemented in general Chat component
-          isCreator={user?.role === "creator"}
+          isCreator={user?.role === "creator" || user?.role === "student"}
         />
       );
     }
@@ -1845,7 +1514,7 @@ export default function Chat() {
               });
             }
           }}
-          isCreator={user?.role === "creator"}
+          isCreator={user?.role === "creator" || user?.role === "student"}
           contractData={message.offer_data}
         />
       );
@@ -1928,7 +1597,7 @@ export default function Chat() {
                                       message.message?.includes("completed") ||
                                       message.message?.includes("aguardando avaliação");
       
-      const canReview = isContractRelatedMessage && user?.role === "creator" && contracts.some(
+      const canReview = isContractRelatedMessage && (user?.role === "creator" || user?.role === "student") && contracts.some(
         (contract) =>
           contract.status === "completed" && !contract.has_creator_review
       );
@@ -2048,7 +1717,7 @@ export default function Chat() {
     }
 
     return (
-      <p className="text-sm text-slate-700 dark:text-slate-300">
+      <p className={`text-sm ${message.is_sender ? 'text-white' : 'text-slate-700 dark:text-slate-300'}`}>
         {message.message}
       </p>
     );
@@ -2331,218 +2000,244 @@ export default function Chat() {
   );
 
   return (
-    <div className="flex h-full bg-background">
-      <style>{`
-        .shadow-3xl {
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  <div className="flex h-full bg-background overflow-hidden">
+    <style>{`
+      .shadow-3xl {
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      }
+      .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @keyframes pulse {
+        0%, 100% {
+          opacity: 1;
         }
-        .animate-pulse {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        50% {
+          opacity: 0.8;
         }
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.8;
-          }
+      }
+      /* Prevent horizontal scroll on mobile */
+      @media (max-width: 768px) {
+        body {
+          overflow-x: hidden;
         }
-      `}</style>
-      
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <div
-          data-sidebar
-          className={cn(
-            "flex flex-col w-full max-w-sm border-r bg-background transition-all duration-500 ease-out",
-            "md:relative md:translate-x-0 md:shadow-none",
-            sidebarOpen
-              ? "fixed inset-0 z-50 translate-x-0 shadow-2xl border-r border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm scale-100 opacity-100"
-              : "fixed inset-0 z-50 -translate-x-full md:relative md:translate-x-0 scale-95 opacity-0 md:scale-100 md:opacity-100"
-          )}
-        >
-          {/* Sidebar Header */}
-          <div className="flex items-center justify-between gap-2 px-6 py-5 border-b bg-background">
-            <div className="flex flex-col">
-              <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
-                Conversas
+      }
+    `}</style>
+
+    <div className="flex flex-1 overflow-hidden">
+      {/* Sidebar */}
+      <div
+        data-sidebar
+        className={cn(
+          // Use full width on mobile, constrained (max-w-sm) on md+
+          "flex flex-col w-full max-w-full md:max-w-sm border-r bg-background transition-all duration-300 ease-in-out",
+          "md:relative md:translate-x-0 md:shadow-none",
+          sidebarOpen
+            ? "fixed inset-0 z-50 translate-x-0 shadow-2xl border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 scale-100 opacity-100"
+            : "fixed inset-0 z-50 -translate-x-full md:relative md:translate-x-0 scale-100 opacity-100 md:opacity-100"
+        )}
+      >
+        {/* Sidebar Header */}
+        <div className="flex items-center justify-between gap-2 px-6 py-5 border-b bg-background">
+          <div className="flex flex-col">
+            <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
+              Conversas
+            </span>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {chatRooms.length} conversas
               </span>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {chatRooms.length} conversas
-                </span>
-                {connectionError && (
-                  <div className="flex items-center gap-1 text-red-500">
-                    <WifiOff className="w-3 h-3" />
-                    <span className="text-xs">Offline</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            {connectionError && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={reconnect}
-                className="p-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </Button>
-            )}
-            <button
-              className="md:hidden p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:scale-105 hover:shadow-lg"
-              onClick={() => setSidebarOpen(false)}
-              aria-label="Close conversations"
-            >
-              <X className="w-5 h-5 text-slate-700 dark:text-slate-300" />
-            </button>
-          </div>
-
-          {/* Search */}
-          <div className="p-4 pb-3 bg-background">
-            <div className="relative">
-              <Input
-                placeholder="Buscar conversas..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-800 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200"
-              />
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-            </div>
-          </div>
-
-          {/* Conversation List */}
-          <ScrollArea className="flex-1 bg-background">
-            <div className="p-2 w-[383px]">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
+              {connectionError && (
+                <div className="flex items-center gap-1 text-red-500">
+                  <WifiOff className="w-3 h-3" />
+                  <span className="text-xs">Offline</span>
                 </div>
-              ) : filteredRooms.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                  <div className="text-4xl mb-2">💬</div>
-                  <p className="text-sm">Nenhuma conversa encontrada</p>
-                </div>
-              ) : (
-                filteredRooms.map((room) => (
-                  <div
-                    key={room.id}
-                    onClick={() => handleConversationSelect(room)}
-                    className={cn(
-                      "w-[350px] ml-1 flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 mb-2",
-                      selectedRoom?.id === room.id
-                        ? "bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800"
-                        : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                    )}
-                  >
-                    <Avatar className="w-12 h-12">
-                      <AvatarImage src={room.other_user.avatar} />
-                      <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400">
-                        {room.other_user.name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-slate-900 dark:text-white truncate">
-                          {room.other_user.name}
-                        </h3>
-                        {room.last_message_at && (
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {formatMessageTime(room.last_message_at)}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-300 truncate">
-                        {room.campaign_title}
-                      </p>
-                      {room.last_message && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                          {room.last_message.is_sender ? "Você: " : ""}
-                          {room.last_message.message}
-                        </p>
-                      )}
-                    </div>
-                    {room.unread_count > 0 && (
-                      <Badge className="ml-auto bg-pink-500 text-white text-xs">
-                        {room.unread_count}
-                      </Badge>
-                    )}
-                  </div>
-                ))
               )}
             </div>
-          </ScrollArea>
+          </div>
+          {connectionError && (
+            <Button variant="outline" size="sm" onClick={reconnect} className="p-2">
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+          )}
+          <button
+            className="md:hidden p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:scale-105 hover:shadow-lg"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close conversations"
+          >
+            <X className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+          </button>
         </div>
 
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
-          {selectedRoom ? (
-            <>
-              {/* Chat Header */}
-              <div className="flex items-center justify-between p-4 border-b bg-background">
-                <div className="flex items-center gap-3">
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage src={selectedRoom.other_user.avatar} />
+        {/* Search */}
+        <div className="p-4 pb-3 bg-background">
+          <div className="relative">
+            <Input
+              placeholder="Buscar conversas..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-800 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200"
+            />
+            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+          </div>
+        </div>
+
+        {/* Conversation List */}
+        <ScrollArea className="flex-1 bg-background overflow-auto">
+          <div className="p-2 w-full">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : filteredRooms.length === 0 ? (
+              <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                <div className="text-4xl mb-2">💬</div>
+                <p className="text-sm">Nenhuma conversa encontrada</p>
+              </div>
+            ) : (
+              filteredRooms.map((room) => (
+                <div
+                  key={room.id}
+                  onClick={() => handleConversationSelect(room)}
+                  className={cn(
+                    // Make each item responsive (full width of sidebar)
+                    "w-full flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 mb-2",
+                    selectedRoom?.id === room.id
+                      ? "bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800"
+                      : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  )}
+                >
+                  <Avatar className="w-12 h-12">
+                    <AvatarImage src={room.other_user?.avatar} />
                     <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400">
-                      {selectedRoom.other_user.name.charAt(0).toUpperCase()}
+                      {(room.other_user?.name || "").charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <h2 className="font-semibold text-slate-900 dark:text-white">
-                      {selectedRoom.other_user.name}
-                    </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {selectedRoom.campaign_title}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-slate-900 dark:text-white truncate">
+                        {room.other_user?.name}
+                      </h3>
+                      {room.last_message_at && (
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {formatMessageTime(room.last_message_at)}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-600 dark:text-slate-300 truncate">
+                      {room.campaign_title}
                     </p>
+                    {room.last_message && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                        {room.last_message.is_sender ? "Você: " : ""}
+                        {room.last_message.message}
+                      </p>
+                    )}
                   </div>
+                  {room.unread_count > 0 && (
+                    <Badge className="ml-auto bg-pink-500 text-white text-xs">
+                      {room.unread_count}
+                    </Badge>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  {/* Mobile Hamburger Button */}
-                  <button
-                    data-hamburger
-                    className={cn(
-                      "md:hidden p-2 rounded-xl bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm shadow-lg border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800 hover:shadow-xl transition-all duration-300 hover:scale-105",
-                      !sidebarOpen && "animate-pulse"
-                    )}
-                    onClick={() => setSidebarOpen(true)}
-                    aria-label="Open conversations"
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Chat Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {selectedRoom ? (
+          <>
+            {/* Chat Header */}
+            <div className="flex items-center justify-between p-4 border-b bg-background">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                {/* Mobile Back Button */}
+                <button
+                  className="md:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 flex-shrink-0"
+                  onClick={() => setSidebarOpen(true)}
+                  aria-label="Back to conversations"
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-slate-700 dark:text-slate-300"
                   >
-                    <svg
-                      width="18"
-                      height="18"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-slate-700 dark:text-slate-300"
-                    >
-                      <line x1="3" y1="12" x2="21" y2="12" />
-                      <line x1="3" y1="6" x2="21" y2="6" />
-                      <line x1="3" y1="18" x2="21" y2="18" />
-                    </svg>
-                  </button>
+                    <path d="m15 18-6-6 6-6"/>
+                  </svg>
+                </button>
+                
+                <Avatar className="w-10 h-10 flex-shrink-0">
+                  <AvatarImage src={selectedRoom.other_user?.avatar} />
+                  <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400">
+                    {(selectedRoom.other_user?.name || "").charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-semibold text-slate-900 dark:text-white truncate">
+                    {selectedRoom.other_user?.name}
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
+                    {selectedRoom.campaign_title}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Mobile Hamburger Button */}
+                <button
+                  data-hamburger
+                  className={cn(
+                    "md:hidden p-2 rounded-xl bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm shadow-lg border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800 hover:shadow-xl transition-all duration-300 hover:scale-105",
+                    !sidebarOpen && "animate-pulse"
+                  )}
+                  onClick={() => setSidebarOpen(true)}
+                  aria-label="Open conversations"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-slate-700 dark:text-slate-300"
+                  >
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                  </svg>
+                </button>
 
-                                      {/* Timeline Button */}
-                    {activeContract && (
-                      <Button
-                        onClick={() => setShowTimelineSidebar(true)}
-                        variant="outline"
-                        className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700 hover:text-blue-800"
-                      >
-                        <Clock className="w-4 h-4 mr-2" />
-                        Linha do Tempo
-                      </Button>
-                    )}
+                {/* Timeline Button */}
+                {activeContract && (
+                  <Button
+                    onClick={() => setShowTimelineSidebar(true)}
+                    variant="outline"
+                    className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-700 hover:text-blue-800"
+                  >
+                    <Clock className="w-4 h-4 mr-2" />
+                    Linha do Tempo
+                  </Button>
+                )}
 
-                  {/* Review Button for Creators */}
-                  {user?.role === "creator" && contracts.some(contract => 
-                    contract.status === "completed" && !contract.has_creator_review
+                {/* Review Buttons */}
+                {(user?.role === "creator" || user?.role === "student") &&
+                  contracts.some(
+                    (contract) =>
+                      contract.status === "completed" && !contract.has_creator_review
                   ) && (
                     <Button
                       onClick={() => {
-                        const contractToReview = contracts.find(contract => 
-                          contract.status === "completed" && !contract.has_creator_review
+                        const contractToReview = contracts.find(
+                          (contract) =>
+                            contract.status === "completed" && !contract.has_creator_review
                         );
                         if (contractToReview) {
                           setContractToReview(contractToReview);
@@ -2562,14 +2257,15 @@ export default function Chat() {
                     </Button>
                   )}
 
-                  {/* Review Button for Brands */}
-                  {user?.role === "brand" && contracts.some(contract => 
-                    contract.status === "completed" && !contract.has_brand_review
+                {user?.role === "brand" &&
+                  contracts.some(
+                    (contract) => contract.status === "completed" && !contract.has_brand_review
                   ) && (
                     <Button
                       onClick={() => {
-                        const contractToReview = contracts.find(contract => 
-                          contract.status === "completed" && !contract.has_brand_review
+                        const contractToReview = contracts.find(
+                          (contract) =>
+                            contract.status === "completed" && !contract.has_brand_review
                         );
                         if (contractToReview) {
                           setBrandContractToReview(contractToReview);
@@ -2589,31 +2285,31 @@ export default function Chat() {
                     </Button>
                   )}
 
-                  {isConnected ? (
-                    <div className="flex items-center gap-1 text-green-500">
-                      <Wifi className="w-4 h-4" />
-                      <span className="text-xs">Online</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1 text-red-500">
-                      <WifiOff className="w-4 h-4" />
-                      <span className="text-xs">Offline</span>
-                    </div>
-                  )}
-                </div>
+                {isConnected ? (
+                  <div className="flex items-center gap-1 text-green-500">
+                    <Wifi className="w-4 h-4" />
+                    <span className="text-xs">Online</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-red-500">
+                    <WifiOff className="w-4 h-4" />
+                    <span className="text-xs">Offline</span>
+                  </div>
+                )}
               </div>
+            </div>
 
-              {/* Messages */}
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4">
-                  {messages.map((message, index) => {
-                    // Debug logging for duplicate detection
-                    if (messages.filter(m => m.id === message.id).length > 1) {
-                      console.warn('Rendering duplicate message ID:', message.id, 'at index:', index);
-                    }
-                    return (
+            {/* Messages */}
+            <ScrollArea className="flex-1 p-4 overflow-y-auto">
+              <div className="space-y-4">
+                {messages.map((message, index) => {
+                  // Debug logging for duplicate detection
+                  if (messages.filter((m) => m.id === message.id).length > 1) {
+                    console.warn("Rendering duplicate message ID:", message.id, "at index:", index);
+                  }
+                  return (
                     <div
-                      key={`msg-${message.id}-${index}`}
+                      key={`msg-${message.id ?? index}-${index}`}
                       className={cn(
                         "flex gap-3",
                         message.message_type === "system"
@@ -2623,17 +2319,14 @@ export default function Chat() {
                           : "justify-start"
                       )}
                     >
-                      {!message.is_sender &&
-                        message.message_type !== "system" && (
-                          <Avatar className="w-8 h-8">
-                            <AvatarImage src={selectedRoom.other_user.avatar} />
-                            <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400 text-xs">
-                              {selectedRoom.other_user.name
-                                .charAt(0)
-                                .toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
+                      {!message.is_sender && message.message_type !== "system" && (
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={selectedRoom.other_user?.avatar} />
+                          <AvatarFallback className="bg-pink-100 dark:bg-pink-900 text-pink-600 dark:text-pink-400 text-xs">
+                            {(selectedRoom.other_user?.name || "").charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
                       <div
                         className={cn(
                           message.message_type === "system"
@@ -2668,57 +2361,80 @@ export default function Chat() {
                         )}
                       </div>
                     </div>
-                    );
-                  })}
-                  <div ref={messagesEndRef} />
-                </div>
-              </ScrollArea>
+                  );
+                })}
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
 
-              {/* Message Input */}
-              <form
-                className="flex items-end gap-3 px-4 py-4 border-t bg-background"
-                onSubmit={handleSendMessage}
+            {/* Message Input */}
+            <form
+              className={`flex items-end gap-3 px-3 sm:px-4 py-3 sm:py-4 border-t bg-background transition-colors ${
+                dragActive ? 'bg-pink-50 dark:bg-pink-900/10' : ''
+              }`}
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendMessage(e as any);
+              }}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              style={{ paddingBottom: viewportOffset ? viewportOffset + 8 : undefined }}
+            >
+              {/* File attachment button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
+                aria-label="Attach file"
               >
-                {/* File attachment button */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
-                  aria-label="Attach file"
-                >
-                  <Paperclip className="w-5 h-5 text-slate-500" />
-                </button>
+                <Paperclip className="w-5 h-5 text-slate-500" />
+              </button>
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  accept="image/*,.pdf,.doc,.docx,.txt"
-                />
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileSelect}
+                className="hidden"
+                accept="image/*,.pdf,.doc,.docx,.txt,.zip,.rar,.mp3,.mp4,.wav,.flac,.avi,.mov,.wmv,.js,.ts,.jsx,.tsx,.html,.css,.json"
+              />
 
-                {/* File preview */}
-                {selectedFile && (
-                  <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-xl border border-pink-200 dark:border-pink-800 shadow-sm">
-                    {filePreview ? (
-                      <img
-                        src={filePreview}
-                        alt="Preview"
-                        className="w-10 h-10 rounded-lg object-cover border border-pink-200 dark:border-pink-700"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900/30 rounded-lg flex items-center justify-center border border-pink-200 dark:border-pink-700">
-                        <File className="w-5 h-5 text-pink-600 dark:text-pink-400" />
+              {/* File preview with upload progress */}
+              {selectedFile && (
+                <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-xl border border-pink-200 dark:border-pink-800 shadow-sm max-w-full">
+                  {filePreview ? (
+                    <img
+                      src={filePreview}
+                      alt="Preview"
+                      className="w-10 h-10 rounded-lg object-cover border border-pink-200 dark:border-pink-700"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900/30 rounded-lg flex items-center justify-center border border-pink-200 dark:border-pink-700">
+                      <File className="w-5 h-5 text-pink-600 dark:text-pink-400" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                      {selectedFile.name}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      {formatFileSize(selectedFile.size)}
+                    </div>
+                    {isUploading && (
+                      <div className="mt-1">
+                        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5">
+                          <div 
+                            className="bg-pink-500 h-1.5 rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          Enviando... {Math.round(uploadProgress)}%
+                        </div>
                       </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                        {selectedFile.name}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {formatFileSize(selectedFile.size)}
-                      </div>
-                    </div>
+                  </div>
+                  {!isUploading && (
                     <button
                       type="button"
                       onClick={() => {
@@ -2729,141 +2445,149 @@ export default function Chat() {
                     >
                       <X className="w-4 h-4" />
                     </button>
-                  </div>
-                )}
-
-                <div className="flex-1 relative">
-                  <Input
-                    ref={inputRef}
-                    className="w-full bg-background border-slate-200 dark:border-slate-700 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200 resize-none rounded-2xl px-4 py-3"
-                    placeholder="Digite uma mensagem..."
-                    value={input}
-                    onChange={handleInputChange}
-                    autoComplete="off"
-                    aria-label="Digite uma mensagem"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage(e as any);
-                      }
-                    }}
-                    onKeyUp={handleKeyUp}
-                    onBlur={handleInputBlur}
-                  />
-
-                  {/* Typing Indicator */}
-                  {typingUsers.size > 0 && (
-                    <div className="absolute -top-8 left-0 right-0 flex items-center gap-2 px-4 py-2">
-                      <div className="flex items-center gap-2">
-                        <div className="flex space-x-1">
-                          <div
-                            className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
-                            style={{ animationDelay: "0ms" }}
-                          ></div>
-                          <div
-                            className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
-                            style={{ animationDelay: "150ms" }}
-                          ></div>
-                          <div
-                            className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
-                            style={{ animationDelay: "300ms" }}
-                          ></div>
-                        </div>
-                        <span className="text-sm text-slate-600 dark:text-slate-300">
-                          {Array.from(typingUsers).length === 1
-                            ? `${Array.from(typingUsers)[0]} está digitando...`
-                            : `${Array.from(typingUsers).join(
-                                ", "
-                              )} estão digitando...`}
-                        </span>
-                      </div>
-                    </div>
                   )}
                 </div>
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={(!input.trim() && !selectedFile) || !selectedRoom}
-                  className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 h-10 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl"
-                >
-                  <Send />
-                  <span className="hidden md:inline font-medium">Enviar</span>
-                </Button>
-              </form>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center text-slate-500 dark:text-slate-400">
-                <div className="text-6xl mb-6">💬</div>
-                <p className="text-lg font-medium mb-2">
-                  Selecione uma conversa
-                </p>
-                <p className="text-sm">
-                  Escolha uma conversa da barra lateral para começar a conversar
-                </p>
+              )}
+
+              <div className="flex-1 relative min-w-0">
+                <Textarea
+                  ref={inputRef}
+                  rows={1}
+                  className="w-full bg-background border-slate-200 dark:border-slate-700 focus:border-pink-300 dark:focus:border-pink-600 transition-all duration-200 resize-none rounded-2xl px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base leading-6 max-h-52"
+                  placeholder="Digite uma mensagem..."
+                  value={input}
+                  onChange={handleInputChange}
+                  autoComplete="off"
+                  aria-label="Digite uma mensagem"
+                  onFocus={() => {
+                    // Ensure caret is visible above keyboard on mobile
+                    setTimeout(() => {
+                      inputRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                    }, 50);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(e as any);
+                    }
+                  }}
+                  onKeyUp={handleKeyUp}
+                  onBlur={handleInputBlur}
+                />
+
+                {/* Typing Indicator */}
+                {typingUsers.size > 0 && (
+                  <div className="absolute -top-8 left-0 right-0 flex items-center gap-2 px-4 py-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex space-x-1">
+                        <div
+                          className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
+                          style={{ animationDelay: "0ms" }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
+                          style={{ animationDelay: "150ms" }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
+                          style={{ animationDelay: "300ms" }}
+                        ></div>
+                      </div>
+                      <span className="text-sm text-slate-600 dark:text-slate-300">
+                        {Array.from(typingUsers).length === 1
+                          ? `${Array.from(typingUsers)[0]} está digitando...`
+                          : `${Array.from(typingUsers).join(", ")} estão digitando...`}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={(!input.trim() && !selectedFile) || !selectedRoom || isUploading}
+                className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed px-3 sm:px-4 py-2 h-9 sm:h-10 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl flex-shrink-0"
+              >
+                {isUploading ? (
+                  <RefreshCw className="animate-spin w-4 h-4 sm:w-5 sm:h-5" />
+                ) : (
+                  <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                )}
+                <span className="hidden sm:inline font-medium ml-1">
+                  {isUploading ? "Enviando..." : "Enviar"}
+                </span>
+              </Button>
+            </form>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center text-slate-500 dark:text-slate-400">
+              <div className="text-6xl mb-6">💬</div>
+              <p className="text-lg font-medium mb-2">Selecione uma conversa</p>
+              <p className="text-sm">Escolha uma conversa da barra lateral para começar a conversar</p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Image Viewer */}
-      <ImageViewer />
-
-      {/* Review Modal */}
-      {showReviewModal && contractToReview && (
-        <div className="w-full h-screen flex justify-center items-center bg-black/60 backdrop-blur-sm">
-          <ReviewModal
-            isOpen={showReviewModal}
-            onClose={handleReviewModalClose}
-            contract={contractToReview}
-            onReviewSubmitted={handleReviewSubmitted}
-          />
-        </div>
-      )}
-
-      {/* Campaign Finalization Modal */}
-      {showCampaignFinalizationModal && contractToFinalize && (
-        <CampaignFinalizationModal
-          isOpen={showCampaignFinalizationModal}
-          onClose={() => {
-            setShowCampaignFinalizationModal(false);
-            setContractToFinalize(null);
-          }}
-          contract={contractToFinalize}
-          onCampaignFinalized={handleCampaignFinalized}
-        />
-      )}
-
-      {/* Campaign Timeline Sidebar */}
-      {showTimelineSidebar && activeContract && (
-        <CampaignTimelineSidebar
-          contractId={activeContract.id}
-          isOpen={showTimelineSidebar}
-          onClose={() => setShowTimelineSidebar(false)}
-        />
-      )}
-
-      {/* Brand Review Modal */}
-      {showBrandReviewModal && brandContractToReview && (
-        <BrandReviewModal
-          isOpen={showBrandReviewModal}
-          onClose={() => {
-            setShowBrandReviewModal(false);
-            setBrandContractToReview(null);
-          }}
-          contract={brandContractToReview}
-          onReviewSubmitted={handleBrandReviewSubmitted}
-        />
-      )}
     </div>
-  );
+
+    {/* Mobile Overlay */}
+    {sidebarOpen && (
+      <div
+        className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+        onClick={() => setSidebarOpen(false)}
+      />
+    )}
+
+    {/* Image Viewer */}
+    <ImageViewer />
+
+    {/* Review Modal */}
+    {showReviewModal && contractToReview && (
+      <div className="w-full h-screen flex justify-center items-center bg-black/60 backdrop-blur-sm">
+        <ReviewModal
+          isOpen={showReviewModal}
+          onClose={handleReviewModalClose}
+          contract={contractToReview}
+          onReviewSubmitted={handleReviewSubmitted}
+        />
+      </div>
+    )}
+
+    {/* Campaign Finalization Modal */}
+    {showCampaignFinalizationModal && contractToFinalize && (
+      <CampaignFinalizationModal
+        isOpen={showCampaignFinalizationModal}
+        onClose={() => {
+          setShowCampaignFinalizationModal(false);
+          setContractToFinalize(null);
+        }}
+        contract={contractToFinalize}
+        onCampaignFinalized={handleCampaignFinalized}
+      />
+    )}
+
+    {/* Campaign Timeline Sidebar */}
+    {showTimelineSidebar && activeContract && (
+      <CampaignTimelineSidebar
+        contractId={activeContract.id}
+        isOpen={showTimelineSidebar}
+        onClose={() => setShowTimelineSidebar(false)}
+      />
+    )}
+
+    {/* Brand Review Modal */}
+    {showBrandReviewModal && brandContractToReview && (
+      <BrandReviewModal
+        isOpen={showBrandReviewModal}
+        onClose={() => {
+          setShowBrandReviewModal(false);
+          setBrandContractToReview(null);
+        }}
+        contract={brandContractToReview}
+        onReviewSubmitted={handleBrandReviewSubmitted}
+      />
+    )}
+  </div>
+);
 }

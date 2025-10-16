@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { getProfile } from '../../api/auth';
+import { createAuthenticatedClient } from '../../services/apiClient';
 
 interface User {
   id: string;
@@ -34,7 +35,6 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   isSigningUp: boolean;
-  requiresEmailVerification: boolean;
 }
 
 const initialState: AuthState = {
@@ -44,7 +44,6 @@ const initialState: AuthState = {
   isLoading: false,
   error: null,
   isSigningUp: false,
-  requiresEmailVerification: false,
 };
 
 // Async thunk for checking authentication status
@@ -61,16 +60,17 @@ export const checkAuthStatus = createAsyncThunk(
       
       if (storedToken && storedUser) {
         try {
-          // Validate token with backend
-          const response = await getProfile();
-          if (response.success) {
+          // Create authenticated client with stored token
+          const authenticatedClient = createAuthenticatedClient(storedToken);
+          const response = await authenticatedClient.get('/user');
+          
+          if (response.data.success) {
             return {
-              user: response.profile,
+              user: response.data.profile,
               token: storedToken
             };
           }
         } catch (error) {
-          // Token is invalid, clear localStorage
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           throw new Error('Token inválido');
@@ -81,15 +81,16 @@ export const checkAuthStatus = createAsyncThunk(
     
     // If token exists in state, validate it
     try {
-      const response = await getProfile();
-      if (response.success) {
+      const authenticatedClient = createAuthenticatedClient(token);
+      const response = await authenticatedClient.get('/user');
+      
+      if (response.data.success) {
         return {
-          user: response.profile,
+          user: response.data.profile,
           token: token
         };
       }
     } catch (error) {
-      // Token is invalid, clear state
       dispatch(logout());
       throw new Error('Token inválido');
     }
@@ -141,7 +142,6 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
-      state.requiresEmailVerification = false;
       
       // Clear localStorage as well
       localStorage.removeItem('token');
@@ -149,12 +149,6 @@ const authSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
-    },
-    setEmailVerificationRequired: (state, action: PayloadAction<boolean>) => {
-      state.requiresEmailVerification = action.payload;
-    },
-    clearEmailVerificationRequired: (state) => {
-      state.requiresEmailVerification = false;
     },
     // Toggle premium status (for testing)
     togglePremium: (state) => {
@@ -175,6 +169,12 @@ const authSlice = createSlice({
       if (state.user) {
         state.user = { ...state.user, ...action.payload };
       }
+    },
+    // Reset loading states (useful for clearing stuck states)
+    resetLoadingStates: (state) => {
+      state.isLoading = false;
+      state.isSigningUp = false;
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -208,10 +208,10 @@ export const {
   signupFailure, 
   logout, 
   clearError,
-  setEmailVerificationRequired,
-  clearEmailVerificationRequired,
   togglePremium,
   toggleAdminRole,
-  updateUser
+  updateUser,
+  resetLoadingStates
 } = authSlice.actions;
+
 export default authSlice.reducer; 

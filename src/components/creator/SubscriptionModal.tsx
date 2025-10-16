@@ -22,7 +22,7 @@ import { useAppDispatch } from "../../store/hooks";
 import { checkAuthStatus, updateUser } from "../../store/slices/authSlice";
 import { fetchUserProfile } from "../../store/thunks/userThunks";
 import { apiClient } from "../../services/apiClient";
-import { useTheme } from "../ThemeProvider";
+import { getAuthToken, dispatchPremiumStatusUpdate } from "../../utils/browserUtils";
 
 interface SubscriptionModalProps {
   open?: boolean;
@@ -60,14 +60,147 @@ const CheckoutForm = ({ selectedPlan, onSuccess, onClose }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const formatCPF = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    if (numbers.length <= 3) return numbers;
+    if (numbers.length <= 6)
+      return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
+    if (numbers.length <= 9)
+      return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(
+        6
+      )}`;
+    return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(
+      6,
+      9
+    )}-${numbers.slice(9, 11)}`;
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Submitting form with data:", formData);
-    if (!stripe || !elements) {
+  const formatCardNumber = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    return numbers.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
+  };
+
+  const formatExpiration = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    if (numbers.length <= 2) return numbers;
+    return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}`;
+  };
+
+  const formatExpirationForBackend = (value: string) => {
+    // Convert MM/AA format to MMYY format for backend
+    const numbers = value.replace(/\D/g, "");
+    return numbers; // Return just the 4 digits
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    let formattedValue = value;
+
+    switch (name) {
+      case "cpf":
+        formattedValue = formatCPF(value);
+        break;
+      case "card_number":
+        formattedValue = formatCardNumber(value);
+        break;
+      case "card_expiration_date":
+        formattedValue = formatExpiration(value);
+        break;
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: formattedValue }));
+  };
+
+  const validateCPF = (cpf: string): boolean => {
+    const numbers = cpf.replace(/[.-]/g, "");
+    if (numbers.length !== 11) {
+      return false;
+    }
+    if (/^(\d)\1{10}$/.test(numbers)) {
+      return false;
+    }
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+      sum += parseInt(numbers[i]) * (10 - i);
+    }
+    let remainder = sum % 11;
+    let digit1 = remainder < 2 ? 0 : 11 - remainder;
+
+    if (parseInt(numbers[9]) !== digit1) {
+      return false;
+    }
+
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+      sum += parseInt(numbers[i]) * (11 - i);
+    }
+    remainder = sum % 11;
+    let digit2 = remainder < 2 ? 0 : 11 - remainder;
+
+    return parseInt(numbers[10]) === digit2;
+  };
+
+  const validateForm = () => {
+    const errors: string[] = [];
+
+    if (!formData.card_number.replace(/\s/g, "").match(/^\d{16}$/)) {
+      errors.push("O número do cartão deve ter 16 dígitos");
+    }
+
+    if (!formData.card_holder_name.trim()) {
+      errors.push("O nome do titular é obrigatório");
+    }
+
+    if (!formData.card_expiration_date.match(/^\d{2}\/\d{2}$/)) {
+      errors.push("A data de validade deve estar no formato MM/AA");
+    }
+
+    if (!formData.card_cvv.match(/^\d{3,4}$/)) {
+      errors.push("O CVV deve ter 3 ou 4 dígitos");
+    }
+
+    if (!formData.cpf.match(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/)) {
+      errors.push("O CPF deve estar no formato XXX.XXX.XXX-XX");
+    } else if (!validateCPF(formData.cpf)) {
+      errors.push("CPF inválido. Verifique o número.");
+    }
+
+    return errors;
+  };
+
+
+  const handlePay = async () => {
+    const token = getAuthToken();
+    
+    if (!token) {
       toast({
-        title: "Erro",
-        description: "Stripe não foi carregado corretamente",
+        title: "Autenticação Necessária",
+        description: "Faça login para prosseguir com o pagamento",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!open) {
+      return;
+    }
+
+    if (!selectedPlan) {
+      console.error('No selected plan found:', { selectedPlan, open });
+      toast({
+        title: "Plano não selecionado",
+        description: "Por favor, selecione um plano de assinatura",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const errors = validateForm();
+
+    if (errors.length > 0) {
+      toast({
+        title: "Erro de Validação",
+        description: errors.join(", "),
         variant: "destructive",
       });
       return;
@@ -104,8 +237,70 @@ const CheckoutForm = ({ selectedPlan, onSuccess, onClose }) => {
       const paymentData = {
         paymentMethodId: paymentMethod.id,
         card_holder_name: formData.card_holder_name.trim(),
+        card_expiration_date: formatExpirationForBackend(formData.card_expiration_date), // Convert MM/AA to MMYY format
+        card_cvv: formData.card_cvv,
+        cpf: formData.cpf,
         subscription_plan_id: selectedPlan?.id,
       };
+
+      if (paymentData.card_number.length !== 16) {
+        toast({
+          title: "Erro de Validação",
+          description: "O número do cartão deve ter exatamente 16 dígitos",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (paymentData.card_expiration_date.length !== 4 || !/^\d{4}$/.test(paymentData.card_expiration_date)) {
+        toast({
+          title: "Erro de Validação",
+          description: "A data de validade deve estar no formato MMAA (4 dígitos)",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Additional validation for card expiration date format
+      const month = parseInt(paymentData.card_expiration_date.substring(0, 2));
+      const year = parseInt(paymentData.card_expiration_date.substring(2, 4));
+      
+      if (month < 1 || month > 12) {
+        toast({
+          title: "Erro de Validação",
+          description: "O mês deve estar entre 01 e 12",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const currentYear = new Date().getFullYear() % 100; // Get last 2 digits of current year
+      if (year < currentYear) {
+        toast({
+          title: "Erro de Validação",
+          description: `O ano deve ser ${currentYear} ou superior`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (paymentData.card_cvv.length < 3 || paymentData.card_cvv.length > 4) {
+        toast({
+          title: "Erro de Validação",
+          description: "O CVV deve ter 3 ou 4 dígitos",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!paymentData.cpf.match(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/)) {
+        toast({
+          title: "Erro de Validação",
+          description: "O CPF deve estar no formato XXX.XXX.XXX-XX",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const response = await paymentClient.post(
         "/payment/subscription",
@@ -119,6 +314,24 @@ const CheckoutForm = ({ selectedPlan, onSuccess, onClose }) => {
       }
     } catch (error: any) {
       console.error("Erro no pagamento:", error);
+      
+      // Enhanced error logging
+      console.error("Detailed Error Info:", {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers
+        }
+      });
+      
+      // Log the actual error data separately so it's not collapsed
+      console.error("🔴 BACKEND ERROR DATA:", error.response?.data);
+      console.error("🔴 FULL ERROR RESPONSE:", error.response);
+      console.error("🔴 REQUEST CONFIG:", error.config);
 
       if (error.code === "ECONNABORTED" || error.message.includes("timeout")) {
         toast({
@@ -191,8 +404,8 @@ const CheckoutForm = ({ selectedPlan, onSuccess, onClose }) => {
 
   const handleSuccess = async () => {
     // Dispatch premium status update event
-    window.dispatchEvent(new CustomEvent("premium-status-updated"));
-
+    dispatchPremiumStatusUpdate();
+    
     // Immediately update user data with premium status
     dispatch(updateUser({ has_premium: true }));
 
@@ -234,8 +447,8 @@ const CheckoutForm = ({ selectedPlan, onSuccess, onClose }) => {
       await dispatch(fetchUserProfile());
 
       // Dispatch another premium status update event to ensure all listeners get it
-      window.dispatchEvent(new CustomEvent("premium-status-updated"));
-
+      dispatchPremiumStatusUpdate();
+      
       // Show success message
       toast({
         title: "🎉 Assinatura Ativada!",

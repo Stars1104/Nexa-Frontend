@@ -33,6 +33,30 @@ export interface AdminBrand {
   free_trial_expires_at: string | null;
 }
 
+export interface AdminStudent {
+  id: number;
+  name: string;
+  email: string;
+  academic_email: string | null;
+  institution: string | null;
+  course_name: string | null;
+  student_verified: boolean;
+  student_expires_at: string | null;
+  free_trial_expires_at: string | null;
+  has_premium: boolean;
+  created_at: string;
+  email_verified_at: string | null;
+  status: 'active' | 'expired' | 'premium';
+  trial_status: 'active' | 'expired' | 'premium';
+  days_remaining: number;
+}
+
+export interface StudentsResponse {
+  success: boolean;
+  data: AdminStudent[];
+  pagination: PaginationData;
+}
+
 export interface PaginationData {
   current_page: number;
   last_page: number;
@@ -261,6 +285,45 @@ export const adminApi = {
    */
   getComprehensiveRankings: async (): Promise<ComprehensiveRankingsResponse> => {
     const response = await apiClient.get('/admin/brand-rankings/comprehensive');
+    return response.data;
+  },
+
+  /**
+   * Get all verified students with filtering and pagination
+   */
+  getStudents: async (params?: {
+    status?: 'active' | 'expired' | 'premium';
+    search?: string;
+    per_page?: number;
+    page?: number;
+  }): Promise<StudentsResponse> => {
+    const response = await apiClient.get('/admin/students', { params });
+    return response.data;
+  },
+
+  /**
+   * Update student trial period
+   */
+  updateStudentTrial: async (
+    studentId: number,
+    period: '1month' | '6months' | '1year'
+  ): Promise<{ success: boolean; message: string; student: AdminStudent }> => {
+    const response = await apiClient.patch(`/admin/students/${studentId}/trial`, {
+      period,
+    });
+    return response.data;
+  },
+
+  /**
+   * Update student status (activate, block, remove)
+   */
+  updateStudentStatus: async (
+    studentId: number,
+    action: 'activate' | 'block' | 'remove'
+  ): Promise<{ success: boolean; message: string; student: AdminStudent }> => {
+    const response = await apiClient.patch(`/admin/students/${studentId}/status`, {
+      action,
+    });
     return response.data;
   },
 };

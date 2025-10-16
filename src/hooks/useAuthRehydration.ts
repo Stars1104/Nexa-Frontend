@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { checkAuthStatus } from '../store/slices/authSlice';
+import { hasSessionData, clearUserSession } from '../utils/sessionCleanup';
+import { SESSION_CONFIG } from '../config/sessionConfig';
 
 export const useAuthRehydration = () => {
   const dispatch = useAppDispatch();
@@ -10,37 +12,58 @@ export const useAuthRehydration = () => {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      // Only initialize once and only if not already authenticated
-      if (!hasInitialized.current && !isAuthenticated && !token && !user) {
-        hasInitialized.current = true;
-        
-        // Check localStorage for existing auth data
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
-
-        if (storedToken && storedUser) {
-          try {
-            // Only validate token if we have stored data
-            await dispatch(checkAuthStatus()).unwrap();
-          } catch (error) {
-            // Token validation failed, clear stored data
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-          }
-        } else {
-        }
-        
-        // Mark rehydration as complete
+      // Only initialize once
+      if (hasInitialized.current) return;
+      hasInitialized.current = true;
+      
+      // Don't auto-login if user is on auth/signup pages
+      const currentPath = window.location.pathname;
+      const isAuthPage = currentPath.includes('/auth') || 
+                        currentPath.includes('/signup') || 
+                        currentPath.includes('/forgot-password');
+      
+      if (isAuthPage) {
         setIsRehydrating(false);
-      } else if (isAuthenticated || token || user) {
-        // Already authenticated, mark rehydration as complete
-        setIsRehydrating(false);
+        return;
       }
+      
+      // If already authenticated from Redux state, no need to revalidate
+      if (isAuthenticated && token && user) {
+        setIsRehydrating(false);
+        return;
+      }
+      
+      // Check localStorage for existing auth data
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+
+      if (storedToken && storedUser) {
+        try {
+          // Validate token with backend
+          await dispatch(checkAuthStatus()).unwrap();
+        } catch (error) {
+          clearUserSession();
+        }
+      }
+      
+      // Mark rehydration as complete
+      setIsRehydrating(false);
     };
     
-    initializeAuth();
-  }, [dispatch, isAuthenticated, token, user]);
+    // Add a small delay to ensure Redux Persist has time to rehydrate
+    const timer = setTimeout(() => {
+      initializeAuth();
+    }, 200);
+    
+    return () => clearTimeout(timer);
+  }, [dispatch]);
 
+  // Reset initialization flag when user logs out
+  useEffect(() => {
+    if (!isAuthenticated && !token && !user) {
+      hasInitialized.current = false;
+    }
+  }, [isAuthenticated, token, user]);
 
   return {
     token,

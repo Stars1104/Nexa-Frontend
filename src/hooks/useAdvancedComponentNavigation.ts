@@ -35,11 +35,13 @@ const COMPONENT_MAPPING: Record<string, string> = {
   // Brand components - Fix the mapping to use the correct URL format
   'Minhas+campanhas': 'Minhas campanhas',
   'brand-profile': 'Meu perfil',
+  'Nova+campanha': 'Nova campanha',
   'create-campaign': 'Nova campanha',
   'payments': 'Pagamentos',
   'brand-notifications': 'Notificações',
   'creator-profile': 'Perfil do Criador',
   'brand-guide': 'Guia da Plataforma',
+  'Gerenciar+Campanhas': 'Gerenciar Campanhas',
   
   // Admin components
   'admin-dashboard': 'Painel',

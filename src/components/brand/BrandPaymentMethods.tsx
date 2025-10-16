@@ -282,9 +282,9 @@ export default function BrandPaymentMethods() {
         loadPaymentMethods();
       } else {
         toast({
-          title: "Erro",
-          description: response.error || "Erro ao salvar método de pagamento",
-          variant: "destructive",
+          title: 'Erro',
+          description: response.error || response.message || 'Erro ao salvar método de pagamento',
+          variant: 'destructive',
         });
       }
     } catch (error) {
@@ -412,7 +412,7 @@ export default function BrandPaymentMethods() {
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className='bg-[#e91e63] text-white hover:bg-[#e91e63]/90'>
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar Cartão
               </Button>
@@ -482,8 +482,8 @@ export default function BrandPaymentMethods() {
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit" disabled={isSubmitting || !stripe}>
-                    {isSubmitting ? "Salvando..." : "Salvar Cartão"}
+                  <Button type="submit" disabled={isSubmitting} className='bg-[#e91e63] text-white hover:bg-[#e91e63]/90'>
+                    {isSubmitting ? 'Salvando...' : 'Salvar Cartão'}
                   </Button>
                 </DialogFooter>
               </form>

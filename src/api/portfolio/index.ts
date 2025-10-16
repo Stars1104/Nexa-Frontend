@@ -71,8 +71,8 @@ export const updatePortfolioProfile = async (
 ): Promise<Portfolio> => {
   
   
-  const response = await apiClient.put('/portfolio/profile', data, {
-    headers: { 
+  const response = await apiClient.post('/portfolio/profile', data, {
+    headers: {
       Authorization: `Bearer ${token}`,
       // Don't set Content-Type for FormData - let the browser set it with boundary
     }
@@ -81,20 +81,69 @@ export const updatePortfolioProfile = async (
   return response.data.data;
 };
 
+// Test update endpoint
+export const testUpdate = async (
+  token: string, 
+  data: FormData
+): Promise<any> => {
+  
+  const response = await apiClient.post('/portfolio/test-update', data, {
+    headers: { 
+      Authorization: `Bearer ${token}`,
+      // Don't set Content-Type for FormData - let the browser set it with boundary
+    }
+  });
+  return response.data;
+};
+
+// Test upload endpoint
+export const testUpload = async (
+  token: string, 
+  files: File[]
+): Promise<any> => {  
+  if (files.length === 0) {
+    throw new Error('No files provided for upload');
+  }
+
+  const formData = new FormData();
+  files.forEach((file, index) => {
+    formData.append('files[]', file);
+  });
+
+  for (let [key, value] of formData.entries()) {
+  }
+
+  const response = await apiClient.post('/portfolio/test-upload', formData, {
+    headers: { 
+      Authorization: `Bearer ${token}`,
+      // Don't set Content-Type for FormData - let the browser set it with boundary
+    }
+  });
+  return response.data;
+};
+
 // Upload portfolio media
 export const uploadPortfolioMedia = async (
   token: string, 
   files: File[]
 ): Promise<{ items: PortfolioItem[]; total_items: number }> => {
+  
+  if (files.length === 0) {
+    throw new Error('No files provided for upload');
+  }
+
   const formData = new FormData();
-  files.forEach(file => {
+  files.forEach((file, index) => {
     formData.append('files[]', file);
   });
+
+  for (let [key, value] of formData.entries()) {
+  }
 
   const response = await apiClient.post('/portfolio/media', formData, {
     headers: { 
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'multipart/form-data'
+      // Don't set Content-Type for FormData - let the browser set it with boundary
     }
   });
   return response.data.data;
@@ -110,6 +159,7 @@ export const updatePortfolioItem = async (
     order?: number;
   }
 ): Promise<PortfolioItem> => {
+  console.log("This is axios",data);
   const response = await apiClient.put(`/portfolio/items/${itemId}`, data, {
     headers: { Authorization: `Bearer ${token}` }
   });

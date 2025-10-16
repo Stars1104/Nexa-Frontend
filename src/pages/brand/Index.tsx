@@ -15,6 +15,7 @@ import ChatPage from "./ChatPage";
 import ViewCreators from "@/components/brand/ViewCreators";
 import ViewApplication from "@/components/brand/ViewApplication";
 import CreateCampaign from "@/components/brand/CreateCampaign";
+import CampaignManagement from "@/components/brand/CampaignManagement";
 import BrandPaymentMethods from "@/components/brand/BrandPaymentMethods";
 import Notification from "@/components/Notification";
 import CreatorProfile from "@/components/brand/CreatorProfile";
@@ -42,75 +43,42 @@ function Index() {
     defaultComponent: "Minhas campanhas",
   });
 
-  const CreatorComponent = () => {
-    if (typeof component === "string") {
-      switch (component) {
-        case "Minhas campanhas":
-          return <AllowedCampaigns setComponent={setComponent} />;
-        case "Meu perfil":
-          return <BrandProfile />;
-        case "Chat":
-          return <ChatPage setComponent={setComponent} />;
-        case "Nova campanha":
-          return <CreateCampaign />;
-        case "Pagamentos":
-          return (
-            <Elements stripe={stripePromise}>
-              <BrandPaymentMethods />
-            </Elements>
-          );
-        case "Notificações":
-          return <Notification />;
-        case "Perfil do Criador":
-          return <CreatorProfile setComponent={setComponent} />;
-        case "Guia da Plataforma":
-          return <GuideEmbedded audience="Brand" />;
-        default:
-          return <NotFound />;
-      }
-    } else if (
-      typeof component === "object" &&
-      component.name === "Ver aplicação"
-    ) {
-      return (
-        <ViewApplication
-          setComponent={setComponent}
-          campaign={component.campaign}
-        />
-      );
-    } else if (
-      typeof component === "object" &&
-      component.name === "Ver criadores"
-    ) {
-      return (
-        <ViewCreators
-          setComponent={setComponent}
-          campaignId={component.campaign?.id}
-          campaignTitle={component.campaign?.title}
-        />
-      );
-    } else if (
-      typeof component === "object" &&
-      component.name === "Perfil do Criador"
-    ) {
-      return (
-        <CreatorProfile
-          setComponent={setComponent}
-          creatorId={(component as any).creatorId}
-        />
-      );
-    } else if (typeof component === "object" && component.name === "Chat") {
-      return (
-        <ChatPage
-          setComponent={setComponent}
-          campaignId={component.campaign?.id}
-          creatorId={component.creatorId}
-        />
-      );
-    } else {
-      return <NotFound />;
+    const CreatorComponent = () => {
+        if (typeof component === "string") {
+            switch (component) {
+                case "Minhas campanhas":
+                    return <AllowedCampaigns setComponent={setComponent} />;
+                case "Meu perfil":
+                    return <BrandProfile />;
+                case "Chat":
+                    return <ChatPage setComponent={setComponent} />
+                case "Nova campanha":
+                    return <CreateCampaign />
+                case "Gerenciar Campanhas":
+                    return <CampaignManagement setComponent={setComponent} />
+                case "Pagamentos":
+                    return <BrandPaymentMethods />
+                case "Notificações":
+                    return <Notification />
+                case "Perfil do Criador":
+                    return <CreatorProfile setComponent={setComponent} />;
+                case "Guia da Plataforma":
+                    return <GuideEmbedded audience="Brand" />;
+                default:
+                    return <NotFound />;
+            }
+        } else if (typeof component === "object" && component.name === "Ver aplicação") {
+            return <ViewApplication setComponent={setComponent} campaign={component.campaign} />;
+        } else if (typeof component === "object" && component.name === "Ver criadores") {
+            return <ViewCreators setComponent={setComponent} campaignId={component.campaign?.id} campaignTitle={component.campaign?.title} />;
+        } else if (typeof component === "object" && component.name === "Perfil do Criador") {
+            return <CreatorProfile setComponent={setComponent} creatorId={(component as any).creatorId} />;
+        } else if (typeof component === "object" && component.name === "Chat") {
+            return <ChatPage setComponent={setComponent} campaignId={component.campaign?.id} creatorId={component.creatorId} />;
+        } else {
+            return <NotFound />;
+        }
     }
-  };
 
   return (
     <ThemeProvider>

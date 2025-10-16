@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { useAppDispatch } from '../../store/hooks';
 import { fetchPortfolio, updatePortfolioProfile, uploadPortfolioMedia, deletePortfolioItem } from '../../store/slices/portfolioSlice';
+import { testUpload, testUpdate } from '../../api/portfolio';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '../ui/dialog';
 import { Camera, Loader2, Plus } from 'lucide-react';
@@ -12,7 +13,7 @@ import { getAvatarUrl } from '../../lib/utils';
 const MAX_BIO_LENGTH = 500;
 const MAX_FILES_PER_UPLOAD = 5;
 const MAX_TOTAL_FILES = 12;
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "video/mp4", "video/quicktime"];
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/jpg", "video/mp4", "video/quicktime", "video/mov", "video/avi", "video/mpeg", "video/x-msvideo", "video/webm", "video/ogg", "video/x-matroska", "video/x-flv", "video/3gpp", "video/x-ms-wmv", "application/octet-stream"];
 
 // Function to get user initials from name
 const getInitials = (name: string) => {
@@ -52,6 +53,10 @@ export default function Portfolio() {
     // State for image modal
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+
+    // State for video modal
+    const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+    const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
     // State for saving
     const [isSaving, setIsSaving] = useState(false);
@@ -104,17 +109,16 @@ export default function Portfolio() {
     }, [error, toast]);
 
     // --- Media Upload Logic ---
+    //-----this is Input change function------------
     const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         addMediaFiles(files);
-        e.target.value = ""; // reset input
+        e.preventDefault; // reset input
     };
-
-    const addMediaFiles = (files: File[]) => {
+    const addMediaFiles = (files: File[]) => {    
         let validFiles = files.filter(
             (file) => ACCEPTED_TYPES.includes(file.type)
         );
-
         const currentMediaCount = media.length + (portfolio?.items?.length || 0);
         if (currentMediaCount + validFiles.length > MAX_TOTAL_FILES) {
             validFiles = validFiles.slice(0, MAX_TOTAL_FILES - currentMediaCount);
@@ -126,7 +130,10 @@ export default function Portfolio() {
             url: URL.createObjectURL(file),
             type: getFileType(file),
         }));
-        setMedia((prev) => [...prev, ...newMedia]);
+        setMedia((prev) => {
+            const updated = [...prev, ...newMedia];
+            return updated;
+        });
     };
 
     const handleRemoveMedia = (idx: number) => {
@@ -154,7 +161,6 @@ export default function Portfolio() {
 
     const handleSaveProfile = async () => {
         if (!user?.id) return;
-
         setIsSaving(true);
         try {
             const token = localStorage.getItem('token');
@@ -170,21 +176,29 @@ export default function Portfolio() {
             formData.append('bio', bioToSend);
 
             // Add project links
+            let validLinks = [];
             if (projectLinks && projectLinks.length > 0) {
-                const validLinks = projectLinks.filter(link => link.title.trim() !== '' && link.url.trim() !== '');
-                if (validLinks.length > 0) {
-                    formData.append('project_links', JSON.stringify(validLinks));
-                }
+                validLinks = projectLinks.filter(link =>
+                    link &&
+                    link.title &&
+                    link.url &&
+                    link.title.trim() !== '' &&
+                    link.url.trim() !== ''
+                );
             }
-
+            // Always append project_links, even if empty, to allow clearing
+            formData.append('project_links', JSON.stringify(validLinks));
 
             if (profilePic && profilePic.startsWith('blob:')) {
                 const response = await fetch(profilePic);
                 const blob = await response.blob();
                 formData.append('profile_picture', blob, 'profile.jpg');
             }
-
+            console.log("Axios data--------->",formData);
             const result = await dispatch(updatePortfolioProfile({ token, data: formData })).unwrap();
+            
+            // Refresh portfolio data to ensure UI is up to date
+            await dispatch(fetchPortfolio(token));
 
             setIsEditDialogOpen(false);
             toast({
@@ -208,35 +222,8 @@ export default function Portfolio() {
             setIsSaving(false);
         }
     };
-
     const handleSavePortfolio = async () => {
-        if (!user?.id || !portfolio) return;
-
-        setIsSaving(true);
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) throw new Error('Token de autenticação não encontrado');
-
-            // Upload new media files
-            const files = media.map(item => item.file);
-            await dispatch(uploadPortfolioMedia({ token, files })).unwrap();
-
-            setMedia([]);
             setIsPortfolioEditDialogOpen(false);
-            toast({
-                title: "Sucesso!",
-                description: "Portfólio adicionado com sucesso!",
-                duration: 3000,
-            });
-        } catch (error) {
-            toast({
-                title: "Erro",
-                description: "Falha ao adicionar portfólio. Tente novamente.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsSaving(false);
-        }
     };
 
     const handleRemovePortfolioItem = async (itemId: number) => {
@@ -274,12 +261,18 @@ export default function Portfolio() {
             formData.append('bio', bio);
 
             // Add project links
+            let validLinks = [];
             if (projectLinks && projectLinks.length > 0) {
-                const validLinks = projectLinks.filter(link => link.title.trim() !== '' && link.url.trim() !== '');
-                if (validLinks.length > 0) {
-                    formData.append('project_links', JSON.stringify(validLinks));
-                }
+                validLinks = projectLinks.filter(link =>
+                    link &&
+                    link.title &&
+                    link.url &&
+                    link.title.trim() !== '' &&
+                    link.url.trim() !== ''
+                );
             }
+            // Always append project_links, even if empty, to allow clearing
+            formData.append('project_links', JSON.stringify(validLinks));
 
             if (profilePic && profilePic.startsWith('blob:')) {
                 const response = await fetch(profilePic);
@@ -341,7 +334,7 @@ export default function Portfolio() {
     };
 
     // Image modal handlers
-    const handleImageClick = (imageUrl: string) => {
+    const handleImageClick = (imageUrl: string) => {    
         setSelectedImage(imageUrl);
         setIsImageModalOpen(true);
     };
@@ -349,6 +342,17 @@ export default function Portfolio() {
     const handleCloseImageModal = () => {
         setIsImageModalOpen(false);
         setSelectedImage(null);
+    };
+
+    // Video modal handlers
+    const handleVideoClick = (videoUrl: string) => {
+        setSelectedVideo(videoUrl);
+        setIsVideoModalOpen(true);
+    };
+
+    const handleCloseVideoModal = () => {
+        setIsVideoModalOpen(false);
+        setSelectedVideo(null);
     };
 
     if (isLoading) {
@@ -415,10 +419,10 @@ export default function Portfolio() {
                     {/* Project Links Display */}
                     {projectLinks && projectLinks.length > 0 && (
                         <div className="flex flex-col gap-2 mt-4">
-                            <h3 className="font-semibold text-base">Projetos Anteriores</h3>
+                            <h3 className="font-semibold text-base"></h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {projectLinks
-                                    .filter(link => {
+                                    .filter((link: any) => {
                                         if (typeof link === 'string') {
                                             return link && link.trim() !== '';
                                         }
@@ -461,14 +465,18 @@ export default function Portfolio() {
                     )}
                     
                     <div className="flex flex-col gap-2 mt-6">
-                        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                            <DialogTrigger asChild>
-                                <button className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-8 py-2 rounded-md text-base">Editar Perfil</button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                        <div className="flex gap-2">
+                            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <button className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-8 py-2 rounded-md text-base">Editar Perfil</button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto" aria-describedby="edit-profile-description">
                                 <DialogHeader>
                                     <DialogTitle>Editar Perfil</DialogTitle>
                                 </DialogHeader>
+                                <div id="edit-profile-description" className="sr-only">
+                                    Edite seu perfil de portfólio incluindo título, biografia e links de projetos
+                                </div>
                                 <div className="flex flex-col gap-4 py-4">
                                     <div>
                                         <label className="block text-sm font-medium mb-1" htmlFor="profileTitle">Perfil Título</label>
@@ -568,6 +576,7 @@ export default function Portfolio() {
                         </Dialog>
                     </div>
                 </div>
+                </div>
             </section>
 
             {/* Portfolio Section */}
@@ -580,10 +589,13 @@ export default function Portfolio() {
                                 Add Portfólio
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+                        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto" aria-describedby="add-portfolio-description">
                             <DialogHeader>
                                 <DialogTitle>Adicionar Trabalhos ao Portfólio</DialogTitle>
                             </DialogHeader>
+                            <div id="add-portfolio-description" className="sr-only">
+                                Adicione trabalhos ao seu portfólio fazendo upload de imagens e vídeos
+                            </div>
                             <div className="flex flex-col gap-6 py-4">
                                 <div>
                                     <h3 className="font-semibold text-base mb-4">Upload de Mídia</h3>
@@ -594,9 +606,14 @@ export default function Portfolio() {
                                         onDrop={handleDrop}
                                     >
                                         <div className="flex flex-col items-center gap-2">
+                                            <input 
+                                                        type="url"
+                                                        className="w-full rounded-md border px-3 py-2 text-sm bg-background text-foreground outline-none transition placeholder:text-muted-foreground"
+                                                        placeholder="https://meu-portfóli"
+                                                    />
                                             <Camera className="w-10 h-10 text-muted-foreground mb-2" />
                                             <div className="font-semibold text-base text-foreground">Arraste arquivos para cá</div>
-                                            <div className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG, MP4, MOV</div>
+                                            <div className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG, MP4, MOV, AVI, MPEG, WMV, WEBM, OGG, MKV, FLV, 3GP</div>
                                             <Button
                                                 className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-6 py-2 rounded-md mt-2"
                                                 onClick={() => mediaInputRef.current?.click()}
@@ -605,7 +622,7 @@ export default function Portfolio() {
                                             <input
                                                 ref={mediaInputRef}
                                                 type="file"
-                                                accept="image/png, image/jpeg,video/mp4,video/quicktime"
+                                                accept="image/png, image/jpeg, image/jpg, video/mp4, video/quicktime, video/mov, video/avi, video/mpeg, video/x-msvideo, video/webm, video/ogg, video/x-matroska, video/x-flv, video/3gpp, video/x-ms-wmv"
                                                 className="hidden"
                                                 multiple
                                                 onChange={handleMediaChange}
@@ -618,12 +635,13 @@ export default function Portfolio() {
                                 <div>
                                     <h3 className="font-semibold text-base mb-2">Meu Trabalho ({getTotalMediaCount()}/{MAX_TOTAL_FILES})</h3>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                        {/* Existing portfolio items */}
+                                
                                         {portfolio?.items?.map((item: any) => (
                                             <div key={`existing-${item.id}`} className="rounded-lg bg-background flex flex-col items-start justify-between aspect-[4/3] p-2 relative overflow-hidden group">
                                                 <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${item.media_type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.media_type === 'image' ? 'Foto' : 'Vídeo'}</span>
                                                 {item.media_type === 'image' ? (
-                                                    <img
+                                                
+                                                     <img
                                                         src={item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`}
                                                         alt={item.title}
                                                         className="object-cover w-full h-full rounded-md cursor-pointer"
@@ -633,6 +651,7 @@ export default function Portfolio() {
                                                             e.currentTarget.style.display = 'none';
                                                         }}
                                                     />
+                                                   
                                                 ) : (
                                                     <div className="flex flex-col items-center justify-center w-full h-full">
                                                         <VideoIcon />
@@ -650,7 +669,7 @@ export default function Portfolio() {
                                             </div>
                                         ))}
                                         {/* New media items */}
-                                        {media.map((item, idx) => (
+                                        {media?.map((item, idx) => (
                                             <div key={`new-${idx}`} className="rounded-lg bg-background flex flex-col items-start justify-between aspect-[4/3] p-2 relative overflow-hidden group">
                                                 <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${item.type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.type === 'image' ? 'Foto' : 'Vídeo'}</span>
                                                 {item.type === 'image' ? (
@@ -742,9 +761,24 @@ export default function Portfolio() {
                                             }}
                                         />
                                     ) : (
-                                        <div className="flex flex-col items-center justify-center w-full h-full">
-                                            <VideoIcon />
-                                        </div>
+                                        <video
+                                            src={item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`}
+                                            className="object-cover w-full h-full rounded-md cursor-pointer"
+                                            controls
+                                            preload="metadata"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleVideoClick(item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`);
+                                            }}
+                                            onError={(e) => {
+                                                console.error('Video failed to load:', item.file_url || item.file_path);
+                                                e.currentTarget.style.display = 'none';
+                                                const parent = e.currentTarget.parentElement;
+                                                if (parent) {
+                                                    parent.innerHTML = '<div class="flex flex-col items-center justify-center w-full h-full"><svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="mx-auto text-blue-500"><rect x="3" y="5" width="15" height="14" rx="2" fill="currentColor" opacity="0.1" /><rect x="3" y="5" width="15" height="14" rx="2" stroke="currentColor" strokeWidth="2" /><path d="M21 7v10l-4-3.5V10.5L21 7z" fill="currentColor" /></svg></div>';
+                                                }
+                                            }}
+                                        />
                                     )}
                                     <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
                                         <button
@@ -764,14 +798,29 @@ export default function Portfolio() {
                                     {item.type === 'image' ? (
                                         <img
                                             src={item.url}
+                                            key={`new-${idx}`}
                                             alt="media"
                                             className="object-cover w-full h-full rounded-md cursor-pointer"
                                             onClick={() => handleImageClick(item.url)}
                                         />
                                     ) : (
-                                        <div className="flex flex-col items-center justify-center w-full h-full">
-                                            <VideoIcon />
-                                        </div>
+                                        <video
+                                            src={item.url}
+                                            className="object-cover w-full h-full rounded-md cursor-pointer"
+                                            controls
+                                            preload="metadata"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleVideoClick(item.url);
+                                            }}
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                                const parent = e.currentTarget.parentElement;
+                                                if (parent) {
+                                                    parent.innerHTML = '<div class="flex flex-col items-center justify-center w-full h-full"><svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="mx-auto text-blue-500"><rect x="3" y="5" width="15" height="14" rx="2" fill="currentColor" strokeWidth="2" /><path d="M21 7v10l-4-3.5V10.5L21 7z" fill="currentColor" /></svg></div>';
+                                                }
+                                            }}
+                                        />
                                     )}
                                     <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
                                         <button
@@ -795,7 +844,7 @@ export default function Portfolio() {
             </section>
 
             {/* Save Button */}
-            {/* <div className="flex justify-end mt-6">
+            <div className="flex justify-end mt-6">
                 <Button
                     className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-8 py-2 rounded-md text-base"
                     onClick={handleSavePortfolioComplete}
@@ -804,7 +853,7 @@ export default function Portfolio() {
                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                     Salvar Portfólio
                 </Button>
-            </div> */}
+            </div>
 
             {/* Image Modal */}
             {isImageModalOpen && selectedImage && (
@@ -818,6 +867,30 @@ export default function Portfolio() {
                         />
                         <button
                             onClick={handleCloseImageModal}
+                            className="absolute top-2 right-2 text-white text-4xl hover:text-gray-300 transition-colors"
+                        >
+                            &times;
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Video Modal */}
+            {isVideoModalOpen && selectedVideo && (
+                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={handleCloseVideoModal}>
+                    <div className="relative max-w-4xl max-h-full p-4">
+                        <video
+                            src={selectedVideo}
+                            className="max-w-full max-h-full object-contain"
+                            controls
+                            autoPlay
+                            onClick={(e) => e.stopPropagation()}
+                            onError={(e) => {
+                                console.error('Video modal failed to load:', selectedVideo);
+                            }}
+                        />
+                        <button
+                            onClick={handleCloseVideoModal}
                             className="absolute top-2 right-2 text-white text-4xl hover:text-gray-300 transition-colors"
                         >
                             &times;

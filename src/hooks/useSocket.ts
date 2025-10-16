@@ -72,7 +72,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         //     rememberUpgrade: true
         // });
 
-        const socket = io(`http://localhost:3001`, {
+        const socket = io(`http://localhost:3000`, {
             transports: ['websocket', 'polling'],
             autoConnect: true,
             reconnection: true,
@@ -100,10 +100,6 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                     userId: user.id,
                     userRole: user.role,
                 });
-
-                // Auto-join all chat rooms when connected for persistent message receiving
-                // Note: This is now handled by the Chat component to avoid duplicate API calls
-                // The Chat component will handle joining rooms when it loads
             } catch (error) {
                 console.warn('Error joining user:', error);
             }
@@ -172,7 +168,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
 
         // Listen for new notifications (only if enabled)
         if (enableNotifications) {
-            socket.on('new_notification', (notificationData: any) => {
+            const handleNotification = (notificationData: any) => {
                 if (!isMountedRef.current) return;
                 
                 // Add notification to Redux store
@@ -182,7 +178,14 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                 if (!notificationData.is_read) {
                     dispatch(incrementUnreadCount());
                 }
-            });
+            };
+            
+            socket.on('new_notification', handleNotification);
+            
+            // Store cleanup function
+            (socket as any)._cleanupNotification = () => {
+                socket.off('new_notification', handleNotification);
+            };
         }
 
         return socket;
@@ -204,6 +207,10 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
             // Disconnect socket
             if (socketRef.current) {
                 try {
+                    // Clean up notification listener if it exists
+                    if ((socketRef.current as any)._cleanupNotification) {
+                        (socketRef.current as any)._cleanupNotification();
+                    }
                     socketRef.current.disconnect();
                     socketRef.current = null;
                 } catch (error) {
@@ -253,6 +260,8 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
             } catch (error) {
                 console.warn('Error joining room:', error);
             }
+        } else {
+            
         }
     }, [isConnected, enableChat]);
 
@@ -283,13 +292,17 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                 const formData = new FormData();
                 formData.append('room_id', roomId);
                 formData.append('file', file);
+                // Include text message if provided
+                if (message && message.trim()) {
+                    formData.append('message', message.trim());
+                }
 
                 const response = await apiClient.post('/chat/messages', formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     },
                 });
-
+                    console.log("I am in here=====>",response.data.data);
                 messageData = response.data.data;
             } else {
                 // Send text message using apiClient
@@ -301,11 +314,9 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                 messageData = response.data.data;
             }
 
-            // Socket event is now handled by backend for better reliability
-
             return messageData;
         } catch (error) {
-            console.error('Error sending message:', error);
+            console.error('❌ Error sending message:', error);
             throw error;
         }
     }, [isConnected, user, enableChat]);
@@ -345,10 +356,6 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         if (!user || !isMountedRef.current || !enableChat) {
             console.warn('Cannot mark messages as read: user not authenticated or chat disabled');
             return;
-        }
-
-        if (!socketRef.current || !isConnected) {
-            console.warn('Socket not connected, marking messages as read via API only');
         }
 
         try {

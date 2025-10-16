@@ -9,8 +9,9 @@ import {
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { fetchApprovedCampaigns } from "../../store/thunks/campaignThunks";
-import { clearError } from "../../store/slices/campaignSlice";
+import { clearError, clearAllCampaignData } from "../../store/slices/campaignSlice";
 import { toast } from "../ui/sonner";
+import { useSafeToast } from "../../hooks/useSafeToast";
 import { Skeleton } from "../ui/skeleton";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -41,7 +42,7 @@ import {
   CardTitle,
 } from "../ui/card";
 import { hiringApi } from "../../api/hiring";
-import { useSafeToast } from "../../hooks/useSafeToast";
+// import { useSafeToast } from "../../hooks/useSafeToast";
 
 // Stats will be calculated dynamically based on approved campaigns
 
@@ -161,7 +162,7 @@ export default function Dashboard({
 
   // Fetch approved campaigns on component mount
   useEffect(() => {
-    if (user?.role === "creator") {
+    if (user?.role === "creator" || user?.role === "student") {
       // Sequential API calls to prevent rate limiting
       const fetchDataSequentially = async () => {
         try {
@@ -175,6 +176,7 @@ export default function Dashboard({
           await dispatch(fetchCreatorApplications()).unwrap();
         } catch (error) {
           console.error('Error fetching dashboard data:', error);
+          toast.error("Falha ao carregar campanhas. Tente recarregar a página.");
         }
       };
       
@@ -189,7 +191,19 @@ export default function Dashboard({
         dispatch(clearError());
       }
     };
-  }, [dispatch, error]);
+  }, [dispatch]);
+
+  // Add periodic refresh to catch newly approved campaigns
+  // Temporarily disabled to fix infinite loop issue
+  // useEffect(() => {
+  //   if (user?.role === "creator") {
+  //     const interval = setInterval(() => {
+  //       dispatch(fetchApprovedCampaigns());
+  //     }, 30000); // Refresh every 30 seconds
+
+  //     return () => clearInterval(interval);
+  //   }
+  // }, [dispatch, user?.role]);
 
   // Fetch completed campaigns and reviews on mount (after user is loaded)
   useEffect(() => {

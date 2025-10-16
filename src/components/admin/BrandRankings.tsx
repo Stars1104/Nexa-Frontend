@@ -28,8 +28,32 @@ export default function BrandRankings() {
                 adminApi.getComprehensiveRankings()
             ]);
 
-            setRankings(rankingsRes.data);
-            setComprehensiveRankings(comprehensiveRes.data);
+            // Validate rankings data structure
+            if (rankingsRes.data && typeof rankingsRes.data === 'object') {
+                const rankingsData = rankingsRes.data;
+                // Ensure all expected arrays exist and are arrays
+                const validatedRankings = {
+                    mostPosted: Array.isArray(rankingsData.mostPosted) ? rankingsData.mostPosted : [],
+                    mostHired: Array.isArray(rankingsData.mostHired) ? rankingsData.mostHired : [],
+                    mostPaid: Array.isArray(rankingsData.mostPaid) ? rankingsData.mostPaid : []
+                };
+                setRankings(validatedRankings);
+            } else {
+                console.warn('Invalid rankings data structure:', rankingsRes.data);
+                setRankings({
+                    mostPosted: [],
+                    mostHired: [],
+                    mostPaid: []
+                });
+            }
+
+            // Validate comprehensive rankings data
+            if (Array.isArray(comprehensiveRes.data)) {
+                setComprehensiveRankings(comprehensiveRes.data);
+            } else {
+                console.warn('Invalid comprehensive rankings data structure:', comprehensiveRes.data);
+                setComprehensiveRankings([]);
+            }
         } catch (error) {
             console.error('Failed to fetch brand rankings:', error);
             toast({
@@ -37,6 +61,13 @@ export default function BrandRankings() {
                 description: "Falha ao carregar rankings das marcas",
                 variant: "destructive",
             });
+            // Set empty data on error
+            setRankings({
+                mostPosted: [],
+                mostHired: [],
+                mostPaid: []
+            });
+            setComprehensiveRankings([]);
         } finally {
             setLoading(false);
         }
@@ -219,7 +250,10 @@ export default function BrandRankings() {
                         </Card>
                         
                         <div className="grid gap-4">
-                            {rankings?.mostPosted.map((brand) => renderRankingCard(brand))}
+                            {rankings?.mostPosted && Array.isArray(rankings.mostPosted) 
+                                ? rankings.mostPosted.map((brand) => renderRankingCard(brand))
+                                : <div className="text-center text-gray-500 py-8">Nenhum dado disponível</div>
+                            }
                         </div>
                     </TabsContent>
 
@@ -237,7 +271,10 @@ export default function BrandRankings() {
                         </Card>
                         
                         <div className="grid gap-4">
-                            {rankings?.mostHired.map((brand) => renderRankingCard(brand))}
+                            {rankings?.mostHired && Array.isArray(rankings.mostHired) 
+                                ? rankings.mostHired.map((brand) => renderRankingCard(brand))
+                                : <div className="text-center text-gray-500 py-8">Nenhum dado disponível</div>
+                            }
                         </div>
                     </TabsContent>
 
@@ -255,7 +292,10 @@ export default function BrandRankings() {
                         </Card>
                         
                         <div className="grid gap-4">
-                            {rankings?.mostPaid.map((brand) => renderRankingCard(brand))}
+                            {rankings?.mostPaid && Array.isArray(rankings.mostPaid) 
+                                ? rankings.mostPaid.map((brand) => renderRankingCard(brand))
+                                : <div className="text-center text-gray-500 py-8">Nenhum dado disponível</div>
+                            }
                         </div>
                     </TabsContent>
                 </Tabs>

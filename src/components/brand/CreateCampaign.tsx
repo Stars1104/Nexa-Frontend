@@ -180,14 +180,24 @@ export default function CreateCampaign() {
     }
   };
 
-  // Handle select all states
-  const handleSelectAllStates = () => {
-    setSelectedStates([...BRAZILIAN_STATES]);
+  // Handle select all states checkbox
+  const handleSelectAllStatesCheckbox = (checked: boolean) => {
+    if (checked) {
+      setSelectedStates([...BRAZILIAN_STATES]);
+    } else {
+      setSelectedStates([]);
+    }
   };
 
-  // Handle clear all states
-  const handleClearAllStates = () => {
-    setSelectedStates([]);
+  // Determine checkbox state: checked if all selected, indeterminate if some selected, unchecked if none selected
+  const getSelectAllCheckboxState = () => {
+    if (selectedStates.length === 0) {
+      return { checked: false, indeterminate: false };
+    } else if (selectedStates.length === BRAZILIAN_STATES.length) {
+      return { checked: true, indeterminate: false };
+    } else {
+      return { checked: false, indeterminate: true };
+    }
   };
 
   // Attachment handlers
@@ -587,22 +597,23 @@ export default function CreateCampaign() {
               ))}
             </div>
             <div className="flex items-center gap-2 mb-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleSelectAllStates}
-                className="text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              >
-                Selecionar Todos
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleClearAllStates}
-                className="text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              >
-                Limpar Todos
-              </Button>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  ref={(el) => {
+                    if (el) {
+                      const state = getSelectAllCheckboxState();
+                      el.checked = state.checked;
+                      el.indeterminate = state.indeterminate;
+                    }
+                  }}
+                  onChange={(e) => handleSelectAllStatesCheckbox(e.target.checked)}
+                  className="rounded border-zinc-300 text-pink-500 focus:ring-pink-500"
+                />
+                <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                  Selecionar todos os estados
+                </span>
+              </label>
             </div>
             <select
               value=""
@@ -732,7 +743,7 @@ export default function CreateCampaign() {
            <Button
              type="submit"
              disabled={isCreating}
-             className="bg-pink-500 hover:bg-pink-600 text-white font-semibold text-base py-3 px-6 rounded-lg shadow-lg flex items-center gap-2 disabled:opacity-50"
+             className="bg-[#e91e63] text-white hover:bg-[#e91e63]/90 font-semibold text-base py-3 px-6 rounded-lg shadow-lg flex items-center gap-2 disabled:opacity-50"
              style={{ minWidth: 180 }}
            >
              {isCreating ? (
