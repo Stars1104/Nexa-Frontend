@@ -1,5 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import intlTelInput from "intl-tel-input";
+import "intl-tel-input/build/css/intlTelInput.css";
+// Vite asset URL para utils.js (necessário para formatação on-the-fly)
+import itiUtils from "intl-tel-input/build/js/utils.js?url";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "../../components/ui/form";
@@ -72,22 +75,143 @@ const CreatorSignUp = () => {
   // intl-tel-input: ref para o input e instância para formatação/validação
   const whatsappInputRef = useRef<HTMLInputElement | null>(null);
   const itiRef = useRef<any>(null);
+  const [isPhoneValid, setIsPhoneValid] = useState(true);
+  const [phonePreviewE164, setPhonePreviewE164] = useState("");
+  const [dialCode, setDialCode] = useState("+55");
 
-  useEffect(() => {
-    if (!whatsappInputRef.current) return;
-    // Inicializa com BR e separador nacional, mantendo UI atual do Input
-    itiRef.current = intlTelInput(whatsappInputRef.current, {
-      initialCountry: "br",
-      nationalMode: true,
-      allowDropdown: false,
-      separateDialCode: false,
-      autoPlaceholder: "off",
-    });
-    return () => {
-      // Algumas versões expõem destroy
-      try { itiRef.current?.destroy?.(); } catch {}
+  const formatBRProgressive = (digits: string): string => {
+    // (DD) 9XXXX-XXXX ou (DD) XXXX-XXXX
+    const d = digits.replace(/\D/g, "");
+    if (d.length <= 2) return `(${d}`;
+    if (d.length <= 6) return `(${d.slice(0,2)}) ${d.slice(2)}`;
+    if (d.length <= 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+    return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7,11)}`;
+  };
+
+  useLayoutEffect(() => {
+    // Ativa apenas no fluxo de cadastro; ao alternar para "entrar", não faz nada (cleanup anterior já removeu listeners)
+    if (authType !== "signup") return;
+
+    const onCountryChange = () => {
+      try {
+        const data = itiRef.current?.getSelectedCountryData?.();
+        if (data?.dialCode) setDialCode(`+${data.dialCode}`);
+      } catch {}
+      setTimeout(() => {
+        const e164 = itiRef.current?.getNumber?.() || "";
+        setPhonePreviewE164(e164);
+      }, 0);
     };
-  }, []);
+
+    const onInput = () => {
+      const e164 = itiRef.current?.getNumber?.() || "";
+      setPhonePreviewE164(e164);
+      const inputEl = whatsappInputRef.current;
+      const raw = inputEl?.value || "";
+
+      // Formata conforme digita (quando utils disponível)
+      const utils = (window as any)?.intlTelInputUtils;
+      if (utils && itiRef.current?.getNumber) {
+        try {
+          const national = itiRef.current.getNumber(utils.numberFormat.NATIONAL) || raw;
+          if (inputEl && national && national !== raw) {
+            const wasEnd = inputEl.selectionStart === raw.length;
+            inputEl.value = national;
+            if (wasEnd) {
+              const len = national.length;
+              inputEl.setSelectionRange(len, len);
+            }
+          }
+        } catch {}
+      } else {
+        // Fallback para BR quando utils ainda não carregou
+        try {
+          const iso2 = itiRef.current?.getSelectedCountryData?.()?.iso2;
+          if (iso2 === 'br' && inputEl) {
+            const digits = raw.replace(/\D/g, "");
+            const national = formatBRProgressive(digits);
+            if (national && national !== raw) {
+              const wasEnd = inputEl.selectionStart === raw.length;
+              inputEl.value = national;
+              if (wasEnd) {
+                const len = national.length;
+                inputEl.setSelectionRange(len, len);
+              }
+            }
+          }
+        } catch {}
+      }
+
+      const currentVal = inputEl?.value || raw;
+      form.setValue("whatsapp", currentVal, { shouldValidate: false, shouldDirty: true });
+
+      // Validação: usa utils quando disponível; caso contrário, aceita enquanto <10 dígitos como pendente
+      const digits = currentVal.replace(/\D/g, "");
+      const valid = digits.length === 0
+        ? true
+        : (itiRef.current?.isValidNumber?.() ?? (digits.length >= 10));
+      setIsPhoneValid(!!valid);
+      if (raw && !valid) {
+        form.setError("whatsapp", { type: "manual", message: "Insira um WhatsApp válido. Dica: use (11) 99999-9999 (o DDI é pela bandeira)" });
+      } else {
+        form.clearErrors("whatsapp");
+      }
+    };
+
+    const ensureItiAndListeners = () => {
+      const el = whatsappInputRef.current;
+      if (!el) return;
+      // Inicializa o plugin se ainda não foi aplicado
+      if (!el.parentElement?.classList.contains("iti")) {
+        itiRef.current = intlTelInput(el, {
+          initialCountry: "br",
+          // @ts-expect-error property available at runtime
+          preferredCountries: ["br", "us", "gb", "pt"],
+          nationalMode: true,
+          allowDropdown: true,
+          separateDialCode: true,
+          autoPlaceholder: "aggressive",
+          formatOnDisplay: true,
+          utilsScript: itiUtils,
+        });
+        try {
+          const data = itiRef.current?.getSelectedCountryData?.();
+          if (data?.dialCode) setDialCode(`+${data.dialCode}`);
+        } catch {}
+      }
+      // Anexa listeners apenas uma vez
+      if (!(el as any).dataset?.itiListenersAttached) {
+        el.addEventListener("countrychange", onCountryChange);
+        el.addEventListener("input", onInput);
+        el.addEventListener("focus", ensureItiAndListeners);
+        (el as any).dataset.itiListenersAttached = "1";
+      }
+    };
+
+    // Tentativas rápidas para lidar com HMR e montagem tardia do input
+    ensureItiAndListeners();
+    const t1 = setTimeout(ensureItiAndListeners, 0);
+    const t2 = setTimeout(ensureItiAndListeners, 150);
+    const t3 = setTimeout(ensureItiAndListeners, 350);
+    const raf = requestAnimationFrame(ensureItiAndListeners);
+
+    return () => {
+      try {
+        const el = whatsappInputRef.current;
+        if (el && (el as any).dataset?.itiListenersAttached) {
+          el.removeEventListener("countrychange", onCountryChange);
+          el.removeEventListener("input", onInput);
+          el.removeEventListener("focus", ensureItiAndListeners);
+          delete (el as any).dataset.itiListenersAttached;
+        }
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+        cancelAnimationFrame(raf);
+        itiRef.current?.destroy?.();
+      } catch {}
+    };
+  }, [authType]);
 
   useEffect(() => {
     if (loginType === "login") setAuthType("signin");
@@ -172,14 +296,33 @@ const CreatorSignUp = () => {
         return;
       }
 
-      // Obtém valor E.164 do intl-tel-input se disponível
-      const e164 = itiRef.current?.getNumber ? itiRef.current.getNumber() : data.whatsapp;
-      if (data.whatsapp) {
-        const isValid = itiRef.current?.isValidNumber ? itiRef.current.isValidNumber() : E164_REGEX.test(e164 || "");
-        if (!isValid) {
-          toast.error("Insira um WhatsApp válido. Ex.: +55 11 99999-9999");
-          return;
-        }
+      // Obtém valor E.164 do intl-tel-input se disponível (preferir E164 quando utils disponível)
+      const utils = (window as any)?.intlTelInputUtils;
+      let e164 = itiRef.current?.getNumber
+        ? (utils ? itiRef.current.getNumber(utils.numberFormat.E164) : itiRef.current.getNumber())
+        : data.whatsapp;
+      if (e164 && !String(e164).startsWith('+')) {
+        e164 = `+${String(e164).replace(/[^\d]/g, '')}`;
+      }
+      let digitsE164 = String(e164 || '').replace(/\D/g, '');
+      // Fallback de normalização para quando utils não carregou ou getNumber() retorna vazio
+      if (!e164 || !E164_REGEX.test(String(e164))) {
+        try {
+          const selected = itiRef.current?.getSelectedCountryData?.();
+          const dialFromState = (dialCode || '+55').replace(/\D/g, '');
+          const dial = selected?.dialCode || dialFromState || '55';
+          const rawDigits = String(data.whatsapp || '').replace(/\D/g, '');
+          const builtFallback = rawDigits ? `+${dial}${rawDigits}` : '';
+          if (builtFallback) {
+            e164 = builtFallback;
+            digitsE164 = String(e164).replace(/\D/g, '');
+          }
+          
+        } catch {}
+      }
+      if (!(isPhoneValid || digitsE164.length >= 11)) {
+        toast.error("Insira um WhatsApp válido. Dica: use (11) 99999-9999 (o DDI é pela bandeira)");
+        return;
       }
 
       const signupData = {
@@ -191,6 +334,7 @@ const CreatorSignUp = () => {
         isStudent: data.isStudent,
         role: (role as 'creator' | 'brand') || 'creator',
       };
+      
 
       // Add timeout to prevent hanging requests
       const timeoutPromise = new Promise((_, reject) => {
@@ -246,17 +390,40 @@ const CreatorSignUp = () => {
       else if (error.response?.status >= 500) {
         toast.error("Erro interno do servidor. Tente novamente em alguns minutos.");
       }
-      // Handle validation errors
+      // Handle validation errors (422) com detalhes por campo
       else if (error.response?.status === 422) {
-        const errorMessage = error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
-        toast.error(errorMessage);
+        const errors = error.response?.data?.errors;
+        if (errors && typeof errors === 'object') {
+          const parts: string[] = [];
+          for (const key of Object.keys(errors)) {
+            const msgs = errors[key];
+            if (Array.isArray(msgs) && msgs.length > 0) {
+              parts.push(`${key}: ${msgs[0]}`);
+              // Mapear erros do backend para o formulário
+              try {
+                if (key === 'email' || key === 'name' || key === 'password' || key === 'password_confirmation' || key === 'whatsapp') {
+                  form.setError(key as any, { type: 'server', message: msgs[0] });
+                }
+              } catch {}
+            }
+          }
+          if (parts.length > 0) {
+            toast.error(parts.join(" | "));
+          } else {
+            const errorMessage = error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
+            toast.error(errorMessage);
+          }
+        } else {
+          const errorMessage = error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
+          toast.error(errorMessage);
+        }
       }
       // Handle other errors
       else {
         const errorMessage = error.response?.data?.message || error.message || "Erro ao criar conta. Tente novamente.";
         toast.error(errorMessage);
       }
-      console.error('Sign up error:', error);
+      
     }
   };
 
@@ -532,9 +699,16 @@ const CreatorSignUp = () => {
                     rules={{
                       validate: (value) => {
                         if (!value) return true;
-                        const e164Try = itiRef.current?.getNumber ? itiRef.current.getNumber() : value;
-                        const isValid = itiRef.current?.isValidNumber ? itiRef.current.isValidNumber() : E164_REGEX.test(e164Try || "");
-                        return isValid || "Insira um WhatsApp válido. Ex.: +55 11 99999-9999";
+                        const raw = String(value);
+                        const digits = raw.replace(/\D/g, "");
+                        const utils = (window as any)?.intlTelInputUtils;
+                        const e164Try = itiRef.current?.getNumber
+                          ? (utils ? itiRef.current.getNumber(utils.numberFormat.E164) : itiRef.current.getNumber())
+                          : raw;
+                        const digitsE164 = String(e164Try || "").replace(/\D/g, "");
+                        const pluginValid = itiRef.current?.isValidNumber ? itiRef.current.isValidNumber() : false;
+                        const fallbackValid = digits.length >= 10 || digitsE164.length >= 11 || E164_REGEX.test(String(e164Try || ""));
+                        return (isPhoneValid || pluginValid || fallbackValid) || "Insira um WhatsApp válido. Dica: use (11) 99999-9999 (o DDI é pela bandeira)";
                       }
                     }}
                     render={({ field }) => (
@@ -543,6 +717,7 @@ const CreatorSignUp = () => {
                         <FormControl>
                           <Input
                             placeholder="(00) 00000-0000"
+                            type="tel"
                             {...field}
                             // mantém UI e classes originais; conecta ref para intl-tel-input
                             ref={(el) => {

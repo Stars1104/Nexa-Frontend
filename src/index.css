@@ -2,6 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+/* intl-tel-input overrides - manter alinhamento e legibilidade */
+.iti {
+  width: 100% !important;
+}
+
+.iti input[type="tel"],
+input[type="tel"].iti__tel-input {
+  width: 100% !important;
+}
+
+/* Dropdown: força fundo claro e texto escuro para legibilidade em dark mode */
+.iti__country-list {
+  background-color: #ffffff !important;
+  color: #111827 !important; /* gray-900 */
+  border-color: #e5e7eb !important; /* gray-200 */
+}
+.iti__country-list .iti__country-name,
+.iti__country-list .iti__dial-code {
+  color: #111827 !important;
+}
+.iti__search-input {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #e5e7eb !important;
+}
+
+/* Ajustes visuais do DDI separado para combinar com o input */
+.iti--separate-dial-code .iti__selected-dial-code {
+  color: inherit;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
 
 @layer base {
