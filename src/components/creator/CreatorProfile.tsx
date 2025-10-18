@@ -20,6 +20,15 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getAvatarUrl } from "@/lib/utils";
 
+
+import {
+  Instagram,
+  Youtube,
+  Facebook,
+  Twitter,
+  Music4,
+} from "lucide-react";
+
 const getInitials = (name: string) => {
   return name
     .split(" ")
@@ -565,58 +574,95 @@ const handleRefreshProfile = useCallback(async () => {
             </div>
             
             {/* Social Media Information - Always show for all creators */}
-            <div className="w-full">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">
-                Redes Sociais
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                {displayProfile.creator_type === 'influencer' || displayProfile.creator_type === 'both' 
-                  ? 'Suas redes sociais ajudam as marcas a conhecerem melhor seu alcance e engajamento'
-                  : 'Adicione suas redes sociais para aumentar suas chances de ser selecionado para campanhas'}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 text-sm">
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    INSTAGRAM
-                  </div>
-                  <div className="text-gray-900 dark:text-white font-medium">
-                    {displayProfile.instagram_handle || 'Não informado'}
-                  </div>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    TIKTOK
-                  </div>
-                  <div className="text-gray-900 dark:text-white font-medium">
-                    {displayProfile.tiktok_handle || 'Não informado'}
-                  </div>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    YOUTUBE
-                  </div>
-                  <div className="text-gray-900 dark:text-white font-medium">
-                    {displayProfile.youtube_channel || 'Não informado'}
-                  </div>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    FACEBOOK
-                  </div>
-                  <div className="text-gray-900 dark:text-white font-medium">
-                    {displayProfile.facebook_page || 'Não informado'}
-                  </div>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                  <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    TWITTER
-                  </div>
-                  <div className="text-gray-900 dark:text-white font-medium">
-                    {displayProfile.twitter_handle || 'Não informado'}
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Redes Sociais Section */}
+<div className="w-full border-t border-gray-200 dark:border-neutral-700 pt-6">
+  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">
+    Redes Sociais
+  </h3>
+  <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+    {displayProfile.creator_type === "influencer" ||
+    displayProfile.creator_type === "both"
+      ? "Suas redes sociais ajudam as marcas a conhecerem melhor seu alcance e engajamento."
+      : "Adicione suas redes sociais para aumentar suas chances de ser selecionado para campanhas."}
+  </p>
+
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+    {/* Instagram */}
+    <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 hover:shadow-sm transition">
+      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-tr from-pink-500 to-yellow-500 rounded-full flex items-center justify-center text-white">
+        <Instagram size={20} />
+      </div>
+      <div>
+        <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          Instagram
+        </div>
+        <div className="text-gray-900 dark:text-white font-medium truncate max-w-[150px] sm:max-w-[180px]">
+          {displayProfile.instagram_handle || "Não informado"}
+        </div>
+      </div>
+    </div>
+
+    {/* TikTok */}
+    <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 hover:shadow-sm transition">
+      <div className="flex-shrink-0 w-10 h-10 bg-black rounded-full flex items-center justify-center text-white">
+        <Music4 size={20} />
+      </div>
+      <div>
+        <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          TikTok
+        </div>
+        <div className="text-gray-900 dark:text-white font-medium truncate max-w-[150px] sm:max-w-[180px]">
+          {displayProfile.tiktok_handle || "Não informado"}
+        </div>
+      </div>
+    </div>
+
+    {/* YouTube */}
+    <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 hover:shadow-sm transition">
+      <div className="flex-shrink-0 w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white">
+        <Youtube size={20} />
+      </div>
+      <div>
+        <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          YouTube
+        </div>
+        <div className="text-gray-900 dark:text-white font-medium truncate max-w-[150px] sm:max-w-[180px]">
+          {displayProfile.youtube_channel || "Não informado"}
+        </div>
+      </div>
+    </div>
+
+    {/* Facebook */}
+    <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 hover:shadow-sm transition">
+      <div className="flex-shrink-0 w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white">
+        <Facebook size={20} />
+      </div>
+      <div>
+        <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          Facebook
+        </div>
+        <div className="text-gray-900 dark:text-white font-medium truncate max-w-[150px] sm:max-w-[180px]">
+          {displayProfile.facebook_page || "Não informado"}
+        </div>
+      </div>
+    </div>
+
+    {/* Twitter */}
+    <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 hover:shadow-sm transition">
+      <div className="flex-shrink-0 w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center text-white">
+        <Twitter size={20} />
+      </div>
+      <div>
+        <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          Twitter
+        </div>
+        <div className="text-gray-900 dark:text-white font-medium truncate max-w-[150px] sm:max-w-[180px]">
+          {displayProfile.twitter_handle || "Não informado"}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
           </div>
         </div>
       </div>
