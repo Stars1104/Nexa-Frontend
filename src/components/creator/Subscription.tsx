@@ -10,7 +10,12 @@ import { apiClient } from "../../services/apiClient";
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 
-const stripePromise = loadStripe('pk_test_51S0Wz1PRcUVFvPMgtByCDcKqzOeGnRicbmd0SckOIFtegvqkyKlAkTVpiCMSOqzWDbmS2NtadwFF9dTxQxDZbJpo00aJN8YBC8'); // your public key
+// Use test key for development, replace with live key in production
+const stripePromise = loadStripe(
+  import.meta.env.MODE === 'production'
+    ? import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE
+    : import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+);
 
 const benefits = [
     "Aplicações ilimitadas em campanhas",
@@ -503,3 +508,4 @@ export default function Subscription() {
         </div>
     );
 }
+

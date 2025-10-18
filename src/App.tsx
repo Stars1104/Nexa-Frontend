@@ -102,7 +102,12 @@ const App = () => {
               <TooltipProvider>
                 <Sonner />
                 {/* <DebugUserState /> */}
-                <BrowserRouter>
+                <BrowserRouter
+                  future={{
+                    v7_startTransition: true,
+                    v7_relativeSplatPath: true,
+                  }}
+                >
                   {/* Session Warning Modal */}
                   <SessionWarningModal
                     isOpen={sessionTimeout.isWarningShown}
