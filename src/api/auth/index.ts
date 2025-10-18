@@ -241,3 +241,28 @@ export const logout = async () => {
     persistor.purge();
 };
 
+// Delete Avatar Function
+export const deleteAvatar = async () => {
+    const response = await AuthAPI.delete("/api/profile/avatar");
+    return response.data;
+};
+
+// Upload Avatar Only
+export const uploadAvatarOnly = async (file: File) => {
+    const fd = new FormData();
+    fd.append('avatar', file);
+    // Enviar somente o avatar para rota dedicada de avatar
+    const response = await AuthAPI.post('/api/profile/avatar', fd);
+    return response.data;
+};
+
+// Upload Avatar via Base64 (fallback)
+export const uploadAvatarBase64 = async (base64: string) => {
+    const response = await AuthAPI.post('/api/profile/avatar-base64', {
+        avatar_base64: base64,
+    }, {
+        headers: { 'Content-Type': 'application/json' },
+    });
+    return response.data;
+};
+
