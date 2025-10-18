@@ -302,7 +302,6 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                         'Content-Type': 'multipart/form-data',
                     },
                 });
-                    console.log("I am in here=====>",response.data.data);
                 messageData = response.data.data;
             } else {
                 // Send text message using apiClient
@@ -314,6 +313,9 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                 messageData = response.data.data;
             }
 
+            // Mark as sent on successful API return
+            (messageData as any).sent = true;
+            (messageData as any).pending = false;
             return messageData;
         } catch (error) {
             console.error('❌ Error sending message:', error);

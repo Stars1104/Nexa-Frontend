@@ -31,6 +31,9 @@ export interface Message {
     sender_name: string;
     sender_avatar?: string;
     is_sender: boolean;
+    // Client-side only flags for UI state
+    pending?: boolean; // message created locally, awaiting server confirmation
+    sent?: boolean;    // message was accepted by server (delivered), but may not be read yet
     file_path?: string;
     file_name?: string;
     file_size?: string;

@@ -2482,7 +2482,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             return (
               <div key={index} className="flex items-start gap-3 pl-4">
                 <div className="w-1.5 h-1.5 bg-pink-500 rounded-full mt-2 flex-shrink-0"></div>
-                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                <p className="text-sm text-slate-900 dark:text-white leading-relaxed">
                   {line.replace('• ', '')}
                 </p>
               </div>
@@ -2493,7 +2493,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           if (line.includes('**')) {
             const parts = line.split('**');
             return (
-              <p key={index} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+              <p key={index} className="text-sm text-slate-900 dark:text-white leading-relaxed">
                 {parts.map((part, partIndex) => 
                   partIndex % 2 === 1 ? (
                     <strong key={partIndex} className="font-semibold text-slate-900 dark:text-slate-100">
@@ -2509,7 +2509,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           
           // Handle regular text
           return (
-            <p key={index} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            <p key={index} className="text-sm text-slate-900 dark:text-white leading-relaxed">
               {line}
             </p>
           );
@@ -2546,7 +2546,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             <FileDropdown message={message} />
           </div>
           {message.message && message.message !== message.file_name && (
-            <p className="text-sm text-slate-300 dark:text-slate-300">
+            <p className={message.is_sender ? "text-sm text-white" : "text-sm text-slate-900 dark:text-white"}>
               {message.message}
             </p>
           )}
@@ -2602,7 +2602,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             </div>
           )}
           {message.message && (
-            <p className="text-sm text-slate-700 dark:text-slate-300">
+            <p className={message.is_sender ? "text-sm text-white" : "text-sm text-slate-900 dark:text-white"}>
               {message.message}
             </p>
           )}
@@ -3043,8 +3043,8 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       );
     }
 
-    return (
-      <p className="text-sm text-slate-300">
+  return (
+      <p className={message.is_sender ? "text-sm text-white" : "text-sm text-slate-900 dark:text-white"}>
         {message.message}
       </p>
     );
@@ -3563,16 +3563,16 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                         </Avatar>
                       )}
                     <div
-                      className={cn(
-                        message.message_type === "system"
-                          ? "max-w-3xl px-4 py-2"
-                          : "max-w-md lg:max-w-2xl xl:max-w-3xl px-4 py-2 rounded-2xl",
-                        message.message_type === "system"
-                          ? ""
-                          : message.is_sender
+                        className={cn(
+                          message.message_type === "system"
+                            ? "max-w-2xl px-4 py-2"
+                            : "max-w-sm lg:max-w-lg xl:max-w-xl px-4 py-2 rounded-2xl",
+                          message.message_type === "system"
+                            ? ""
+                            : message.is_sender
                             ? "bg-pink-500 text-white"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-300"
-                      )}
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white"
+                        )}
                     >
                       {renderMessageContent(message)}
                       {message.message_type !== "system" && (
@@ -3588,7 +3588,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                                   <Check className="w-3 h-3 -ml-1" />
                                 </div>
                               ) : (
-                                <Clock className="w-3 h-3" />
+                                <Check className="w-3 h-3" />
                               )}
                             </div>
                           )}
@@ -3757,7 +3757,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                         style={{ animationDelay: "300ms" }}
                       ></div>
                     </div>
-                    <span className="text-sm text-slate-600 dark:text-slate-300">
+                    <span className="text-sm text-slate-900 dark:text-white">
                       {Array.from(typingUsers).length === 1
                         ? `${Array.from(typingUsers)[0]} está digitando...`
                         : `${Array.from(typingUsers).join(", ")} estão digitando...`}
