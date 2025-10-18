@@ -185,13 +185,36 @@ const portfolioSlice = createSlice({
       })
       .addCase(updatePortfolioProfile.fulfilled, (state, action) => {
         state.isLoading = false;
-        // Always update the portfolio state, even if it was null before
+        // Update the portfolio state with the new data
+        // If portfolio exists, merge the new data, otherwise create new portfolio
         if (state.portfolio) {
-          state.portfolio = { ...state.portfolio, ...action.payload };
+          state.portfolio = { 
+            ...state.portfolio, 
+            ...action.payload,
+            // Preserve existing items if new data doesn't have them
+            items: action.payload.items || state.portfolio.items || []
+          };
         } else {
-          // If portfolio was null, create a new one with the updated data
-          state.portfolio = action.payload;
+          state.portfolio = {
+            ...action.payload,
+            items: action.payload.items || []
+          };
         }
+        
+        // Update stats - use existing items count if new data doesn't have items
+        const items = action.payload.items || state.portfolio?.items || [];
+        const imageCount = items.filter((item: any) => item.media_type === 'image').length;
+        const videoCount = items.filter((item: any) => item.media_type === 'video').length;
+        const totalItems = items.length;
+        
+        state.stats = {
+          total_items: totalItems,
+          images_count: imageCount,
+          videos_count: videoCount,
+          is_complete: !!(action.payload.title && action.payload.bio && totalItems >= 3),
+          has_minimum_items: totalItems >= 3,
+          profile_complete: !!(action.payload.title && action.payload.bio),
+        };
       })
       .addCase(updatePortfolioProfile.rejected, (state, action) => {
         state.isLoading = false;

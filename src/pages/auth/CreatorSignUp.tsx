@@ -378,8 +378,8 @@ const CreatorSignUp = () => {
         toast.error("A solicitação demorou muito para responder. Tente novamente.");
       }
       // Handle rate limiting errors specifically
-      else if (error?.status === 429 || error.response?.status === 429) {
-        const retryAfter = error?.retry_after || error.response?.data?.retry_after || 60;
+      else if (error.response?.status === 429) {
+        const retryAfter = error.response?.data?.retry_after || 60;
         const minutes = Math.ceil(retryAfter / 60);
         const errorMessage = `Muitas tentativas de registro. Tente novamente em ${minutes} minuto(s).`;
         toast.error(errorMessage);
@@ -389,12 +389,12 @@ const CreatorSignUp = () => {
         toast.error("Erro de conexão. Verifique sua internet e tente novamente.");
       }
       // Handle server errors
-      else if (error?.status >= 500 || error.response?.status >= 500) {
+      else if (error.response?.status >= 500) {
         toast.error("Erro interno do servidor. Tente novamente em alguns minutos.");
       }
       // Handle validation errors (422) com detalhes por campo
-      else if (error?.status === 422 || error.response?.status === 422) {
-        const errors = error?.errors || error.response?.data?.errors;
+      else if (error.response?.status === 422) {
+        const errors = error.response?.data?.errors;
         if (errors && typeof errors === 'object') {
           const parts: string[] = [];
           for (const key of Object.keys(errors)) {
@@ -412,11 +412,11 @@ const CreatorSignUp = () => {
           if (parts.length > 0) {
             toast.error(parts.join(" | "));
           } else {
-            const errorMessage = error?.message || error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
+            const errorMessage = error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
             toast.error(errorMessage);
           }
         } else {
-          const errorMessage = error?.message || error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
+          const errorMessage = error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
           toast.error(errorMessage);
         }
       }
