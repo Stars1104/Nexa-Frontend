@@ -412,11 +412,11 @@ const CreatorSignUp = () => {
           if (parts.length > 0) {
             toast.error(parts.join(" | "));
           } else {
-            const errorMessage = error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
+            const errorMessage = error?.message || error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
             toast.error(errorMessage);
           }
         } else {
-          const errorMessage = error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
+          const errorMessage = error?.message || error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
           toast.error(errorMessage);
         }
       }
