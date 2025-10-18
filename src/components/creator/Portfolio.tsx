@@ -56,6 +56,7 @@ export default function Portfolio() {
 
     // State for video modal
     const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+    const [newLinkUrl, setNewLinkUrl] = useState<string>('');
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
     // State for saving
@@ -176,18 +177,19 @@ export default function Portfolio() {
             formData.append('bio', bioToSend);
 
             // Add project links
-            let validLinks = [];
+            let validLinks: { title: string; url: string }[] = [];
             if (projectLinks && projectLinks.length > 0) {
-                validLinks = projectLinks.filter(link =>
-                    link &&
-                    link.title &&
-                    link.url &&
-                    link.title.trim() !== '' &&
-                    link.url.trim() !== ''
-                );
+                validLinks = projectLinks
+                    .filter(link => link && typeof link.url === 'string' && link.url.trim() !== '')
+                    .map((link, idx) => ({
+                        title: (link.title && link.title.trim() !== '' ? link.title : `Projeto ${idx + 1}`),
+                        url: link.url.trim()
+                    }));
             }
-            // Always append project_links, even if empty, to allow clearing
-            formData.append('project_links', JSON.stringify(validLinks));
+            // Só envia project_links se houver itens válidos
+            if (validLinks.length > 0) {
+                formData.append('project_links', JSON.stringify(validLinks));
+            }
 
             if (profilePic && profilePic.startsWith('blob:')) {
                 const response = await fetch(profilePic);
@@ -223,7 +225,46 @@ export default function Portfolio() {
         }
     };
     const handleSavePortfolio = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) throw new Error('Token de autenticação não encontrado');
+
+            // 1) Upload de mídias (se houver)
+            const files = media.map(m => m.file);
+            if (files.length > 0) {
+                await dispatch(uploadPortfolioMedia({ token, files })).unwrap();
+                setMedia([]);
+            }
+
+            // 2) Persistir link digitado no modal (se houver)
+            const urlToSave = (newLinkUrl || '').trim();
+            if (urlToSave) {
+                // Normaliza links existentes do portfólio
+                const existing = (portfolio?.project_links || []) as any[];
+                const normalized: { title: string; url: string }[] = existing.map((l: any, idx: number) =>
+                    typeof l === 'string'
+                        ? { title: `Projeto ${idx + 1}`, url: l }
+                        : { title: (l?.title || `Projeto ${idx + 1}`), url: (l?.url || '') }
+                ).filter(l => l.url && l.url.trim() !== '');
+
+                // Evita duplicado simples
+                if (!normalized.find(l => l.url === urlToSave)) {
+                    normalized.push({ title: 'Link', url: urlToSave });
+                }
+
+                const fd = new FormData();
+                fd.append('project_links', JSON.stringify(normalized));
+                await dispatch(updatePortfolioProfile({ token, data: fd })).unwrap();
+                setNewLinkUrl('');
+            }
+
+            // 3) Recarrega para refletir
+            await dispatch(fetchPortfolio(token));
             setIsPortfolioEditDialogOpen(false);
+            toast({ title: 'Sucesso!', description: 'Portfólio salvo com sucesso!', duration: 3000 });
+        } catch (err) {
+            toast({ title: 'Erro', description: 'Falha ao salvar portfólio. Tente novamente.', variant: 'destructive' });
+        }
     };
 
     const handleRemovePortfolioItem = async (itemId: number) => {
@@ -261,18 +302,18 @@ export default function Portfolio() {
             formData.append('bio', bio);
 
             // Add project links
-            let validLinks = [];
+            let validLinks2: { title: string; url: string }[] = [];
             if (projectLinks && projectLinks.length > 0) {
-                validLinks = projectLinks.filter(link =>
-                    link &&
-                    link.title &&
-                    link.url &&
-                    link.title.trim() !== '' &&
-                    link.url.trim() !== ''
-                );
+                validLinks2 = projectLinks
+                    .filter(link => link && typeof link.url === 'string' && link.url.trim() !== '')
+                    .map((link, idx) => ({
+                        title: (link.title && link.title.trim() !== '' ? link.title : `Projeto ${idx + 1}`),
+                        url: link.url.trim()
+                    }));
             }
-            // Always append project_links, even if empty, to allow clearing
-            formData.append('project_links', JSON.stringify(validLinks));
+            if (validLinks2.length > 0) {
+                formData.append('project_links', JSON.stringify(validLinks2));
+            }
 
             if (profilePic && profilePic.startsWith('blob:')) {
                 const response = await fetch(profilePic);
@@ -606,11 +647,13 @@ export default function Portfolio() {
                                         onDrop={handleDrop}
                                     >
                                         <div className="flex flex-col items-center gap-2">
-                                            <input 
-                                                        type="url"
-                                                        className="w-full rounded-md border px-3 py-2 text-sm bg-background text-foreground outline-none transition placeholder:text-muted-foreground"
-                                                        placeholder="https://meu-portfóli"
-                                                    />
+                                            <input
+                                                type="url"
+                                                className="w-full rounded-md border px-3 py-2 text-sm bg-background text-foreground outline-none transition placeholder:text-muted-foreground"
+                                                placeholder="https://meu-projeto.com"
+                                                value={newLinkUrl}
+                                                onChange={(e) => setNewLinkUrl(e.target.value)}
+                                            />
                                             <Camera className="w-10 h-10 text-muted-foreground mb-2" />
                                             <div className="font-semibold text-base text-foreground">Arraste arquivos para cá</div>
                                             <div className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG, MP4, MOV, AVI, MPEG, WMV, WEBM, OGG, MKV, FLV, 3GP</div>
