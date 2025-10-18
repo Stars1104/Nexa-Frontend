@@ -7,6 +7,10 @@ import { useToast } from "../../hooks/use-toast";
 import { dispatchPremiumStatusUpdate } from "../../utils/browserUtils";
 import { useAppSelector} from "../../store/hooks";
 import { apiClient } from "../../services/apiClient";
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+
+const stripePromise = loadStripe('pk_test_51S0Wz1PRcUVFvPMgtByCDcKqzOeGnRicbmd0SckOIFtegvqkyKlAkTVpiCMSOqzWDbmS2NtadwFF9dTxQxDZbJpo00aJN8YBC8'); // your public key
 
 const benefits = [
     "Aplicações ilimitadas em campanhas",
@@ -15,6 +19,7 @@ const benefits = [
     "Suporte premium via chat",
     "Ferramentas avançadas de criação de conteúdo",
 ];
+
 
 export default function Subscription() {
     const { toast } = useToast();
@@ -468,6 +473,7 @@ export default function Subscription() {
                     )}
                 </div>
             </div>
+        <Elements stripe={stripePromise}>
             <SubscriptionModal 
               open={open} 
               selectedPlan={selectedPlan}
@@ -493,6 +499,7 @@ export default function Subscription() {
                 });
               }}
             />
+        </Elements>
         </div>
     );
 }

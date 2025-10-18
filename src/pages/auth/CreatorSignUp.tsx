@@ -168,7 +168,6 @@ const CreatorSignUp = () => {
       if (!el.parentElement?.classList.contains("iti")) {
         itiRef.current = intlTelInput(el, {
           initialCountry: "br",
-          // @ts-expect-error property available at runtime
           preferredCountries: ["br", "us", "gb", "pt"],
           nationalMode: true,
           allowDropdown: true,
