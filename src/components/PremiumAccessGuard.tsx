@@ -34,6 +34,7 @@ export default function PremiumAccessGuard({
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   
   const {
+    premiumStatus,
     hasPremium,
     loading: premiumLoading,
     refreshPremiumStatus,
@@ -91,8 +92,8 @@ export default function PremiumAccessGuard({
 
       // Check premium for creators and students
       if (userData.role === "creator" || userData.role === "student") {
-        // Premium status is now handled by the hook
-        if (!hasPremium && !premiumLoading) {
+        // Only decide after premium status is loaded to avoid false positives
+        if (premiumStatus && !hasPremium && !premiumLoading) {
           showPremiumWarning();
         }
       }
@@ -152,7 +153,8 @@ export default function PremiumAccessGuard({
     }
   };
 
-  if (loading || premiumLoading) {
+  // Consider loading while premiumStatus is not yet available to avoid flashing the guard
+  if (loading || premiumLoading || !premiumStatus) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
