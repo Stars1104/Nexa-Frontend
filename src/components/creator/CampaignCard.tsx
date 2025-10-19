@@ -286,6 +286,9 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                             </Badge>
                         </div>
                     )}
+
+                    {/* Action button */}
+                    {button}
                 </div>
             </CardFooter>
         </Card>
