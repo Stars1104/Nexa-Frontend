@@ -286,24 +286,6 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                             </Badge>
                         </div>
                     )}
-                    <div className='w-full flex justify-center items-center gap-2'>
-                        {button}
-                        {/* Contribute Button - Add to Favorites */}
-                        <Button  
-                            className={`text-xs w-full ${
-                                campaign.is_favorited 
-                                    ? 'bg-red-600 hover:bg-red-700 text-white' 
-                                    : 'bg-green-600 hover:bg-green-700 text-white'
-                            }`}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                onToggleFavorite && onToggleFavorite(campaign.id);
-                            }}
-                        >
-                            {campaign.is_favorited ? 'Remover' : 'Contribuir'}
-                        </Button>
-                    </div>
                 </div>
             </CardFooter>
         </Card>
