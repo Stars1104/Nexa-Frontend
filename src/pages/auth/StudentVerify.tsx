@@ -9,6 +9,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
 import { toast } from 'sonner';
 import { Helmet } from 'react-helmet-async';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { CheckCircle, CreditCard, User, Building2, AlertCircle } from 'lucide-react';
 
 const initialState = {
   fullName: '',
@@ -17,14 +21,41 @@ const initialState = {
   courseName: '',
 };
 
+const stripeVerificationState = {
+  accountType: 'individual', // 'individual' or 'business'
+  businessName: '',
+  businessType: '',
+  country: 'BR',
+  email: '',
+  phone: '',
+  address: {
+    line1: '',
+    line2: '',
+    city: '',
+    state: '',
+    postal_code: '',
+  },
+  dob: {
+    day: '',
+    month: '',
+    year: '',
+  },
+  idNumber: '',
+  verificationStatus: 'pending', // 'pending', 'verified', 'failed'
+};
+
 interface StudentVerifyProps {
   setComponent?: (component: string) => void;
 }
 
 export default function StudentVerify({ setComponent }: StudentVerifyProps = {}) {
   const [form, setForm] = useState(initialState);
+  const [stripeForm, setStripeForm] = useState(stripeVerificationState);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isStripeSubmitting, setIsStripeSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stripeError, setStripeError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('student');
   const { navigateToRoleDashboard } = useRoleNavigation();
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
@@ -54,6 +85,26 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
     setForm({ ...form, [e.target.name]: e.target.value });
     // Clear error when user starts typing
     if (error) setError(null);
+  };
+
+  const handleStripeChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setStripeForm(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent as keyof typeof prev],
+          [child]: value
+        }
+      }));
+    } else {
+      setStripeForm({ ...stripeForm, [name]: value });
+    }
+    
+    // Clear error when user starts typing
+    if (stripeError) setStripeError(null);
   };
 
   const handleSkip = () => {
@@ -168,6 +219,129 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
     }
   };
 
+  const handleStripeVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (isStripeSubmitting) return;
+    
+    setIsStripeSubmitting(true);
+    setStripeError(null);
+
+    try {
+      // Validate required fields
+      const requiredFields = ['email', 'phone', 'address.line1', 'address.city', 'address.state', 'address.postal_code'];
+      const missingFields = requiredFields.filter(field => {
+        const value = field.split('.').reduce((obj, key) => obj?.[key], stripeForm);
+        return !value || !value.trim();
+      });
+      
+      if (missingFields.length > 0) {
+        setStripeError('Por favor, preencha todos os campos obrigatórios.');
+        return;
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(stripeForm.email)) {
+        setStripeError('Por favor, insira um e-mail válido.');
+        return;
+      }
+
+      // Validate phone format (Brazilian phone)
+      const phoneRegex = /^\(\d{2}\)\s\d{4,5}-\d{4}$/;
+      if (!phoneRegex.test(stripeForm.phone)) {
+        setStripeError('Por favor, insira um telefone válido no formato (XX) XXXX-XXXX.');
+        return;
+      }
+
+      // Prepare Stripe account creation data
+      const stripeAccountData = {
+        type: stripeForm.accountType,
+        country: stripeForm.country,
+        email: stripeForm.email,
+        business_type: stripeForm.accountType === 'business' ? 'company' : 'individual',
+        individual: stripeForm.accountType === 'individual' ? {
+          first_name: user?.name?.split(' ')[0] || '',
+          last_name: user?.name?.split(' ').slice(1).join(' ') || '',
+          email: stripeForm.email,
+          phone: stripeForm.phone,
+          address: {
+            line1: stripeForm.address.line1,
+            line2: stripeForm.address.line2,
+            city: stripeForm.address.city,
+            state: stripeForm.address.state,
+            postal_code: stripeForm.address.postal_code,
+            country: stripeForm.country,
+          },
+          dob: {
+            day: parseInt(stripeForm.dob.day),
+            month: parseInt(stripeForm.dob.month),
+            year: parseInt(stripeForm.dob.year),
+          },
+          id_number: stripeForm.idNumber,
+        } : undefined,
+        company: stripeForm.accountType === 'business' ? {
+          name: stripeForm.businessName,
+          structure: stripeForm.businessType,
+          address: {
+            line1: stripeForm.address.line1,
+            line2: stripeForm.address.line2,
+            city: stripeForm.address.city,
+            state: stripeForm.address.state,
+            postal_code: stripeForm.address.postal_code,
+            country: stripeForm.country,
+          },
+        } : undefined,
+      };
+
+      // Call API to create Stripe account
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/api/stripe/create-account`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(stripeAccountData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Erro ao criar conta Stripe');
+      }
+
+      if (result.success) {
+        toast.success('Conta Stripe criada com sucesso! Verificação em andamento...');
+        
+        // Update user state to reflect Stripe account creation
+        if (user) {
+          dispatch({
+            type: 'auth/updateUser',
+            payload: {
+              stripe_account_id: result.stripe_account_id,
+              stripe_verification_status: 'pending',
+            }
+          });
+        }
+
+        // Navigate to creator dashboard
+        if (isInsideCreatorDashboard) {
+          setComponent?.('Painel');
+        } else {
+          navigateToRoleDashboard('creator');
+        }
+      } else {
+        throw new Error(result.message || 'Falha na criação da conta Stripe');
+      }
+
+    } catch (err: any) {
+      console.error('Stripe verification error:', err);
+      setStripeError(err.message || 'Erro ao criar conta Stripe. Tente novamente.');
+    } finally {
+      setIsStripeSubmitting(false);
+    }
+  };
+
   const canonical = typeof window !== "undefined" ? window.location.href : "";
   const structuredData = {
     "@context": "https://schema.org",
@@ -190,27 +364,16 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
             <ThemeToggle />
           </div>
         )}
-        <div className={`w-full max-w-2xl bg-background rounded-xl shadow-lg relative border ${isInsideCreatorDashboard ? 'p-6' : 'p-8 md:p-12'}`}>
+        <div className={`w-full max-w-4xl bg-background rounded-xl shadow-lg relative border ${isInsideCreatorDashboard ? 'p-6' : 'p-8 md:p-12'}`}>
           <h1 className={`font-bold mb-2 text-foreground ${isInsideCreatorDashboard ? 'text-xl' : 'text-2xl md:text-3xl'}`}>
-          Preencha os dados se você for aluna do Build Creators
+            Verificação de Conta
           </h1>
           <p className="text-muted-foreground mb-6 max-w-2xl text-sm md:text-base">
             {user?.student_verified 
               ? "Você já foi verificado como aluno! Redirecionando para o painel..."
-              : "Preencha suas informações educacionais abaixo para verificar seu status de aluno e obter acesso gratuito por até 12 meses."
+              : "Escolha uma das opções abaixo para verificar sua conta e obter acesso completo à plataforma."
             }
           </p>
-          <Alert className="mb-8 flex flex-col md:flex-row items-start md:items-center gap-2 bg-[#FAF5FF] dark:bg-[#30253d]">
-            <div className="flex-1">
-              <AlertTitle className="font-semibold text-primary text-sm md:text-base">
-                <span className="mr-2 text-[#A873E9]">ⓘ</span>Os alunos do curso recebem acesso 100% gratuito!
-              </AlertTitle>
-            </div>
-            <AlertDescription className="text-xs md:text-sm text-muted-foreground">
-              Não perca.
-            </AlertDescription>
-          </Alert>
-
           {/* Success Alert for Already Verified Students */}
           {user?.student_verified && (
             <Alert className="mb-6 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
@@ -220,16 +383,51 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
             </Alert>
           )}
 
-          {/* Error Alert */}
-          {error && (
-            <Alert className="mb-6 border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
-              <AlertDescription className="text-red-600 dark:text-red-400">
-                {error}
-              </AlertDescription>
-            </Alert>
-          )}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="student" className="flex items-center gap-2">
+                <GraduationCap className="w-4 h-4" />
+                Verificação de Aluno
+              </TabsTrigger>
+              <TabsTrigger value="stripe" className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4" />
+                Conta Stripe
+              </TabsTrigger>
+            </TabsList>
 
-          <form onSubmit={handleSubmit} className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${user?.student_verified ? 'opacity-50 pointer-events-none' : ''}`}>
+            <TabsContent value="student" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <GraduationCap className="w-5 h-5 text-[#E91E63]" />
+                    Verificação de Aluno
+                  </CardTitle>
+                  <CardDescription>
+                    Preencha suas informações educacionais para obter acesso gratuito por até 12 meses.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Alert className="mb-6 flex flex-col md:flex-row items-start md:items-center gap-2 bg-[#FAF5FF] dark:bg-[#30253d]">
+                    <div className="flex-1">
+                      <AlertTitle className="font-semibold text-primary text-sm md:text-base">
+                        <span className="mr-2 text-[#A873E9]">ⓘ</span>Os alunos do curso recebem acesso 100% gratuito!
+                      </AlertTitle>
+                    </div>
+                    <AlertDescription className="text-xs md:text-sm text-muted-foreground">
+                      Não perca.
+                    </AlertDescription>
+                  </Alert>
+
+                  {/* Error Alert */}
+                  {error && (
+                    <Alert className="mb-6 border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+                      <AlertDescription className="text-red-600 dark:text-red-400">
+                        {error}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  <form onSubmit={handleSubmit} className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${user?.student_verified ? 'opacity-50 pointer-events-none' : ''}`}>
           <div className="flex flex-col gap-1">
             <label htmlFor="fullName" className="text-xs text-muted-foreground">Nome completo</label>
               <Input
@@ -301,17 +499,319 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
                 'Enviar para verificação'
               )}
             </Button>
-            <Button 
-              type="button" 
-              variant="outline"
-              onClick={handleSkip}
-              className="w-full sm:w-auto font-semibold px-6 py-2 rounded-lg border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
-              disabled={isSubmitting}
-            >
-              Pular por enquanto
-            </Button>
-          </div>
-        </form>
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={handleSkip}
+                      className="w-full sm:w-auto font-semibold px-6 py-2 rounded-lg border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+                      disabled={isSubmitting}
+                    >
+                      Pular por enquanto
+                    </Button>
+                  </div>
+                </form>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="stripe" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-[#635BFF]" />
+                    Verificação de Conta Stripe
+                  </CardTitle>
+                  <CardDescription>
+                    Crie uma conta Stripe para receber pagamentos e ter acesso completo à plataforma.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Alert className="mb-6 flex flex-col md:flex-row items-start md:items-center gap-2 bg-blue-50 dark:bg-blue-900/20">
+                    <div className="flex-1">
+                      <AlertTitle className="font-semibold text-blue-700 dark:text-blue-300 text-sm md:text-base">
+                        <span className="mr-2">💳</span>Conta Stripe necessária para receber pagamentos
+                      </AlertTitle>
+                    </div>
+                    <AlertDescription className="text-xs md:text-sm text-blue-600 dark:text-blue-400">
+                      Verificação em até 24h.
+                    </AlertDescription>
+                  </Alert>
+
+                  {/* Stripe Error Alert */}
+                  {stripeError && (
+                    <Alert className="mb-6 border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+                      <AlertDescription className="text-red-600 dark:text-red-400">
+                        {stripeError}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  <form onSubmit={handleStripeVerification} className="space-y-6">
+                    {/* Account Type Selection */}
+                    <div className="space-y-4">
+                      <label className="text-sm font-medium">Tipo de Conta</label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Button
+                          type="button"
+                          variant={stripeForm.accountType === 'individual' ? 'default' : 'outline'}
+                          onClick={() => setStripeForm({...stripeForm, accountType: 'individual'})}
+                          className="flex items-center gap-2"
+                        >
+                          <User className="w-4 h-4" />
+                          Pessoa Física
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={stripeForm.accountType === 'business' ? 'default' : 'outline'}
+                          onClick={() => setStripeForm({...stripeForm, accountType: 'business'})}
+                          className="flex items-center gap-2"
+                        >
+                          <Building2 className="w-4 h-4" />
+                          Empresa
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Business Information */}
+                    {stripeForm.accountType === 'business' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1">
+                          <label htmlFor="businessName" className="text-xs text-muted-foreground">Nome da Empresa</label>
+                          <Input
+                            id="businessName"
+                            name="businessName"
+                            type="text"
+                            placeholder="Nome da sua empresa"
+                            value={stripeForm.businessName}
+                            onChange={handleStripeChange}
+                            required
+                            disabled={isStripeSubmitting}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label htmlFor="businessType" className="text-xs text-muted-foreground">Tipo de Empresa</label>
+                          <select
+                            id="businessType"
+                            name="businessType"
+                            value={stripeForm.businessType}
+                            onChange={handleStripeChange}
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            required
+                            disabled={isStripeSubmitting}
+                          >
+                            <option value="">Selecione o tipo</option>
+                            <option value="corporation">Corporação</option>
+                            <option value="partnership">Sociedade</option>
+                            <option value="llc">LLC</option>
+                            <option value="sole_proprietorship">Empresa Individual</option>
+                          </select>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Contact Information */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1">
+                        <label htmlFor="email" className="text-xs text-muted-foreground">E-mail</label>
+                        <Input
+                          id="email"
+                          name="email"
+                          type="email"
+                          placeholder="seu@email.com"
+                          value={stripeForm.email}
+                          onChange={handleStripeChange}
+                          required
+                          disabled={isStripeSubmitting}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label htmlFor="phone" className="text-xs text-muted-foreground">Telefone</label>
+                        <Input
+                          id="phone"
+                          name="phone"
+                          type="tel"
+                          placeholder="(11) 99999-9999"
+                          value={stripeForm.phone}
+                          onChange={handleStripeChange}
+                          required
+                          disabled={isStripeSubmitting}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Address Information */}
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-medium">Endereço</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1">
+                          <label htmlFor="address.line1" className="text-xs text-muted-foreground">Endereço</label>
+                          <Input
+                            id="address.line1"
+                            name="address.line1"
+                            type="text"
+                            placeholder="Rua, número"
+                            value={stripeForm.address.line1}
+                            onChange={handleStripeChange}
+                            required
+                            disabled={isStripeSubmitting}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label htmlFor="address.line2" className="text-xs text-muted-foreground">Complemento</label>
+                          <Input
+                            id="address.line2"
+                            name="address.line2"
+                            type="text"
+                            placeholder="Apto, bloco, etc."
+                            value={stripeForm.address.line2}
+                            onChange={handleStripeChange}
+                            disabled={isStripeSubmitting}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label htmlFor="address.city" className="text-xs text-muted-foreground">Cidade</label>
+                          <Input
+                            id="address.city"
+                            name="address.city"
+                            type="text"
+                            placeholder="São Paulo"
+                            value={stripeForm.address.city}
+                            onChange={handleStripeChange}
+                            required
+                            disabled={isStripeSubmitting}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label htmlFor="address.state" className="text-xs text-muted-foreground">Estado</label>
+                          <Input
+                            id="address.state"
+                            name="address.state"
+                            type="text"
+                            placeholder="SP"
+                            value={stripeForm.address.state}
+                            onChange={handleStripeChange}
+                            required
+                            disabled={isStripeSubmitting}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label htmlFor="address.postal_code" className="text-xs text-muted-foreground">CEP</label>
+                          <Input
+                            id="address.postal_code"
+                            name="address.postal_code"
+                            type="text"
+                            placeholder="01234-567"
+                            value={stripeForm.address.postal_code}
+                            onChange={handleStripeChange}
+                            required
+                            disabled={isStripeSubmitting}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Date of Birth (for individuals) */}
+                    {stripeForm.accountType === 'individual' && (
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-medium">Data de Nascimento</h3>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="flex flex-col gap-1">
+                            <label htmlFor="dob.day" className="text-xs text-muted-foreground">Dia</label>
+                            <Input
+                              id="dob.day"
+                              name="dob.day"
+                              type="number"
+                              placeholder="01"
+                              min="1"
+                              max="31"
+                              value={stripeForm.dob.day}
+                              onChange={handleStripeChange}
+                              required
+                              disabled={isStripeSubmitting}
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label htmlFor="dob.month" className="text-xs text-muted-foreground">Mês</label>
+                            <Input
+                              id="dob.month"
+                              name="dob.month"
+                              type="number"
+                              placeholder="01"
+                              min="1"
+                              max="12"
+                              value={stripeForm.dob.month}
+                              onChange={handleStripeChange}
+                              required
+                              disabled={isStripeSubmitting}
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label htmlFor="dob.year" className="text-xs text-muted-foreground">Ano</label>
+                            <Input
+                              id="dob.year"
+                              name="dob.year"
+                              type="number"
+                              placeholder="1990"
+                              min="1900"
+                              max="2010"
+                              value={stripeForm.dob.year}
+                              onChange={handleStripeChange}
+                              required
+                              disabled={isStripeSubmitting}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ID Number */}
+                    <div className="flex flex-col gap-1">
+                      <label htmlFor="idNumber" className="text-xs text-muted-foreground">
+                        {stripeForm.accountType === 'individual' ? 'CPF' : 'CNPJ'}
+                      </label>
+                      <Input
+                        id="idNumber"
+                        name="idNumber"
+                        type="text"
+                        placeholder={stripeForm.accountType === 'individual' ? '000.000.000-00' : '00.000.000/0000-00'}
+                        value={stripeForm.idNumber}
+                        onChange={handleStripeChange}
+                        required
+                        disabled={isStripeSubmitting}
+                      />
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                      <Button 
+                        type="submit" 
+                        className="w-full sm:w-auto bg-[#635BFF] text-white font-semibold px-6 py-2 rounded-lg shadow hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={isStripeSubmitting}
+                      >
+                        {isStripeSubmitting ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Criando conta...
+                          </div>
+                        ) : (
+                          'Criar Conta Stripe'
+                        )}
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={handleSkip}
+                        className="w-full sm:w-auto font-semibold px-6 py-2 rounded-lg border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+                        disabled={isStripeSubmitting}
+                      >
+                        Pular por enquanto
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </>
