@@ -1,5 +1,6 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Input } from "../ui/input";
+import { getAvatarUrl } from "@/lib/utils";
 import {
   Select,
   SelectTrigger,
@@ -22,7 +23,8 @@ const NICHES = [
   "Moda e Beleza", "Tecnologia", "Saúde e Bem-estar", "Educação", "Entretenimento",
   "Esportes", "Gastronomia", "Viagem e Turismo", "Negócios e Empreendedorismo",
   "Arte e Cultura", "Música", "Jogos", "Fitness e Esportes", "Maternidade e Família",
-  "Automotivo", "Imóveis", "Finanças", "Política", "Meio Ambiente", "Outros"
+  "Automotivo", "Imóveis", "Finanças", "Política", "Meio Ambiente",
+  "Renda extra", "Saúde infantil", "Psicologia", "Desenvolvimento pessoal", "Outros"
 ];
 
 const LANGUAGES = [
@@ -36,8 +38,16 @@ const LANGUAGES = [
 const getInitials = (name: string) =>
   name.split(" ").map((n) => n[0]).join("").toUpperCase();
 
-const MAX_IMAGE_SIZE_MB = 2;
-const ALLOWED_TYPES = ["image/jpeg", "image/png"];
+const LANGUAGE_MAP: { [key: string]: string } = Object.fromEntries(
+  LANGUAGES.map((lang) => [lang, lang])
+);
+
+const getLanguageDisplayName = (language: string): string =>
+  LANGUAGE_MAP[language] || language;
+
+const MAX_IMAGE_SIZE_MB = 5;
+const SOFT_IMAGE_SIZE_MB = 1.8; // acima disso tentamos comprimir
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const defaultProfile = {
   name: "Andrii Kerrn",
@@ -49,6 +59,7 @@ const defaultProfile = {
   image: null as File | null,
   birth_date: null as string | null,
   creator_type: null as string | null,
+  industry: null as string | null,
   instagram_handle: null as string | null,
   tiktok_handle: null as string | null,
   youtube_channel: null as string | null,
@@ -66,24 +77,151 @@ export const EditProfile: React.FC<{
 }> = ({ initialProfile = defaultProfile, onCancel, onSave, isLoading = false }) => {
   const [profile, setProfile] = useState({ ...initialProfile });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedBlobUrl, setSelectedBlobUrl] = useState<string | null>(null);
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('[profile] image input change');
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.warn('[profile] no file selected');
+      return;
+    }
+    console.log('[profile] selected', { name: file.name, size: file.size, type: file.type });
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setError("Apenas arquivos JPG e PNG são permitidos.");
+      setError("Apenas arquivos JPG, PNG ou WebP são permitidos.");
+      console.error('[profile] invalid type');
       return;
     }
     if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-      setError("Tamanho máximo do arquivo é 2MB.");
+      setError(`Tamanho máximo do arquivo é ${MAX_IMAGE_SIZE_MB}MB. Por favor, escolha uma imagem menor.`);
+      console.error('[profile] file too large');
       return;
     }
-    setProfile((p) => ({ ...p, image: file }));
-    setImagePreview(URL.createObjectURL(file));
+
+    // Criar/atualizar blob URL para fallback
+    if (selectedBlobUrl) {
+      try { URL.revokeObjectURL(selectedBlobUrl); } catch {}
+    }
+    const blobUrl = URL.createObjectURL(file);
+    setSelectedBlobUrl(blobUrl);
+
+    // Mostrar preview via base64 (preferencial). Tentar: arrayBuffer->base64 -> FileReader -> createImageBitmap -> blob URL
+    const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
+      let binary = '';
+      const bytes = new Uint8Array(buffer);
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode.apply(null as any, bytes.subarray(i, i + chunk) as unknown as number[]);
+      }
+      return btoa(binary);
+    };
+    const toBase64 = (f: File) => new Promise<string>((resolve, reject) => {
+      try {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(f);
+      } catch (err) {
+        reject(err);
+      }
+    });
+
+    let previewSet = false;
+    try {
+      // 1) arrayBuffer -> base64 manual
+      const buf = await file.arrayBuffer();
+      const b64 = arrayBufferToBase64(buf);
+      const dataUrl1 = `data:${file.type || 'image/jpeg'};base64,${b64}`;
+      setImagePreview(dataUrl1);
+      previewSet = true;
+      console.log('[profile] preview set (arrayBuffer->base64)');
+    } catch (err0) {
+      console.warn('[profile] arrayBuffer->base64 failed, trying FileReader', err0);
+      try {
+        const base64 = await toBase64(file);
+        setImagePreview(base64);
+        previewSet = true;
+        console.log('[profile] preview set (base64)');
+      } catch (err) {
+        console.warn('[profile] FileReader failed, trying createImageBitmap', err);
+        try {
+          const bitmap = await createImageBitmap(file);
+          const canvas = document.createElement('canvas');
+          canvas.width = bitmap.width;
+          canvas.height = bitmap.height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(bitmap, 0, 0);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            setImagePreview(dataUrl);
+            previewSet = true;
+            console.log('[profile] preview set (bitmap->dataURL)');
+          }
+        } catch (err2) {
+          console.warn('[profile] createImageBitmap failed, falling back to blob url', err2);
+        }
+      }
+    }
+
+    if (!previewSet) {
+      setImagePreview(blobUrl);
+      console.log('[profile] preview set (blob url)');
+    }
+
+    let finalFile = file;
+    if (file.size > SOFT_IMAGE_SIZE_MB * 1024 * 1024) {
+      try {
+        finalFile = await compressImage(file, 1024, 0.8);
+        console.log('[profile] compressed', { size: finalFile.size });
+      } catch {}
+    }
+
+    setProfile((p) => ({ ...p, image: finalFile }));
     setError("");
   };
+
+  const compressImage = (file: File, maxWidth: number, quality: number): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.floor(img.width * scale);
+        canvas.height = Math.floor(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('Canvas não suportado'));
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (!blob) return reject(new Error('Falha ao comprimir imagem'));
+          const ext = file.type === 'image/png' ? 'png' : 'jpeg';
+          const out = new File([blob], file.name.replace(/\.[^.]+$/, `.${ext}`), { type: `image/${ext}` });
+          resolve(out);
+        }, file.type === 'image/png' ? 'image/png' : 'image/jpeg', quality);
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  // Mostrar imagem atual do usuário ao abrir o formulário
+  useEffect(() => {
+    const img = (initialProfile as any)?.image;
+    if (img && typeof img === 'string') {
+      const url = getAvatarUrl(img) || img;
+      setImagePreview(url);
+    }
+  }, [initialProfile]);
+
+  // Revogar blob URL apenas quando trocarmos de arquivo ou desmontar
+  useEffect(() => {
+    return () => {
+      if (selectedBlobUrl) {
+        try { URL.revokeObjectURL(selectedBlobUrl); } catch {}
+      }
+    };
+  }, [selectedBlobUrl]);
 
   const handleRemoveImage = () => {
     setProfile((p) => ({ ...p, image: null }));
@@ -126,27 +264,50 @@ export const EditProfile: React.FC<{
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#171717] px-4 sm:px-8 py-8 overflow-y-auto">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#171717] px-3 py-5 sm:px-6 overflow-y-auto">
       <form
-        className="max-w-3xl mx-auto bg-background rounded-2xl shadow-md border border-gray-200 dark:border-neutral-700 p-6 sm:p-8 space-y-8"
+        className="max-w-3xl mx-auto bg-background rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700 p-4 sm:p-6 space-y-6"
         onSubmit={handleSave}
       >
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white text-center">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white text-center">
           Editar Perfil
         </h2>
 
         {/* Profile Picture */}
-        <div className="flex flex-col items-center gap-4 mb-8">
-          <div className="relative w-28 h-28 sm:w-32 sm:h-32">
+        <div className="flex flex-col items-center gap-3 sm:gap-4">
+          <div className="relative w-20 h-20 sm:w-24 sm:h-24">
             <div className="w-full h-full rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-800 overflow-hidden">
               {imagePreview ? (
                 <img
-                  src={imagePreview}
+                  src={imagePreview || ''}
                   alt="Profile"
                   className="object-cover w-full h-full rounded-full"
+                  decoding="async"
+                  loading="eager"
+                  onLoad={() => console.log('[profile] preview loaded ok')}
+                  onError={(e) => {
+                    console.warn('[profile] preview onError triggered');
+                    // 1) tenta blob do arquivo selecionado
+                    if (selectedBlobUrl && (e.target as HTMLImageElement).src !== selectedBlobUrl) {
+                      (e.target as HTMLImageElement).src = selectedBlobUrl;
+                      return;
+                    }
+                    // 2) tenta URL do backend da imagem atual (se existir)
+                    const target = e.target as HTMLImageElement;
+                    const current = (initialProfile as any)?.image;
+                    if (current && typeof current === 'string') {
+                      const fallback = getAvatarUrl(current) || current;
+                      if (fallback && fallback !== target.src) {
+                        target.src = fallback;
+                        return;
+                      }
+                    }
+                    // 3) último recurso: limpa preview
+                    setImagePreview(null);
+                  }}
                 />
               ) : (
-                <div className="w-full h-full rounded-full bg-pink-100 dark:bg-pink-900 flex items-center justify-center text-3xl sm:text-4xl font-bold text-pink-600 dark:text-white">
+                <div className="w-full h-full rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center text-2xl sm:text-3xl font-bold text-purple-600 dark:text-white">
                   {getInitials(profile.name)}
                 </div>
               )}
@@ -154,21 +315,21 @@ export const EditProfile: React.FC<{
 
             <button
               type="button"
-              className="absolute -bottom-2 -right-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full p-2 shadow-md focus:outline-none"
+              className="absolute -bottom-1 -right-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full p-1.5 sm:p-2 shadow-md focus:outline-none"
               onClick={() => fileInputRef.current?.click()}
               aria-label="Enviar foto do perfil"
             >
-              <UploadIcon className="w-4 h-4" />
+              <UploadIcon className="w-3 h-3 sm:w-4 sm:h-4" />
             </button>
 
             {imagePreview && (
               <button
                 type="button"
-                className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1"
+                className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white border border-red-500 rounded-full p-1 focus:outline-none"
                 onClick={handleRemoveImage}
                 aria-label="Remover foto do perfil"
               >
-                <XIcon className="w-4 h-4" />
+                <XIcon className="w-3 h-3 sm:w-4 sm:h-4" />
               </button>
             )}
           </div>
@@ -180,136 +341,317 @@ export const EditProfile: React.FC<{
             onChange={handleImageChange}
             className="hidden"
           />
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-            JPG ou PNG, máximo 2MB
-          </p>
-        </div>
 
-        {/* Personal Info */}
-        <div>
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-            Informações Pessoais
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input name="name" placeholder="Nome completo" value={profile.name} onChange={handleChange} />
-            <Input name="email" type="email" placeholder="Email" value={profile.email} onChange={handleChange} />
-            <Select value={profile.state} onValueChange={(val) => setProfile((p) => ({ ...p, state: val }))}>
-              <SelectTrigger><SelectValue placeholder="Estado" /></SelectTrigger>
-              <SelectContent>
-                {BRAZILIAN_STATES.map((state) => (
-                  <SelectItem key={state} value={state}>{state}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input name="role" placeholder="Profissão" value={profile.role} onChange={handleChange} />
+          <div className="text-center">
+            <div className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
+              Foto do perfil
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              JPG ou PNG, máximo 2MB
+            </div>
           </div>
         </div>
 
-        {/* Creator Info */}
-        <div className="border-t border-gray-200 dark:border-neutral-700 pt-6">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-            Informações de Criador
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Select value={profile.gender || ""} onValueChange={(val) => setProfile((p) => ({ ...p, gender: val }))}>
-              <SelectTrigger><SelectValue placeholder="Gênero" /></SelectTrigger>
+        {/* Form fields */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          {/* Name */}
+          <div className="flex flex-col">
+            <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Nome Completo
+            </label>
+            <Input
+              id="name"
+              name="name"
+              type="text"
+              placeholder="Digite seu nome completo"
+              value={profile.name}
+              onChange={handleChange}
+              disabled={isLoading}
+              required
+            />
+          </div>
+
+          {/* Email */}
+          <div className="flex flex-col">
+            <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Email
+            </label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="Digite seu email"
+              value={profile.email}
+              onChange={handleChange}
+              disabled={isLoading}
+              required
+            />
+          </div>
+
+          {/* State */}
+          <div className="flex flex-col">
+            <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Estado
+            </label>
+            <Select
+              value={profile.state}
+              onValueChange={(val) => setProfile((p) => ({ ...p, state: val }))}
+              disabled={isLoading}
+            >
+              <SelectTrigger className="bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-md px-4 py-2">
+                <SelectValue placeholder="Selecione seu estado" />
+              </SelectTrigger>
+              <SelectContent>
+                {BRAZILIAN_STATES.map((state) => (
+                  <SelectItem key={state} value={state}>
+                    {state}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Profissão (campo livre, persiste em `profession`) */}
+          <div className="flex flex-col">
+            <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Profissão
+            </label>
+            <Input
+              id="profession"
+              name="profession"
+              type="text"
+              placeholder="Digite sua profissão"
+              value={(profile as any).profession || ''}
+              onChange={handleChange}
+              disabled={isLoading}
+            />
+            <span className="text-xs text-gray-400 mt-1">
+              Isso ajuda as marcas a entenderem seu perfil.
+            </span>
+          </div>
+
+          {/* Gender */}
+          <div className="flex flex-col">
+            <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Gênero <span className="text-red-500">*</span>
+            </label>
+            <Select
+              value={profile.gender || ""}
+              onValueChange={(val) => setProfile((p) => ({ ...p, gender: val }))}
+              disabled={isLoading}
+              required
+            >
+              <SelectTrigger className="bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-md px-4 py-2">
+                <SelectValue placeholder="Selecione o gênero" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="female">Feminino</SelectItem>
                 <SelectItem value="male">Masculino</SelectItem>
                 <SelectItem value="other">Não-binário</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Date of birth */}
+          <div className="flex flex-col">
+            <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Data de Nascimento <span className="text-red-500">*</span>
+            </label>
             <DatePicker
               value={profile.birth_date || ""}
               onChange={(date) => setProfile((p) => ({ ...p, birth_date: date }))}
-              placeholder="Data de nascimento"
+              disabled={isLoading}
+              placeholder="Selecione sua data de nascimento"
+              className="w-full"
             />
-            <Select value={profile.creator_type || ""} onValueChange={(val) => setProfile((p) => ({ ...p, creator_type: val }))}>
-              <SelectTrigger><SelectValue placeholder="Tipo de criador" /></SelectTrigger>
+          </div>
+
+          {/* Creator Type */}
+          <div className="flex flex-col">
+            <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Tipo de Criador
+            </label>
+            <Select
+              value={profile.creator_type || ""}
+              onValueChange={(val) => setProfile((p) => ({ ...p, creator_type: val }))}
+              disabled={isLoading}
+            >
+              <SelectTrigger className="bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-md px-4 py-2">
+                <SelectValue placeholder="Selecione o tipo de criador" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ugc">UGC</SelectItem>
                 <SelectItem value="influencer">Influenciador</SelectItem>
                 <SelectItem value="both">Ambos</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={profile.niche || ""} onValueChange={(val) => setProfile((p) => ({ ...p, niche: val }))}>
-              <SelectTrigger><SelectValue placeholder="Nicho" /></SelectTrigger>
+          </div>
+
+          {/* Niche */}
+          <div className="flex flex-col">
+            <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Nicho <span className="text-red-500">*</span>
+            </label>
+            <Select
+              value={profile.niche || ""}
+              onValueChange={(val) => setProfile((p) => ({ ...p, niche: val }))}
+              disabled={isLoading}
+              required
+            >
+              <SelectTrigger className="bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-md px-4 py-2">
+                <SelectValue placeholder="Selecione seu nicho" />
+              </SelectTrigger>
               <SelectContent>
                 {NICHES.map((niche) => (
-                  <SelectItem key={niche} value={niche}>{niche}</SelectItem>
+                  <SelectItem key={niche} value={niche}>
+                    {niche}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-        </div>
 
-        {/* Social Media */}
-        <div className="border-t border-gray-200 dark:border-neutral-700 pt-6">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-            Redes Sociais
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input name="instagram_handle" placeholder="@Instagram" value={profile.instagram_handle || ""} onChange={handleChange} />
-            <Input name="tiktok_handle" placeholder="@TikTok" value={profile.tiktok_handle || ""} onChange={handleChange} />
-            <Input name="youtube_channel" placeholder="Canal do YouTube" value={profile.youtube_channel || ""} onChange={handleChange} />
-            <Input name="facebook_page" placeholder="Página do Facebook" value={profile.facebook_page || ""} onChange={handleChange} />
-            <Input name="twitter_handle" placeholder="@Twitter" value={profile.twitter_handle || ""} onChange={handleChange} />
+          {/* Languages */}
+          <div className="flex flex-col col-span-1 sm:col-span-2">
+            <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Idiomas
+            </label>
+            <Select
+              value=""
+              onValueChange={(value) => {
+                if (value && !profile.languages.includes(value)) {
+                  setProfile((p) => ({
+                    ...p,
+                    languages: [...p.languages, value],
+                  }));
+                }
+              }}
+              disabled={isLoading}
+            >
+              <SelectTrigger className="bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-md px-4 py-2">
+                <SelectValue placeholder="Adicionar idioma" />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGES.filter((l) => !profile.languages.includes(l)).map((l) => (
+                  <SelectItem key={l} value={l}>
+                    {l}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {profile.languages.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {profile.languages.map((lang) => (
+                  <div
+                    key={lang}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-sm rounded-full"
+                  >
+                    <span>{getLanguageDisplayName(lang)}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleLanguageToggle(lang)}
+                      disabled={isLoading}
+                      className="ml-1 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
+                    >
+                      <XIcon className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Languages */}
-        <div className="border-t border-gray-200 dark:border-neutral-700 pt-6">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-            Idiomas
-          </h3>
-          <Select
-            value=""
-            onValueChange={(value) => {
-              if (value && !profile.languages.includes(value)) {
-                setProfile((p) => ({
-                  ...p,
-                  languages: [...p.languages, value],
-                }));
-              }
-            }}
-          >
-            <SelectTrigger><SelectValue placeholder="Adicionar idioma" /></SelectTrigger>
-            <SelectContent>
-              {LANGUAGES.filter((l) => !profile.languages.includes(l)).map((l) => (
-                <SelectItem key={l} value={l}>{l}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {profile.languages.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {profile.languages.map((lang) => (
-                <div
-                  key={lang}
-                  className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-sm rounded-full"
-                >
-                  <span>{lang}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleLanguageToggle(lang)}
-                    className="ml-1 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
-                  >
-                    <XIcon className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+      {/* Social Media - always visible for editing */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-2">
+        <div className="flex flex-col">
+          <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Instagram {profile.creator_type === 'influencer' || profile.creator_type === 'both' ? <span className="text-red-500">*</span> : null}
+          </label>
+          <Input
+            id="instagram_handle"
+            name="instagram_handle"
+            type="text"
+            placeholder="@seuusuario"
+            value={profile.instagram_handle || ''}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+          <span className="text-xs text-gray-400 mt-1">Obrigatório para Influenciadores/Ambos.</span>
         </div>
 
-        {/* Buttons & Error */}
-        {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+        <div className="flex flex-col">
+          <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+            TikTok
+          </label>
+          <Input
+            id="tiktok_handle"
+            name="tiktok_handle"
+            type="text"
+            placeholder="@seuusuario"
+            value={profile.tiktok_handle || ''}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+        </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 justify-center sm:justify-end pt-6">
+        <div className="flex flex-col">
+          <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+            YouTube (canal ou URL)
+          </label>
+          <Input
+            id="youtube_channel"
+            name="youtube_channel"
+            type="text"
+            placeholder="URL do canal ou @handle"
+            value={profile.youtube_channel || ''}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+        </div>
+
+        <div className="flex flex-col">
+          <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Facebook (página)
+          </label>
+          <Input
+            id="facebook_page"
+            name="facebook_page"
+            type="text"
+            placeholder="URL da página"
+            value={profile.facebook_page || ''}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+        </div>
+
+        <div className="flex flex-col">
+          <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Twitter (X)
+          </label>
+          <Input
+            id="twitter_handle"
+            name="twitter_handle"
+            type="text"
+            placeholder="@seuusuario"
+            value={profile.twitter_handle || ''}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+        </div>
+      </div>
+
+        {error && (
+          <div className="text-red-500 text-sm text-center mt-2">{error}</div>
+        )}
+
+        {/* Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center sm:justify-start pt-4">
           <button
             type="submit"
             disabled={isLoading}
-            className="bg-pink-500 hover:bg-pink-600 disabled:bg-gray-400 text-white font-semibold px-6 py-2 rounded-md flex items-center justify-center gap-2"
+            className="bg-[#E91E63] hover:bg-pink-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold px-6 py-2 rounded-md flex justify-center items-center gap-2 w-full sm:w-auto"
           >
             {isLoading && (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -319,9 +661,9 @@ export const EditProfile: React.FC<{
 
           <button
             type="button"
-            onClick={onCancel}
             disabled={isLoading}
-            className="bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-md"
+            onClick={onCancel}
+            className="bg-white dark:bg-neutral-900 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-neutral-700 px-6 py-2 rounded-md w-full sm:w-auto"
           >
             Cancelar
           </button>

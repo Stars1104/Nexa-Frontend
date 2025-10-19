@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAppSelector, useAppDispatch } from "../../store/hooks";
 import {
   fetchUserProfile,
@@ -19,6 +19,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getAvatarUrl } from "@/lib/utils";
+import { deleteAvatar, uploadAvatarOnly, uploadAvatarBase64 } from "@/api/auth";
+import { updateUser as updateAuthUser } from "@/store/slices/authSlice";
 
 
 import {
@@ -178,13 +180,18 @@ export const CreatorProfile = () => {
     }
   };
 
-  // Fetch profile data on component mount
+  // Guards to evitar múltiplas chamadas simultâneas
+  const hasFetchedRef = useRef(false);
+  const isFetchingRef = useRef(false);
+
+  // Fetch profile data on component mount (evita flicker/throttle)
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // Clear any cached profile data first
-        dispatch(clearProfile());
+        if (isFetchingRef.current || hasFetchedRef.current) return;
+        isFetchingRef.current = true;
         await dispatch(fetchUserProfile()).unwrap();
+        hasFetchedRef.current = true;
       } catch (error: any) {
         console.error("Error fetching profile:", error);
         // Don't show error toast for authentication errors as they're handled by the interceptor
@@ -194,7 +201,7 @@ export const CreatorProfile = () => {
         ) {
           safeToast.error("Erro ao carregar perfil");
         }
-      }
+      } finally { isFetchingRef.current = false; }
     };
 
     // Only fetch if user is authenticated
@@ -224,6 +231,7 @@ export const CreatorProfile = () => {
     facebook_page: profile?.facebook_page || user?.facebook_page || defaultProfile.facebook_page,
     twitter_handle: profile?.twitter_handle || user?.twitter_handle || defaultProfile.twitter_handle,
     niche: profile?.niche || user?.niche || profile?.industry || user?.industry || "Não informado",
+    profession: (profile as any)?.profession || (user as any)?.profession || null,
     languages: profile?.languages || user?.languages || defaultProfile.languages,
   };
 
@@ -237,7 +245,6 @@ export const CreatorProfile = () => {
           name: updatedProfile.name,
           email: updatedProfile.email,
           state: updatedProfile.state, // Send state directly instead of mapping to location
-          role: updatedProfile.role,
           gender: updatedProfile.gender,
           birth_date: updatedProfile.birth_date,
           creator_type: updatedProfile.creator_type,
@@ -247,27 +254,64 @@ export const CreatorProfile = () => {
           facebook_page: updatedProfile.facebook_page,
           twitter_handle: updatedProfile.twitter_handle,
           niche: updatedProfile.niche,
-          industry: updatedProfile.niche, // Send niche value to both fields for compatibility
+          // Persistir profissão em campo próprio no backend
+          profession: (updatedProfile as any).profession,
           languages: updatedProfile.languages,
         };
 
-        // Avatar: backend expects 'avatar' (file), not 'avatar_url'
+        // Avatar: se for trocar a foto, remove a anterior antes de enviar a nova
         if (updatedProfile.image instanceof File) {
+          try {
+            await deleteAvatar();
+          } catch (e) {
+            // segue mesmo que a remoção falhe em dev/local
+          }
           profileData.avatar = updatedProfile.image;
         }
 
 
-        // Update profile
-        await dispatch(updateUserProfile(profileData)).unwrap();
+        // Update text fields first (sem arquivo)
+        const { avatar, ...textOnly } = profileData;
+        await dispatch(updateUserProfile(textOnly)).unwrap();
 
-        // Refetch the latest profile from backend
-        await dispatch(fetchUserProfile()).unwrap();
+        // Then upload avatar only (se houver arquivo)
+        if (avatar instanceof File) {
+          try {
+            const uploadRes = await uploadAvatarOnly(avatar);
+            const newAvatar = uploadRes?.profile?.avatar || uploadRes?.profile?.avatar_url;
+            if (newAvatar) {
+              try {
+                // cache-busting para refletir imediatamente no header/nav
+                const bust = `${newAvatar}${newAvatar.includes('?') ? '&' : '?'}t=${Date.now()}`;
+                dispatch(updateAuthUser({ avatar: bust, avatar_url: bust }));
+              } catch {}
+            }
+          } catch (err) {
+            // Fallback: converter para base64 e enviar
+            try {
+              const base64 = await fileToBase64(avatar);
+              const res2 = await uploadAvatarBase64(base64);
+              const newAvatar2 = res2?.profile?.avatar || res2?.profile?.avatar_url;
+              if (newAvatar2) {
+                try {
+                  const bust2 = `${newAvatar2}${newAvatar2.includes('?') ? '&' : '?'}t=${Date.now()}`;
+                  dispatch(updateAuthUser({ avatar: bust2, avatar_url: bust2 }));
+                } catch {}
+              }
+            } catch (e2) {
+              throw e2;
+            }
+          }
+        }
 
         // Exit edit mode first, then show success message
         setEditMode(false);
 
-        // Use safe toast with longer delay to ensure all React updates are complete
+        // Use safe toast; em seguida, recarregar a página para refletir avatar no app inteiro
         safeToast.success("Perfil atualizado com sucesso!", 300);
+        setTimeout(() => {
+          try { window.location.reload(); } catch {}
+        }, 250);
       } catch (error: any) {
         console.error("Profile update failed:", error);
         safeToast.error(error?.message || error || "Falha ao atualizar perfil");
@@ -277,6 +321,15 @@ export const CreatorProfile = () => {
     },
     [dispatch, isUpdating]
   );
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
 
   const handleUpdatePassword = useCallback(
     async (passwordData: { currentPassword: string; newPassword: string }) => {
@@ -309,13 +362,14 @@ export const CreatorProfile = () => {
 
 const handleRefreshProfile = useCallback(async () => {
   try {
-    dispatch(clearProfile());
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     await dispatch(fetchUserProfile()).unwrap();
     safeToast.success("Perfil atualizado!");
   } catch (error: any) {
     console.error("Profile refresh failed:", error);
     safeToast.error("Falha ao atualizar perfil");
-  }
+  } finally { isFetchingRef.current = false; }
 }, [dispatch]);
 
   const handleWithdrawalCreated = () => {
@@ -352,6 +406,7 @@ const handleRefreshProfile = useCallback(async () => {
           image: displayProfile.image,
           birth_date: displayProfile.birth_date,
           creator_type: displayProfile.creator_type,
+          industry: displayProfile.niche,
           instagram_handle: displayProfile.instagram_handle,
           tiktok_handle: displayProfile.tiktok_handle,
           youtube_channel: displayProfile.youtube_channel,
@@ -510,10 +565,10 @@ const handleRefreshProfile = useCallback(async () => {
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <div className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">
-                    Função
+                    Profissão
                   </div>
                   <div className="text-gray-900 dark:text-white font-medium">
-                    {displayProfile.role}
+                    {displayProfile.profession || 'Não informado'}
                   </div>
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
