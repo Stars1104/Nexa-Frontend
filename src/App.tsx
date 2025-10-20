@@ -28,8 +28,26 @@ import Documentation from "./pages/Documentation";
 import { HelmetProvider } from "react-helmet-async";
 import { useState, useEffect } from "react";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 
 const queryClient = new QueryClient();
+
+// Stripe configuration
+const stripeKey = import.meta.env.MODE === 'production'
+  ? import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE
+  : import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
+
+// Debug Stripe configuration
+console.log('Stripe configuration:', {
+  mode: import.meta.env.MODE,
+  testKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
+  liveKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE,
+  stripeKey,
+  stripePromise: !!stripePromise
+});
 
 const App = () => {
   const [isAppReady, setIsAppReady] = useState(false);
@@ -125,7 +143,9 @@ const App = () => {
                   <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />
                   <Route path="/student-verify" element={
                     <ProtectedRoute allowedRoles={['creator', 'student']}>
-                      <StudentVerify />
+                      <Elements stripe={stripePromise}>
+                        <StudentVerify />
+                      </Elements>
                     </ProtectedRoute>
                   } />
                   <Route path="/creator" element={
