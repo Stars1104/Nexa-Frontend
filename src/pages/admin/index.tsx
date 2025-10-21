@@ -21,6 +21,7 @@ import BrandRankings from "@/components/admin/BrandRankings";
 import WithdrawalVerification from "@/components/admin/WithdrawalVerification";
 import Notification from "@/components/Notification";
 import NexaGuide from "@/components/admin/Guidelist";
+import StudentRequests from "@/components/admin/StudentRequests";
 
 const AdminIndex = () => {
     const isMobile = useIsMobile();
@@ -64,6 +65,8 @@ const AdminIndex = () => {
                 return <UserList />;
             case "alunos":
                 return <StudentList />;
+            case "Solicitações de Estudante":
+                return <StudentRequests />;
             case "Rankings das Marcas":
                 return <BrandRankings />;
             case "Verificação de Saques":
