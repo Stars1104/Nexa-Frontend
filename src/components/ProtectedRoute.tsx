@@ -34,10 +34,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (user && allowedRoles && allowedRoles.length > 0) {
     // Check if user's role is allowed
     if (!allowedRoles.includes(user.role)) {
-      // Redirect to appropriate dashboard based on user's role
+      // Calculate target dashboard (fallback para creator em roles inválidas)
       const defaultDashboard = getDefaultDashboard(user.role);
+      const target = redirectTo || defaultDashboard;
+      // Evitar loop: se já estamos no destino, renderizar children mesmo com role inválida
+      if (location.pathname === target) {
+        return <>{children}</>;
+      }
       // Don't use replace: true for role-based redirects to allow proper browser history
-      return <Navigate to={redirectTo || defaultDashboard} replace={false} />;
+      return <Navigate to={target} replace={false} />;
     }
   }
 
