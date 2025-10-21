@@ -121,17 +121,7 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
         toast.success('Solicitação registrada. Nossa equipe validará seu acesso de aluno.');
       }
       
-      // Update user state to reflect student verification
-      if (user) {
-        dispatch({
-          type: 'auth/updateUser',
-          payload: {
-            student_verified: true,
-            student_expires_at: result.student_expires_at,
-            free_trial_expires_at: result.free_trial_expires_at,
-          }
-        });
-      }
+      // Update de estado local do usuário removido (evitar referência inexistente)
 
       // Navigate to creator dashboard
       if (isInsideCreatorDashboard) {
