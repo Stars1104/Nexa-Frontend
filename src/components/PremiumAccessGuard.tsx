@@ -166,7 +166,8 @@ export default function PremiumAccessGuard({
   // For students, check if they have premium access (includes free trial)
   // For creators, check if they have premium access (premium only)
   // hasPremium from context already includes is_premium_active logic
-  const userHasPremiumAccess = hasPremium;
+  // Considera também período de teste (is_on_trial) vindo do backend
+  const userHasPremiumAccess = hasPremium || Boolean((premiumStatus as any)?.is_on_trial);
 
   if (!user || (user.role !== "creator" && user.role !== "student") || userHasPremiumAccess) {
     return <>{children}</>;
