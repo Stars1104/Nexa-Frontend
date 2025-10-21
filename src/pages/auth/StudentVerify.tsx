@@ -11,10 +11,9 @@ import { toast } from 'sonner';
 import { Helmet } from 'react-helmet-async';
 
 const initialState = {
-  fullName: '',
-  purchaseEmail: '',
-  cpf: '',
-  courseName: '',
+  username: '',
+  email: '',
+  cardholderName: '',
 };
 
 interface StudentVerifyProps {
@@ -31,6 +30,18 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
   const location = useLocation();
   const navigate = useNavigate();
   
+  // Stripe hooks
+  const stripe = useStripe();
+  const elements = useElements();
+  
+  // Debug Stripe hooks
+  console.log('StudentVerify Stripe hooks:', {
+    stripe: !!stripe,
+    elements: !!elements,
+    stripeType: typeof stripe,
+    elementsType: typeof elements
+  });
+
   // Check if we're inside the Creator dashboard
   const isInsideCreatorDashboard = location.pathname === '/creator' && setComponent;
   
@@ -88,7 +99,7 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
 
     try {
       // Validate required fields
-      const requiredFields = ['fullName', 'purchaseEmail', 'cpf', 'courseName'];
+      const requiredFields = ['username', 'email', 'cardholderName'];
       const missingFields = requiredFields.filter(field => !form[field as keyof typeof form].trim());
       
       if (missingFields.length > 0) {
@@ -98,71 +109,137 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
 
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(form.purchaseEmail)) {
-        setError('Por favor, insira um e-mail de compra válido.');
+      if (!emailRegex.test(form.email)) {
+        setError('Por favor, insira um e-mail válido.');
         return;
       }
 
-      // Validate CPF format (basic validation)
-      const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{11}$/;
-      if (!cpfRegex.test(form.cpf.replace(/\D/g, ''))) {
-        setError('Por favor, insira um CPF válido.');
+      // Validate Stripe card element
+      if (!stripe || !elements) {
+        setError('Sistema de pagamento não está disponível. Tente novamente.');
         return;
       }
 
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) {
+        setError('Por favor, preencha os dados do cartão.');
+        return;
+      }
+
+
+      // Request SetupIntent from backend
+      console.log('Requesting SetupIntent with:', { username: form.username, email: form.email });
+      
+      const setupIntentResponse = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/api/stripe/setup-intent`,
+        {
+          username: form.username,
+          email: form.email,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+
+      const setupIntentResult = setupIntentResponse.data;
+      console.log('SetupIntent response:', setupIntentResult);
+
+      if (!setupIntentResult.success) {
+        throw new Error(setupIntentResult.message || 'Erro ao criar SetupIntent');
+      }
+
+      if (!setupIntentResult.client_secret) {
+        throw new Error('SetupIntent não retornou client_secret');
+      }
+
+      // Confirm SetupIntent with Stripe
+      console.log('Confirming SetupIntent with Stripe...');
+      const { error: stripeError } = await stripe.confirmCardSetup(
+        setupIntentResult.client_secret,
+        {
+          payment_method: {
+            card: cardElement,
+            billing_details: {
+              name: form.cardholderName,
+              email: form.email,
+            },
+          },
+        }
+      );
+
+      if (stripeError) {
+        console.error('Stripe confirmation error:', stripeError);
+        setError(stripeError.message || 'Erro ao processar cartão. Tente novamente.');
+        return;
+      }
+
+      console.log('SetupIntent confirmed successfully');
 
       // Prepare submission data
       const submissionData = {
-        full_name: form.fullName,
-        purchase_email: form.purchaseEmail,
-        cpf: form.cpf.replace(/\D/g, ''), // Remove non-digits
-        course_name: form.courseName,
+        username: form.username,
+        email: form.email,
+        cardholder_name: form.cardholderName,
+        setup_intent_id: setupIntentResult.setup_intent_id,
       };
 
-      // Call API to submit student verification
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/api/student/verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify(submissionData),
-      });
+      // Call API to submit student verification with payment
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/api/student/verify`,
+        submissionData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
 
-      const result = await response.json();
+      const result = response.data;
 
-      if (!response.ok) {
-        throw new Error(result.message || 'Erro ao verificar status de aluno');
+      if (!result.success) {
+        throw new Error(result.message || 'Falha na verificação');
       }
 
-      if (result.success) {
-        toast.success('Verificação de aluno enviada com sucesso! Você receberá acesso gratuito por 1 mês.');
-        
-        // Update user state to reflect student verification
-        if (user) {
-          dispatch({
-            type: 'auth/updateUser',
-            payload: {
-              student_verified: true,
-              student_expires_at: result.student_expires_at,
-              free_trial_expires_at: result.free_trial_expires_at,
-            }
-          });
-        }
+      toast.success('Verificação de aluno enviada com sucesso! Você receberá acesso gratuito por 1 mês.');
+      
+      // Update user state to reflect student verification
+      if (user) {
+        dispatch({
+          type: 'auth/updateUser',
+          payload: {
+            student_verified: true,
+            student_expires_at: result.student_expires_at,
+            free_trial_expires_at: result.free_trial_expires_at,
+          }
+        });
+      }
 
-        // Navigate to creator dashboard
-        if (isInsideCreatorDashboard) {
-          setComponent?.('Painel');
-        } else {
-          navigateToRoleDashboard('creator');
-        }
+      // Navigate to creator dashboard
+      if (isInsideCreatorDashboard) {
+        setComponent?.('Painel');
       } else {
-        throw new Error(result.message || 'Falha na verificação');
+        navigateToRoleDashboard('creator');
       }
 
     } catch (err: any) {
       console.error('Student verification error:', err);
-      setError(err.message || 'Erro ao verificar status de aluno. Tente novamente.');
+      
+      // Handle axios errors
+      if (err.response) {
+        // Server responded with error status
+        const errorMessage = err.response.data?.message || err.response.data?.error || 'Erro do servidor';
+        setError(errorMessage);
+      } else if (err.request) {
+        // Request was made but no response received
+        setError('Erro de conexão. Verifique sua internet e tente novamente.');
+      } else {
+        // Something else happened
+        setError(err.message || 'Erro ao verificar status de aluno. Tente novamente.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -173,6 +250,30 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
     "@context": "https://schema.org",
     "@type": "ItemList",
   };
+
+  // Check if Stripe is not available
+  if (!stripe || !elements) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted py-8 px-2 dark:bg-background relative">
+        <div className="w-full max-w-2xl bg-background rounded-xl shadow-lg relative border p-8 md:p-12">
+          <h1 className="font-bold mb-2 text-foreground text-2xl md:text-3xl">
+            Sistema de Pagamento Indisponível
+          </h1>
+          <p className="text-muted-foreground mb-6 max-w-2xl text-sm md:text-base">
+            O sistema de pagamento não está disponível no momento. Por favor, tente novamente mais tarde.
+          </p>
+          <div className="text-center">
+            <Button 
+              onClick={() => window.location.reload()}
+              className="bg-[#E91E63] text-white font-semibold px-6 py-2 rounded-lg shadow hover:bg-pink-600"
+            >
+              Tentar Novamente
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -231,27 +332,27 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
 
           <form onSubmit={handleSubmit} className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${user?.student_verified ? 'opacity-50 pointer-events-none' : ''}`}>
           <div className="flex flex-col gap-1">
-            <label htmlFor="fullName" className="text-xs text-muted-foreground">Nome completo</label>
+            <label htmlFor="username" className="text-xs text-muted-foreground">Nome de usuário</label>
               <Input
-                id="fullName"
-                name="fullName"
+                id="username"
+                name="username"
                 type="text"
-                placeholder="Your name as it appears on the course"
-                value={form.fullName}
+                placeholder="Seu nome de usuário"
+                value={form.username}
                 onChange={handleChange}
                 required
-                autoComplete="name"
+                autoComplete="username"
                 disabled={isSubmitting}
               />
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="purchaseEmail" className="text-xs text-muted-foreground">E-mail de compra</label>
+            <label htmlFor="email" className="text-xs text-muted-foreground">E-mail</label>
             <Input
-              id="purchaseEmail"
-              name="purchaseEmail"
+              id="email"
+              name="email"
               type="email"
               placeholder="email@exemplo.com"
-              value={form.purchaseEmail}
+              value={form.email}
               onChange={handleChange}
               required
               autoComplete="email"
@@ -259,32 +360,37 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="cpf" className="text-xs text-muted-foreground">CPF</label>
+            <label htmlFor="cardholderName" className="text-xs text-muted-foreground">Nome no cartão</label>
             <Input
-              id="cpf"
-              name="cpf"
+              id="cardholderName"
+              name="cardholderName"
               type="text"
-              placeholder="000.000.000-00"
-              value={form.cpf}
+              placeholder="Nome como aparece no cartão"
+              value={form.cardholderName}
               onChange={handleChange}
               required
-              autoComplete="off"
+              autoComplete="cc-name"
               disabled={isSubmitting}
             />
           </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="courseName" className="text-xs text-muted-foreground">Nome do curso</label>
-            <Input
-              id="courseName"
-              name="courseName"
-              type="text"
-              placeholder="Nome do curso que você comprou"
-              value={form.courseName}
-              onChange={handleChange}
-              required
-              autoComplete="off"
-              disabled={isSubmitting}
-            />
+          <div className="md:col-span-2 flex flex-col gap-1">
+            <label className="text-xs text-muted-foreground">Dados do cartão</label>
+            <div className="p-3 border rounded-md bg-background">
+              <CardElement 
+                options={{ 
+                  hidePostalCode: true,
+                  style: {
+                    base: {
+                      fontSize: '16px',
+                      color: '#424770',
+                      '::placeholder': {
+                        color: '#aab7c4',
+                      },
+                    },
+                  },
+                }} 
+              />
+            </div>
           </div>
           <div className="md:col-span-2 mt-4 flex flex-col sm:flex-row gap-3">
             <Button 
