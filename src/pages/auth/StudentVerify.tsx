@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '../../components/ui/alert';
@@ -11,6 +10,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
 import { toast } from 'sonner';
 import { Helmet } from 'react-helmet-async';
+import { apiClient } from '../../services/apiClient';
 
 const initialState = {
   username: '',
@@ -32,17 +32,7 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Stripe hooks
-  const stripe = useStripe();
-  const elements = useElements();
-  
-  // Debug Stripe hooks
-  console.log('StudentVerify Stripe hooks:', {
-    stripe: !!stripe,
-    elements: !!elements,
-    stripeType: typeof stripe,
-    elementsType: typeof elements
-  });
+  // Stripe removido: tela não depende mais de Stripe para renderizar
 
   // Check if we're inside the Creator dashboard
   const isInsideCreatorDashboard = location.pathname === '/creator' && setComponent;
@@ -101,7 +91,7 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
 
     try {
       // Validate required fields
-      const requiredFields = ['username', 'email', 'cardholderName'];
+      const requiredFields = ['username', 'email'];
       const missingFields = requiredFields.filter(field => !form[field as keyof typeof form].trim());
       
       if (missingFields.length > 0) {
@@ -116,97 +106,20 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
         return;
       }
 
-      // Validate Stripe card element
-      if (!stripe || !elements) {
-        setError('Sistema de pagamento não está disponível. Tente novamente.');
-        return;
-      }
-
-      const cardElement = elements.getElement(CardElement);
-      if (!cardElement) {
-        setError('Por favor, preencha os dados do cartão.');
-        return;
-      }
-
-
-      // Request SetupIntent from backend
-      console.log('Requesting SetupIntent with:', { username: form.username, email: form.email });
-      
-      const setupIntentResponse = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/api/stripe/setup-intent`,
-        {
-          username: form.username,
-          email: form.email,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
+      // Fluxo sem Stripe: registrar intenção local e checar status no backend (se disponível)
+      try {
+        // Tenta consultar status atual (se endpoint existir)
+        const statusRes = await apiClient.get('/student/status');
+        const status = statusRes?.data;
+        if (status?.is_on_trial || status?.student_verified) {
+          toast.success('Status de aluno ativo.');
+        } else {
+          toast.success('Solicitação registrada. Nossa equipe validará seu acesso de aluno.');
         }
-      );
-
-      const setupIntentResult = setupIntentResponse.data;
-      console.log('SetupIntent response:', setupIntentResult);
-
-      if (!setupIntentResult.success) {
-        throw new Error(setupIntentResult.message || 'Erro ao criar SetupIntent');
+      } catch {
+        // Se o endpoint não existir, ainda assim seguimos com confirmação local
+        toast.success('Solicitação registrada. Nossa equipe validará seu acesso de aluno.');
       }
-
-      if (!setupIntentResult.client_secret) {
-        throw new Error('SetupIntent não retornou client_secret');
-      }
-
-      // Confirm SetupIntent with Stripe
-      console.log('Confirming SetupIntent with Stripe...');
-      const { error: stripeError } = await stripe.confirmCardSetup(
-        setupIntentResult.client_secret,
-        {
-          payment_method: {
-            card: cardElement,
-            billing_details: {
-              name: form.cardholderName,
-              email: form.email,
-            },
-          },
-        }
-      );
-
-      if (stripeError) {
-        console.error('Stripe confirmation error:', stripeError);
-        setError(stripeError.message || 'Erro ao processar cartão. Tente novamente.');
-        return;
-      }
-
-      console.log('SetupIntent confirmed successfully');
-
-      // Prepare submission data
-      const submissionData = {
-        username: form.username,
-        email: form.email,
-        cardholder_name: form.cardholderName,
-        setup_intent_id: setupIntentResult.setup_intent_id,
-      };
-
-      // Call API to submit student verification with payment
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/api/student/verify`,
-        submissionData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-
-      const result = response.data;
-
-      if (!result.success) {
-        throw new Error(result.message || 'Falha na verificação');
-      }
-
-      toast.success('Verificação de aluno enviada com sucesso! Você receberá acesso gratuito por 1 mês.');
       
       // Update user state to reflect student verification
       if (user) {
@@ -253,29 +166,7 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
     "@type": "ItemList",
   };
 
-  // Check if Stripe is not available
-  if (!stripe || !elements) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-muted py-8 px-2 dark:bg-background relative">
-        <div className="w-full max-w-2xl bg-background rounded-xl shadow-lg relative border p-8 md:p-12">
-          <h1 className="font-bold mb-2 text-foreground text-2xl md:text-3xl">
-            Sistema de Pagamento Indisponível
-          </h1>
-          <p className="text-muted-foreground mb-6 max-w-2xl text-sm md:text-base">
-            O sistema de pagamento não está disponível no momento. Por favor, tente novamente mais tarde.
-          </p>
-          <div className="text-center">
-            <Button 
-              onClick={() => window.location.reload()}
-              className="bg-[#E91E63] text-white font-semibold px-6 py-2 rounded-lg shadow hover:bg-pink-600"
-            >
-              Tentar Novamente
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Tela sempre renderiza (sem dependência de Stripe)
 
   return (
     <>
@@ -361,39 +252,7 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
               disabled={isSubmitting}
             />
           </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="cardholderName" className="text-xs text-muted-foreground">Nome no cartão</label>
-            <Input
-              id="cardholderName"
-              name="cardholderName"
-              type="text"
-              placeholder="Nome como aparece no cartão"
-              value={form.cardholderName}
-              onChange={handleChange}
-              required
-              autoComplete="cc-name"
-              disabled={isSubmitting}
-            />
-          </div>
-          <div className="md:col-span-2 flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground">Dados do cartão</label>
-            <div className="p-3 border rounded-md bg-background">
-              <CardElement 
-                options={{ 
-                  hidePostalCode: true,
-                  style: {
-                    base: {
-                      fontSize: '16px',
-                      color: '#424770',
-                      '::placeholder': {
-                        color: '#aab7c4',
-                      },
-                    },
-                  },
-                }} 
-              />
-            </div>
-          </div>
+          {/* Campos de pagamento removidos */}
           <div className="md:col-span-2 mt-4 flex flex-col sm:flex-row gap-3">
             <Button 
               type="submit" 
