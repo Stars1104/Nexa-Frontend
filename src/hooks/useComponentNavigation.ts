@@ -40,7 +40,7 @@ const COMPONENT_MAPPING: Record<string, string> = {
   'brand-rankings': 'Rankings das Marcas',
   'withdrawal-verification': 'Verificação de Saques',
   'admin-guide': 'Guia para',
-  'notifications': 'Notificações'
+  'admin-notifications': 'Notificações'
 };
 
 // Reverse mapping: Portuguese display names -> English URL names
