@@ -24,24 +24,9 @@ import BankRegistrationDemo from "../BankRegistrationDemo";
 import GuideEmbedded from "@/components/GuideEmbedded";
 import StudentVerify from "../auth/StudentVerify";
 import { Helmet } from "react-helmet-async";
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+ 
 
-// Stripe configuration
-const stripeKey = import.meta.env.MODE === 'production'
-  ? import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE
-  : import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-
-const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
-
-// Debug Stripe configuration
-console.log('Creator Index Stripe configuration:', {
-  mode: import.meta.env.MODE,
-  testKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
-  liveKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE,
-  stripeKey,
-  stripePromise: !!stripePromise
-});
+ 
 
 function Index() {
     const isMobile = useIsMobile();
@@ -124,9 +109,7 @@ function Index() {
                 return <BankRegistrationDemo />;
             case "Verificação de Aluno":
                 return (
-                    <Elements stripe={stripePromise}>
                         <StudentVerify setComponent={handleComponentChange} />
-                    </Elements>
                 );
             case "Guia da Plataforma":
                 return <GuideEmbedded audience="Creator" />;

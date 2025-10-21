@@ -7,15 +7,7 @@ import { useToast } from "../../hooks/use-toast";
 import { dispatchPremiumStatusUpdate } from "../../utils/browserUtils";
 import { useAppSelector} from "../../store/hooks";
 import { apiClient } from "../../services/apiClient";
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
-
-// Use test key for development, replace with live key in production
-const stripePromise = loadStripe(
-  import.meta.env.MODE === 'production'
-    ? import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE
-    : import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
-);
+ 
 
 const benefits = [
     "Aplicações ilimitadas em campanhas",
@@ -428,18 +420,18 @@ export default function Subscription() {
                                     </div>
 
                                     {/* Subscribe Button */}
-                                    <div className="flex justify-center">
-                                        <Button
-                                            onClick={() => setOpen(true)}
-                                            className="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-8 py-3 text-lg w-full sm:w-auto"
-                                            disabled={subscriptionStatus?.is_premium_active || paymentProcessing}
-                                        >
-                                            {subscriptionStatus?.is_premium_active 
-                                                ? 'Assinatura Ativa' 
-                                                : `Assinar ${selectedPlan.name || 'Plano'} por R$ ${typeof selectedPlan.price === 'number' ? selectedPlan.price.toFixed(2).replace('.', ',') : '0,00'}`
-                                            }
-                                        </Button>
-                                    </div>
+                <div className="flex justify-center">
+                    <Button
+                        onClick={() => toast({ title: 'Assinaturas desativadas', description: 'O pagamento está temporariamente desativado.' })}
+                        className="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-8 py-3 text-lg w-full sm:w-auto"
+                        disabled={subscriptionStatus?.is_premium_active}
+                    >
+                        {subscriptionStatus?.is_premium_active 
+                            ? 'Assinatura Ativa' 
+                            : `Assinar ${selectedPlan.name || 'Plano'}`
+                        }
+                    </Button>
+                </div>
                                 </div>
                             )}
 
@@ -478,33 +470,7 @@ export default function Subscription() {
                     )}
                 </div>
             </div>
-        <Elements stripe={stripePromise}>
-            <SubscriptionModal 
-              open={open} 
-              selectedPlan={selectedPlan}
-              onOpenChange={(newOpen) => {
-                setOpen(newOpen);
-                if (!newOpen) {
-                  setPaymentProcessing(false);
-                }
-              }}
-              onSuccess={() => {
-                // Refresh subscription status after successful payment
-                setPaymentProcessing(true);
-                loadSubscriptionStatus().finally(() => {
-                  setPaymentProcessing(false);
-                });
-                
-                // Dispatch event to notify other components about premium status update
-                dispatchPremiumStatusUpdate();
-                
-                                toast({
-                    title: "Sucesso!",
-                    description: "Sua assinatura premium foi ativada com sucesso!",
-                });
-              }}
-            />
-        </Elements>
+        {/* Stripe desativado: modal removido */}
         </div>
     );
 }
