@@ -33,7 +33,8 @@ export interface SavePaymentMethodResponse {
 
 export interface ContractPaymentRequest {
   contract_id: string;
-  payment_method_id?: string;
+  payment_method_id?: string; // legacy
+  stripe_payment_method_id?: string; // Stripe PM id
 }
 
 export interface ContractPaymentResponse {

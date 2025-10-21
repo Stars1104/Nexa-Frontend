@@ -80,6 +80,13 @@ export default function SubscriptionModal({
       });
 
       if (response.data.success) {
+        // If 3DS is required, confirm the PaymentIntent on client
+        if (response.data.requires_action && response.data.client_secret) {
+          const { error: confirmError } = await stripe.confirmCardPayment(response.data.client_secret);
+          if (confirmError) {
+            throw new Error(confirmError.message || 'Falha na confirmação do cartão');
+          }
+        }
         await handleSuccess();
       } else {
         throw new Error(response.data.message || "Falha no pagamento");
