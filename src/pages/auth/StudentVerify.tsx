@@ -10,6 +10,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
 import { toast } from 'sonner';
 import { Helmet } from 'react-helmet-async';
+import { updateUser as updateAuthUser } from '../../store/slices/authSlice';
 import { apiClient } from '../../services/apiClient';
 
 const initialState = {
@@ -108,22 +109,32 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
 
       // Fluxo sem Stripe: registrar intenção local e checar status no backend (se disponível)
       try {
-        // Tenta consultar status atual (se endpoint existir)
-        const statusRes = await apiClient.get('/student/status');
-        const status = statusRes?.data;
-        if (status?.is_on_trial || status?.student_verified) {
-          toast.success('Status de aluno ativo.');
+        // Verificação direta no backend (concede 1 ano de acesso conforme regra atual)
+        const res = await apiClient.post('/student/verify', {
+          purchase_email: form.email,
+          course_name: 'Build Creators'
+        });
+        const data = res?.data || {};
+        if (data?.success) {
+          // Atualiza o estado de auth imediatamente
+          dispatch(updateAuthUser({
+            role: 'student',
+            student_verified: true as any,
+            student_expires_at: data.student_expires_at,
+            free_trial_expires_at: data.free_trial_expires_at,
+          } as any));
+          toast.success('Verificação concluída! Seu acesso de estudante foi ativado.');
         } else {
-          toast.success('Solicitação registrada. Nossa equipe validará seu acesso de aluno.');
+          toast.info(data?.message || 'Solicitação registrada. Nossa equipe validará seu acesso de aluno.');
         }
-      } catch {
-        // Se o endpoint não existir, ainda assim seguimos com confirmação local
-        toast.success('Solicitação registrada. Nossa equipe validará seu acesso de aluno.');
+      } catch (e) {
+        // Fallback: apenas informa registro da solicitação
+        toast.info('Solicitação registrada. Nossa equipe validará seu acesso de aluno.');
       }
       
       // Update de estado local do usuário removido (evitar referência inexistente)
 
-      // Navigate to creator dashboard
+      // Navegar ao dashboard
       if (isInsideCreatorDashboard) {
         setComponent?.('Painel');
       } else {
