@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '../../components/ui/alert';
@@ -9,17 +11,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
 import { toast } from 'sonner';
 import { Helmet } from 'react-helmet-async';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { GraduationCap } from 'lucide-react';
-import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
-import axios from 'axios';
 
 const initialState = {
   username: '',
   email: '',
   cardholderName: '',
 };
-
 
 interface StudentVerifyProps {
   setComponent?: (component: string) => void;
@@ -250,7 +247,6 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
     }
   };
 
-
   const canonical = typeof window !== "undefined" ? window.location.href : "";
   const structuredData = {
     "@context": "https://schema.org",
@@ -299,7 +295,7 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
         )}
         <div className={`w-full max-w-2xl bg-background rounded-xl shadow-lg relative border ${isInsideCreatorDashboard ? 'p-6' : 'p-8 md:p-12'}`}>
           <h1 className={`font-bold mb-2 text-foreground ${isInsideCreatorDashboard ? 'text-xl' : 'text-2xl md:text-3xl'}`}>
-            Preencha os dados se você for aluna do Build Creators
+          Preencha os dados se você for aluna do Build Creators
           </h1>
           <p className="text-muted-foreground mb-6 max-w-2xl text-sm md:text-base">
             {user?.student_verified 
@@ -307,6 +303,17 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
               : "Preencha suas informações educacionais abaixo para verificar seu status de aluno e obter acesso gratuito por até 12 meses."
             }
           </p>
+          <Alert className="mb-8 flex flex-col md:flex-row items-start md:items-center gap-2 bg-[#FAF5FF] dark:bg-[#30253d]">
+            <div className="flex-1">
+              <AlertTitle className="font-semibold text-primary text-sm md:text-base">
+                <span className="mr-2 text-[#A873E9]">ⓘ</span>Os alunos do curso recebem acesso 100% gratuito!
+              </AlertTitle>
+            </div>
+            <AlertDescription className="text-xs md:text-sm text-muted-foreground">
+              Não perca.
+            </AlertDescription>
+          </Alert>
+
           {/* Success Alert for Already Verified Students */}
           {user?.student_verified && (
             <Alert className="mb-6 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
@@ -316,38 +323,16 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
             </Alert>
           )}
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <GraduationCap className="w-5 h-5 text-[#E91E63]" />
-                    Verificação de Aluno
-                  </CardTitle>
-                  <CardDescription>
-                    Preencha suas informações educacionais para obter acesso gratuito por até 12 meses.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Alert className="mb-6 flex flex-col md:flex-row items-start md:items-center gap-2 bg-[#FAF5FF] dark:bg-[#30253d]">
-                    <div className="flex-1">
-                      <AlertTitle className="font-semibold text-primary text-sm md:text-base">
-                        <span className="mr-2 text-[#A873E9]">ⓘ</span>Os alunos do curso recebem acesso 100% gratuito!
-                      </AlertTitle>
-                    </div>
-                    <AlertDescription className="text-xs md:text-sm text-muted-foreground">
-                      Não perca.
-                    </AlertDescription>
-                  </Alert>
+          {/* Error Alert */}
+          {error && (
+            <Alert className="mb-6 border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+              <AlertDescription className="text-red-600 dark:text-red-400">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
 
-                  {/* Error Alert */}
-                  {error && (
-                    <Alert className="mb-6 border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
-                      <AlertDescription className="text-red-600 dark:text-red-400">
-                        {error}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  <form onSubmit={handleSubmit} className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${user?.student_verified ? 'opacity-50 pointer-events-none' : ''}`}>
+          <form onSubmit={handleSubmit} className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${user?.student_verified ? 'opacity-50 pointer-events-none' : ''}`}>
           <div className="flex flex-col gap-1">
             <label htmlFor="username" className="text-xs text-muted-foreground">Nome de usuário</label>
               <Input
@@ -424,19 +409,17 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
                 'Enviar para verificação'
               )}
             </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={handleSkip}
-                      className="w-full sm:w-auto font-semibold px-6 py-2 rounded-lg border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
-                      disabled={isSubmitting}
-                    >
-                      Pular por enquanto
-                    </Button>
-                  </div>
-                </form>
-                </CardContent>
-              </Card>
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={handleSkip}
+              className="w-full sm:w-auto font-semibold px-6 py-2 rounded-lg border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+              disabled={isSubmitting}
+            >
+              Pular por enquanto
+            </Button>
+          </div>
+        </form>
         </div>
       </div>
     </>

@@ -288,7 +288,9 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                     )}
 
                     {/* Action button */}
-                    {button}
+                    <div className="w-full">
+                        {button}
+                    </div>
                 </div>
             </CardFooter>
         </Card>
