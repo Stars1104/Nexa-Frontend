@@ -116,14 +116,7 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
         });
         const data = res?.data || {};
         if (data?.success) {
-          // Atualiza o estado de auth imediatamente
-          dispatch(updateAuthUser({
-            role: 'student',
-            student_verified: true as any,
-            student_expires_at: data.student_expires_at,
-            free_trial_expires_at: data.free_trial_expires_at,
-          } as any));
-          toast.success('Verificação concluída! Seu acesso de estudante foi ativado.');
+          toast.info(data?.message || 'Solicitação registrada. Nossa equipe validará seu acesso de aluno.');
         } else {
           toast.info(data?.message || 'Solicitação registrada. Nossa equipe validará seu acesso de aluno.');
         }

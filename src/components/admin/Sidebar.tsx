@@ -11,6 +11,7 @@ const navLinks = [
     { label: "Todas as Campanhas", icon: Text, key: "Todas as Campanhas" },
     { label: "Usuários", icon: User, key: "Usuários" },
     { label: "alunos", icon: GraduationCap, key: "alunos" },
+    { label: "Solicitações de Estudante", icon: GraduationCap, key: "Solicitações de Estudante" },
     { label: "Rankings das Marcas", icon: Trophy, key: "Rankings das Marcas" },
     { label: "Verificação de Saques", icon: Shield, key: "Verificação de Saques" },
     { label: "Guia para", icon: Waypoints, key: "Guia para" },
