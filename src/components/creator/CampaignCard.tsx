@@ -286,6 +286,11 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                             </Badge>
                         </div>
                     )}
+
+                    {/* Action button */}
+                    <div className="w-full">
+                        {button}
+                    </div>
                 </div>
             </CardFooter>
         </Card>

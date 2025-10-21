@@ -224,37 +224,6 @@ export default function Portfolio() {
         }
     };
     const handleSavePortfolio = async () => {
-<<<<<<< HEAD
-        if (!user?.id || media.length === 0) return;
-        
-        setIsSaving(false);
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) throw new Error('No authentication token found');
-            
-            const files = media.map(item => item.file);
-            
-            await dispatch(uploadPortfolioMedia({ token, files })).unwrap();
-            
-            // Clear the media state after successful upload
-            setMedia([]);
-            setIsPortfolioEditDialogOpen(false);
-            
-            toast({
-                title: "Sucesso!",
-                description: "Mídia adicionada com sucesso!",
-                duration: 3000,
-            });
-        } catch (error) {
-            console.error('Media upload error:', error);
-            toast({
-                title: "Erro",
-                description: "Falha ao adicionar mídia. Tente novamente.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsSaving(false);
-=======
         try {
             const token = localStorage.getItem('token');
             if (!token) throw new Error('Token de autenticação não encontrado');
@@ -269,15 +238,15 @@ export default function Portfolio() {
             // 2) Persistir link digitado no modal (se houver)
             const urlToSave = (newLinkUrl || '').trim();
             if (urlToSave) {
-                // Normaliza links existentes do portfólio
                 const existing = (portfolio?.project_links || []) as any[];
-                const normalized: { title: string; url: string }[] = existing.map((l: any, idx: number) =>
-                    typeof l === 'string'
-                        ? { title: `Projeto ${idx + 1}`, url: l }
-                        : { title: (l?.title || `Projeto ${idx + 1}`), url: (l?.url || '') }
-                ).filter(l => l.url && l.url.trim() !== '');
+                const normalized: { title: string; url: string }[] = existing
+                    .map((l: any, idx: number) =>
+                        typeof l === 'string'
+                            ? { title: `Projeto ${idx + 1}`, url: l }
+                            : { title: (l?.title || `Projeto ${idx + 1}`), url: (l?.url || '') }
+                    )
+                    .filter(l => l.url && l.url.trim() !== '');
 
-                // Evita duplicado simples
                 if (!normalized.find(l => l.url === urlToSave)) {
                     normalized.push({ title: 'Link', url: urlToSave });
                 }
@@ -294,7 +263,6 @@ export default function Portfolio() {
             toast({ title: 'Sucesso!', description: 'Portfólio salvo com sucesso!', duration: 3000 });
         } catch (err) {
             toast({ title: 'Erro', description: 'Falha ao salvar portfólio. Tente novamente.', variant: 'destructive' });
->>>>>>> 0e189b2 (fix(portfolio): persistir links e mídias\n\n- Envia project_links apenas quando houver URL válida (title opcional)\n- Persiste link digitado no modal “Add Portfólio” junto com upload\n- Recarrega portfólio após salvar\n- Evita enviar [] e limpar links sem intenção)
         }
     };
 
@@ -702,8 +670,6 @@ export default function Portfolio() {
                                         onDrop={handleDrop}
                                     >
                                         <div className="flex flex-col items-center gap-2">
-<<<<<<< HEAD
-=======
                                             <input
                                                 type="url"
                                                 className="w-full rounded-md border px-3 py-2 text-sm bg-background text-foreground outline-none transition placeholder:text-muted-foreground"
@@ -711,7 +677,6 @@ export default function Portfolio() {
                                                 value={newLinkUrl}
                                                 onChange={(e) => setNewLinkUrl(e.target.value)}
                                             />
->>>>>>> 0e189b2 (fix(portfolio): persistir links e mídias\n\n- Envia project_links apenas quando houver URL válida (title opcional)\n- Persiste link digitado no modal “Add Portfólio” junto com upload\n- Recarrega portfólio após salvar\n- Evita enviar [] e limpar links sem intenção)
                                             <Camera className="w-10 h-10 text-muted-foreground mb-2" />
                                             <div className="font-semibold text-base text-foreground">Arraste arquivos para cá</div>
                                             <div className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG, MP4, MOV, AVI, MPEG, WMV, WEBM, OGG, MKV, FLV, 3GP</div>

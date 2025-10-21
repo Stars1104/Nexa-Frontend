@@ -1301,10 +1301,8 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
-      // Create a synthetic event for handleFileSelect
-      const syntheticEvent = {
-        target: { files: [file] }
-      } as React.ChangeEvent<HTMLInputElement>;
+      // Create a synthetic event for handleFileSelect (cast via unknown to satisfy TS)
+      const syntheticEvent = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
       handleFileSelect(syntheticEvent);
     }
   };
@@ -3532,7 +3530,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           )}
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-3 sm:p-4 scrollbar-hide">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 scrollbar-hide">
             <div className="space-y-4">
               {messages.map((message) => {
                 return (
@@ -3565,13 +3563,14 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                     <div
                         className={cn(
                           message.message_type === "system"
-                            ? "max-w-2xl px-4 py-2"
-                            : "max-w-sm lg:max-w-lg xl:max-w-xl px-4 py-2 rounded-2xl",
+                            ? "max-w-[92vw] sm:max-w-2xl px-4 py-2 rounded-xl"
+                            : "max-w-[85vw] sm:max-w-sm lg:max-w-lg xl:max-w-xl px-4 py-2 rounded-2xl",
                           message.message_type === "system"
                             ? ""
                             : message.is_sender
                             ? "bg-pink-500 text-white"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white",
+                          "break-words"
                         )}
                     >
                       {renderMessageContent(message)}

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../hooks/useUser';
+import { useAppDispatch } from '../store/hooks';
+import { updateUserProfile } from '../store/thunks/userThunks';
 import { toast } from 'sonner';
 
 interface UserProfileEditorProps {
@@ -14,6 +16,7 @@ export const UserProfileEditor: React.FC<UserProfileEditorProps> = ({
   onCancel
 }) => {
   const { user, isLoading, error, fetchUser, updateUser } = useUser();
+  const dispatch = useAppDispatch();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,6 +27,7 @@ export const UserProfileEditor: React.FC<UserProfileEditorProps> = ({
     company_name: '',
     avatar_url: ''
   });
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
   // Fetch user data on component mount
@@ -63,7 +67,11 @@ export const UserProfileEditor: React.FC<UserProfileEditorProps> = ({
     e.preventDefault();
     
     try {
-      await updateUser(formData);
+      const payload: any = { ...formData };
+      if (avatarFile) {
+        payload.avatar = avatarFile;
+      }
+      await dispatch(updateUserProfile(payload)).unwrap();
       toast.success('Perfil atualizado com sucesso!');
       setIsEditing(false);
       onSave?.(formData);
@@ -221,6 +229,31 @@ export const UserProfileEditor: React.FC<UserProfileEditorProps> = ({
               onChange={handleInputChange}
               disabled={!isEditing}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-700"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Foto de perfil
+          </label>
+          <div className="flex items-center gap-3">
+            {formData.avatar_url && (
+              <img src={formData.avatar_url} alt="avatar" className="w-12 h-12 rounded-full object-cover border" />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              disabled={!isEditing}
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                setAvatarFile(file);
+                if (file) {
+                  const preview = URL.createObjectURL(file);
+                  setFormData(prev => ({ ...prev, avatar_url: preview }));
+                }
+              }}
+              className="block text-sm"
             />
           </div>
         </div>
