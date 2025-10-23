@@ -72,7 +72,8 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         //     rememberUpgrade: true
         // });
 
-        const socket = io(`http://localhost:3000`, {
+        const socket = io(import.meta.env.VITE_SOCKET_URL || window.location.origin, {
+            path: '/socket.io',
             transports: ['websocket', 'polling'],
             autoConnect: true,
             reconnection: true,
