@@ -1,5 +1,5 @@
 import { Button } from "../ui/button";
-import { Home, FileText, MessageCircle, User, Briefcase, Bell, CreditCard, Receipt, BanknoteIcon, Wallet, BookOpen, GraduationCap } from "lucide-react";
+import { Home, FileText, MessageCircle, User, Briefcase, Bell, CreditCard, Receipt, BanknoteIcon, Wallet, BookOpen, GraduationCap, Zap, CreditCard as PaymentMethodsIcon } from "lucide-react";
 import LightLogo from "../../assets/light-logo.png";
 import DarkLogo from "../../assets/dark-logo.png";
 import { useEffect, useState, useRef } from "react";
@@ -14,8 +14,10 @@ const navLinks = [
     { label: "Saldo e Saques", icon: Wallet, key: "Saldo e Saques" },
     { label: "Notificações", icon: Bell, key: "Notificações" },
     { label: "Assinatura", icon: CreditCard, key: "Assinatura" },
+    { label: "Métodos de Pagamento", icon: PaymentMethodsIcon, key: "Pagamento" },
     { label: "Histórico de Pagamentos", icon: Receipt, key: "Histórico de Pagamentos" },
     { label: "Cadastro Bancário", icon: BanknoteIcon, key: "Cadastro Bancário" },
+    { label: "Configuração Stripe", icon: Zap, key: "Configuração Stripe" },
     { label: "Verificação de Aluno", icon: GraduationCap, key: "Verificação de Aluno" },
     { label: "Guia da Plataforma", icon: BookOpen, key: "Guia da Plataforma" },
 ];

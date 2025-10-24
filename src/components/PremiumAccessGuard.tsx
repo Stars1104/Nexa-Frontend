@@ -12,8 +12,7 @@ import {
   CardTitle,
 } from "./ui/card";
 import { Crown, Lock, ArrowRight } from "lucide-react";
-import { useAppSelector } from "../store/hooks";
-import { apiClient } from "../services/apiClient";
+import { useAppSelector } from "../store/hooks"
 
 interface PremiumAccessGuardProps {
   children: React.ReactNode;

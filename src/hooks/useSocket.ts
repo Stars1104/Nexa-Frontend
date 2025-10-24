@@ -80,7 +80,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
             reconnectionAttempts: maxReconnectAttempts,
             reconnectionDelay: 500, // Reduced from 1000ms
             reconnectionDelayMax: 3000, // Reduced from 5000ms
-            timeout: 10000, // Reduced from 20000ms
+            timeout: 20000, // Reduced from 20000ms
             forceNew: false,
             upgrade: true,
             rememberUpgrade: true

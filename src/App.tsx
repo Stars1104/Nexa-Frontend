@@ -23,11 +23,13 @@ import BrandIndex from "./pages/brand/Index";
 import AdminIndex from "./pages/admin";
 import NotificationsPage from "./pages/Notifications";
 import BankRegistrationPage from "./pages/creator/BankRegistrationPage";
+import StripeConnectPage from "./pages/creator/StripeConnectPage";
 import Guide from "./pages/Guide";
 import Documentation from "./pages/Documentation";
 import { HelmetProvider } from "react-helmet-async";
 import { useState, useEffect } from "react";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import PaymentMethods from "./pages/PaymentMethods";
  
 
 const queryClient = new QueryClient();
@@ -146,6 +148,16 @@ const App = () => {
                       <BankRegistrationPage />
                     </ProtectedRoute>
                   } />
+                  <Route path="/creator/stripe-connect" element={
+                    <ProtectedRoute allowedRoles={['creator', 'student']}>
+                      <StripeConnectPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/creator/payment-method" element={
+                    <ProtectedRoute allowedRoles={['creator', 'student']}>
+                      <PaymentMethods />
+                    </ProtectedRoute>
+                  } />
                   <Route path="/brand/*" element={
                     <ProtectedRoute allowedRoles={['brand']}>
                       <BrandIndex />
@@ -161,8 +173,7 @@ const App = () => {
                     <ProtectedRoute>
                       <NotificationsPage />
                     </ProtectedRoute>
-                  } />
-                  
+                  } />             
                           {/* Guide route - accessible to everyone */}
         <Route path="/guides" element={<Guide />} />
          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
