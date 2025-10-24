@@ -6,6 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { brandPaymentApi, BrandPaymentMethod, ContractPaymentRequest } from '@/api/payment/brandPayment';
+import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { CreditCard, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface ContractPaymentModalProps {
@@ -30,6 +31,8 @@ export default function ContractPaymentModal({
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const stripe = useStripe();
+  const elements = useElements();
 
   useEffect(() => {
     if (isOpen) {
@@ -69,21 +72,22 @@ export default function ContractPaymentModal({
   };
 
   const handleProcessPayment = async () => {
-    if (!selectedPaymentMethod) {
-      toast({
-        title: 'Erro',
-        description: 'Selecione um método de pagamento',
-        variant: 'destructive',
-      });
-      return;
-    }
+    // Stripe flow: use inline CardElement to create PaymentMethod
+    if (!stripe || !elements) return;
+    const card = elements.getElement(CardElement);
+    if (!card) return;
 
     setProcessing(true);
 
     try {
+      const { paymentMethod, error } = await stripe.createPaymentMethod({ type: 'card', card });
+      if (error || !paymentMethod) {
+        throw new Error(error?.message || 'Erro ao criar método de pagamento');
+      }
+
       const paymentData: ContractPaymentRequest = {
         contract_id: contractId,
-        payment_method_id: selectedPaymentMethod,
+        stripe_payment_method_id: paymentMethod.id,
       };
 
       const response = await brandPaymentApi.processContractPayment(paymentData);
@@ -191,36 +195,12 @@ export default function ContractPaymentModal({
             </CardContent>
           </Card>
 
-          {/* Payment Methods */}
+          {/* Stripe Card */}
           <div className="space-y-3">
-            <h4 className="font-medium">Método de Pagamento</h4>
-            <RadioGroup value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
-              {paymentMethods.map((method) => (
-                <div key={method.id} className="flex items-center space-x-3">
-                  <RadioGroupItem value={method.id} id={method.id} />
-                  <Label htmlFor={method.id} className="flex-1 cursor-pointer">
-                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">
-                      <div className="flex items-center space-x-3">
-                        <CreditCard className="h-5 w-5 text-primary" />
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium">{method.card_info}</span>
-                            {method.is_default && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground">
-                                Padrão
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {method.card_holder_name}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
+            <h4 className="font-medium">Cartão</h4>
+            <div className="p-2 border rounded">
+              <CardElement options={{ hidePostalCode: true }} />
+            </div>
           </div>
 
           {/* Payment Info */}

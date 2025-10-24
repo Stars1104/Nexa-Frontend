@@ -28,6 +28,8 @@ import Documentation from "./pages/Documentation";
 import { HelmetProvider } from "react-helmet-async";
 import { useState, useEffect } from "react";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import { Elements } from '@stripe/react-stripe-js';
+import { stripePromise } from './stripe/stripeClient';
  
 
 const queryClient = new QueryClient();
@@ -105,6 +107,7 @@ const App = () => {
               <TooltipProvider>
                 <Sonner />
                 {/* <DebugUserState /> */}
+                <Elements stripe={stripePromise || undefined}>
                 <BrowserRouter
                   future={{
                     v7_startTransition: true,
@@ -175,6 +178,7 @@ const App = () => {
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
+              </Elements>
               </TooltipProvider>
             </PremiumProvider>
           </ThemeProvider>
