@@ -12,13 +12,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
 import { createCampaign } from "../../store/thunks/campaignThunks";
 import { clearError, CampaignFormData } from "../../store/slices/campaignSlice";
+import NICHES from "../../lib/niches";
 
-// Campaign types
-const CAMPAIGN_TYPES = [
-  "Skincare", "Maquiagem", "beleza e bem-estar", "Moda feminina", "Moda fitness", "Moda praia", "Joias e bijuterias", "Sapatos e bolsas",
-  "Tecnologia e eletrônicos", "Smartphones e acessórios", "Casa e decoração", "Organização", "Limpeza", "Gastronomia e bebidas", "Alimentação saudável", "Doces e confeitaria",
-  "Maternidade e infantil", "Viagem e lazer", "Turismo e experiências", "Pets",
-];
+// Tipos/Nichos de campanha unificados
+const CAMPAIGN_TYPES = NICHES;
 
 // Brazilian states
 const BRAZILIAN_STATES = [
