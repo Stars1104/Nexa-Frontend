@@ -8,6 +8,7 @@ import {
   SelectContent,
   SelectItem,
 } from "../ui/select";
+import NICHES from "../../lib/niches";
 import { DatePicker } from "../ui/date-picker";
 import { UploadIcon, XIcon } from "lucide-react";
 
@@ -19,13 +20,7 @@ const BRAZILIAN_STATES = [
   "Roraima", "Santa Catarina", "São Paulo", "Sergipe", "Tocantins"
 ];
 
-const NICHES = [
-  "Moda e Beleza", "Tecnologia", "Saúde e Bem-estar", "Educação", "Entretenimento",
-  "Esportes", "Gastronomia", "Viagem e Turismo", "Negócios e Empreendedorismo",
-  "Arte e Cultura", "Música", "Jogos", "Fitness e Esportes", "Maternidade e Família",
-  "Automotivo", "Imóveis", "Finanças", "Política", "Meio Ambiente",
-  "Renda extra", "Saúde infantil", "Psicologia", "Desenvolvimento pessoal", "Outros"
-];
+// NICHES agora vem de src/lib/niches.ts
 
 const LANGUAGES = [
   "Português", "Inglês", "Espanhol", "Francês", "Alemão", "Italiano", "Japonês",
