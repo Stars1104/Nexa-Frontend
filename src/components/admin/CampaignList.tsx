@@ -5,7 +5,8 @@ import { clearError } from "../../store/slices/campaignSlice";
 import CampaignDetail from "./CampaignDetail";
 import { Campaign } from "../../store/slices/campaignSlice";
 import { toast } from "../ui/sonner";
-import { Star } from "lucide-react";
+import { Star, Trash2 } from "lucide-react";
+import { adminApi } from "../../api/admin";
 import { Helmet } from "react-helmet-async";
 
 const TABS = [
@@ -109,6 +110,21 @@ const CampaignList: React.FC = () => {
       toast.success("Status de destaque alterado com sucesso!");
     } catch (error) {
       toast.error("Erro ao alterar status de destaque");
+    }
+  };
+
+  const handleDelete = async (campaignId: number) => {
+    try {
+      if (!confirm('Tem certeza que deseja excluir esta campanha? Essa ação é reversível (exclusão lógica).')) return;
+      const res = await adminApi.deleteCampaign(campaignId);
+      if (res.success) {
+        toast.success('Campanha excluída com sucesso');
+        await dispatch(fetchCampaigns()).unwrap();
+      } else {
+        toast.error(res.message || 'Falha ao excluir campanha');
+      }
+    } catch (e) {
+      toast.error('Erro ao excluir campanha');
     }
   };
 
@@ -247,6 +263,13 @@ const CampaignList: React.FC = () => {
                           >
                             Ver detalhes
                           </button>
+                      <button
+                        className="ml-2 px-3 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        onClick={() => handleDelete(c.id)}
+                        title="Excluir campanha"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                         </td>
                       </tr>
                     ))}
@@ -291,6 +314,16 @@ const CampaignList: React.FC = () => {
                         onClick={() => handleOpenModal(c)}
                       >
                         Ver detalhes
+                      </button>
+                      <button
+                        className="mt-2 w-full px-4 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        onClick={() => handleDelete(c.id)}
+                        title="Excluir campanha"
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <Trash2 className="h-4 w-4" />
+                          <span>Excluir</span>
+                        </div>
                       </button>
                     </div>
                   </div>
