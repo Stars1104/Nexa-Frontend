@@ -196,6 +196,14 @@ export const adminApi = {
   },
 
   /**
+   * Delete campaign (soft delete on backend)
+   */
+  deleteCampaign: async (campaignId: number): Promise<CampaignActionResponse> => {
+    const response = await apiClient.delete(`/admin/campaigns/${campaignId}`);
+    return response.data;
+  },
+
+  /**
    * Approve a campaign
    */
   approveCampaign: async (campaignId: number): Promise<CampaignActionResponse> => {
