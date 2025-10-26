@@ -178,7 +178,7 @@ const addAuthToken = (config: any) => {
             const parsedState = JSON.parse(reduxState);
             const authState = JSON.parse(parsedState.auth || '{}');
             if (authState.token) {
-                token = JSON.parse(authState.token);
+                token = authState.token;
             }
         }
     } catch (e) {
