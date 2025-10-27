@@ -60,6 +60,19 @@ const LANGUAGE_CODE_TO_NAME: { [key: string]: string } = {
   "other": "Outros"
 };
 
+function getAvatarUrl(avatarPath?: string | null): string | null {
+  if (!avatarPath || avatarPath === 'null' || avatarPath.trim() === '') return null;
+  
+  // If already a full URL, return as-is
+  if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://')) {
+    return avatarPath;
+  }
+  
+  // Construct full URL from relative path
+  const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+  return `${baseUrl}${avatarPath}`;
+}
+
 interface CreatorProfileProps {
   creatorId?: string;
   onBack?: () => void;
@@ -221,18 +234,21 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
               <CardHeader className="text-center pb-4">
                 <div className="flex justify-center mb-4">
                   <Avatar className="h-24 w-24">
-                    {creator.avatar && creator.avatar !== 'null' && creator.avatar.trim() !== '' && !creator.avatar.includes('null') ? (
-                      <AvatarImage 
-                        src={creator.avatar} 
-                        alt={creator.name || 'Criador'}
-                        onError={(e) => {
-                          console.warn('Avatar image failed to load:', creator.avatar);
-                          // Hide the image and show fallback
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                        }}
-                      />
-                    ) : null}
+                    {(() => {
+                      const avatarUrl = getAvatarUrl(creator.avatar);
+                      return avatarUrl ? (
+                        <AvatarImage 
+                          src={avatarUrl} 
+                          alt={creator.name || 'Criador'}
+                          onError={(e) => {
+                            console.warn('Avatar image failed to load:', avatarUrl);
+                            // Hide the image and show fallback
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
+                      ) : null;
+                    })()}
                     <AvatarFallback className="text-2xl bg-gradient-to-br from-pink-500 to-purple-600 text-white">
                       {getInitials(creator.name || 'Criador')}
                     </AvatarFallback>

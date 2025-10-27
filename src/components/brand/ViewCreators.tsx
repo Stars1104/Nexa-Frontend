@@ -13,6 +13,19 @@ function getInitials(name?: string) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
+function getAvatarUrl(avatarPath?: string | null): string | null {
+  if (!avatarPath || avatarPath === 'null' || avatarPath.trim() === '') return null;
+  
+  // If already a full URL, return as-is
+  if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://')) {
+    return avatarPath;
+  }
+  
+  // Construct full URL from relative path
+  const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+  return `${baseUrl}${avatarPath}`;
+}
+
 interface ViewCreatorsProps {
   setComponent?: (component: string | { name: string; campaign?: any; creatorId?: string }) => void;
   campaignId: number;
@@ -102,17 +115,27 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
             >
               {/* User Info */}
               <div className="flex items-center gap-4 w-full sm:w-auto">
-                {creator.avatar ? (
-                  <img
-                    src={creator.avatar}
-                    alt={creator.name || "Criador"}
-                    className="w-14 h-14 rounded-full object-cover border border-gray-200 dark:border-neutral-700"
-                  />
-                ) : (
-                  <div className="w-14 h-14 rounded-full flex items-center justify-center bg-pink-600 text-white font-bold text-lg border border-gray-200 dark:border-neutral-700">
-                    {getInitials(creator.name)}
-                  </div>
-                )}
+                {(() => {
+                  const avatarUrl = getAvatarUrl(creator.avatar || creator.avatar_url);
+                  return avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={creator.name || "Criador"}
+                      className="w-14 h-14 rounded-full object-cover border border-gray-200 dark:border-neutral-700"
+                      onError={(e) => {
+                        // Hide the image on error and show fallback
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        if (target.nextElementSibling) {
+                          (target.nextElementSibling as HTMLElement).style.display = 'flex';
+                        }
+                      }}
+                    />
+                  ) : null;
+                })()}
+                <div className="w-14 h-14 rounded-full flex items-center justify-center bg-pink-600 text-white font-bold text-lg border border-gray-200 dark:border-neutral-700" style={{ display: (creator.avatar || creator.avatar_url) && (creator.avatar || creator.avatar_url) !== 'null' && (creator.avatar || creator.avatar_url)?.trim() !== '' ? 'none' : 'flex' }}>
+                  {getInitials(creator.name)}
+                </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <div className="font-semibold text-gray-900 dark:text-white text-base sm:text-lg">{creator.name}</div>
@@ -273,17 +296,27 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
         >
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-neutral-800">
             <div className="flex items-center gap-3">
-              {selectedApp?.creator?.avatar ? (
-                <img
-                  src={selectedApp.creator.avatar}
-                  alt={selectedApp.creator.name || "Criador"}
-                  className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-neutral-700"
-                />
-              ) : (
-                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-pink-600 text-white font-bold text-lg border border-gray-200 dark:border-neutral-700">
-                  {getInitials(selectedApp?.creator?.name)}
-                </div>
-              )}
+              {(() => {
+                const avatarUrl = getAvatarUrl(selectedApp?.creator?.avatar || selectedApp?.creator?.avatar_url);
+                return avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={selectedApp.creator.name || "Criador"}
+                    className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-neutral-700"
+                    onError={(e) => {
+                      // Hide the image on error and show fallback
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      if (target.nextElementSibling) {
+                        (target.nextElementSibling as HTMLElement).style.display = 'flex';
+                      }
+                    }}
+                  />
+                ) : null;
+              })()}
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-pink-600 text-white font-bold text-lg border border-gray-200 dark:border-neutral-700" style={{ display: (selectedApp?.creator?.avatar || selectedApp?.creator?.avatar_url) && (selectedApp?.creator?.avatar || selectedApp?.creator?.avatar_url) !== 'null' && (selectedApp?.creator?.avatar || selectedApp?.creator?.avatar_url)?.trim() !== '' ? 'none' : 'flex' }}>
+                {getInitials(selectedApp?.creator?.name)}
+              </div>
               <div>
                 <div className="font-semibold text-gray-900 dark:text-white text-base">
                   {selectedApp?.creator?.name}

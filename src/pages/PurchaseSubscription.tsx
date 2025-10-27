@@ -55,7 +55,12 @@ export default function PurchaseSubscription() {
 
   useEffect(() => {
     loadPlan();
-  }, [planId]);
+    
+    // Check if Stripe is ready
+    if (!stripe || !elements) {
+      console.warn('Stripe Elements not ready yet');
+    }
+  }, [planId, stripe, elements]);
 
   const loadPlan = async () => {
     try {
@@ -140,25 +145,54 @@ export default function PurchaseSubscription() {
         return;
       }
 
+      console.log('Creating subscription with:', {
+        subscription_plan_id: plan.id,
+        payment_method_id: paymentMethod.id
+      });
+
       // Call backend API to create subscription
       const response = await paymentApi.processSubscription({
         subscription_plan_id: plan.id,
         payment_method_id: paymentMethod.id,
       });
 
-      if (response.success) {
-        await handleSuccess();
-      } else {
-        throw new Error(response.message || "Falha ao processar assinatura");
+      console.log('Subscription response:', response);
+
+      // Check if requires action (3D Secure)
+      if (response.requires_action && response.client_secret) {
+        const { error: confirmError } = await stripe.confirmCardPayment(response.client_secret);
+        
+        if (confirmError) {
+          setCardError(confirmError.message || "Erro ao confirmar pagamento");
+          setIsLoading(false);
+          return;
+        }
       }
+
+      // await handleSuccess();
 
     } catch (err: any) {
       console.error("Erro no pagamento:", err);
-      toast({
-        title: "Falha no pagamento",
-        description: err.message || "Tente novamente",
-        variant: "destructive"
-      });
+      
+      const errorMessage = err.response?.data?.message || err.message || "Tente novamente";
+      
+      // Handle 409 Conflict - user already has premium
+      if (err.response?.status === 409 || errorMessage.includes('premium') || errorMessage.includes('already has')) {
+        toast({
+          title: "Você já possui uma assinatura ativa",
+          description: errorMessage,
+        });
+        
+        setTimeout(() => {
+          navigate('/creator/subscription');
+        }, 5000);
+      } else {
+        toast({
+          title: "Falha no pagamento",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -191,12 +225,14 @@ export default function PurchaseSubscription() {
     }
   };
 
-  if (loadingPlan) {
+  if (loadingPlan || !stripe || !elements) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f6f6f6] dark:bg-[#18181b]">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-pink-600" />
-          <p className="text-muted-foreground">Carregando plano...</p>
+          <p className="text-muted-foreground">
+            {loadingPlan ? 'Carregando plano...' : 'Carregando Stripe...'}
+          </p>
         </div>
       </div>
     );
