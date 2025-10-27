@@ -15,8 +15,10 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthStep from "./pages/auth/AuthStep";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import Signup from "./pages/auth/CreatorSignUp";
 import StudentVerify from "./pages/auth/StudentVerify";
+import PurchaseSubscription from "./pages/PurchaseSubscription";
 import GoogleOAuthCallback from "./components/GoogleOAuthCallback";
 import CreatorIndex from "./pages/creator/Index";
 import BrandIndex from "./pages/brand/Index";
@@ -30,10 +32,13 @@ import { HelmetProvider } from "react-helmet-async";
 import { useState, useEffect } from "react";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import PaymentMethods from "./pages/PaymentMethods";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
  
 
 const queryClient = new QueryClient();
 
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_test_your_key_here");
  
 
 const App = () => {
@@ -127,6 +132,7 @@ const App = () => {
                   <Route path="/auth/signup" element={<Signup />} />
                   <Route path="/signup/:role" element={<Signup />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />
                   <Route path="/student-verify" element={
                     <ProtectedRoute allowedRoles={['creator', 'student']}>
@@ -142,6 +148,13 @@ const App = () => {
                     <ProtectedRoute allowedRoles={['creator', 'student']}>
                       <CreatorIndex />
                     </ProtectedRoute>
+                  } />
+                   <Route path="/creator/purchase-subscription" element={
+                     <ProtectedRoute allowedRoles={['creator', 'student']}>
+                        <Elements stripe={stripePromise}>
+                          <PurchaseSubscription />
+                        </Elements>
+                      </ProtectedRoute>
                   } />
                   <Route path="/creator/bank-registration" element={
                     <ProtectedRoute allowedRoles={['creator', 'student']}>
