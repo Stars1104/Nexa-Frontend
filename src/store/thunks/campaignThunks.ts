@@ -333,6 +333,8 @@ export const updateCampaign = createAsyncThunk<
   try {
     const state = getState();
     const token = state.auth.token;
+    const user = state.auth.user;
+    const isAdmin = user?.role === 'admin';
     
     if (!token) {
       throw new Error('Usuário não autenticado');
@@ -363,7 +365,7 @@ export const updateCampaign = createAsyncThunk<
       formData.append('attach_file', data.attachments[0]);
     }
     
-    const response = await UpdateCampaign(campaignId, formData, token);
+    const response = await UpdateCampaign(campaignId, formData, token, isAdmin);
     return response;
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Falha ao atualizar campanha';
@@ -380,12 +382,14 @@ export const deleteCampaign = createAsyncThunk<
   try {
     const state = getState();
     const token = state.auth.token;
+    const user = state.auth.user;
+    const isAdmin = user?.role === 'admin';
     
     if (!token) {
       throw new Error('Usuário não autenticado');
     }
     
-    await DeleteCampaign(campaignId, token);
+    await DeleteCampaign(campaignId, token, isAdmin);
     return { campaignId };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Falha ao deletar campanha';

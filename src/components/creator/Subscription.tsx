@@ -1,7 +1,7 @@
 import { Button } from "../ui/button";
 import { CheckCircle2, Calendar, Lightbulb, Crown, AlertCircle, Loader2, Star, GraduationCap } from "lucide-react";
 import { useState, useEffect } from "react";
-import SubscriptionModal from "./SubscriptionModal";
+import { useNavigate } from "react-router-dom";
 import { paymentApi, SubscriptionStatus, SubscriptionPlan } from "../../api/payment";
 import { useToast } from "../../hooks/use-toast";
 import { dispatchPremiumStatusUpdate } from "../../utils/browserUtils";
@@ -20,6 +20,7 @@ const benefits = [
 
 export default function Subscription() {
     const { toast } = useToast();
+    const navigate = useNavigate();
     const { user } = useAppSelector((state) => state.auth);
     const { profile } = useAppSelector((state) => state.user);
     const userData = profile||user;
@@ -422,7 +423,7 @@ export default function Subscription() {
                                     {/* Subscribe Button */}
                 <div className="flex justify-center">
                     <Button
-                        onClick={() => toast({ title: 'Assinaturas desativadas', description: 'O pagamento está temporariamente desativado.' })}
+                        onClick={() => navigate(`/creator/purchase-subscription?planId=${selectedPlan.id}`)}
                         className="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-8 py-3 text-lg w-full sm:w-auto"
                         disabled={subscriptionStatus?.is_premium_active}
                     >
@@ -474,4 +475,3 @@ export default function Subscription() {
         </div>
     );
 }
-

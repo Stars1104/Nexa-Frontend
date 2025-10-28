@@ -198,7 +198,7 @@ export const GetCampaignById = async (campaignId: number, token: string) => {
 };
 
 // Update campaign
-export const UpdateCampaign = async (campaignId: number, data: FormData, token: string) => {
+export const UpdateCampaign = async (campaignId: number, data: FormData, token: string, isAdmin: boolean = false) => {
     setAuthToken(token);
 
     // Create a new axios instance for form data
@@ -210,14 +210,25 @@ export const UpdateCampaign = async (campaignId: number, data: FormData, token: 
         },
     });
 
-    const response = await FormDataAPI.patch(`/api/campaigns/${campaignId}`, data);
+    // Use PATCH method for update
+    const endpoint = isAdmin 
+        ? `/api/admin/campaigns/${campaignId}` 
+        : `/api/campaigns/${campaignId}`;
+    
+    const response = await FormDataAPI.patch(endpoint, data);
     return response.data;
 };
 
 // Delete campaign
-export const DeleteCampaign = async (campaignId: number, token: string) => {
+export const DeleteCampaign = async (campaignId: number, token: string, isAdmin: boolean = false) => {
     setAuthToken(token);
-    const response = await CampaignAPI.delete(`/api/campaigns/${campaignId}`);
+    
+    // Use admin route if admin, otherwise use brand route
+    const endpoint = isAdmin 
+        ? `/api/admin/campaigns/${campaignId}` 
+        : `/api/campaigns/${campaignId}`;
+    
+    const response = await CampaignAPI.delete(endpoint);
     return response.data;
 };
 

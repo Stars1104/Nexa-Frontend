@@ -86,10 +86,10 @@ export default function Portfolio() {
                 const links = portfolio.project_links.map((link: any, index: number) => {
                     if (typeof link === 'string') {
                         // Legacy string format
-                        return { title: `Projeto ${index + 1}`, url: link };
+                        return { title: `Projecto ${index + 1}`, url: link };
                     } else {
                         // New object format
-                        return { title: link.title || `Projeto ${index + 1}`, url: link.url || '' };
+                        return { title: link.title || `Projecto ${index + 1}`, url: link.url || '' };
                     }
                 });
                 setProjectLinks(links);
@@ -575,7 +575,7 @@ export default function Portfolio() {
                                             {projectLinks.map((link, index) => (
                                                 <div key={index} className="space-y-2 p-3 border rounded-lg bg-muted/20">
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-sm font-medium">Projeto {index + 1}</span>
+                                                        <span className="text-sm font-medium">Portfolio {index + 1}</span>
                                                         <Button
                                                             type="button"
                                                             variant="outline"
@@ -670,13 +670,6 @@ export default function Portfolio() {
                                         onDrop={handleDrop}
                                     >
                                         <div className="flex flex-col items-center gap-2">
-                                            <input
-                                                type="url"
-                                                className="w-full rounded-md border px-3 py-2 text-sm bg-background text-foreground outline-none transition placeholder:text-muted-foreground"
-                                                placeholder="https://meu-projeto.com"
-                                                value={newLinkUrl}
-                                                onChange={(e) => setNewLinkUrl(e.target.value)}
-                                            />
                                             <Camera className="w-10 h-10 text-muted-foreground mb-2" />
                                             <div className="font-semibold text-base text-foreground">Arraste arquivos para cá</div>
                                             <div className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG, MP4, MOV, AVI, MPEG, WMV, WEBM, OGG, MKV, FLV, 3GP</div>

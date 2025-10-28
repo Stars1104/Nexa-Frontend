@@ -87,7 +87,7 @@ export const paymentClient = axios.create({
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-    },
+    }
 });
 
 // Function to create an authenticated API client instance

@@ -21,6 +21,7 @@ import Notification from "@/components/Notification";
 import CreatorProfile from "@/components/brand/CreatorProfile";
 import GuideEmbedded from "@/components/GuideEmbedded";
 import { Helmet } from "react-helmet-async";
+import PaymentMethods from "../PaymentMethods";
 
 function Index() {
     const isMobile = useIsMobile();
@@ -58,6 +59,8 @@ function Index() {
                     return <CreatorProfile setComponent={setComponent} />;
                 case "Guia da Plataforma":
                     return <GuideEmbedded audience="Brand" />;
+                case "Método de pagamento":
+                    return <PaymentMethods/>;
                 default:
                     return <NotFound />;
             }

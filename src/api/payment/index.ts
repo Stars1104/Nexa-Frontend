@@ -29,6 +29,11 @@ export interface ProcessPaymentRequest {
 }
 
 export interface SubscriptionPaymentRequest {
+  subscription_plan_id: number;
+  payment_method_id: string;
+}
+
+export interface LegacySubscriptionPaymentRequest {
   card_number: string;
   card_holder_name: string;
   card_expiration_date: string; // MMYY format
