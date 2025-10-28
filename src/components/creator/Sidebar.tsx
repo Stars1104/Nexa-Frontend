@@ -17,7 +17,6 @@ const navLinks = [
     { label: "Métodos de Pagamento", icon: PaymentMethodsIcon, key: "Pagamento" },
     { label: "Histórico de Pagamentos", icon: Receipt, key: "Histórico de Pagamentos" },
     { label: "Cadastro Bancário", icon: BanknoteIcon, key: "Cadastro Bancário" },
-    { label: "Configuração Stripe", icon: Zap, key: "Configuração Stripe" },
     { label: "Verificação de Aluno", icon: GraduationCap, key: "Verificação de Aluno" },
     { label: "Guia da Plataforma", icon: BookOpen, key: "Guia da Plataforma" },
 ];

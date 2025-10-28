@@ -559,8 +559,8 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                           })
                           .map((link, index) => {
                             const linkData = typeof link === 'string' 
-                              ? { title: `Projeto ${index + 1}`, url: link }
-                              : { title: link.title || `Projeto ${index + 1}`, url: link.url || '' };
+                              ? { title: `Portfolio ${index + 1}`, url: link }
+                              : { title: link.title || `Portfolio ${index + 1}`, url: link.url || '' };
                             
                             return (
                               <a

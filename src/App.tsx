@@ -188,12 +188,12 @@ const App = () => {
                     </ProtectedRoute>
                   } />             
                           {/* Guide route - accessible to everyone */}
-        <Route path="/guides" element={<Guide />} />
-         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/guides" element={<Guide />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         
-        {/* Documentation route - accessible to everyone */}
-        <Route path="/docs" element={<Documentation />} />
-        <Route path="/docs/:section" element={<Documentation />} />
+                  {/* Documentation route - accessible to everyone */}
+                <Route path="/docs" element={<Documentation />} />
+                <Route path="/docs/:section" element={<Documentation />} />
                   
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
