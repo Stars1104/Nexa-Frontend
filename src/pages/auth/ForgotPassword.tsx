@@ -5,6 +5,7 @@ import DarkLogo from "../../assets/dark-logo.png";
 import { useTheme } from "../../components/ThemeProvider";
 import { ThemeToggle } from "../../components/ThemeToggle";
 import { useSystemTheme } from "../../hooks/use-system-theme";
+import { forgotPassword } from "../../api/auth";
 
 const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -16,30 +17,21 @@ const ForgotPassword: React.FC = () => {
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log("this is my funct")
     e.preventDefault();
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/forgot-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
+      const data = await forgotPassword({ email });
+      
+      if (data.success || data.message) {
         setSubmitted(true);
       } else {
         alert(data.message || "Email not found. Please try again.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending reset link:", error);
-      alert("Something went wrong. Please try again later.");
+      const errorMessage = error?.response?.data?.message || error?.message || "Something went wrong. Please try again later.";
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }

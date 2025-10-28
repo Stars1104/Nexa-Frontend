@@ -116,31 +116,50 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
         });
         const data = res?.data || {};
         if (data?.success) {
-          // Atualiza o estado de auth imediatamente
-          dispatch(updateAuthUser({
-            role: 'student',
-            student_verified: true as any,
-            student_expires_at: data.student_expires_at,
-            free_trial_expires_at: data.free_trial_expires_at,
-          } as any));
-          toast.success('Verificação concluída! Seu acesso de estudante foi ativado.');
+          if (data?.student_verified) {
+            // Auto-verified - update auth state immediately
+            dispatch(updateAuthUser({
+              role: 'student',
+              student_verified: true as any,
+              student_expires_at: data.student_expires_at,
+              free_trial_expires_at: data.free_trial_expires_at,
+            } as any));
+            toast.success(data?.message || 'Verificação concluída! Seu acesso de estudante foi ativado.');
+            
+            // Navegar ao dashboard
+            setTimeout(() => {
+              if (isInsideCreatorDashboard) {
+                setComponent?.('Painel');
+              } else {
+                navigateToRoleDashboard('creator');
+              }
+            }, 1500);
+          } else {
+            // Pending admin approval
+            toast.info(data?.message || 'Solicitação registrada. Aguarde a aprovação do admin.');
+            
+            // Navegar ao dashboard
+            setTimeout(() => {
+              if (isInsideCreatorDashboard) {
+                setComponent?.('Painel');
+              } else {
+                navigateToRoleDashboard('creator');
+              }
+            }, 1500);
+          }
         } else {
           toast.info(data?.message || 'Solicitação registrada. Nossa equipe validará seu acesso de aluno.');
         }
       } catch (e) {
-        // Fallback: apenas informa registro da solicitação
-        toast.info('Solicitação registrada. Nossa equipe validará seu acesso de aluno.');
+        // Handle specific errors from the try block
+        const errorMessage = e?.response?.data?.message || 'Erro ao verificar. Tente novamente.';
+        
+        if (e?.response?.status === 422) {
+          setError(errorMessage);
+        } else {
+          toast.error(errorMessage);
+        }
       }
-      
-      // Update de estado local do usuário removido (evitar referência inexistente)
-
-      // Navegar ao dashboard
-      if (isInsideCreatorDashboard) {
-        setComponent?.('Painel');
-      } else {
-        navigateToRoleDashboard('creator');
-      }
-
     } catch (err: any) {
       console.error('Student verification error:', err);
       
