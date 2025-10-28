@@ -1,14 +1,17 @@
 import {
-  Root,
   Slot,
-  Slottable
-} from "./chunk-NLUUAN34.js";
-import "./chunk-T6PWRRVS.js";
-import "./chunk-E55NSNTN.js";
-import "./chunk-4MBMRILA.js";
+  Slottable,
+  createSlot,
+  createSlottable
+} from "./chunk-DL3WMVFQ.js";
+import "./chunk-X3VLT5EQ.js";
+import "./chunk-2CLD7BNN.js";
+import "./chunk-WOOG5QLI.js";
 export {
-  Root,
+  Slot as Root,
   Slot,
-  Slottable
+  Slottable,
+  createSlot,
+  createSlottable
 };
 //# sourceMappingURL=@radix-ui_react-slot.js.map

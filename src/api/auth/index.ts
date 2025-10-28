@@ -221,8 +221,18 @@ export const getUser = async (userId?: string) => {
 
 // Forgot Password Function
 export const forgotPassword = async (data: any) => {
-    const response = await AuthAPI.post("/forgot-password", data);
+    const response = await AuthAPI.post("/api/forgot-password", data);
     return response.data;
+};
+
+// Reset Password Function
+export const resetPassword = async (data: { token: string; email: string; password: string; password_confirmation: string }) => {
+    try {
+        const response = await AuthAPI.post("/api/reset-password", data);
+        return response.data;
+    } catch (error: any) {
+        throw error;
+    }
 };
 
 // Update Password Function
@@ -239,5 +249,30 @@ export const logout = async () => {
     const response = await AuthAPI.post("/api/logout");
     localStorage.clear();
     persistor.purge();
+};
+
+// Delete Avatar Function
+export const deleteAvatar = async () => {
+    const response = await AuthAPI.delete("/api/profile/avatar");
+    return response.data;
+};
+
+// Upload Avatar Only
+export const uploadAvatarOnly = async (file: File) => {
+    const fd = new FormData();
+    fd.append('avatar', file);
+    // Enviar somente o avatar para rota dedicada de avatar
+    const response = await AuthAPI.post('/api/profile/avatar', fd);
+    return response.data;
+};
+
+// Upload Avatar via Base64 (fallback)
+export const uploadAvatarBase64 = async (base64: string) => {
+    const response = await AuthAPI.post('/api/profile/avatar-base64', {
+        avatar_base64: base64,
+    }, {
+        headers: { 'Content-Type': 'application/json' },
+    });
+    return response.data;
 };
 

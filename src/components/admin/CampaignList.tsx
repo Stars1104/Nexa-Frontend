@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { fetchCampaigns, approveCampaign, rejectCampaign, toggleFeaturedCampaign } from "../../store/thunks/campaignThunks";
+import { fetchCampaigns, approveCampaign, rejectCampaign, toggleFeaturedCampaign, updateCampaign, deleteCampaign } from "../../store/thunks/campaignThunks";
 import { clearError } from "../../store/slices/campaignSlice";
 import CampaignDetail from "./CampaignDetail";
 import { Campaign } from "../../store/slices/campaignSlice";
 import { toast } from "../ui/sonner";
-import { Star } from "lucide-react";
+import { Star, Edit, Trash2, Eye } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+import EditCampaign from "../brand/EditCampaign";
 
 const TABS = [
   { label: "Todas", value: "all" },
@@ -46,6 +47,9 @@ const CampaignList: React.FC = () => {
   const [tab, setTab] = useState("all");
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [campaignToDelete, setCampaignToDelete] = useState<number | null>(null);
 
   const campaignsToDisplay = Array.isArray(campaigns) ? campaigns : [];
   const filtered = filterCampaigns(campaignsToDisplay, tab);
@@ -109,6 +113,44 @@ const CampaignList: React.FC = () => {
       toast.success("Status de destaque alterado com sucesso!");
     } catch (error) {
       toast.error("Erro ao alterar status de destaque");
+    }
+  };
+
+  const handleEdit = (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteClick = (campaignId: number) => {
+    setCampaignToDelete(campaignId);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!campaignToDelete) return;
+    
+    try {
+      await dispatch(deleteCampaign(campaignToDelete)).unwrap();
+      toast.success("Campanha excluída com sucesso!");
+      setShowDeleteModal(false);
+      setCampaignToDelete(null);
+      await dispatch(fetchCampaigns()).unwrap();
+    } catch (error) {
+      toast.error("Erro ao excluir campanha");
+    }
+  };
+
+  const handleEditSave = async (campaignData: any) => {
+    if (!selectedCampaign) return;
+    
+    try {
+      await dispatch(updateCampaign({ campaignId: selectedCampaign.id, data: campaignData })).unwrap();
+      toast.success("Campanha atualizada com sucesso!");
+      setShowEditModal(false);
+      setSelectedCampaign(null);
+      await dispatch(fetchCampaigns()).unwrap();
+    } catch (error) {
+      toast.error("Erro ao atualizar campanha");
     }
   };
 
@@ -202,11 +244,11 @@ const CampaignList: React.FC = () => {
                     <tr className="text-xs text-gray-500 dark:text-gray-400">
                       <th className="py-3 px-2 font-medium">Nome</th>
                       <th className="py-3 px-2 font-medium">Status</th>
-                      <th className="py-3 px-2 font-medium">Data de Criação</th>
+                      <th className="py-3 px-2 font-medium">Data</th>
                       <th className="py-3 px-2 font-medium">Marca</th>
-                      <th className="py-3 px-2 font-medium">Criadores Aprovados</th>
+                      <th className="py-3 px-2 font-medium">Criadores</th>
                       <th className="py-3 px-2 font-medium">Destaque</th>
-                      <th className="py-3 px-2 font-medium">Ações</th>
+                      <th className="py-3 px-2 font-medium text-right">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -219,7 +261,7 @@ const CampaignList: React.FC = () => {
                           </span>
                         </td>
                         <td className="py-4 px-2 text-sm text-gray-700 dark:text-gray-300">
-                          {formatDate(c.submissionDate)}
+                          {formatDate(c.created_at)}
                         </td>
                         <td className="py-4 px-2 text-sm text-gray-700 dark:text-gray-300">
                           {c.brand?.name || 'N/A'}
@@ -241,12 +283,28 @@ const CampaignList: React.FC = () => {
                           </button>
                         </td>
                         <td className="py-4 px-2">
-                          <button
-                            className="px-4 py-2 border border-[#E91E63] text-[#E91E63] rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors"
-                            onClick={() => handleOpenModal(c)}
-                          >
-                            Ver detalhes
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              className="px-2.5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                              onClick={() => handleEdit(c)}
+                              title="Editar"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              className="px-2.5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                              onClick={() => handleDeleteClick(c.id)}
+                              title="Excluir"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              className="px-3 py-2 border border-[#E91E63] text-[#E91E63] rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors text-xs font-medium"
+                              onClick={() => handleOpenModal(c)}
+                            >
+                              Ver
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -255,43 +313,78 @@ const CampaignList: React.FC = () => {
               </div>
 
               {/* Mobile Cards */}
-              <div className="md:hidden flex flex-col gap-4">
+              <div className="md:hidden flex flex-col gap-3">
                 {filtered.map((c, i) => (
-                  <div key={i} className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow p-4 flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-gray-900 dark:text-gray-100">{c.title}</span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleToggleFeatured(c.id)}
-                          className={`p-2 rounded-lg transition-colors ${
-                            c.is_featured 
-                              ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200 dark:hover:bg-yellow-800' 
-                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                          }`}
-                          title={c.is_featured ? 'Remover destaque' : 'Adicionar destaque'}
-                        >
-                          <Star className={`h-4 w-4 ${c.is_featured ? 'fill-current' : ''}`} />
-                        </button>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[c.status]}`}>
-                          {STATUS_LABELS[c.status]}
-                        </span>
-                      </div>
+                  <div key={i} className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm p-4 flex flex-col gap-3">
+                    {/* Header with title and status */}
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-tight flex-1">
+                        {c.title}
+                      </h3>
+                      <button
+                        onClick={() => handleToggleFeatured(c.id)}
+                        className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${
+                          c.is_featured 
+                            ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200 dark:hover:bg-yellow-800' 
+                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                        }`}
+                        title={c.is_featured ? 'Remover destaque' : 'Adicionar destaque'}
+                      >
+                        <Star className={`h-4 w-4 ${c.is_featured ? 'fill-current' : ''}`} />
+                      </button>
                     </div>
-                    <div className="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
-                      <span>Data: <span className="text-gray-700 dark:text-gray-200">{formatDate(c.submissionDate)}</span></span>
-                      <span>Marca: <span className="text-gray-700 dark:text-gray-200">{c.brand?.name || 'N/A'}</span></span>
-                      <span>Criadores: <span className="text-gray-700 dark:text-gray-200">{c.approvedCreators}</span></span>
+
+                    {/* Status badge */}
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[c.status]}`}>
+                        {STATUS_LABELS[c.status]}
+                      </span>
                       {c.is_featured && (
-                        <span className="text-yellow-600 font-medium">⭐ Destaque</span>
+                        <span className="text-yellow-600 dark:text-yellow-400 text-xs font-medium">⭐ Destaque</span>
                       )}
                     </div>
-                    <div className="mt-2">
+
+                    {/* Info grid */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="flex flex-col">
+                        <span className="text-gray-500 dark:text-gray-400">Data</span>
+                        <span className="text-gray-900 dark:text-gray-100 font-medium">{formatDate(c.created_at)}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-gray-500 dark:text-gray-400">Marca</span>
+                        <span className="text-gray-900 dark:text-gray-100 font-medium">{c.brand?.name || 'N/A'}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-gray-500 dark:text-gray-400">Criadores</span>
+                        <span className="text-gray-900 dark:text-gray-100 font-medium">{c.approvedCreators}</span>
+                      </div>
+                    </div>
+
+                    {/* Action buttons - Stack for better mobile UX */}
+                    <div className="flex flex-col gap-2 mt-1">
                       <button
-                        className="w-full px-4 py-2 border border-[#E91E63] text-[#E91E63] rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors"
-                        onClick={() => handleOpenModal(c)}
+                        className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 font-medium text-sm"
+                        onClick={() => handleEdit(c)}
                       >
-                        Ver detalhes
+                        <Edit className="h-4 w-4" />
+                        Editar Campanha
                       </button>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          className="px-3 py-2.5 border-2 border-red-500 text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center gap-1.5 font-medium text-sm"
+                          onClick={() => handleDeleteClick(c.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Excluir
+                        </button>
+                        <button
+                          className="px-3 py-2.5 border-2 border-[#E91E63] text-[#E91E63] rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors flex items-center justify-center gap-1.5 font-medium text-sm"
+                          onClick={() => handleOpenModal(c)}
+                        >
+                          <Eye className="h-4 w-4" />
+                          Ver Detalhes
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -309,6 +402,50 @@ const CampaignList: React.FC = () => {
             onApprove={() => handleApprove(selectedCampaign.id)}
             onReject={() => handleReject(selectedCampaign.id)}
           />
+        )}
+
+        {/* Edit Campaign Modal */}
+        {showEditModal && selectedCampaign && (
+          <EditCampaign
+            campaign={selectedCampaign}
+            open={showEditModal}
+            onClose={() => {
+              setShowEditModal(false);
+              setSelectedCampaign(null);
+            }}
+            onSave={handleEditSave}
+          />
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && campaignToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                Confirmar Exclusão
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Tem certeza que deseja excluir esta campanha? Esta ação não pode ser desfeita.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setCampaignToDelete(null);
+                  }}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Excluir
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </>

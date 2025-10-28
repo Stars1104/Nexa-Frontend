@@ -1,16 +1,13 @@
 import { Button } from "../ui/button";
 import { CheckCircle2, Calendar, Lightbulb, Crown, AlertCircle, Loader2, Star, GraduationCap } from "lucide-react";
 import { useState, useEffect } from "react";
-import SubscriptionModal from "./SubscriptionModal";
+import { useNavigate } from "react-router-dom";
 import { paymentApi, SubscriptionStatus, SubscriptionPlan } from "../../api/payment";
 import { useToast } from "../../hooks/use-toast";
 import { dispatchPremiumStatusUpdate } from "../../utils/browserUtils";
 import { useAppSelector} from "../../store/hooks";
 import { apiClient } from "../../services/apiClient";
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
-
-const stripePromise = loadStripe('pk_test_51S0Wz1PRcUVFvPMgtByCDcKqzOeGnRicbmd0SckOIFtegvqkyKlAkTVpiCMSOqzWDbmS2NtadwFF9dTxQxDZbJpo00aJN8YBC8'); // your public key
+ 
 
 const benefits = [
     "Aplicações ilimitadas em campanhas",
@@ -23,6 +20,7 @@ const benefits = [
 
 export default function Subscription() {
     const { toast } = useToast();
+    const navigate = useNavigate();
     const { user } = useAppSelector((state) => state.auth);
     const { profile } = useAppSelector((state) => state.user);
     const userData = profile||user;
@@ -423,18 +421,18 @@ export default function Subscription() {
                                     </div>
 
                                     {/* Subscribe Button */}
-                                    <div className="flex justify-center">
-                                        <Button
-                                            onClick={() => setOpen(true)}
-                                            className="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-8 py-3 text-lg w-full sm:w-auto"
-                                            disabled={subscriptionStatus?.is_premium_active || paymentProcessing}
-                                        >
-                                            {subscriptionStatus?.is_premium_active 
-                                                ? 'Assinatura Ativa' 
-                                                : `Assinar ${selectedPlan.name || 'Plano'} por R$ ${typeof selectedPlan.price === 'number' ? selectedPlan.price.toFixed(2).replace('.', ',') : '0,00'}`
-                                            }
-                                        </Button>
-                                    </div>
+                <div className="flex justify-center">
+                    <Button
+                        onClick={() => navigate(`/creator/purchase-subscription?planId=${selectedPlan.id}`)}
+                        className="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-8 py-3 text-lg w-full sm:w-auto"
+                        disabled={subscriptionStatus?.is_premium_active}
+                    >
+                        {subscriptionStatus?.is_premium_active 
+                            ? 'Assinatura Ativa' 
+                            : `Assinar ${selectedPlan.name || 'Plano'}`
+                        }
+                    </Button>
+                </div>
                                 </div>
                             )}
 
@@ -473,33 +471,7 @@ export default function Subscription() {
                     )}
                 </div>
             </div>
-        <Elements stripe={stripePromise}>
-            <SubscriptionModal 
-              open={open} 
-              selectedPlan={selectedPlan}
-              onOpenChange={(newOpen) => {
-                setOpen(newOpen);
-                if (!newOpen) {
-                  setPaymentProcessing(false);
-                }
-              }}
-              onSuccess={() => {
-                // Refresh subscription status after successful payment
-                setPaymentProcessing(true);
-                loadSubscriptionStatus().finally(() => {
-                  setPaymentProcessing(false);
-                });
-                
-                // Dispatch event to notify other components about premium status update
-                dispatchPremiumStatusUpdate();
-                
-                                toast({
-                    title: "Sucesso!",
-                    description: "Sua assinatura premium foi ativada com sucesso!",
-                });
-              }}
-            />
-        </Elements>
+        {/* Stripe desativado: modal removido */}
         </div>
     );
 }

@@ -4,38 +4,45 @@ import {
   FocusScope,
   hideOthers,
   useFocusGuards
-} from "./chunk-4QR2KDDI.js";
-import {
-  useId
-} from "./chunk-RLCZGPC3.js";
+} from "./chunk-GCXHSUNL.js";
 import {
   DismissableLayer,
   Portal
-} from "./chunk-CG436DOF.js";
+} from "./chunk-SMZZWHH3.js";
 import {
-  Presence,
-  composeEventHandlers,
-  createContext2,
-  createContextScope,
+  useId
+} from "./chunk-V3Y5YWK2.js";
+import "./chunk-O4TN7TGM.js";
+import {
   useControllableState
-} from "./chunk-UICRSPZI.js";
+} from "./chunk-MJQFOKPD.js";
+import {
+  Presence
+} from "./chunk-ACVC744H.js";
+import {
+  composeEventHandlers
+} from "./chunk-ZMAP7OQT.js";
+import {
+  createContext2,
+  createContextScope
+} from "./chunk-Y2GCCCMK.js";
 import {
   Primitive
-} from "./chunk-KH3PULZP.js";
+} from "./chunk-2C7GCY5X.js";
 import {
-  Slot,
+  createSlot,
   useComposedRefs
-} from "./chunk-NLUUAN34.js";
+} from "./chunk-DL3WMVFQ.js";
 import {
   require_jsx_runtime
-} from "./chunk-T6PWRRVS.js";
-import "./chunk-I2MCD6RR.js";
+} from "./chunk-X3VLT5EQ.js";
+import "./chunk-GZTOERBL.js";
 import {
   require_react
-} from "./chunk-E55NSNTN.js";
+} from "./chunk-2CLD7BNN.js";
 import {
   __toESM
-} from "./chunk-4MBMRILA.js";
+} from "./chunk-WOOG5QLI.js";
 
 // node_modules/@radix-ui/react-dialog/dist/index.mjs
 var React = __toESM(require_react(), 1);
@@ -54,10 +61,11 @@ var Dialog = (props) => {
   } = props;
   const triggerRef = React.useRef(null);
   const contentRef = React.useRef(null);
-  const [open = false, setOpen] = useControllableState({
+  const [open, setOpen] = useControllableState({
     prop: openProp,
-    defaultProp: defaultOpen,
-    onChange: onOpenChange
+    defaultProp: defaultOpen ?? false,
+    onChange: onOpenChange,
+    caller: DIALOG_NAME
   });
   return (0, import_jsx_runtime.jsx)(
     DialogProvider,
@@ -119,6 +127,7 @@ var DialogOverlay = React.forwardRef(
   }
 );
 DialogOverlay.displayName = OVERLAY_NAME;
+var Slot = createSlot("DialogOverlay.RemoveScroll");
 var DialogOverlayImpl = React.forwardRef(
   (props, forwardedRef) => {
     const { __scopeDialog, ...overlayProps } = props;

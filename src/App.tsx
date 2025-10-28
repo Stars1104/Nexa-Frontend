@@ -15,21 +15,31 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthStep from "./pages/auth/AuthStep";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import Signup from "./pages/auth/CreatorSignUp";
 import StudentVerify from "./pages/auth/StudentVerify";
+import PurchaseSubscription from "./pages/PurchaseSubscription";
 import GoogleOAuthCallback from "./components/GoogleOAuthCallback";
 import CreatorIndex from "./pages/creator/Index";
 import BrandIndex from "./pages/brand/Index";
 import AdminIndex from "./pages/admin";
 import NotificationsPage from "./pages/Notifications";
 import BankRegistrationPage from "./pages/creator/BankRegistrationPage";
+import StripeConnectPage from "./pages/creator/StripeConnectPage";
 import Guide from "./pages/Guide";
 import Documentation from "./pages/Documentation";
 import { HelmetProvider } from "react-helmet-async";
 import { useState, useEffect } from "react";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import PaymentMethods from "./pages/PaymentMethods";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+ 
 
 const queryClient = new QueryClient();
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_test_your_key_here");
+ 
 
 const App = () => {
   const [isAppReady, setIsAppReady] = useState(false);
@@ -102,7 +112,12 @@ const App = () => {
               <TooltipProvider>
                 <Sonner />
                 {/* <DebugUserState /> */}
-                <BrowserRouter>
+                <BrowserRouter
+                  future={{
+                    v7_startTransition: true,
+                    v7_relativeSplatPath: true,
+                  }}
+                >
                   {/* Session Warning Modal */}
                   <SessionWarningModal
                     isOpen={sessionTimeout.isWarningShown}
@@ -117,6 +132,7 @@ const App = () => {
                   <Route path="/auth/signup" element={<Signup />} />
                   <Route path="/signup/:role" element={<Signup />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />
                   <Route path="/student-verify" element={
                     <ProtectedRoute allowedRoles={['creator', 'student']}>
@@ -133,9 +149,26 @@ const App = () => {
                       <CreatorIndex />
                     </ProtectedRoute>
                   } />
+                   <Route path="/creator/purchase-subscription" element={
+                     <ProtectedRoute allowedRoles={['creator', 'student']}>
+                        <Elements stripe={stripePromise}>
+                          <PurchaseSubscription />
+                        </Elements>
+                      </ProtectedRoute>
+                  } />
                   <Route path="/creator/bank-registration" element={
                     <ProtectedRoute allowedRoles={['creator', 'student']}>
                       <BankRegistrationPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/creator/stripe-connect" element={
+                    <ProtectedRoute allowedRoles={['creator', 'student']}>
+                      <StripeConnectPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/creator/payment-method" element={
+                    <ProtectedRoute allowedRoles={['creator', 'student']}>
+                      <PaymentMethods />
                     </ProtectedRoute>
                   } />
                   <Route path="/brand/*" element={
@@ -153,15 +186,14 @@ const App = () => {
                     <ProtectedRoute>
                       <NotificationsPage />
                     </ProtectedRoute>
-                  } />
-                  
+                  } />             
                           {/* Guide route - accessible to everyone */}
-        <Route path="/guides" element={<Guide />} />
-         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/guides" element={<Guide />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         
-        {/* Documentation route - accessible to everyone */}
-        <Route path="/docs" element={<Documentation />} />
-        <Route path="/docs/:section" element={<Documentation />} />
+                  {/* Documentation route - accessible to everyone */}
+                <Route path="/docs" element={<Documentation />} />
+                <Route path="/docs/:section" element={<Documentation />} />
                   
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />

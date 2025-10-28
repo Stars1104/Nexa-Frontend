@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "./ui/card";
 import { Crown, Lock, ArrowRight } from "lucide-react";
-import { useAppSelector } from "../store/hooks";
+import { useAppSelector } from "../store/hooks"
 
 interface PremiumAccessGuardProps {
   children: React.ReactNode;
@@ -34,10 +34,27 @@ export default function PremiumAccessGuard({
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   
   const {
+    premiumStatus,
     hasPremium,
     loading: premiumLoading,
     refreshPremiumStatus,
   } = usePremiumContext();
+
+  // Fallback: considerar trial de estudante diretamente via endpoint de estudante
+  const [hasStudentTrial, setHasStudentTrial] = useState<boolean>(false);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiClient.get('/student/status');
+        const st = res?.data;
+        if (!cancelled) {
+          setHasStudentTrial(Boolean(st?.is_on_trial || (st?.free_trial_expires_at && new Date(st.free_trial_expires_at) > new Date())));
+        }
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     checkUserAndPremiumStatus();
@@ -91,8 +108,8 @@ export default function PremiumAccessGuard({
 
       // Check premium for creators and students
       if (userData.role === "creator" || userData.role === "student") {
-        // Premium status is now handled by the hook
-        if (!hasPremium && !premiumLoading) {
+        // Only decide after premium status is loaded to avoid false positives
+        if (premiumStatus && !hasPremium && !premiumLoading) {
           showPremiumWarning();
         }
       }
@@ -152,7 +169,8 @@ export default function PremiumAccessGuard({
     }
   };
 
-  if (loading || premiumLoading) {
+  // Consider loading while premiumStatus is not yet available to avoid flashing the guard
+  if (loading || premiumLoading || !premiumStatus) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -164,7 +182,8 @@ export default function PremiumAccessGuard({
   // For students, check if they have premium access (includes free trial)
   // For creators, check if they have premium access (premium only)
   // hasPremium from context already includes is_premium_active logic
-  const userHasPremiumAccess = hasPremium;
+  // Considera também período de teste (is_on_trial) vindo do backend
+  const userHasPremiumAccess = hasPremium || Boolean((premiumStatus as any)?.is_on_trial) || hasStudentTrial;
 
   if (!user || (user.role !== "creator" && user.role !== "student") || userHasPremiumAccess) {
     return <>{children}</>;

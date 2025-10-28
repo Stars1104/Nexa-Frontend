@@ -85,14 +85,15 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         //     rememberUpgrade: true
         // });
 
-        const socket = io(`http://localhost:3000`, {
+        const socket = io(import.meta.env.VITE_SOCKET_URL || window.location.origin, {
+            path: '/socket.io',
             transports: ['websocket', 'polling'],
             autoConnect: true,
             reconnection: true,
             reconnectionAttempts: maxReconnectAttempts,
             reconnectionDelay: 500, // Reduced from 1000ms
             reconnectionDelayMax: 3000, // Reduced from 5000ms
-            timeout: 10000, // Reduced from 20000ms
+            timeout: 20000, // Reduced from 20000ms
             forceNew: false,
             upgrade: true,
             rememberUpgrade: true
@@ -315,7 +316,6 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                         'Content-Type': 'multipart/form-data',
                     },
                 });
-                    console.log("I am in here=====>",response.data.data);
                 messageData = response.data.data;
             } else {
                 // Send text message using apiClient
@@ -327,6 +327,9 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                 messageData = response.data.data;
             }
 
+            // Mark as sent on successful API return
+            (messageData as any).sent = true;
+            (messageData as any).pending = false;
             return messageData;
         } catch (error) {
             console.error('❌ Error sending message:', error);

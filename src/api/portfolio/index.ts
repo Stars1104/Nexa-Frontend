@@ -60,7 +60,7 @@ export const getPortfolio = async (token: string): Promise<PortfolioResponse> =>
   const response = await apiClient.get('/portfolio', {
     headers: { Authorization: `Bearer ${token}` }
   });
-  
+  console.log(response.data.data)
   return response.data.data;
 };
 

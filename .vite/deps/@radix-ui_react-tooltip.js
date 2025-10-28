@@ -1,45 +1,52 @@
 "use client";
 import {
+  Root
+} from "./chunk-5ST3Y4AI.js";
+import {
   Anchor,
   Arrow,
   Content,
   Root2,
   createPopperScope
-} from "./chunk-3JCB27JG.js";
-import {
-  useId
-} from "./chunk-RLCZGPC3.js";
-import {
-  Root
-} from "./chunk-NJQYZ4KQ.js";
+} from "./chunk-S4I7ECN7.js";
 import {
   DismissableLayer,
   Portal
-} from "./chunk-CG436DOF.js";
-import "./chunk-SNH7KGQN.js";
+} from "./chunk-SMZZWHH3.js";
 import {
-  Presence,
-  composeEventHandlers,
-  createContextScope,
+  useId
+} from "./chunk-V3Y5YWK2.js";
+import "./chunk-O4TN7TGM.js";
+import "./chunk-WVBNPD3I.js";
+import {
   useControllableState
-} from "./chunk-UICRSPZI.js";
+} from "./chunk-MJQFOKPD.js";
+import {
+  Presence
+} from "./chunk-ACVC744H.js";
+import {
+  composeEventHandlers
+} from "./chunk-ZMAP7OQT.js";
+import {
+  createContextScope
+} from "./chunk-Y2GCCCMK.js";
 import {
   Primitive
-} from "./chunk-KH3PULZP.js";
+} from "./chunk-2C7GCY5X.js";
 import {
-  Slottable,
+  createSlottable,
   useComposedRefs
-} from "./chunk-NLUUAN34.js";
+} from "./chunk-DL3WMVFQ.js";
 import {
   require_jsx_runtime
-} from "./chunk-T6PWRRVS.js";
-import "./chunk-I2MCD6RR.js";
+} from "./chunk-X3VLT5EQ.js";
+import "./chunk-GZTOERBL.js";
 import {
   require_react
-} from "./chunk-E55NSNTN.js";
+} from "./chunk-2CLD7BNN.js";
 import {
   __toESM
-} from "./chunk-4MBMRILA.js";
+} from "./chunk-WOOG5QLI.js";
 
 // node_modules/@radix-ui/react-tooltip/dist/index.mjs
 var React = __toESM(require_react(), 1);
@@ -60,7 +67,7 @@ var TooltipProvider = (props) => {
     disableHoverableContent = false,
     children
   } = props;
-  const [isOpenDelayed, setIsOpenDelayed] = React.useState(true);
+  const isOpenDelayedRef = React.useRef(true);
   const isPointerInTransitRef = React.useRef(false);
   const skipDelayTimerRef = React.useRef(0);
   React.useEffect(() => {
@@ -71,16 +78,16 @@ var TooltipProvider = (props) => {
     TooltipProviderContextProvider,
     {
       scope: __scopeTooltip,
-      isOpenDelayed,
+      isOpenDelayedRef,
       delayDuration,
       onOpen: React.useCallback(() => {
         window.clearTimeout(skipDelayTimerRef.current);
-        setIsOpenDelayed(false);
+        isOpenDelayedRef.current = false;
       }, []),
       onClose: React.useCallback(() => {
         window.clearTimeout(skipDelayTimerRef.current);
         skipDelayTimerRef.current = window.setTimeout(
-          () => setIsOpenDelayed(true),
+          () => isOpenDelayedRef.current = true,
           skipDelayDuration
         );
       }, [skipDelayDuration]),
@@ -101,7 +108,7 @@ var Tooltip = (props) => {
     __scopeTooltip,
     children,
     open: openProp,
-    defaultOpen = false,
+    defaultOpen,
     onOpenChange,
     disableHoverableContent: disableHoverableContentProp,
     delayDuration: delayDurationProp
@@ -114,9 +121,9 @@ var Tooltip = (props) => {
   const disableHoverableContent = disableHoverableContentProp ?? providerContext.disableHoverableContent;
   const delayDuration = delayDurationProp ?? providerContext.delayDuration;
   const wasOpenDelayedRef = React.useRef(false);
-  const [open = false, setOpen] = useControllableState({
+  const [open, setOpen] = useControllableState({
     prop: openProp,
-    defaultProp: defaultOpen,
+    defaultProp: defaultOpen ?? false,
     onChange: (open2) => {
       if (open2) {
         providerContext.onOpen();
@@ -125,7 +132,8 @@ var Tooltip = (props) => {
         providerContext.onClose();
       }
       onOpenChange == null ? void 0 : onOpenChange(open2);
-    }
+    },
+    caller: TOOLTIP_NAME
   });
   const stateAttribute = React.useMemo(() => {
     return open ? wasOpenDelayedRef.current ? "delayed-open" : "instant-open" : "closed";
@@ -167,9 +175,9 @@ var Tooltip = (props) => {
       trigger,
       onTriggerChange: setTrigger,
       onTriggerEnter: React.useCallback(() => {
-        if (providerContext.isOpenDelayed) handleDelayedOpen();
+        if (providerContext.isOpenDelayedRef.current) handleDelayedOpen();
         else handleOpen();
-      }, [providerContext.isOpenDelayed, handleDelayedOpen, handleOpen]),
+      }, [providerContext.isOpenDelayedRef, handleDelayedOpen, handleOpen]),
       onTriggerLeave: React.useCallback(() => {
         if (disableHoverableContent) {
           handleClose();
@@ -220,6 +228,9 @@ var TooltipTrigger = React.forwardRef(
           hasPointerMoveOpenedRef.current = false;
         }),
         onPointerDown: composeEventHandlers(props.onPointerDown, () => {
+          if (context.open) {
+            context.onClose();
+          }
           isPointerDownRef.current = true;
           document.addEventListener("pointerup", handlePointerUp, { once: true });
         }),
@@ -314,6 +325,7 @@ var TooltipContentHoverable = React.forwardRef((props, forwardedRef) => {
   return (0, import_jsx_runtime.jsx)(TooltipContentImpl, { ...props, ref: composedRefs });
 });
 var [VisuallyHiddenContentContextProvider, useVisuallyHiddenContentContext] = createTooltipContext(TOOLTIP_NAME, { isInside: false });
+var Slottable = createSlottable("TooltipContent");
 var TooltipContentImpl = React.forwardRef(
   (props, forwardedRef) => {
     const {
@@ -453,10 +465,12 @@ function isPointInPolygon(point, polygon) {
   const { x, y } = point;
   let inside = false;
   for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const xi = polygon[i].x;
-    const yi = polygon[i].y;
-    const xj = polygon[j].x;
-    const yj = polygon[j].y;
+    const ii = polygon[i];
+    const jj = polygon[j];
+    const xi = ii.x;
+    const yi = ii.y;
+    const xj = jj.x;
+    const yj = jj.y;
     const intersect = yi > y !== yj > y && x < (xj - xi) * (y - yi) / (yj - yi) + xi;
     if (intersect) inside = !inside;
   }

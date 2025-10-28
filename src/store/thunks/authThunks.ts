@@ -59,13 +59,12 @@ export const signupUser = createAsyncThunk(
       };
       dispatch(signupSuccess(authData));
       return authData;
-    } catch (error: any) {
-      // Propagar erros estruturados quando disponíveis (especialmente 422)
-      const status = error?.response?.status;
-
-      // Conta removida, porém restaurável
-      if (error?.response?.data?.can_restore) {
-        const restorationData = error.response.data;
+    } catch (error: unknown) {
+      const apiError = handleApiError(error);
+      
+      // Check if this is an account restoration case
+      if (apiError.response?.data?.can_restore) {
+        const restorationData = apiError.response.data;
         dispatch(signupFailure('account_removed_restorable'));
         return rejectWithValue({
           type: 'account_removed_restorable',
@@ -75,40 +74,9 @@ export const signupUser = createAsyncThunk(
           days_since_deletion: restorationData.days_since_deletion,
         });
       }
-
-      // Validação por campo
-      if (status === 422) {
-        const data = error.response?.data;
-        const message = data?.message || 'Dados inválidos. Verifique os campos e tente novamente.';
-        dispatch(signupFailure(message));
-        return rejectWithValue({
-          type: 'validation_error',
-          status,
-          message,
-          errors: data?.errors || null,
-        });
-      }
-
-      // Rate limit com retry_after
-      if (status === 429) {
-        const data = error.response?.data;
-        const retryAfter = data?.retry_after || 60;
-        const message = error.config?.url?.includes('/register')
-          ? `Muitas tentativas de registro. Tente novamente em ${Math.ceil(retryAfter / 60)} minuto(s).`
-          : `Muitas tentativas. Tente novamente em ${Math.ceil(retryAfter / 60)} minuto(s).`;
-        dispatch(signupFailure(message));
-        return rejectWithValue({
-          type: 'rate_limited',
-          status,
-          message,
-          retry_after: retryAfter,
-        });
-      }
-
-      // Demais erros (401/403/500/etc.) com mensagem amigável
-      const apiError = handleApiError(error);
+      
       dispatch(signupFailure(apiError.message));
-      return rejectWithValue({ message: apiError.message, status: apiError.status });
+      return rejectWithValue(apiError.message);
     }
   }
 );

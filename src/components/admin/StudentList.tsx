@@ -12,7 +12,7 @@ import { Badge } from "../ui/badge";
 import { useToast } from "../../hooks/use-toast";
 import { Helmet } from "react-helmet-async";
 import { GraduationCap, Calendar, Clock, CheckCircle, XCircle, AlertCircle, Ban, Trash2, Shield } from "lucide-react";
-import { adminApi, AdminStudent } from "../../api/admin";
+import { adminApi, AdminStudent, PaginationData } from "../../api/admin";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -28,26 +28,10 @@ import {
 interface StudentsResponse {
     success: boolean;
     data: AdminStudent[];
-    pagination: {
-        current_page: number;
-        last_page: number;
-        per_page: number;
-        total: number;
-        from: number;
-        to: number;
-    };
+    pagination: PaginationData;
 }
 
-function usePagination(data: any[], initialRowsPerPage = 10) {
-    const [page, setPage] = useState(1);
-    const [rowsPerPage, setRowsPerPage] = useState(initialRowsPerPage);
-    const totalPages = Math.ceil(data.length / rowsPerPage) || 1;
-    const paginated = data.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-    const goToPage = (p: number) => setPage(Math.max(1, Math.min(totalPages, p)));
-    React.useEffect(() => { setPage(1); }, [rowsPerPage, data]);
-    
-    return { page, setPage: goToPage, rowsPerPage, setRowsPerPage, totalPages, paginated };
-}
+// Removido: paginação client-side (vamos usar server-side)
 
 export default function StudentList() {
     const [students, setStudents] = useState<AdminStudent[]>([]);
@@ -55,19 +39,24 @@ export default function StudentList() {
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
+    const [page, setPage] = useState<number>(1);
+    const [perPage, setPerPage] = useState<number>(10);
+    const [pagination, setPagination] = useState<PaginationData | null>(null);
     const [updatingStudent, setUpdatingStudent] = useState<number | null>(null);
     const [actionLoading, setActionLoading] = useState<number | null>(null);
     const { toast } = useToast();
-
-    const { page, setPage, rowsPerPage, setRowsPerPage, totalPages, paginated } = usePagination(students);
 
     // Fetch students data
     const fetchStudents = async () => {
         setLoading(true);
         setError(null);
         try {
-            const result = await adminApi.getStudents();
+            const params: any = { page, per_page: perPage };
+            if (statusFilter !== 'all') params.status = statusFilter;
+            if (searchTerm.trim()) params.search = searchTerm.trim();
+            const result = await adminApi.getStudents(params);
             setStudents(result.data);
+            setPagination(result.pagination);
         } catch (err: any) {
             console.error('Error fetching students:', err);
             setError('Failed to fetch students data');
@@ -84,21 +73,21 @@ export default function StudentList() {
     // Load data when component mounts
     useEffect(() => {
         fetchStudents();
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [page, perPage, statusFilter]);
+
+    // Buscar ao pressionar Enter no search
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setPage(1);
+            fetchStudents();
+        }, 400);
+        return () => clearTimeout(handler);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchTerm]);
 
     // Filter students based on search and status
-    const filteredStudents = students.filter(student => {
-        const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            (student.academic_email && student.academic_email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                            (student.institution && student.institution.toLowerCase().includes(searchTerm.toLowerCase()));
-        
-        const matchesStatus = statusFilter === "all" || student.status === statusFilter;
-        
-        return matchesSearch && matchesStatus;
-    });
-
-    const { page: filteredPage, setPage: setFilteredPage, rowsPerPage: filteredRowsPerPage, setRowsPerPage: setFilteredRowsPerPage, totalPages: filteredTotalPages, paginated: filteredPaginated } = usePagination(filteredStudents, rowsPerPage);
+    // Sem filtro client-side; usamos os dados paginados do backend
 
     // Update trial period
     const updateTrialPeriod = async (studentId: number, period: '1month' | '6months' | '1year') => {
@@ -240,7 +229,7 @@ export default function StudentList() {
                                 />
                             </div>
                             <div className="w-full md:w-48">
-                                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                <Select value={statusFilter} onValueChange={(v)=>{ setStatusFilter(v); setPage(1); }}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Filtrar por status" />
                                     </SelectTrigger>
@@ -303,14 +292,14 @@ export default function StudentList() {
                                                 </tr>
                                             </thead>
                                             <tbody className="bg-white dark:bg-neutral-900 divide-y divide-gray-200 dark:divide-neutral-700">
-                                                {filteredPaginated.length === 0 ? (
+                                                {students.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={6} className="px-3 py-8 text-center text-gray-400 dark:text-gray-500">
                                                             Nenhum aluno encontrado.
                                                         </td>
                                                     </tr>
                                                 ) : (
-                                                    filteredPaginated.map((student) => (
+                                                    students.map((student) => (
                                                         <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                                                             <td className="px-3 py-4 whitespace-nowrap">
                                                                 <div className="flex flex-col">
@@ -454,12 +443,12 @@ export default function StudentList() {
                             </div>
                         )}
 
-                        {/* Pagination */}
-                        {!loading && !error && (
+                        {/* Pagination (server-side) */}
+                        {!loading && !error && pagination && (
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-6">
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm text-gray-600 dark:text-gray-300">Linhas por página:</span>
-                                    <Select value={String(filteredRowsPerPage)} onValueChange={val => setFilteredRowsPerPage(Number(val))}>
+                                    <Select value={String(perPage)} onValueChange={val => { setPerPage(Number(val)); setPage(1); }}>
                                         <SelectTrigger className="w-[80px]">
                                             <SelectValue />
                                         </SelectTrigger>
@@ -473,18 +462,18 @@ export default function StudentList() {
                                 <div className="flex items-center gap-2">
                                     <button
                                         className="px-3 py-2 rounded border border-gray-300 dark:border-neutral-700 text-gray-700 dark:text-gray-200 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-neutral-800 transition"
-                                        onClick={() => setFilteredPage(filteredPage - 1)}
-                                        disabled={filteredPage === 1}
+                                        onClick={() => setPage(Math.max(1, (pagination.current_page || 1) - 1))}
+                                        disabled={pagination.current_page <= 1}
                                     >
                                         &lt;
                                     </button>
                                     <span className="text-sm text-gray-600 dark:text-gray-300 px-2">
-                                        {filteredPage} de {filteredTotalPages}
+                                        {pagination.current_page} de {pagination.last_page}
                                     </span>
                                     <button
                                         className="px-3 py-2 rounded border border-gray-300 dark:border-neutral-700 text-gray-700 dark:text-gray-200 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-neutral-800 transition"
-                                        onClick={() => setFilteredPage(filteredPage + 1)}
-                                        disabled={filteredPage === filteredTotalPages}
+                                        onClick={() => setPage(Math.min(pagination.last_page, (pagination.current_page || 1) + 1))}
+                                        disabled={pagination.current_page >= pagination.last_page}
                                     >
                                         &gt;
                                     </button>

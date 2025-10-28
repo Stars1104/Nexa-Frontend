@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '../../components/ui/alert';
@@ -9,12 +10,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
 import { toast } from 'sonner';
 import { Helmet } from 'react-helmet-async';
+import { updateUser as updateAuthUser } from '../../store/slices/authSlice';
+import { apiClient } from '../../services/apiClient';
 
 const initialState = {
-  fullName: '',
-  purchaseEmail: '',
-  cpf: '',
-  courseName: '',
+  username: '',
+  email: '',
+  cardholderName: '',
 };
 
 interface StudentVerifyProps {
@@ -31,6 +33,8 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
   const location = useLocation();
   const navigate = useNavigate();
   
+  // Stripe removido: tela não depende mais de Stripe para renderizar
+
   // Check if we're inside the Creator dashboard
   const isInsideCreatorDashboard = location.pathname === '/creator' && setComponent;
   
@@ -88,7 +92,7 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
 
     try {
       // Validate required fields
-      const requiredFields = ['fullName', 'purchaseEmail', 'cpf', 'courseName'];
+      const requiredFields = ['username', 'email'];
       const missingFields = requiredFields.filter(field => !form[field as keyof typeof form].trim());
       
       if (missingFields.length > 0) {
@@ -98,71 +102,79 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
 
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(form.purchaseEmail)) {
-        setError('Por favor, insira um e-mail de compra válido.');
+      if (!emailRegex.test(form.email)) {
+        setError('Por favor, insira um e-mail válido.');
         return;
       }
 
-      // Validate CPF format (basic validation)
-      const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{11}$/;
-      if (!cpfRegex.test(form.cpf.replace(/\D/g, ''))) {
-        setError('Por favor, insira um CPF válido.');
-        return;
-      }
-
-
-      // Prepare submission data
-      const submissionData = {
-        full_name: form.fullName,
-        purchase_email: form.purchaseEmail,
-        cpf: form.cpf.replace(/\D/g, ''), // Remove non-digits
-        course_name: form.courseName,
-      };
-
-      // Call API to submit student verification
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/api/student/verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify(submissionData),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || 'Erro ao verificar status de aluno');
-      }
-
-      if (result.success) {
-        toast.success('Verificação de aluno enviada com sucesso! Você receberá acesso gratuito por 1 mês.');
-        
-        // Update user state to reflect student verification
-        if (user) {
-          dispatch({
-            type: 'auth/updateUser',
-            payload: {
-              student_verified: true,
-              student_expires_at: result.student_expires_at,
-              free_trial_expires_at: result.free_trial_expires_at,
-            }
-          });
-        }
-
-        // Navigate to creator dashboard
-        if (isInsideCreatorDashboard) {
-          setComponent?.('Painel');
+      // Fluxo sem Stripe: registrar intenção local e checar status no backend (se disponível)
+      try {
+        // Verificação direta no backend (concede 1 ano de acesso conforme regra atual)
+        const res = await apiClient.post('/student/verify', {
+          purchase_email: form.email,
+          course_name: 'Build Creators'
+        });
+        const data = res?.data || {};
+        if (data?.success) {
+          if (data?.student_verified) {
+            // Auto-verified - update auth state immediately
+            dispatch(updateAuthUser({
+              role: 'student',
+              student_verified: true as any,
+              student_expires_at: data.student_expires_at,
+              free_trial_expires_at: data.free_trial_expires_at,
+            } as any));
+            toast.success(data?.message || 'Verificação concluída! Seu acesso de estudante foi ativado.');
+            
+            // Navegar ao dashboard
+            setTimeout(() => {
+              if (isInsideCreatorDashboard) {
+                setComponent?.('Painel');
+              } else {
+                navigateToRoleDashboard('creator');
+              }
+            }, 1500);
+          } else {
+            // Pending admin approval
+            toast.info(data?.message || 'Solicitação registrada. Aguarde a aprovação do admin.');
+            
+            // Navegar ao dashboard
+            setTimeout(() => {
+              if (isInsideCreatorDashboard) {
+                setComponent?.('Painel');
+              } else {
+                navigateToRoleDashboard('creator');
+              }
+            }, 1500);
+          }
         } else {
-          navigateToRoleDashboard('creator');
+          toast.info(data?.message || 'Solicitação registrada. Nossa equipe validará seu acesso de aluno.');
         }
-      } else {
-        throw new Error(result.message || 'Falha na verificação');
+      } catch (e) {
+        // Handle specific errors from the try block
+        const errorMessage = e?.response?.data?.message || 'Erro ao verificar. Tente novamente.';
+        
+        if (e?.response?.status === 422) {
+          setError(errorMessage);
+        } else {
+          toast.error(errorMessage);
+        }
       }
-
     } catch (err: any) {
       console.error('Student verification error:', err);
-      setError(err.message || 'Erro ao verificar status de aluno. Tente novamente.');
+      
+      // Handle axios errors
+      if (err.response) {
+        // Server responded with error status
+        const errorMessage = err.response.data?.message || err.response.data?.error || 'Erro do servidor';
+        setError(errorMessage);
+      } else if (err.request) {
+        // Request was made but no response received
+        setError('Erro de conexão. Verifique sua internet e tente novamente.');
+      } else {
+        // Something else happened
+        setError(err.message || 'Erro ao verificar status de aluno. Tente novamente.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -173,6 +185,8 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
     "@context": "https://schema.org",
     "@type": "ItemList",
   };
+
+  // Tela sempre renderiza (sem dependência de Stripe)
 
   return (
     <>
@@ -231,61 +245,34 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
 
           <form onSubmit={handleSubmit} className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${user?.student_verified ? 'opacity-50 pointer-events-none' : ''}`}>
           <div className="flex flex-col gap-1">
-            <label htmlFor="fullName" className="text-xs text-muted-foreground">Nome completo</label>
+            <label htmlFor="username" className="text-xs text-muted-foreground">Nome de usuário</label>
               <Input
-                id="fullName"
-                name="fullName"
+                id="username"
+                name="username"
                 type="text"
-                placeholder="Your name as it appears on the course"
-                value={form.fullName}
+                placeholder="Seu nome de usuário"
+                value={form.username}
                 onChange={handleChange}
                 required
-                autoComplete="name"
+                autoComplete="username"
                 disabled={isSubmitting}
               />
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="purchaseEmail" className="text-xs text-muted-foreground">E-mail de compra</label>
+            <label htmlFor="email" className="text-xs text-muted-foreground">E-mail</label>
             <Input
-              id="purchaseEmail"
-              name="purchaseEmail"
+              id="email"
+              name="email"
               type="email"
               placeholder="email@exemplo.com"
-              value={form.purchaseEmail}
+              value={form.email}
               onChange={handleChange}
               required
               autoComplete="email"
               disabled={isSubmitting}
             />
           </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="cpf" className="text-xs text-muted-foreground">CPF</label>
-            <Input
-              id="cpf"
-              name="cpf"
-              type="text"
-              placeholder="000.000.000-00"
-              value={form.cpf}
-              onChange={handleChange}
-              required
-              autoComplete="off"
-              disabled={isSubmitting}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="courseName" className="text-xs text-muted-foreground">Nome do curso</label>
-            <Input
-              id="courseName"
-              name="courseName"
-              type="text"
-              placeholder="Nome do curso que você comprou"
-              value={form.courseName}
-              onChange={handleChange}
-              required
-              autoComplete="off"
-              disabled={isSubmitting}
-            />
-          </div>
+          {/* Campos de pagamento removidos */}
           <div className="md:col-span-2 mt-4 flex flex-col sm:flex-row gap-3">
             <Button 
               type="submit" 

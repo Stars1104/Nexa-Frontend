@@ -5,7 +5,7 @@ import { useAppDispatch } from '../../store/hooks';
 import { fetchPortfolio, updatePortfolioProfile, uploadPortfolioMedia, deletePortfolioItem } from '../../store/slices/portfolioSlice';
 import { testUpload, testUpdate } from '../../api/portfolio';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '../ui/dialog';
 import { Camera, Loader2, Plus } from 'lucide-react';
 import { useToast } from '../../hooks/use-toast';
 import { getAvatarUrl } from '../../lib/utils';
@@ -56,16 +56,18 @@ export default function Portfolio() {
 
     // State for video modal
     const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+    const [newLinkUrl, setNewLinkUrl] = useState<string>('');
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
     // State for saving
     const [isSaving, setIsSaving] = useState(false);
-
+    const [token, setToken] = useState<string | null>(null)
     // Load portfolio data on component mount
     useEffect(() => {
         if (user?.id) {
             const token = localStorage.getItem('token');
             if (token) {
+                
                 dispatch(fetchPortfolio(token));
             }
         }
@@ -84,10 +86,10 @@ export default function Portfolio() {
                 const links = portfolio.project_links.map((link: any, index: number) => {
                     if (typeof link === 'string') {
                         // Legacy string format
-                        return { title: `Projeto ${index + 1}`, url: link };
+                        return { title: `Projecto ${index + 1}`, url: link };
                     } else {
                         // New object format
-                        return { title: link.title || `Projeto ${index + 1}`, url: link.url || '' };
+                        return { title: link.title || `Projecto ${index + 1}`, url: link.url || '' };
                     }
                 });
                 setProjectLinks(links);
@@ -111,9 +113,9 @@ export default function Portfolio() {
     // --- Media Upload Logic ---
     //-----this is Input change function------------
     const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
+        const files = Array.from(e.target.files || []) as File[];
         addMediaFiles(files);
-        e.preventDefault; // reset input
+        e.preventDefault(); // reset input
     };
     const addMediaFiles = (files: File[]) => {    
         let validFiles = files.filter(
@@ -155,7 +157,7 @@ export default function Portfolio() {
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         setDragActive(false);
-        const files = Array.from(e.dataTransfer.files || []);
+        const files = Array.from(e.dataTransfer.files || []) as File[];
         addMediaFiles(files);
     };
 
@@ -165,38 +167,37 @@ export default function Portfolio() {
         try {
             const token = localStorage.getItem('token');
             if (!token) throw new Error('No authentication token found');
-            
+
             const formData = new FormData();
 
             // Ensure we have valid values
             const titleToSend = profileTitle?.trim() || '';
             const bioToSend = bio?.trim() || '';
-
             formData.append('title', titleToSend);
             formData.append('bio', bioToSend);
 
             // Add project links
-            let validLinks = [];
+            let validLinks: { title: string; url: string }[] = [];
             if (projectLinks && projectLinks.length > 0) {
-                validLinks = projectLinks.filter(link =>
-                    link &&
-                    link.title &&
-                    link.url &&
-                    link.title.trim() !== '' &&
-                    link.url.trim() !== ''
-                );
+                validLinks = projectLinks
+                    .filter(link => link && typeof link.url === 'string' && link.url.trim() !== '')
+                    .map((link, idx) => ({
+                        title: (link.title && link.title.trim() !== '' ? link.title : `Projeto ${idx + 1}`),
+                        url: link.url.trim()
+                    }));
             }
-            // Always append project_links, even if empty, to allow clearing
-            formData.append('project_links', JSON.stringify(validLinks));
+            // Só envia project_links se houver itens válidos
+            if (validLinks.length > 0) {
+                formData.append('project_links', JSON.stringify(validLinks));
+            }
 
             if (profilePic && profilePic.startsWith('blob:')) {
                 const response = await fetch(profilePic);
                 const blob = await response.blob();
                 formData.append('profile_picture', blob, 'profile.jpg');
             }
-            console.log("Axios data--------->",formData);
             const result = await dispatch(updatePortfolioProfile({ token, data: formData })).unwrap();
-            
+
             // Refresh portfolio data to ensure UI is up to date
             await dispatch(fetchPortfolio(token));
 
@@ -223,7 +224,46 @@ export default function Portfolio() {
         }
     };
     const handleSavePortfolio = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) throw new Error('Token de autenticação não encontrado');
+
+            // 1) Upload de mídias (se houver)
+            const files = media.map(m => m.file);
+            if (files.length > 0) {
+                await dispatch(uploadPortfolioMedia({ token, files })).unwrap();
+                setMedia([]);
+            }
+
+            // 2) Persistir link digitado no modal (se houver)
+            const urlToSave = (newLinkUrl || '').trim();
+            if (urlToSave) {
+                const existing = (portfolio?.project_links || []) as any[];
+                const normalized: { title: string; url: string }[] = existing
+                    .map((l: any, idx: number) =>
+                        typeof l === 'string'
+                            ? { title: `Projeto ${idx + 1}`, url: l }
+                            : { title: (l?.title || `Projeto ${idx + 1}`), url: (l?.url || '') }
+                    )
+                    .filter(l => l.url && l.url.trim() !== '');
+
+                if (!normalized.find(l => l.url === urlToSave)) {
+                    normalized.push({ title: 'Link', url: urlToSave });
+                }
+
+                const fd = new FormData();
+                fd.append('project_links', JSON.stringify(normalized));
+                await dispatch(updatePortfolioProfile({ token, data: fd })).unwrap();
+                setNewLinkUrl('');
+            }
+
+            // 3) Recarrega para refletir
+            await dispatch(fetchPortfolio(token));
             setIsPortfolioEditDialogOpen(false);
+            toast({ title: 'Sucesso!', description: 'Portfólio salvo com sucesso!', duration: 3000 });
+        } catch (err) {
+            toast({ title: 'Erro', description: 'Falha ao salvar portfólio. Tente novamente.', variant: 'destructive' });
+        }
     };
 
     const handleRemovePortfolioItem = async (itemId: number) => {
@@ -261,18 +301,18 @@ export default function Portfolio() {
             formData.append('bio', bio);
 
             // Add project links
-            let validLinks = [];
+            let validLinks2: { title: string; url: string }[] = [];
             if (projectLinks && projectLinks.length > 0) {
-                validLinks = projectLinks.filter(link =>
-                    link &&
-                    link.title &&
-                    link.url &&
-                    link.title.trim() !== '' &&
-                    link.url.trim() !== ''
-                );
+                validLinks2 = projectLinks
+                    .filter(link => link && typeof link.url === 'string' && link.url.trim() !== '')
+                    .map((link, idx) => ({
+                        title: (link.title && link.title.trim() !== '' ? link.title : `Projeto ${idx + 1}`),
+                        url: link.url.trim()
+                    }));
             }
-            // Always append project_links, even if empty, to allow clearing
-            formData.append('project_links', JSON.stringify(validLinks));
+            if (validLinks2.length > 0) {
+                formData.append('project_links', JSON.stringify(validLinks2));
+            }
 
             if (profilePic && profilePic.startsWith('blob:')) {
                 const response = await fetch(profilePic);
@@ -291,6 +331,27 @@ export default function Portfolio() {
             toast({
                 title: "Erro",
                 description: "Falha ao salvar portfólio. Tente novamente.",
+                variant: "destructive",
+            });
+        } ;
+        try {
+            const files = media.map(item => item.file);
+            
+            await dispatch(uploadPortfolioMedia({ token, files })).unwrap();
+            
+            // Clear the media state after successful upload
+            setMedia([]);
+            
+            toast({
+                title: "Sucesso!",
+                description: "Mídia adicionada com sucesso!",
+                duration: 3000,
+            });
+        } catch (error) {
+            console.error('Media upload error:', error);
+            toast({
+                title: "Erro",
+                description: "Falha ao adicionar mídia. Tente novamente.",
                 variant: "destructive",
             });
         } finally {
@@ -471,6 +532,9 @@ export default function Portfolio() {
                                     <button className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-8 py-2 rounded-md text-base">Editar Perfil</button>
                                 </DialogTrigger>
                                 <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto" aria-describedby="edit-profile-description">
+                                    <DialogDescription id="edit-profile-description">
+                                        Edite as informações do seu perfil profissional
+                                    </DialogDescription>
                                 <DialogHeader>
                                     <DialogTitle>Editar Perfil</DialogTitle>
                                 </DialogHeader>
@@ -511,7 +575,7 @@ export default function Portfolio() {
                                             {projectLinks.map((link, index) => (
                                                 <div key={index} className="space-y-2 p-3 border rounded-lg bg-muted/20">
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-sm font-medium">Projeto {index + 1}</span>
+                                                        <span className="text-sm font-medium">Portfolio {index + 1}</span>
                                                         <Button
                                                             type="button"
                                                             variant="outline"
@@ -565,7 +629,7 @@ export default function Portfolio() {
                                     </Button>
                                     <Button
                                         className="bg-[#E91E63] hover:bg-pink-600 text-white"
-                                        onClick={handleSaveProfile}
+                                        onClick={() => setIsEditDialogOpen(false)}
                                         disabled={isSaving}
                                     >
                                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -590,12 +654,12 @@ export default function Portfolio() {
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto" aria-describedby="add-portfolio-description">
+                            <DialogDescription id="add-portfolio-description">
+                                Adicione novos itens ao seu portfólio profissional
+                            </DialogDescription>
                             <DialogHeader>
                                 <DialogTitle>Adicionar Trabalhos ao Portfólio</DialogTitle>
                             </DialogHeader>
-                            <div id="add-portfolio-description" className="sr-only">
-                                Adicione trabalhos ao seu portfólio fazendo upload de imagens e vídeos
-                            </div>
                             <div className="flex flex-col gap-6 py-4">
                                 <div>
                                     <h3 className="font-semibold text-base mb-4">Upload de Mídia</h3>
@@ -606,11 +670,6 @@ export default function Portfolio() {
                                         onDrop={handleDrop}
                                     >
                                         <div className="flex flex-col items-center gap-2">
-                                            <input 
-                                                        type="url"
-                                                        className="w-full rounded-md border px-3 py-2 text-sm bg-background text-foreground outline-none transition placeholder:text-muted-foreground"
-                                                        placeholder="https://meu-portfóli"
-                                                    />
                                             <Camera className="w-10 h-10 text-muted-foreground mb-2" />
                                             <div className="font-semibold text-base text-foreground">Arraste arquivos para cá</div>
                                             <div className="text-xs text-muted-foreground mb-2">Formatos aceitos: JPG, PNG, MP4, MOV, AVI, MPEG, WMV, WEBM, OGG, MKV, FLV, 3GP</div>
@@ -724,10 +783,8 @@ export default function Portfolio() {
                                 </Button>
                                 <Button
                                     className="bg-[#E91E63] hover:bg-pink-600 text-white"
-                                    onClick={handleSavePortfolio}
-                                    disabled={isSaving || media.length === 0}
+                                    onClick={(e)=>setIsPortfolioEditDialogOpen(false)}
                                 >
-                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                                     Salvar
                                 </Button>
                             </DialogFooter>
@@ -798,7 +855,6 @@ export default function Portfolio() {
                                     {item.type === 'image' ? (
                                         <img
                                             src={item.url}
-                                            key={`new-${idx}`}
                                             alt="media"
                                             className="object-cover w-full h-full rounded-md cursor-pointer"
                                             onClick={() => handleImageClick(item.url)}

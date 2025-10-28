@@ -234,23 +234,35 @@ export default function Chat() {
           file_size: data.fileData?.file_size,
           file_type: data.fileData?.file_type,
           file_url: data.fileData?.file_url,
-          is_read: isFromCurrentUser, // Mark as read if from current user
+          // Only mark as read via read-receipt events, never on echo of own message
+          is_read: false,
           created_at: data.timestamp || new Date().toISOString(),
           offer_data: data.offerData, // Map socket offerData to offer_data
         };
 
         setMessages((prev) => {
-          // Check if message already exists to prevent duplicates
-          if (prev.some(msg => msg.id === newMessage.id)) {
-            console.warn('Attempted to add duplicate socket message:', newMessage.id);
+          // If this is echo of our own message, try to replace optimistic one
+          if (isFromCurrentUser) {
+            const idx = prev.findIndex(
+              (m) => m.is_sender && m.message === newMessage.message && (m as any).pending
+            );
+            if (idx !== -1) {
+              const copy = [...prev];
+              copy[idx] = { ...newMessage, is_sender: true, sent: true } as any;
+              return copy;
+            }
+          }
+
+          // Prevent duplicates by id
+          if (prev.some((msg) => msg.id === newMessage.id)) {
             return prev;
           }
-          
-          // Check if this is a recently sent message by current user to avoid duplicates
+
+          // Also avoid adding if we just marked last sent id
           if (isFromCurrentUser && (window as any).lastSentMessageId === newMessage.id) {
             return prev;
           }
-          
+
           return [...prev, newMessage];
         });
 
@@ -698,26 +710,40 @@ export default function Chat() {
           setFilePreview(null);
         }
       } else {
+        // Optimistic UI: show a pending message bubble immediately
+        const tempId = Date.now();
+        const optimisticMessage: Message = {
+          id: tempId,
+          message: input.trim(),
+          message_type: 'text',
+          sender_id: user?.id || 0,
+          sender_name: user?.name || '',
+          sender_avatar: user?.avatar_url,
+          is_sender: true,
+          // Optimistic: show as enviada (1 check) até receber recibo de leitura
+          is_read: false,
+          sent: true,
+          pending: true,
+          created_at: new Date().toISOString(),
+        };
+
+        setMessages((prev) => [...prev, optimisticMessage]);
+
+        // Send to server
         newMessage = await sendMessage(selectedRoom.room_id, input.trim());
+
+        // Replace optimistic with real message and mark as sent
+        setMessages((prev) => prev.map(m =>
+          m.id === tempId ? { ...newMessage, is_sender: true, sent: true, pending: false } as any : m
+        ));
       }
 
       if (isMountedRef.current) {
-        // Add the message to the UI immediately for better UX
-        // The message from the API response is already complete with proper ID
-        setMessages((prev) => {
-          // Check if message already exists to prevent duplicates
-          if (prev.some(msg => msg.id === newMessage.id)) {
-            console.warn('Attempted to add duplicate sent message:', newMessage.id);
-            return prev;
-          }
-          return [...prev, newMessage];
-        });
-        
         // Mark the message as sent via socket to prevent duplicate handling
         if (newMessage.id) {
           (window as any).lastSentMessageId = newMessage.id;
         }
-      
+        
         setInput("");
 
         // Stop typing indicator immediately when message is sent
@@ -1717,7 +1743,7 @@ export default function Chat() {
     }
 
     return (
-      <p className={`text-sm ${message.is_sender ? 'text-white' : 'text-slate-700 dark:text-slate-300'}`}>
+      <p className={`text-sm ${message.is_sender ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
         {message.message}
       </p>
     );
@@ -2345,7 +2371,7 @@ export default function Chat() {
                             <span className="text-xs opacity-70">
                               {formatMessageTime(message.created_at)}
                             </span>
-                            {message.is_sender && (
+                        {message.is_sender && (
                               <div className="flex items-center gap-1">
                                 {message.is_read ? (
                                   <div className="flex items-center gap-0.5">
@@ -2353,7 +2379,7 @@ export default function Chat() {
                                     <Check className="w-3 h-3 -ml-1" />
                                   </div>
                                 ) : (
-                                  <Clock className="w-3 h-3" />
+                                  <Check className="w-3 h-3" />
                                 )}
                               </div>
                             )}
