@@ -107,46 +107,25 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
         return;
       }
 
-      // Fluxo sem Stripe: registrar intenção local e checar status no backend (se disponível)
+      // Registrar solicitação de verificação - requer aprovação admin
       try {
-        // Verificação direta no backend (concede 1 ano de acesso conforme regra atual)
         const res = await apiClient.post('/student/verify', {
           purchase_email: form.email,
           course_name: 'Build Creators'
         });
         const data = res?.data || {};
         if (data?.success) {
-          if (data?.student_verified) {
-            // Auto-verified - update auth state immediately
-            dispatch(updateAuthUser({
-              role: 'student',
-              student_verified: true as any,
-              student_expires_at: data.student_expires_at,
-              free_trial_expires_at: data.free_trial_expires_at,
-            } as any));
-            toast.success(data?.message || 'Verificação concluída! Seu acesso de estudante foi ativado.');
-            
-            // Navegar ao dashboard
-            setTimeout(() => {
-              if (isInsideCreatorDashboard) {
-                setComponent?.('Painel');
-              } else {
-                navigateToRoleDashboard('creator');
-              }
-            }, 1500);
-          } else {
-            // Pending admin approval
-            toast.info(data?.message || 'Solicitação registrada. Aguarde a aprovação do admin.');
-            
-            // Navegar ao dashboard
-            setTimeout(() => {
-              if (isInsideCreatorDashboard) {
-                setComponent?.('Painel');
-              } else {
-                navigateToRoleDashboard('creator');
-              }
-            }, 1500);
-          }
+          // Solicitação registrada - sempre aguarda aprovação admin
+          toast.success(data?.message || 'Solicitação registrada com sucesso! Aguarde a aprovação do administrador.');
+          
+          // Navegar ao dashboard
+          setTimeout(() => {
+            if (isInsideCreatorDashboard) {
+              setComponent?.('Painel');
+            } else {
+              navigateToRoleDashboard('creator');
+            }
+          }, 1500);
         } else {
           toast.info(data?.message || 'Solicitação registrada. Nossa equipe validará seu acesso de aluno.');
         }

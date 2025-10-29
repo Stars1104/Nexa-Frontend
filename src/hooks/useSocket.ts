@@ -85,20 +85,6 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         //     rememberUpgrade: true
         // });
 
-        const socket = io(import.meta.env.VITE_SOCKET_URL || window.location.origin, {
-            path: '/socket.io',
-            transports: ['websocket', 'polling'],
-            autoConnect: true,
-            reconnection: true,
-            reconnectionAttempts: maxReconnectAttempts,
-            reconnectionDelay: 500, // Reduced from 1000ms
-            reconnectionDelayMax: 3000, // Reduced from 5000ms
-            timeout: 20000, // Reduced from 20000ms
-            forceNew: false,
-            upgrade: true,
-            rememberUpgrade: true
-        });
-
         socketRef.current = socket;
 
         socket.on('connect', () => {
