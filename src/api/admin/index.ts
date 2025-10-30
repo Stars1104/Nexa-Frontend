@@ -326,4 +326,73 @@ export const adminApi = {
     });
     return response.data;
   },
+
+  /**
+   * Get student verification requests
+   */
+  getStudentVerificationRequests: async (params?: {
+    status?: 'pending' | 'approved' | 'rejected';
+    per_page?: number;
+  }): Promise<{
+    success: boolean;
+    data: {
+      data: StudentVerificationRequest[];
+      current_page: number;
+      last_page: number;
+      per_page: number;
+      total: number;
+    };
+  }> => {
+    const response = await apiClient.get('/admin/student-requests', { params });
+    return response.data;
+  },
+
+  /**
+   * Approve student verification request
+   */
+  approveStudentVerification: async (
+    requestId: number,
+    data?: {
+      duration_months?: number;
+      review_notes?: string;
+    }
+  ): Promise<{ success: boolean; message: string }> => {
+    const response = await apiClient.patch(`/admin/student-requests/${requestId}/approve`, data);
+    return response.data;
+  },
+
+  /**
+   * Reject student verification request
+   */
+  rejectStudentVerification: async (
+    requestId: number,
+    data?: {
+      review_notes?: string;
+    }
+  ): Promise<{ success: boolean; message: string }> => {
+    const response = await apiClient.patch(`/admin/student-requests/${requestId}/reject`, data);
+    return response.data;
+  },
 };
+
+export interface StudentVerificationRequest {
+  id: number;
+  user_id: number;
+  purchase_email: string;
+  course_name: string | null;
+  evidence: any;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewed_by: number | null;
+  reviewed_at: string | null;
+  review_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+    avatar_url: string | null;
+    student_verified: boolean;
+  };
+}

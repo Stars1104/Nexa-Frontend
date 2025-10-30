@@ -19,6 +19,7 @@ import UserList from "@/components/admin/UserList";
 import StudentList from "@/components/admin/StudentList";
 import BrandRankings from "@/components/admin/BrandRankings";
 import WithdrawalVerification from "@/components/admin/WithdrawalVerification";
+import StudentVerificationRequests from "@/components/admin/StudentVerificationRequests";
 import Notification from "@/components/Notification";
 import NexaGuide from "@/components/admin/Guidelist";
 
@@ -64,6 +65,8 @@ const AdminIndex = () => {
                 return <UserList />;
             case "alunos":
                 return <StudentList />;
+            case "Verificação de Alunos":
+                return <StudentVerificationRequests />;
             case "Rankings das Marcas":
                 return <BrandRankings />;
             case "Verificação de Saques":
