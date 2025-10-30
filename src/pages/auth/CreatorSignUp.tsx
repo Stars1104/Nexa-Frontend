@@ -353,6 +353,7 @@ const CreatorSignUp = () => {
       
       if (response.user !== null) {
         toast.success("Conta criada com sucesso! Você foi automaticamente logado.");
+        toast.message("Verify Email");
         setIsNewRegistration(true); // Set flag for new registration
         
         // For new users, automatically log them in after successful registration

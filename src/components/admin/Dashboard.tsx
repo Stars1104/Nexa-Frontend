@@ -11,12 +11,13 @@ export default function Dashboard() {
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
     const [pendingCampaigns, setPendingCampaigns] = useState<PendingCampaign[]>([]);
     const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [loadingCampaigns, setLoadingCampaigns] = useState<number[]>([]);
     const { toast } = useToast();
 
     // Fetch dashboard data on component mount
     useEffect(() => {
+        console.log("I am in loading")
         fetchDashboardData();
     }, []);
 
