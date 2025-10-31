@@ -66,10 +66,8 @@ export default function PurchaseSubscription() {
     try {
       setLoadingPlan(true);
       const plans = await apiClient.get('/subscription/plans');
-      
       if (plans.data?.data && Array.isArray(plans.data.data)) {
         const selected = plans.data.data.find((p: any) => p.id.toString() === planId);
-        
         if (selected) {
           setPlan(selected);
         } else {
@@ -132,7 +130,6 @@ export default function PurchaseSubscription() {
         type: "card",
         card: cardElement,
       });
-
       if (pmError) {
         setCardError(pmError.message || "Erro ao processar cartão");
         setIsLoading(false);
@@ -167,9 +164,21 @@ export default function PurchaseSubscription() {
           setIsLoading(false);
           return;
         }
+        
+        // After 3DS confirmation, poll for activation
+        await pollSubscriptionStatus(response.subscription_id);
+        return;
       }
 
-      // await handleSuccess();
+      // Check if subscription was activated immediately
+      if (response.activated && response.subscription_status === 'active') {
+        await handleSuccess();
+        return;
+      }
+
+      // Subscription is pending, poll for activation status
+      await pollSubscriptionStatus(response.subscription_id);
+
 
     } catch (err: any) {
       console.error("Erro no pagamento:", err);
@@ -198,11 +207,53 @@ export default function PurchaseSubscription() {
     }
   };
 
-  const handleSuccess = async () => {
-    dispatchPremiumStatusUpdate();
-    dispatch(updateUser({ has_premium: true }));
+  const pollSubscriptionStatus = async (subscriptionId: number, attempts = 0): Promise<void> => {
+    const maxAttempts = 20; // Poll for up to 20 seconds (20 attempts * 1 second)
+    
+    // Show loading message on first attempt
+    if (attempts === 0) {
+      toast({
+        title: "Processando pagamento",
+        description: "Aguardando confirmação do pagamento...",
+      });
+    }
+    
+    if (attempts >= maxAttempts) {
+      toast({
+        title: "Processando pagamento",
+        description: "O pagamento está sendo processado. Você receberá uma confirmação em breve.",
+      });
+      navigate('/creator/subscription');
+      return;
+    }
 
     try {
+      const statusResponse = await apiClient.get('/payment/subscription-status');
+      const status = statusResponse.data;
+      console.log('Status:', status);
+
+      if (status.is_premium_active || status.subscription?.status === 'active') {
+        await handleSuccess();
+        console.log('Successfully activated subscription');
+        return;
+      }
+
+      // If still pending, wait and poll again
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await pollSubscriptionStatus(subscriptionId, attempts + 1);
+      console.log('Polling again...');
+    } catch (err) {
+      console.error("Erro ao verificar status da assinatura:", err);
+      // Continue polling despite errors
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await pollSubscriptionStatus(subscriptionId, attempts + 1);
+      console.log('Error polling subscription status:', err);
+    }
+  };
+
+  const handleSuccess = async () => {
+    try {
+      // Fetch latest user data from backend
       const userResponse = await apiClient.get("/user");
       dispatch(updateUser({ ...userResponse.data }));
       await dispatch(checkAuthStatus());
@@ -222,6 +273,8 @@ export default function PurchaseSubscription() {
         description: "Assinatura processada, mas houve problema ao atualizar dados.",
         variant: "destructive"
       });
+      // Still navigate even if update fails
+      navigate('/creator/subscription');
     }
   };
 

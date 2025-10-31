@@ -31,6 +31,7 @@ export default function BrandPaymentMethods() {
     try {
       setLoading(true);
       const response = await brandPaymentApi.getPaymentMethods();
+      console.log('Payment methods response:', response);
       if (response.success && response.data) {
         setPaymentMethods(response.data);
       } else {
