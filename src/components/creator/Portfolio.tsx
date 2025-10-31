@@ -3,14 +3,13 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { useAppDispatch } from '../../store/hooks';
 import { fetchPortfolio, updatePortfolioProfile, uploadPortfolioMedia, deletePortfolioItem } from '../../store/slices/portfolioSlice';
-import { testUpload, testUpdate } from '../../api/portfolio';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '../ui/dialog';
 import { Camera, Loader2, Plus } from 'lucide-react';
 import { useToast } from '../../hooks/use-toast';
 import { getAvatarUrl } from '../../lib/utils';
 
-const MAX_BIO_LENGTH = 500;
+const MAX_BIO_LENGTH = 100;
 const MAX_FILES_PER_UPLOAD = 5;
 const MAX_TOTAL_FILES = 12;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/jpg", "video/mp4", "video/quicktime", "video/mov", "video/avi", "video/mpeg", "video/x-msvideo", "video/webm", "video/ogg", "video/x-matroska", "video/x-flv", "video/3gpp", "video/x-ms-wmv", "application/octet-stream"];
@@ -42,7 +41,6 @@ export default function Portfolio() {
     const [bio, setBio] = useState('');
     const [profilePic, setProfilePic] = useState<string | null>(null);
     const [projectLinks, setProjectLinks] = useState<{title: string; url: string}[]>([]);
-    const profilePicInputRef = useRef<HTMLInputElement>(null);
 
     // State for portfolio editing
     const [isPortfolioEditDialogOpen, setIsPortfolioEditDialogOpen] = useState(false);
@@ -56,7 +54,6 @@ export default function Portfolio() {
 
     // State for video modal
     const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
-    const [newLinkUrl, setNewLinkUrl] = useState<string>('');
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
     // State for saving
@@ -161,110 +158,6 @@ export default function Portfolio() {
         addMediaFiles(files);
     };
 
-    const handleSaveProfile = async () => {
-        if (!user?.id) return;
-        setIsSaving(true);
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) throw new Error('No authentication token found');
-
-            const formData = new FormData();
-
-            // Ensure we have valid values
-            const titleToSend = profileTitle?.trim() || '';
-            const bioToSend = bio?.trim() || '';
-            formData.append('title', titleToSend);
-            formData.append('bio', bioToSend);
-
-            // Add project links
-            let validLinks: { title: string; url: string }[] = [];
-            if (projectLinks && projectLinks.length > 0) {
-                validLinks = projectLinks
-                    .filter(link => link && typeof link.url === 'string' && link.url.trim() !== '')
-                    .map((link, idx) => ({
-                        title: (link.title && link.title.trim() !== '' ? link.title : `Projeto ${idx + 1}`),
-                        url: link.url.trim()
-                    }));
-            }
-            // Só envia project_links se houver itens válidos
-            if (validLinks.length > 0) {
-                formData.append('project_links', JSON.stringify(validLinks));
-            }
-
-            if (profilePic && profilePic.startsWith('blob:')) {
-                const response = await fetch(profilePic);
-                const blob = await response.blob();
-                formData.append('profile_picture', blob, 'profile.jpg');
-            }
-            const result = await dispatch(updatePortfolioProfile({ token, data: formData })).unwrap();
-
-            // Refresh portfolio data to ensure UI is up to date
-            await dispatch(fetchPortfolio(token));
-
-            setIsEditDialogOpen(false);
-            toast({
-                title: "Sucesso!",
-                description: "Perfil atualizado com sucesso!",
-                duration: 3000,
-            });
-        } catch (error) {
-            console.error('Profile update error:', error);
-            console.error('Error details:', {
-                message: error.message,
-                response: error.response,
-                status: error.status
-            });
-            toast({
-                title: "Erro",
-                description: "Falha ao atualizar perfil. Tente novamente.",
-                duration: 3000,
-            });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-    const handleSavePortfolio = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) throw new Error('Token de autenticação não encontrado');
-
-            // 1) Upload de mídias (se houver)
-            const files = media.map(m => m.file);
-            if (files.length > 0) {
-                await dispatch(uploadPortfolioMedia({ token, files })).unwrap();
-                setMedia([]);
-            }
-
-            // 2) Persistir link digitado no modal (se houver)
-            const urlToSave = (newLinkUrl || '').trim();
-            if (urlToSave) {
-                const existing = (portfolio?.project_links || []) as any[];
-                const normalized: { title: string; url: string }[] = existing
-                    .map((l: any, idx: number) =>
-                        typeof l === 'string'
-                            ? { title: `Projeto ${idx + 1}`, url: l }
-                            : { title: (l?.title || `Projeto ${idx + 1}`), url: (l?.url || '') }
-                    )
-                    .filter(l => l.url && l.url.trim() !== '');
-
-                if (!normalized.find(l => l.url === urlToSave)) {
-                    normalized.push({ title: 'Link', url: urlToSave });
-                }
-
-                const fd = new FormData();
-                fd.append('project_links', JSON.stringify(normalized));
-                await dispatch(updatePortfolioProfile({ token, data: fd })).unwrap();
-                setNewLinkUrl('');
-            }
-
-            // 3) Recarrega para refletir
-            await dispatch(fetchPortfolio(token));
-            setIsPortfolioEditDialogOpen(false);
-            toast({ title: 'Sucesso!', description: 'Portfólio salvo com sucesso!', duration: 3000 });
-        } catch (err) {
-            toast({ title: 'Erro', description: 'Falha ao salvar portfólio. Tente novamente.', variant: 'destructive' });
-        }
-    };
 
     const handleRemovePortfolioItem = async (itemId: number) => {
         if (!portfolio) return;

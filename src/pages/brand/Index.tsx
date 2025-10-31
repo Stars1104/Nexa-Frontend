@@ -59,8 +59,6 @@ function Index() {
                     return <CreatorProfile setComponent={setComponent} />;
                 case "Guia da Plataforma":
                     return <GuideEmbedded audience="Brand" />;
-                case "Método de pagamento":
-                    return <PaymentMethods/>;
                 default:
                     return <NotFound />;
             }

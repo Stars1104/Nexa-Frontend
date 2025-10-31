@@ -109,6 +109,7 @@ export default function WithdrawalVerification() {
       if (filters.withdrawal_method && filters.withdrawal_method !== 'all') params.append('withdrawal_method', filters.withdrawal_method);
 
       const response = await apiClient.get(`/admin/payouts/verification-report?${params}`);
+      console.log('Verification report response:', response);
       setReport(response.data.data);
     } catch (error) {
       toast({
