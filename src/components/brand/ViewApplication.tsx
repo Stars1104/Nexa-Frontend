@@ -8,6 +8,35 @@ const labelClass =
   "text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1";
 const valueClass = "text-base font-semibold text-gray-800 dark:text-gray-100";
 
+// Component for image attachment preview with aspect ratio preservation
+const ImageAttachmentPreview: React.FC<{ src: string; alt: string; fileName: string }> = ({ src, alt, fileName }) => {
+  const [imageError, setImageError] = useState(false);
+  
+  return (
+    <div className="w-8 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center overflow-hidden">
+      {!imageError ? (
+        <img
+          src={src}
+          alt={alt}
+          className="w-8 h-8 object-cover"
+          style={{
+            minWidth: 0,
+            minHeight: 0,
+            objectFit: 'cover',
+            maxWidth: '80%',
+            maxHeight: '100%'
+          }}
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+        </svg>
+      )}
+    </div>
+  );
+};
+
 interface ViewApplicationProps {
   setComponent?: (component: string) => void;
   campaign?: Campaign | {
@@ -232,6 +261,13 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
                   src={`${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${campaign.logo}`}
                   alt="Campaign Logo" 
                   className="w-full h-full object-cover"
+                  style={{ 
+                    minWidth: 0, 
+                    minHeight: 0,
+                    objectFit: 'cover',
+                    maxWidth: '100%',
+                    maxHeight: '100%'
+                  }}
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                     e.currentTarget.nextElementSibling?.classList.remove('hidden');
@@ -329,12 +365,13 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
                       </div>
                     );
                   } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension || '')) {
+                    const imageUrl = `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${attachment}`;
                     return (
-                      <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                        </svg>
-                      </div>
+                      <ImageAttachmentPreview 
+                        src={imageUrl}
+                        alt={fileName}
+                        fileName={fileName}
+                      />
                     );
                   } else if (['mp4', 'avi', 'mov', 'wmv', 'flv'].includes(fileExtension || '')) {
                     return (

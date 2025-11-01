@@ -27,7 +27,7 @@ const NexaGuide: React.FC = () => {
     try {
       setLoading(true);
       const data = await GetAdminGuides();
-      setGuides(data.data || data); // Handle both paginated and non-paginated responses
+      setGuides(data?.data || data); // Handle both paginated and non-paginated responses
       setError(null);
     } catch (err: any) {
       setError(err.message || "Failed to fetch guides");
@@ -111,18 +111,18 @@ const NexaGuide: React.FC = () => {
     );
   }
 
-  if (error) {
-    return (
-      <main className="w-full p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <p className="text-red-500 mb-4">{error}</p>
-            <Button onClick={fetchGuides} variant="outline">Retry</Button>
-          </div>
-        </div>
-      </main>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <main className="w-full p-6">
+  //       <div className="flex items-center justify-center h-64">
+  //         <div className="text-center">
+  //           <p className="text-red-500 mb-4">{error}</p>
+  //           <Button onClick={fetchGuides} variant="outline">Retry</Button>
+  //         </div>
+  //       </div>
+  //     </main>
+  //   );
+  // }
 
   return (
     <main className="w-full p-6">
