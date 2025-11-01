@@ -169,6 +169,13 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                       }${project.logo}`}
                     alt={`${project.title} logo`}
                     className="w-16 h-16 rounded-xl object-cover border border-border"
+                    style={{
+                      minWidth: 0,
+                      minHeight: 0,
+                      objectFit: 'cover',
+                      maxWidth: '100%',
+                      maxHeight: '100%'
+                    }}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = "none";
@@ -273,7 +280,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                   </span>
                 )}
               </div>
-              <div className="rounded-xl w-full h-52 border border-border flex items-center justify-center bg-background overflow-auto">
+              <div className="rounded-xl  flex items-center justify-center bg-background overflow-auto">
                 {project.attach_file ? (
                   (() => {
                     const file = project.attach_file;
@@ -288,7 +295,14 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                           "http://localhost:8000"
                         }${file}`}
                         alt="Anexo visual"
-                        className="rounded-xl w-full h-full border border-border"
+                        className="rounded-xl w-full h-full object-contain border border-border"
+                        style={{
+                          minWidth: 0,
+                          minHeight: 0,
+                          objectFit: 'contain',
+                          maxWidth: '80%',
+                          maxHeight: '80%'
+                        }}
                       />
                     ) : (
                       <a
