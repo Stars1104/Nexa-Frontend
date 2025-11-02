@@ -90,6 +90,17 @@ export const paymentClient = axios.create({
     }
 });
 
+// Create a separate client for file uploads with extended timeout
+// Large files (200MB+) can take several minutes to upload
+export const uploadClient = axios.create({
+    baseURL: `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/api`,
+    timeout: 300000, // 5 minutes (300 seconds) for large file uploads
+    headers: {
+        'Accept': 'application/json',
+        // Don't set Content-Type - let browser set it with boundary for FormData
+    },
+});
+
 // Function to create an authenticated API client instance
 export const createAuthenticatedClient = (token: string) => {
     
@@ -212,6 +223,19 @@ paymentClient.interceptors.request.use(addAuthToken, (error) => {
     return Promise.reject(error);
 });
 
+uploadClient.interceptors.request.use((config) => {
+    // Add auth token for uploads
+    addAuthToken(config);
+    
+    // Don't set Content-Type for FormData requests - let the browser set it with boundary
+    if (config.data instanceof FormData) {
+        delete config.headers['Content-Type'];
+    }
+    return config;
+}, (error) => {
+    return Promise.reject(error);
+});
+
 // Response interceptor to handle errors
 const handleResponse = (response: any) => {
     // Extend session on successful API calls
@@ -269,6 +293,7 @@ const handleError = async (error: any) => {
 
 apiClient.interceptors.response.use(handleResponse, handleError);
 paymentClient.interceptors.response.use(handleResponse, handleError);
+uploadClient.interceptors.response.use(handleResponse, handleError);
 
 // Export utility functions for use in components
 export { isNetworkError, getErrorMessage }; 

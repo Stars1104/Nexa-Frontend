@@ -623,7 +623,7 @@ export default function Portfolio() {
                                         {/* New media items */}
                                         {media?.map((item, idx) => (
                                             <div key={`new-${idx}`} className="rounded-lg bg-background flex flex-col items-start justify-between aspect-[4/3] p-2 relative overflow-hidden group">
-                                                <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${item.type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.type === 'image' ? 'Foto' : 'Vídeo'}</span>
+                                                <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full z-10 ${item.type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.type === 'image' ? 'Foto' : 'Vídeo'}</span>
                                                 {item.type === 'image' ? (
                                                     <img
                                                         src={item.url}
@@ -636,10 +636,14 @@ export default function Portfolio() {
                                                         <VideoIcon />
                                                     </div>
                                                 )}
-                                                <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                                                <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 hover:opacity-100 transition z-20">
                                                     <button
-                                                        className="bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow transition"
-                                                        onClick={() => handleRemoveMedia(idx)}
+                                                        type="button"
+                                                        className="bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow transition cursor-pointer"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleRemoveMedia(idx);
+                                                        }}
                                                         aria-label="Remover mídia"
                                                     >
                                                         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12" /></svg>
@@ -744,7 +748,7 @@ export default function Portfolio() {
                             {/* New media items */}
                             {media.map((item, idx) => (
                                 <div key={`new-${idx}`} className="rounded-lg bg-background flex flex-col items-start justify-between aspect-[4/3] p-2 relative overflow-hidden group">
-                                    <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${item.type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.type === 'image' ? 'Foto' : 'Vídeo'}</span>
+                                    <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full z-10 ${item.type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.type === 'image' ? 'Foto' : 'Vídeo'}</span>
                                     {item.type === 'image' ? (
                                         <img
                                             src={item.url}
@@ -771,10 +775,14 @@ export default function Portfolio() {
                                             }}
                                         />
                                     )}
-                                    <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                                    <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 hover:opacity-100 transition z-20">
                                         <button
-                                            className="bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow transition"
-                                            onClick={() => handleRemoveMedia(idx)}
+                                            type="button"
+                                            className="bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow transition cursor-pointer"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRemoveMedia(idx);
+                                            }}
                                             aria-label="Remover mídia"
                                         >
                                             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12" /></svg>

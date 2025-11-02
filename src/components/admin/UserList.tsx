@@ -6,7 +6,7 @@ import {
     SelectContent,
     SelectItem,
 } from "../ui/select";
-import { adminApi, AdminUser, AdminBrand, UsersResponse } from "../../api/admin";
+import { adminApi, AdminUser, AdminBrand, UsersResponse, StudentsResponse, PaginationData } from "../../api/admin";
 import { useToast } from "../../hooks/use-toast";
 import { Helmet } from "react-helmet-async";
 
@@ -23,25 +23,24 @@ const tabs = [
     { label: "alunos", key: "students" },
 ];
 
-
-
-function usePagination(data: any[], initialRowsPerPage = 5) {
-    const [page, setPage] = useState(1);
-    const [rowsPerPage, setRowsPerPage] = useState(initialRowsPerPage);
-    const totalPages = Math.ceil(data.length / rowsPerPage) || 1;
-    const paginated = data.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-    const goToPage = (p: number) => setPage(Math.max(1, Math.min(totalPages, p)));
-    React.useEffect(() => { setPage(1); }, [rowsPerPage, data]);
-    
-    return { page, setPage: goToPage, rowsPerPage, setRowsPerPage, totalPages, paginated };
-
-}
-
 export default function UserList() {
     // State for API data
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [brands, setBrands] = useState<AdminBrand[]>([]);
     const [students, setStudents] = useState<any[]>([]);
+    
+    // Pagination state - using backend metadata
+    const [page, setPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [pagination, setPagination] = useState<PaginationData>({
+        current_page: 1,
+        last_page: 1,
+        per_page: 10,
+        total: 0,
+        from: 0,
+        to: 0,
+    });
+    
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
@@ -50,9 +49,9 @@ export default function UserList() {
     const isCreators = activeTab === "creators";
     const isBrands = activeTab === "brands";
     const isStudents = activeTab === "students";
+    
+    // Get current data based on active tab (already paginated from backend)
     const data = isCreators ? users : isBrands ? brands : students;
-    const { page, setPage, rowsPerPage, setRowsPerPage, totalPages, paginated } = usePagination(data);
-
 
     // Fetch data from API
     const fetchData = async () => {
@@ -65,18 +64,27 @@ export default function UserList() {
                     page: page
                 });
                 setUsers(response.data as AdminUser[]);
+                if (response.pagination) {
+                    setPagination(response.pagination);
+                }
             } else if (isBrands) {
                 const response = await adminApi.getBrands({
                     per_page: rowsPerPage,
                     page: page
                 });
                 setBrands(response.data as AdminBrand[]);
+                if (response.pagination) {
+                    setPagination(response.pagination);
+                }
             } else if (isStudents) {
                 const response = await adminApi.getStudents({
                     per_page: rowsPerPage,
                     page: page
                 });
                 setStudents(response.data as any[]);
+                if (response.pagination) {
+                    setPagination(response.pagination);
+                }
             }
         } catch (err) {
             setError('Failed to fetch data');
@@ -90,9 +98,15 @@ export default function UserList() {
         }
     };
 
-    // Load data when component mounts or tab changes
+    // Reset to page 1 when tab or rowsPerPage changes
+    useEffect(() => {
+        setPage(1);
+    }, [activeTab, rowsPerPage]);
+
+    // Load data when component mounts, tab changes, page changes, or rowsPerPage changes
     useEffect(() => {
         fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab, page, rowsPerPage]);
 
     const canonical = typeof window !== "undefined" ? window.location.href : "";
@@ -185,14 +199,14 @@ export default function UserList() {
                                                 </tr>
                                             </thead>
                                             <tbody className="bg-white dark:bg-neutral-900 divide-y divide-gray-200 dark:divide-neutral-700">
-                                                {paginated.length === 0 ? (
+                                                {data.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={6} className="px-3 py-8 text-center text-gray-400 dark:text-gray-500">
                                                             Nenhum registro encontrado.
                                                         </td>
                                                     </tr>
                                                 ) : (
-                                                    paginated.map((user) => (
+                                                    data.map((user) => (
                                                         <tr key={user.email} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                                                             <td className="px-3 py-4 whitespace-nowrap">
                                                                 <div className="flex flex-col">
@@ -253,14 +267,14 @@ export default function UserList() {
                                                 </tr>
                                             </thead>
                                             <tbody className="bg-white dark:bg-neutral-900 divide-y divide-gray-200 dark:divide-neutral-700">
-                                                {paginated.length === 0 ? (
+                                                {data.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={6} className="px-3 py-8 text-center text-gray-400 dark:text-gray-500">
                                                             Nenhum registro encontrado.
                                                         </td>
                                                     </tr>
                                                 ) : (
-                                                    paginated.map((brand) => (
+                                                    data.map((brand) => (
                                                         <tr key={brand.email} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                                                             <td className="px-3 py-4 whitespace-nowrap">
                                                                 <div className="flex flex-col">
@@ -324,14 +338,14 @@ export default function UserList() {
                                                 </tr>
                                             </thead>
                                             <tbody className="bg-white dark:bg-neutral-900 divide-y divide-gray-200 dark:divide-neutral-700">
-                                                {paginated.length === 0 ? (
+                                                {data.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={6} className="px-3 py-8 text-center text-gray-400 dark:text-gray-500">
                                                             Nenhum aluno encontrado.
                                                         </td>
                                                     </tr>
                                                 ) : (
-                                                    paginated.map((student) => (
+                                                    data.map((student) => (
                                                         <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                                                             <td className="px-3 py-4 whitespace-nowrap">
                                                                 <div className="flex flex-col">
@@ -411,12 +425,12 @@ export default function UserList() {
                                         &lt;
                                     </button>
                                     <span className="text-sm text-gray-600 dark:text-gray-300 px-2">
-                                        {page} de {totalPages}
+                                        {pagination.current_page} de {pagination.last_page}
                                     </span>
                                     <button
                                         className="px-3 py-2 rounded border border-gray-300 dark:border-neutral-700 text-gray-700 dark:text-gray-200 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-neutral-800 transition"
                                         onClick={() => setPage(page + 1)}
-                                        disabled={page === totalPages}
+                                        disabled={page >= pagination.last_page}
                                     >
                                         &gt;
                                     </button>
