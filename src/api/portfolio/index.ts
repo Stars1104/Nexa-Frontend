@@ -1,4 +1,4 @@
-import { apiClient } from '../../services/apiClient';
+import { apiClient, uploadClient } from '../../services/apiClient';
 
 export interface Portfolio {
   id: number;
@@ -71,7 +71,7 @@ export const updatePortfolioProfile = async (
 ): Promise<Portfolio> => {
   
   
-  const response = await apiClient.post('/portfolio/profile', data, {
+  const response = await uploadClient.post('/portfolio/profile', data, {
     headers: {
       Authorization: `Bearer ${token}`,
       // Don't set Content-Type for FormData - let the browser set it with boundary
@@ -113,7 +113,7 @@ export const testUpload = async (
   for (let [key, value] of formData.entries()) {
   }
 
-  const response = await apiClient.post('/portfolio/test-upload', formData, {
+  const response = await uploadClient.post('/portfolio/test-upload', formData, {
     headers: { 
       Authorization: `Bearer ${token}`,
       // Don't set Content-Type for FormData - let the browser set it with boundary
@@ -140,7 +140,8 @@ export const uploadPortfolioMedia = async (
   for (let [key, value] of formData.entries()) {
   }
 
-  const response = await apiClient.post('/portfolio/media', formData, {
+  // Use uploadClient which has extended timeout (5 minutes) for large file uploads
+  const response = await uploadClient.post('/portfolio/media', formData, {
     headers: { 
       Authorization: `Bearer ${token}`,
       // Don't set Content-Type for FormData - let the browser set it with boundary
