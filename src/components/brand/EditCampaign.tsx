@@ -20,6 +20,9 @@ interface EditCampaignProps {
     min_age?: number;
     max_age?: number;
     requirements?: string;
+    briefing?: string;
+    type?: string;
+    category?: string;
   };
   onClose: () => void;
   onSave: () => void;
@@ -76,20 +79,28 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
     if (!validateForm()) {
       return;
     }
-
     setIsUpdating(true);
     try {
+      // Map form data to CampaignFormData interface
+      const campaignData = {
+        title: formData.title,
+        description: formData.description,
+        briefing: formData.requirements || campaign.briefing || '',
+        budget: formData.budget.toString(),
+        remunerationType: formData.remuneration_type as 'paga' | 'permuta',
+        deadline: new Date(formData.deadline),
+        target_states: campaign.target_states || [],
+        creatorRequirements: formData.requirements || campaign.briefing || '',
+        type: campaign.type || campaign.category || '',
+        targetGenders: campaign.target_genders || [],
+        targetCreatorTypes: campaign.target_creator_types || [],
+        minAge: campaign.min_age,
+        maxAge: campaign.max_age,
+      };
+      console.log(campaignData);
       await dispatch(updateCampaign({
         campaignId: campaign.id,
-        data: {
-          ...formData,
-          deadline: new Date(formData.deadline),
-          target_states: campaign.target_states,
-          target_genders: campaign.target_genders,
-          target_creator_types: campaign.target_creator_types,
-          min_age: campaign.min_age,
-          max_age: campaign.max_age,
-        }
+        data: campaignData
       })).unwrap();
       
       toast.success("Campanha atualizada com sucesso!");

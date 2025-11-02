@@ -167,9 +167,11 @@ export const createCampaign = createAsyncThunk<
       formData.append('logo', campaignData.logo);
     }
     
+    // Handle multiple attachments - send all of them
     if (campaignData.attachments && campaignData.attachments.length > 0) {
-      // Use the first attachment as attach_file
-      formData.append('attach_file', campaignData.attachments[0]);
+      campaignData.attachments.forEach((attachment) => {
+        formData.append('attach_file[]', attachment);
+      });
     }
     
     const response = await CreateNewCampaign(formData, token);
@@ -317,7 +319,9 @@ export const fetchCampaignById = createAsyncThunk<
     }
     
     const response = await GetCampaignById(campaignId, token);
-    return response;
+    // Handle API response structure - extract data if wrapped
+    const campaignData = (response as any).data || response;
+    return campaignData;
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Falha ao buscar campanha';
     return rejectWithValue(errorMessage);
@@ -344,18 +348,27 @@ export const updateCampaign = createAsyncThunk<
     const formData = new FormData();
     formData.append('title', data.title);
     formData.append('description', data.description);
-    formData.append('briefing', data.briefing);
+    // Backend expects 'requirements' not 'briefing'
+    formData.append('requirements', data.briefing || data.creatorRequirements || '');
     formData.append('budget', data.budget);
-    formData.append('deadline', data.deadline.toISOString());
+    formData.append('deadline', data.deadline.toISOString().split('T')[0]); // Send only date part
     
-    // Handle target_states - send as comma-separated string
+    // Handle target_states - send as array (backend expects array)
     const filteredStates = data.target_states.filter(Boolean);
-    formData.append('target_states', filteredStates.join(','));
-    formData.append('locations', filteredStates.join(',')); // Also send as locations in case backend expects it
+    filteredStates.forEach((state: string) => {
+      formData.append('target_states[]', state);
+    });
     
-    formData.append('creatorRequirements', data.creatorRequirements);
-    formData.append('type', data.type);
-    formData.append('category', data.type); // Also send as category in case backend expects it
+    // Handle remuneration_type if available
+    if (data.remunerationType) {
+      formData.append('remuneration_type', data.remunerationType);
+    }
+    
+    // Send type/category - backend expects 'category' or 'campaign_type'
+    if (data.type) {
+      formData.append('category', data.type);
+      formData.append('campaign_type', data.type);
+    }
     
     if (data.logo) {
       formData.append('logo', data.logo);

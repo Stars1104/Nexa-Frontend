@@ -87,8 +87,8 @@ const CampaignDetail = ({
             states: Array.isArray(campaign.target_states) ? campaign.target_states : ["Estados não especificados"],
   };
 
-  // Get attachments from campaign data
-  const attachments = campaign.attachments || campaign.attach_file || [];
+  // Get attachments from campaign data - handle both array (new) and string (backward compatibility)
+  const attachments = campaign.attachments || (campaign.attach_file ? (Array.isArray(campaign.attach_file) ? campaign.attach_file : [campaign.attach_file]) : []);
   const hasAttachments = Array.isArray(attachments) ? attachments.length > 0 : !!attachments;
 
   const handleApprove = () => {
