@@ -182,17 +182,17 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
     );
   }
 
-  if (error) {
-    return (
-      <div className="text-center py-8">
-        <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <p className="text-red-500 mb-4">Erro ao carregar campanhas</p>
-        <Button onClick={() => dispatch(fetchUserCampaigns())}>
-          Tentar Novamente
-        </Button>
-      </div>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <div className="text-center py-8">
+  //       <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+  //       <p className="text-red-500 mb-4">Erro ao carregar campanhas</p>
+  //       <Button onClick={() => dispatch(fetchUserCampaigns())}>
+  //         Tentar Novamente
+  //       </Button>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="space-y-6 p-4 dark:bg-[#171717] h-screen">

@@ -338,11 +338,14 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
         </section>
 
         {/* Attachments */}
-        {campaign.attachments && campaign.attachments.length > 0 && (
-          <section className="mb-6">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Arquivos Anexados</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {campaign.attachments.map((attachment, index) => {
+        {(() => {
+          // Handle both array format (new) and string format (backward compatibility)
+          const attachments = campaign.attachments || (campaign.attach_file ? (Array.isArray(campaign.attach_file) ? campaign.attach_file : [campaign.attach_file]) : []);
+          return attachments.length > 0 && (
+            <section className="mb-6">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Arquivos Anexados</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {attachments.map((attachment, index) => {
                 const fileName = attachment.split('/').pop() || `Arquivo ${index + 1}`;
                 const fileExtension = fileName.split('.').pop()?.toLowerCase();
                 
@@ -419,10 +422,11 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
                     </a>
                   </div>
                 );
-              })}
-            </div>
-          </section>
-        )}
+                })}
+              </div>
+            </section>
+          );
+        })()}
 
       </div>
     </div>

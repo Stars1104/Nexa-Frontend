@@ -1,4 +1,4 @@
-import { Clock, DollarSign, File } from "lucide-react";
+import { Clock, DollarSign, File, X } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import ApplyModal from "./ApplyModal";
 import { useAppSelector, useAppDispatch } from "../../store/hooks";
@@ -6,6 +6,10 @@ import { formatDate } from "date-fns";
 import { toast } from "../ui/sonner";
 import { fetchCreatorApplications } from "../../store/thunks/campaignThunks";
 import { fetchApprovedCampaigns, fetchCampaignById } from "../../store/thunks/campaignThunks";
+import {
+  Dialog,
+  DialogContent,
+} from "../ui/dialog";
 
 interface ProjectDetailProps {
   setComponent?: (component: string) => void;
@@ -51,6 +55,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const project = campaign;
   
   const [open, setOpen] = useState(false);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string>("");
 
   // Fetch data sequentially to prevent rate limiting
   useEffect(() => {
@@ -162,19 +168,24 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             <div className="flex items-center gap-4 mb-8">
               {/* Campaign Logo */}
               <div className="flex-shrink-0">
-                {project.logo ? (
+                {(project.logo || (project as any).logo_url) ? (
                   <img
                     src={`${import.meta.env.VITE_BACKEND_URL ||
                       "https://nexacreators.com.br"
-                      }${project.logo}`}
+                      }${project.logo || (project as any).logo_url || ''}`}
                     alt={`${project.title} logo`}
-                    className="w-16 h-16 rounded-xl object-cover border border-border"
+                    className="w-16 h-16 rounded-xl object-cover border border-border cursor-pointer hover:opacity-80 transition-opacity"
                     style={{
                       minWidth: 0,
                       minHeight: 0,
                       objectFit: 'cover',
                       maxWidth: '100%',
                       maxHeight: '100%'
+                    }}
+                    onClick={() => {
+                      const logoUrl = `${import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br"}${project.logo || (project as any).logo_url || ''}`;
+                      setSelectedImageUrl(logoUrl);
+                      setImageModalOpen(true);
                     }}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
@@ -183,7 +194,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                     }}
                   />
                 ) : null}
-                {(!project.logo || project.logo === "") && (
+                {(!project.logo && !(project as any).logo_url) && (
                   <div className="w-16 h-16 rounded-xl border border-border flex items-center justify-center text-2xl font-bold text-white bg-gradient-to-br from-primary to-primary/80">
                     {project.title.charAt(0).toUpperCase()}
                   </div>
@@ -280,14 +291,25 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                   </span>
                 )}
               </div>
-              <div className="rounded-xl  flex items-center justify-center bg-background overflow-auto">
-                {project.attach_file ? (
-                  (() => {
-                    const file = project.attach_file;
-                    const isImage =
-                      /\.(jpg|jpeg|png|gif|bmp|webp|mp4|mov|avi|wmv|flv|mkv|webm)$/i.test(
-                        file
-                      );
+              <div className="rounded-xl flex items-center justify-center bg-background overflow-auto min-h-[200px]">
+                {(() => {
+                  // Handle both array format (new) and string format (backward compatibility)
+                  // Also check for attachments field (alternative name)
+                  const attachData = project.attach_file || (project as any).attachments;
+                  const attachments = attachData ? (Array.isArray(attachData) ? attachData : [attachData]) : [];
+                  
+                  if (attachments.length === 0) {
+                    return (
+                      <span className="text-muted-foreground">
+                        Nenhum anexo disponível
+                      </span>
+                    );
+                  }
+                  
+                  // Show first attachment if single, or gallery if multiple
+                  if (attachments.length === 1) {
+                    const file = attachments[0];
+                    const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|mp4|mov|avi|wmv|flv|mkv|webm)$/i.test(file);
                     return isImage ? (
                       <img
                         src={`${
@@ -295,13 +317,18 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                           "http://localhost:8000"
                         }${file}`}
                         alt="Anexo visual"
-                        className="rounded-xl w-full h-full object-contain border border-border"
+                        className="rounded-xl w-full h-full object-contain border border-border cursor-pointer hover:opacity-80 transition-opacity"
                         style={{
                           minWidth: 0,
                           minHeight: 0,
                           objectFit: 'contain',
                           maxWidth: '80%',
                           maxHeight: '80%'
+                        }}
+                        onClick={() => {
+                          const imageUrl = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:8000"}${file}`;
+                          setSelectedImageUrl(imageUrl);
+                          setImageModalOpen(true);
                         }}
                       />
                     ) : (
@@ -317,12 +344,42 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                         {file.split("/").pop()}
                       </a>
                     );
-                  })()
-                ) : (
-                  <span className="text-muted-foreground">
-                    Nenhum anexo disponível
-                  </span>
-                )}
+                  } else {
+                    // Multiple attachments - show grid
+                    return (
+                      <div className="grid grid-cols-2 gap-2 p-4 w-full">
+                        {attachments.map((file: string, index: number) => {
+                          const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|mp4|mov|avi|wmv|flv|mkv|webm)$/i.test(file);
+                          return (
+                            <div key={index} className="border rounded-lg p-2">
+                              {isImage ? (
+                                <img
+                                  src={`${import.meta.env.VITE_BACKEND_URL || "http://localhost:8000"}${file}`}
+                                  alt={`Anexo ${index + 1}`}
+                                  className="w-full h-32 object-contain rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                  onClick={() => {
+                                    const imageUrl = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:8000"}${file}`;
+                                    setSelectedImageUrl(imageUrl);
+                                    setImageModalOpen(true);
+                                  }}
+                                />
+                              ) : (
+                                <a
+                                  href={`${import.meta.env.VITE_BACKEND_URL || "http://localhost:8000"}${file}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 underline text-sm break-all"
+                                >
+                                  {file.split("/").pop()}
+                                </a>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  }
+                })()}
               </div>
             </div>
             <button
@@ -362,6 +419,33 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
         }
         campaignId={project.id}
       />
+
+      {/* Image Modal */}
+      <Dialog open={imageModalOpen} onOpenChange={setImageModalOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto h-auto p-0 bg-black/90 border-none">
+          <div className="relative w-full h-full flex items-center justify-center">
+            {selectedImageUrl && (
+              <img
+                src={selectedImageUrl}
+                alt="Visualização ampliada"
+                className="max-w-full max-h-[95vh] object-contain"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '95vh',
+                  width: 'auto',
+                  height: 'auto'
+                }}
+              />
+            )}
+            <button
+              onClick={() => setImageModalOpen(false)}
+              className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full p-2 transition-colors"
+              aria-label="Fechar"
+            >
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
