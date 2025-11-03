@@ -1,7 +1,7 @@
 import { Button } from "../ui/button";
 import { CheckCircle2, Calendar, Lightbulb, Crown, AlertCircle, Loader2, Star, GraduationCap } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { paymentApi, SubscriptionStatus, SubscriptionPlan } from "../../api/payment";
 import { useToast } from "../../hooks/use-toast";
 import { dispatchPremiumStatusUpdate } from "../../utils/browserUtils";
@@ -21,6 +21,7 @@ const benefits = [
 export default function Subscription() {
     const { toast } = useToast();
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAppSelector((state) => state.auth);
     const { profile } = useAppSelector((state) => state.user);
     const userData = profile||user;
@@ -34,6 +35,7 @@ export default function Subscription() {
     const [paymentProcessing, setPaymentProcessing] = useState(false);
     const [studentStatus, setStudentStatus] = useState<any>(null);
     const [studentLoading, setStudentLoading] = useState(false);
+    const checkoutProcessedRef = useRef(false);
 
     useEffect(() => {
         // Load subscription plans first (public endpoint)
@@ -49,6 +51,71 @@ export default function Subscription() {
             // Load student status if user is a student
         }
     }, [user?.role]);
+    
+    // Separate useEffect to handle checkout success from URL params
+    useEffect(() => {
+        // Skip if already processed or currently processing
+        if (checkoutProcessedRef.current || paymentProcessing) {
+            return;
+        }
+        
+        // Check if user returned from Stripe checkout
+        const urlParams = new URLSearchParams(location.search);
+        const success = urlParams.get('success');
+        const sessionId = urlParams.get('session_id');
+        
+        if (success === 'true' && sessionId && !checkoutProcessedRef.current) {
+            checkoutProcessedRef.current = true;
+            handleCheckoutSuccess(sessionId);
+        }
+    }, [location.search]); // Watch location.search for changes
+    
+    const handleCheckoutSuccess = async (sessionId: string) => {
+        try {
+            setPaymentProcessing(true);
+            
+            const result = await paymentApi.createSubscriptionFromCheckout(sessionId);
+            
+            // Reload subscription status first
+            await loadSubscriptionStatus();
+            
+            // Immediately dispatch premium status update to refresh PremiumContext
+            dispatchPremiumStatusUpdate();
+            
+            // Give a small delay to ensure context is updated, then refresh again
+            setTimeout(() => {
+                dispatchPremiumStatusUpdate();
+            }, 500);
+            
+            // Remove query params from URL but keep the subscription component active
+            // Use replace: true to avoid adding to history, but keep the component in URL
+            const currentPath = location.pathname;
+            if (currentPath === '/creator/subscription') {
+                // If we're on the subscription route, update to use component query param instead
+                // This allows proper navigation after purchase
+                navigate('/creator?component=subscription', { replace: true });
+            } else {
+                // Otherwise just clean the query params
+                navigate(currentPath, { replace: true });
+            }
+            
+            toast({
+                title: "🎉 Assinatura Criada!",
+                description: "Sua assinatura premium foi ativada com sucesso!",
+            });
+        } catch (error: any) {
+            console.error("Error creating subscription from checkout:", error);
+            toast({
+                title: "Erro",
+                description: error.response?.data?.message || "Não foi possível criar a assinatura. Tente novamente.",
+                variant: "destructive",
+            });
+            // Reset the ref so user can retry
+            checkoutProcessedRef.current = false;
+        } finally {
+            setPaymentProcessing(false);
+        }
+    };
 
     // Refresh subscription status when modal closes
     useEffect(() => {

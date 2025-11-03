@@ -130,6 +130,27 @@ export const useComponentNavigation = (options: UseComponentNavigationOptions) =
     
     // Check if URL is already correct to prevent unnecessary navigation
     const currentUrl = location.search || '';
+    const currentPath = location.pathname;
+    
+    // If we're on a pathname route like /creator/subscription, we need to navigate
+    // to the base path with query params instead for proper component navigation
+    if (currentPath !== '/creator' && currentPath !== '/creator/') {
+      // Extract base path (e.g., /creator from /creator/subscription)
+      let basePath = '/creator';
+      if (currentPath.startsWith('/creator/')) {
+        basePath = '/creator';
+      } else if (currentPath.startsWith('/brand/')) {
+        basePath = '/brand';
+      } else if (currentPath.startsWith('/admin/')) {
+        basePath = '/admin';
+      }
+      
+      isNavigatingRef.current = true;
+      // Navigate to base path with query params, replacing the pathname route
+      navigate(`${basePath}${newUrl}`, { replace: true });
+      return;
+    }
+    
     if (currentUrl === newUrl || currentUrl === `?${newUrl.substring(1)}`) {
       return; // Already at this URL, skip navigation
     }
