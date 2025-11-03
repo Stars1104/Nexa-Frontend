@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface UseComponentNavigationOptions {
@@ -53,7 +53,8 @@ export const useComponentNavigation = (options: UseComponentNavigationOptions) =
   const location = useLocation();
   
   const [component, setComponent] = useState<string>(defaultComponent);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const isInitializedRef = useRef(false);
+  const isNavigatingRef = useRef(false);
 
   // Convert Portuguese display name to English URL name
   const toUrlName = (displayName: string): string => {
@@ -67,26 +68,42 @@ export const useComponentNavigation = (options: UseComponentNavigationOptions) =
 
   // Sync component state with URL changes
   useEffect(() => {
+    // Skip if we're currently navigating to avoid loops
+    if (isNavigatingRef.current) {
+      isNavigatingRef.current = false;
+      return;
+    }
+
     const searchParams = new URLSearchParams(location.search);
     const componentParam = searchParams.get(urlParamName);
     
     if (componentParam) {
       // Convert URL name to display name
       const displayName = toDisplayName(componentParam);
-      setComponent(displayName);
+      // Only update if different to prevent loops
+      setComponent((prev) => {
+        if (prev !== displayName) {
+          return displayName;
+        }
+        return prev;
+      });
+    } else if (!isInitializedRef.current) {
+      // Only set default on initial load if no URL param
+      setComponent(defaultComponent);
     }
     
     // Mark as initialized after first URL sync
-    if (!isInitialized) {
-      setIsInitialized(true);
+    if (!isInitializedRef.current) {
+      isInitializedRef.current = true;
     }
-  }, [location.search, urlParamName, isInitialized]);
+  }, [location.search, urlParamName, defaultComponent]);
 
   // Enhanced setComponent that updates URL
   const handleComponentChange = (newComponent: string, additionalState?: Record<string, any>) => {
+    // Update component state
     setComponent(newComponent);
     
-    // Update URL to reflect component change
+    // Build new URL
     const searchParams = new URLSearchParams();
     
     // Convert display name to URL name
@@ -109,25 +126,49 @@ export const useComponentNavigation = (options: UseComponentNavigationOptions) =
       });
     }
     
-    // Never use replace: true for component changes
-    // This ensures each component change adds to browser history
-    // so the back button can navigate between components
-    navigate(`?${searchParams.toString()}`, { replace: false });
+    const newUrl = `?${searchParams.toString()}`;
+    
+    // Check if URL is already correct to prevent unnecessary navigation
+    const currentUrl = location.search || '';
+    if (currentUrl === newUrl || currentUrl === `?${newUrl.substring(1)}`) {
+      return; // Already at this URL, skip navigation
+    }
+    
+    // Mark that we're navigating to prevent loop
+    isNavigatingRef.current = true;
+    
+    // Navigate only if URL is different
+    navigate(newUrl, { replace: false });
   };
 
   // Handle browser back/forward navigation
   useEffect(() => {
     const handlePopState = () => {
+      // Don't process if we're navigating programmatically
+      if (isNavigatingRef.current) {
+        return;
+      }
+
       const searchParams = new URLSearchParams(location.search);
       const componentParam = searchParams.get(urlParamName);
       
       if (componentParam) {
         // Convert URL name to display name
         const displayName = toDisplayName(componentParam);
-        setComponent(displayName);
+        setComponent((prev) => {
+          if (prev !== displayName) {
+            return displayName;
+          }
+          return prev;
+        });
       } else {
         // Default to default component if no component in URL
-        setComponent(defaultComponent);
+        setComponent((prev) => {
+          if (prev !== defaultComponent) {
+            return defaultComponent;
+          }
+          return prev;
+        });
       }
     };
 

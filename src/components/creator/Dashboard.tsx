@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { fetchApprovedCampaigns } from "../../store/thunks/campaignThunks";
 import { clearError, clearAllCampaignData } from "../../store/slices/campaignSlice";
@@ -163,24 +163,21 @@ export default function Dashboard({
   // Fetch approved campaigns on component mount
   useEffect(() => {
     if (user?.role === "creator" || user?.role === "student") {
-      // Sequential API calls to prevent rate limiting
-      const fetchDataSequentially = async () => {
+      // Parallel API calls for better performance
+      const fetchDataInParallel = async () => {
         try {
-          // First, fetch approved campaigns
-          await dispatch(fetchApprovedCampaigns()).unwrap();
-          
-          // Add a longer delay to respect backend rate limiting
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Then, fetch creator applications after the first call completes
-          await dispatch(fetchCreatorApplications()).unwrap();
+          // Fetch both in parallel instead of sequentially
+          await Promise.all([
+            dispatch(fetchApprovedCampaigns()).unwrap(),
+            dispatch(fetchCreatorApplications()).unwrap()
+          ]);
         } catch (error) {
           console.error('Error fetching dashboard data:', error);
           toast.error("Falha ao carregar campanhas. Tente recarregar a página.");
         }
       };
       
-      fetchDataSequentially();
+      fetchDataInParallel();
     }
   }, [dispatch, user?.role]);
 
@@ -282,9 +279,9 @@ export default function Dashboard({
     }
   };
 
-  // Filter and sort campaigns
-  const filteredAndSortedCampaigns = campaigns
-    .filter((campaign) => {
+  // Filter and sort campaigns - memoized for performance
+  const filteredAndSortedCampaigns = useMemo(() => {
+    return campaigns.filter((campaign) => {
       // Search filter
       if (filters.search) {
         const searchTerm = filters.search.toLowerCase();
@@ -390,12 +387,13 @@ export default function Dashboard({
           return 0;
       }
     });
+  }, [campaigns, filters]);
 
-  // Format date for display
-  const formatDate = (dateString: string) => {
+  // Format date for display - memoized
+  const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("pt-BR");
-  };
+  }, []);
 
   // Format budget for display
   const formatBudget = (budget: number) => {

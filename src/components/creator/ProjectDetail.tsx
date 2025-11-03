@@ -318,6 +318,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                         }${file}`}
                         alt="Anexo visual"
                         className="rounded-xl w-full h-full object-contain border border-border cursor-pointer hover:opacity-80 transition-opacity"
+                        loading="lazy"
+                        decoding="async"
                         style={{
                           minWidth: 0,
                           minHeight: 0,

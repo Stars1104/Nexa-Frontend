@@ -2570,6 +2570,8 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                 src={message.file_url}
                 alt={message.file_name || "Image"}
                 className="max-w-full max-h-80 rounded-xl object-cover cursor-pointer"
+                loading="lazy"
+                decoding="async"
                 onClick={handleImageClick}
               />
               <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">

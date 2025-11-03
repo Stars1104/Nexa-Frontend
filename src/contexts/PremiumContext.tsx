@@ -124,20 +124,27 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
     }
   }, [checkPremiumStatus, isEnabled]);
 
-  // Initialize with a delay to ensure app is fully loaded
+  // Initialize immediately for better performance
   useEffect(() => {
     if (!isInitialized) {
-      // Wait 2 seconds before making the first API call to ensure app is initialized
-      initializationTimeout.current = setTimeout(() => {
-        // Check if user is authenticated before making API call
-        const token = localStorage.getItem('token');
-        if (token) {
-          checkPremiumStatus();
+      // Check if user is authenticated before making API call
+      const token = localStorage.getItem('token');
+      if (token) {
+        // Use requestIdleCallback or immediate call for better performance
+        if (window.requestIdleCallback) {
+          window.requestIdleCallback(() => {
+            checkPremiumStatus();
+          }, { timeout: 500 });
         } else {
-          setIsInitialized(true);
-          setIsEnabled(false);
+          // Fallback: use small timeout instead of 2 seconds
+          initializationTimeout.current = setTimeout(() => {
+            checkPremiumStatus();
+          }, 100);
         }
-      }, 2000);
+      } else {
+        setIsInitialized(true);
+        setIsEnabled(false);
+      }
     }
 
     return () => {
