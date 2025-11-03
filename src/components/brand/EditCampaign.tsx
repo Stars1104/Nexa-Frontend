@@ -81,23 +81,45 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
     }
     setIsUpdating(true);
     try {
+      // Validate deadline date
+      const deadlineDate = new Date(formData.deadline);
+      if (isNaN(deadlineDate.getTime())) {
+        toast.error("Data de prazo inválida");
+        setIsUpdating(false);
+        return;
+      }
+
       // Map form data to CampaignFormData interface
       const campaignData = {
-        title: formData.title,
-        description: formData.description,
-        briefing: formData.requirements || campaign.briefing || '',
-        budget: formData.budget.toString(),
+        title: formData.title?.trim() || '',
+        description: formData.description?.trim() || '',
+        briefing: formData.requirements?.trim() || campaign.briefing || campaign.requirements || '',
+        budget: formData.budget?.toString() || '0',
         remunerationType: formData.remuneration_type as 'paga' | 'permuta',
-        deadline: new Date(formData.deadline),
+        deadline: deadlineDate,
         target_states: campaign.target_states || [],
-        creatorRequirements: formData.requirements || campaign.briefing || '',
+        creatorRequirements: formData.requirements?.trim() || campaign.briefing || campaign.requirements || '',
         type: campaign.type || campaign.category || '',
         targetGenders: campaign.target_genders || [],
         targetCreatorTypes: campaign.target_creator_types || [],
         minAge: campaign.min_age,
         maxAge: campaign.max_age,
       };
-      console.log(campaignData);
+
+      // Validate critical fields
+      if (!campaignData.title) {
+        toast.error("Título é obrigatório");
+        setIsUpdating(false);
+        return;
+      }
+      if (!campaignData.description) {
+        toast.error("Descrição é obrigatória");
+        setIsUpdating(false);
+        return;
+      }
+
+      console.log('Campaign update data:', campaignData);
+      
       await dispatch(updateCampaign({
         campaignId: campaign.id,
         data: campaignData
@@ -106,7 +128,8 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
       toast.success("Campanha atualizada com sucesso!");
       onSave();
     } catch (error) {
-      toast.error("Erro ao atualizar campanha");
+      const errorMessage = error instanceof Error ? error.message : "Erro ao atualizar campanha";
+      toast.error(errorMessage);
       console.error("Update error:", error);
     } finally {
       setIsUpdating(false);

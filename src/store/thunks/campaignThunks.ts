@@ -343,45 +343,140 @@ export const updateCampaign = createAsyncThunk<
     if (!token) {
       throw new Error('Usuário não autenticado');
     }
+
+    // Validate data parameter exists
+    if (!data) {
+      throw new Error('Dados da campanha não fornecidos');
+    }
+
+    // Validate required fields
+    if (!data.title || !data.title.trim()) {
+      throw new Error('Título é obrigatório');
+    }
+    if (!data.description || !data.description.trim()) {
+      throw new Error('Descrição é obrigatória');
+    }
+    if (!data.deadline || !(data.deadline instanceof Date) || isNaN(data.deadline.getTime())) {
+      throw new Error('Prazo deve ser uma data válida');
+    }
     
     // Create FormData for file upload
     const formData = new FormData();
-    formData.append('title', data.title);
-    formData.append('description', data.description);
+    
+    // Only append defined, non-empty values
+    if (data.title && data.title.trim()) {
+      formData.append('title', data.title.trim());
+    }
+    
+    if (data.description && data.description.trim()) {
+      formData.append('description', data.description.trim());
+    }
+    
     // Backend expects 'requirements' not 'briefing'
-    formData.append('requirements', data.briefing || data.creatorRequirements || '');
-    formData.append('budget', data.budget);
-    formData.append('deadline', data.deadline.toISOString().split('T')[0]); // Send only date part
+    const requirements = data.briefing || data.creatorRequirements || '';
+    if (requirements) {
+      formData.append('requirements', requirements);
+    }
+    
+    // Validate and append budget
+    if (data.budget !== undefined && data.budget !== null && data.budget !== '') {
+      const budgetValue = typeof data.budget === 'string' ? parseFloat(data.budget) : data.budget;
+      if (!isNaN(budgetValue) && budgetValue >= 0) {
+        formData.append('budget', budgetValue.toString());
+      }
+    }
+    
+    // Validate and append deadline
+    if (data.deadline instanceof Date && !isNaN(data.deadline.getTime())) {
+      formData.append('deadline', data.deadline.toISOString().split('T')[0]);
+    } else {
+      throw new Error('Prazo inválido');
+    }
     
     // Handle target_states - send as array (backend expects array)
-    const filteredStates = data.target_states.filter(Boolean);
-    filteredStates.forEach((state: string) => {
-      formData.append('target_states[]', state);
-    });
+    if (data.target_states && Array.isArray(data.target_states)) {
+      const filteredStates = data.target_states.filter(Boolean);
+      filteredStates.forEach((state: string) => {
+        if (state && state.trim()) {
+          formData.append('target_states[]', state.trim());
+        }
+      });
+    }
     
     // Handle remuneration_type if available
-    if (data.remunerationType) {
+    if (data.remunerationType && (data.remunerationType === 'paga' || data.remunerationType === 'permuta')) {
       formData.append('remuneration_type', data.remunerationType);
     }
     
     // Send type/category - backend expects 'category' or 'campaign_type'
-    if (data.type) {
-      formData.append('category', data.type);
-      formData.append('campaign_type', data.type);
+    if (data.type && data.type.trim()) {
+      formData.append('category', data.type.trim());
+      formData.append('campaign_type', data.type.trim());
     }
     
-    if (data.logo) {
+    // Handle optional fields
+    if (data.minAge !== undefined && data.minAge !== null) {
+      formData.append('min_age', data.minAge.toString());
+    }
+    
+    if (data.maxAge !== undefined && data.maxAge !== null) {
+      formData.append('max_age', data.maxAge.toString());
+    }
+    
+    // Handle target_genders if provided
+    if (data.targetGenders && Array.isArray(data.targetGenders)) {
+      const filteredGenders = data.targetGenders.filter(Boolean);
+      filteredGenders.forEach((gender: string) => {
+        if (gender && gender.trim()) {
+          formData.append('target_genders[]', gender.trim());
+        }
+      });
+    }
+    
+    // Handle target_creator_types if provided
+    if (data.targetCreatorTypes && Array.isArray(data.targetCreatorTypes)) {
+      const filteredTypes = data.targetCreatorTypes.filter(Boolean);
+      filteredTypes.forEach((type: string) => {
+        if (type && type.trim()) {
+          formData.append('target_creator_types[]', type.trim());
+        }
+      });
+    }
+    
+    // Handle file uploads
+    if (data.logo && data.logo instanceof File) {
       formData.append('logo', data.logo);
     }
     
-    if (data.attachments && data.attachments.length > 0) {
-      formData.append('attach_file', data.attachments[0]);
+    // Handle attachments - backend accepts single file or array
+    if (data.attachments && Array.isArray(data.attachments) && data.attachments.length > 0) {
+      // Filter valid files
+      const validFiles = data.attachments.filter((file: File) => file instanceof File);
+      if (validFiles.length > 0) {
+        // Send as array if multiple files, single if one file
+        if (validFiles.length === 1) {
+          formData.append('attach_file', validFiles[0]);
+        } else {
+          validFiles.forEach((file: File) => {
+            formData.append('attach_file[]', file);
+          });
+        }
+      }
+    }
+
+    // Debug: Log FormData contents
+    if (import.meta.env.DEV) {
+      console.log('FormData contents:');
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ':', pair[1]);
+      }
     }
     
     const response = await UpdateCampaign(campaignId, formData, token, isAdmin);
     return response;
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Falha ao atualizar campanha';
+    console.error('Update campaign error:', error);
     return rejectWithValue(errorMessage);
   }
 });

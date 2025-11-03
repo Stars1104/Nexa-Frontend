@@ -215,8 +215,35 @@ export const UpdateCampaign = async (campaignId: number, data: FormData, token: 
         ? `/api/admin/campaigns/${campaignId}` 
         : `/api/campaigns/${campaignId}`;
     
-    const response = await FormDataAPI.patch(endpoint, data);
-    return response.data;
+    try {
+        // Log FormData in development
+        if (import.meta.env.DEV) {
+            console.log('Sending FormData to:', endpoint);
+            console.log('FormData size:', data.toString().length, 'bytes');
+        }
+
+        const response = await FormDataAPI.patch(endpoint, data, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                // Explicitly don't set Content-Type - browser will set it with boundary
+            },
+        });
+
+        return response.data;
+    } catch (error: any) {
+        console.error('UpdateCampaign API error:', error);
+        if (error.response) {
+            console.error('Response status:', error.response.status);
+            console.error('Response data:', error.response.data);
+            throw new Error(error.response.data?.message || error.response.data?.error || 'Failed to update campaign');
+        } else if (error.request) {
+            console.error('Request made but no response:', error.request);
+            throw new Error('No response from server');
+        } else {
+            console.error('Error setting up request:', error.message);
+            throw error;
+        }
+    }
 };
 
 // Delete campaign
