@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface ComponentObject {
@@ -50,8 +50,7 @@ const COMPONENT_MAPPING: Record<string, string> = {
   'users': 'Usuários',
   'brand-rankings': 'Rankings das Marcas',
   'withdrawal-verification': 'Verificação de Saques',
-  'admin-guide': 'Guia para',
-  'notifications': 'Notificações'
+  'admin-guide': 'Guia para'
 };
 
 // Reverse mapping: Portuguese display names -> English URL names
@@ -65,7 +64,8 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
   const location = useLocation();
   
   const [component, setComponent] = useState<ComponentType>(defaultComponent);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const isInitializedRef = useRef(false);
+  const isNavigatingRef = useRef(false);
 
   // Convert Portuguese display name to English URL name
   const toUrlName = (displayName: string): string => {
@@ -121,21 +121,37 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
 
   // Sync component state with URL changes
   useEffect(() => {
+    // Skip if we're currently navigating to avoid loops
+    if (isNavigatingRef.current) {
+      isNavigatingRef.current = false;
+      return;
+    }
+
     const searchParams = new URLSearchParams(location.search);
     const parsedComponent = parseComponentFromURL(searchParams);
-    setComponent(parsedComponent);
+    
+    // Only update if different to prevent loops
+    setComponent((prev) => {
+      const prevStr = typeof prev === 'string' ? prev : prev.name;
+      const newStr = typeof parsedComponent === 'string' ? parsedComponent : parsedComponent.name;
+      if (prevStr !== newStr || JSON.stringify(prev) !== JSON.stringify(parsedComponent)) {
+        return parsedComponent;
+      }
+      return prev;
+    });
     
     // Mark as initialized after first URL sync
-    if (!isInitialized) {
-      setIsInitialized(true);
+    if (!isInitializedRef.current) {
+      isInitializedRef.current = true;
     }
-  }, [location.search, urlParamName, defaultComponent, isInitialized]);
+  }, [location.search, urlParamName, defaultComponent]);
 
   // Enhanced setComponent that updates URL
   const handleComponentChange = (newComponent: ComponentType) => {
+    // Update component state
     setComponent(newComponent);
     
-    // Update URL to reflect component change
+    // Build new URL
     const searchParams = new URLSearchParams();
     
     if (typeof newComponent === "string") {
@@ -166,18 +182,41 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
       }
     });
     
-    // Never use replace: true for component changes
-    // This ensures each component change adds to browser history
-    // so the back button can navigate between components
-    navigate(`?${searchParams.toString()}`, { replace: false });
+    const newUrl = `?${searchParams.toString()}`;
+    
+    // Check if URL is already correct to prevent unnecessary navigation
+    const currentUrl = location.search || '';
+    if (currentUrl === newUrl || currentUrl === `?${newUrl.substring(1)}`) {
+      return; // Already at this URL, skip navigation
+    }
+    
+    // Mark that we're navigating to prevent loop
+    isNavigatingRef.current = true;
+    
+    // Navigate only if URL is different
+    navigate(newUrl, { replace: false });
   };
 
   // Handle browser back/forward navigation
   useEffect(() => {
     const handlePopState = () => {
+      // Don't process if we're navigating programmatically
+      if (isNavigatingRef.current) {
+        return;
+      }
+
       const searchParams = new URLSearchParams(location.search);
       const parsedComponent = parseComponentFromURL(searchParams);
-      setComponent(parsedComponent);
+      
+      // Only update if different to prevent loops
+      setComponent((prev) => {
+        const prevStr = typeof prev === 'string' ? prev : prev.name;
+        const newStr = typeof parsedComponent === 'string' ? parsedComponent : parsedComponent.name;
+        if (prevStr !== newStr || JSON.stringify(prev) !== JSON.stringify(parsedComponent)) {
+          return parsedComponent;
+        }
+        return prev;
+      });
     };
 
     // Listen for popstate events (browser back/forward)
@@ -186,7 +225,7 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [location.search, urlParamName, defaultComponent, isInitialized]);
+  }, [location.search, urlParamName, defaultComponent]);
 
   return {
     component,

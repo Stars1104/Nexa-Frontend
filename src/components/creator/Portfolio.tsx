@@ -593,16 +593,18 @@ export default function Portfolio() {
                                                 <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${item.media_type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.media_type === 'image' ? 'Foto' : 'Vídeo'}</span>
                                                 {item.media_type === 'image' ? (
                                                 
-                                                     <img
-                                                        src={item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`}
-                                                        alt={item.title}
-                                                        className="object-cover w-full h-full rounded-md cursor-pointer"
-                                                        onClick={() => handleImageClick(item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`)}
-                                                        onError={(e) => {
-                                                            console.error('Image failed to load:', item.file_url || item.file_path);
-                                                            e.currentTarget.style.display = 'none';
-                                                        }}
-                                                    />
+                                                    <img
+                                                       src={item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`}
+                                                       alt={item.title}
+                                                       className="object-cover w-full h-full rounded-md cursor-pointer"
+                                                       loading="lazy"
+                                                       decoding="async"
+                                                       onClick={() => handleImageClick(item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`)}
+                                                       onError={(e) => {
+                                                           console.error('Image failed to load:', item.file_url || item.file_path);
+                                                           e.currentTarget.style.display = 'none';
+                                                       }}
+                                                   />
                                                    
                                                 ) : (
                                                     <div className="flex flex-col items-center justify-center w-full h-full">
@@ -704,16 +706,18 @@ export default function Portfolio() {
                                 <div key={`existing-${item.id}`} className="rounded-lg bg-background flex flex-col items-start justify-between aspect-[4/3] p-2 relative overflow-hidden group">
                                     <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${item.media_type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.media_type === 'image' ? 'Foto' : 'Vídeo'}</span>
                                     {item.media_type === 'image' ? (
-                                        <img
-                                            src={item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`}
-                                            alt={item.title}
-                                            className="object-cover w-full h-full rounded-md cursor-pointer"
-                                            onClick={() => handleImageClick(item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`)}
-                                            onError={(e) => {
-                                                console.error('Image failed to load:', item.file_url || item.file_path);
-                                                e.currentTarget.style.display = 'none';
-                                            }}
-                                        />
+                                                    <img
+                                                       src={item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`}
+                                                       alt={item.title}
+                                                       className="object-cover w-full h-full rounded-md cursor-pointer"
+                                                       loading="lazy"
+                                                       decoding="async"
+                                                       onClick={() => handleImageClick(item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`)}
+                                                       onError={(e) => {
+                                                           console.error('Image failed to load:', item.file_url || item.file_path);
+                                                           e.currentTarget.style.display = 'none';
+                                                       }}
+                                                   />
                                     ) : (
                                         <video
                                             src={item.file_url || `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/storage/${item.file_path}`}

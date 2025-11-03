@@ -423,11 +423,38 @@ export default function Subscription() {
                                     {/* Subscribe Button */}
                 <div className="flex justify-center">
                     <Button
-                        onClick={() => navigate(`/creator/purchase-subscription?planId=${selectedPlan.id}`)}
+                        onClick={async () => {
+                            if (!selectedPlan) {
+                                toast({
+                                    title: "Erro",
+                                    description: "Por favor, selecione um plano primeiro.",
+                                    variant: "destructive",
+                                });
+                                return;
+                            }
+                            try {
+                                setPaymentProcessing(true);
+                                const checkoutUrl = await paymentApi.getCheckoutUrl(selectedPlan.id);
+                                window.location.href = checkoutUrl;
+                            } catch (error: any) {
+                                toast({
+                                    title: "Erro",
+                                    description: error.response?.data?.message || "Não foi possível obter o link de checkout. Tente novamente.",
+                                    variant: "destructive",
+                                });
+                            } finally {
+                                setPaymentProcessing(false);
+                            }
+                        }}
                         className="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-8 py-3 text-lg w-full sm:w-auto"
-                        disabled={subscriptionStatus?.is_premium_active}
+                        disabled={subscriptionStatus?.is_premium_active || paymentProcessing}
                     >
-                        {subscriptionStatus?.is_premium_active 
+                        {paymentProcessing ? (
+                            <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Carregando...
+                            </>
+                        ) : subscriptionStatus?.is_premium_active 
                             ? 'Assinatura Ativa' 
                             : `Assinar ${selectedPlan.name || 'Plano'}`
                         }

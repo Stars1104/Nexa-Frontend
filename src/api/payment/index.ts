@@ -189,6 +189,14 @@ export const paymentApi = {
     const response = await apiClient.get('/payment/subscription-status');
     return response.data;
   },
+
+  // Get Stripe checkout URL
+  getCheckoutUrl: async (planId: number): Promise<string> => {
+    const response = await apiClient.get('/payment/checkout-url', {
+      params: { plan_id: planId }
+    });
+    return response.data.url;
+  },
 };
 
 // Export creator payment API

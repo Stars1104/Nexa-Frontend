@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,28 +48,8 @@ export default function ContractList() {
     loadContracts();
   }, []);
 
-  useEffect(() => {
-    filterContracts();
-  }, [contracts, activeTab, statusFilter, searchTerm]);
-
-  const loadContracts = async () => {
-    try {
-      setIsLoading(true);
-      const response = await hiringApi.getContracts();
-      setContracts(response.data.data);
-    } catch (error) {
-      console.error("Error loading contracts:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar contratos",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const filterContracts = () => {
+  // Memoize filtered contracts to prevent unnecessary recalculations
+  const filteredContractsMemo = useMemo(() => {
     let filtered = [...contracts];
 
     // Filter by status
@@ -90,8 +70,31 @@ export default function ContractList() {
       );
     }
 
-    setFilteredContracts(filtered);
+    return filtered;
+  }, [contracts, statusFilter, searchTerm]);
+
+  useEffect(() => {
+    setFilteredContracts(filteredContractsMemo);
+  }, [filteredContractsMemo]);
+
+  const loadContracts = async () => {
+    try {
+      setIsLoading(true);
+      const response = await hiringApi.getContracts();
+      setContracts(response.data.data);
+    } catch (error) {
+      console.error("Error loading contracts:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar contratos",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  // filterContracts is now handled by useMemo above
 
   const handleContractUpdated = () => {
     loadContracts();
