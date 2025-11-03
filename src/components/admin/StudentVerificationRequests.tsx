@@ -13,15 +13,14 @@ export default function StudentVerificationRequests() {
     const [page, setPage] = useState<number>(1);
     const [pagination, setPagination] = useState<{ current_page: number; last_page: number; total: number; per_page: number } | null>(null);
     const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
-    const [reviewNotes, setReviewNotes] = useState<string>("");
+    const [reviewNotes, setReviewNotes] = useState<Record<number, string>>({});
     const { toast } = useToast();
 
     const fetchRequests = async () => {
         setLoading(true);
         try {
-            const params: any = { per_page: perPage };
+            const params: any = { per_page: perPage, page: page };
             if (status !== "all") params.status = status;
-            // backend pagination uses ?page=; append via apiClient default behavior using params
             const res = await adminApi.getStudentVerificationRequests(params);
             const data = res.data;
             setRequests(data.data);
@@ -31,6 +30,10 @@ export default function StudentVerificationRequests() {
                 per_page: data.per_page,
                 total: data.total,
             });
+            // Sync page state with actual current page from API
+            if (data.current_page !== page) {
+                setPage(data.current_page);
+            }
         } catch (e: any) {
             toast({ title: "Erro", description: e?.message || "Falha ao carregar solicitações", variant: "destructive" });
         } finally {
@@ -46,9 +49,14 @@ export default function StudentVerificationRequests() {
     const handleApprove = async (requestId: number) => {
         setActionLoadingId(requestId);
         try {
-            await adminApi.approveStudentVerification(requestId, { review_notes: reviewNotes || undefined });
+            const notes = reviewNotes[requestId] || undefined;
+            await adminApi.approveStudentVerification(requestId, { review_notes: notes });
             toast({ title: "Aprovado", description: "Solicitação aprovada com sucesso" });
-            setReviewNotes("");
+            setReviewNotes((prev) => {
+                const updated = { ...prev };
+                delete updated[requestId];
+                return updated;
+            });
             fetchRequests();
         } catch (e: any) {
             toast({ title: "Erro", description: e?.message || "Falha ao aprovar", variant: "destructive" });
@@ -60,9 +68,14 @@ export default function StudentVerificationRequests() {
     const handleReject = async (requestId: number) => {
         setActionLoadingId(requestId);
         try {
-            await adminApi.rejectStudentVerification(requestId, { review_notes: reviewNotes || undefined });
+            const notes = reviewNotes[requestId] || undefined;
+            await adminApi.rejectStudentVerification(requestId, { review_notes: notes });
             toast({ title: "Rejeitado", description: "Solicitação rejeitada com sucesso" });
-            setReviewNotes("");
+            setReviewNotes((prev) => {
+                const updated = { ...prev };
+                delete updated[requestId];
+                return updated;
+            });
             fetchRequests();
         } catch (e: any) {
             toast({ title: "Erro", description: e?.message || "Falha ao rejeitar", variant: "destructive" });
@@ -119,14 +132,14 @@ export default function StudentVerificationRequests() {
                                 <span className={`px-2 py-1 rounded text-xs ${r.status === "pending" ? "bg-yellow-100 text-yellow-800" : r.status === "approved" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>{r.status}</span>
                             </div>
                             <div className="col-span-2 flex items-center justify-end gap-2">
-                                <Input
-                                    placeholder="Notas de revisão (opcional)"
-                                    value={reviewNotes}
-                                    onChange={(e) => setReviewNotes(e.target.value)}
-                                    className="max-w-[180px]"
-                                />
                                 {r.status === "pending" && (
                                     <>
+                                        <Input
+                                            placeholder="Notas de revisão (opcional)"
+                                            value={reviewNotes[r.id] || ""}
+                                            onChange={(e) => setReviewNotes((prev) => ({ ...prev, [r.id]: e.target.value }))}
+                                            className="max-w-[180px]"
+                                        />
                                         <Button size="sm" variant="outline" disabled={actionLoadingId === r.id} onClick={() => handleReject(r.id)}>
                                             {actionLoadingId === r.id ? "..." : "Rejeitar"}
                                         </Button>
@@ -147,8 +160,8 @@ export default function StudentVerificationRequests() {
                         Página {pagination.current_page} de {pagination.last_page} — {pagination.total} solicitações
                     </div>
                     <div className="flex gap-2">
-                        <Button variant="outline" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</Button>
-                        <Button variant="outline" disabled={page >= pagination.last_page} onClick={() => setPage((p) => p + 1)}>Próxima</Button>
+                        <Button variant="outline" disabled={pagination.current_page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</Button>
+                        <Button variant="outline" disabled={pagination.current_page >= pagination.last_page} onClick={() => setPage((p) => p + 1)}>Próxima</Button>
                     </div>
                 </div>
             )}

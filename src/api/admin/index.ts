@@ -333,6 +333,7 @@ export const adminApi = {
   getStudentVerificationRequests: async (params?: {
     status?: 'pending' | 'approved' | 'rejected';
     per_page?: number;
+    page?: number;
   }): Promise<{
     success: boolean;
     data: {

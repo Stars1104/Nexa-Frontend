@@ -140,17 +140,26 @@ const CampaignList: React.FC = () => {
     }
   };
 
-  const handleEditSave = async (campaignData: any) => {
+  const handleEditSave = async (campaignData?: any) => {
     if (!selectedCampaign) return;
     
-    try {
-      await dispatch(updateCampaign({ campaignId: selectedCampaign.id, data: campaignData })).unwrap();
-      toast.success("Campanha atualizada com sucesso!");
+    // If campaignData is provided, update the campaign
+    // Otherwise, just refresh the list (campaign was already updated in EditCampaign component)
+    if (campaignData) {
+      try {
+        await dispatch(updateCampaign({ campaignId: selectedCampaign.id, data: campaignData })).unwrap();
+        toast.success("Campanha atualizada com sucesso!");
+        setShowEditModal(false);
+        setSelectedCampaign(null);
+        await dispatch(fetchCampaigns()).unwrap();
+      } catch (error) {
+        toast.error("Erro ao atualizar campanha");
+      }
+    } else {
+      // Just refresh the list since EditCampaign already handled the update
       setShowEditModal(false);
       setSelectedCampaign(null);
       await dispatch(fetchCampaigns()).unwrap();
-    } catch (error) {
-      toast.error("Erro ao atualizar campanha");
     }
   };
 
