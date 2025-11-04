@@ -13,7 +13,7 @@ export interface BrandPaymentMethod {
 export interface SavePaymentMethodRequest {
   card_hash: string;
   card_holder_name: string;
-  cpf: string;
+  cnpj: string;
   is_default?: boolean;
 }
 
@@ -167,9 +167,11 @@ export const brandPaymentApi = {
       return response.data;
     } catch (error: any) {
       if (error.response) {
+        const errorData = error.response.data;
         return {
           success: false,
-          error: error.response.data.error || error.response.data.message || 'Erro ao deletar método de pagamento'
+          message: errorData.message,
+          error: errorData.error || errorData.message || 'Erro ao deletar método de pagamento'
         };
       }
       
@@ -273,6 +275,56 @@ export const brandPaymentApi = {
       
       return {
         success: false,
+        error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
+      };
+    }
+  },
+
+  /**
+   * Create Stripe Checkout Session for adding payment method
+   * POST /api/brand-payment/create-checkout-session
+   */
+  createCheckoutSession: async (): Promise<{ success: boolean; url?: string; session_id?: string; error?: string }> => {
+    try {
+      const response = await apiClient.post('/brand-payment/create-checkout-session');
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return {
+          success: false,
+          error: error.response.data.error || error.response.data.message || 'Erro ao criar sessão de checkout'
+        };
+      }
+      
+      return {
+        success: false,
+        error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
+      };
+    }
+  },
+
+  /**
+   * Handle successful Stripe Checkout Session
+   * POST /api/brand-payment/handle-checkout-success
+   */
+  handleCheckoutSuccess: async (sessionId: string): Promise<SavePaymentMethodResponse> => {
+    try {
+      const response = await apiClient.post('/brand-payment/handle-checkout-success', {
+        session_id: sessionId
+      });
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return {
+          success: false,
+          error: error.response.data.error || error.response.data.message || 'Erro ao processar pagamento',
+          message: error.response.data.message
+        };
+      }
+      
+      return {
+        success: false,
+        message: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.',
         error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
       };
     }
