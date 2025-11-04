@@ -54,9 +54,11 @@ export const uploadPortfolioMedia = createAsyncThunk<
   { items: PortfolioItem[]; total_items: number },
   { token: string; files: File[] },
   { state: RootState; rejectValue: string }
->('portfolio/uploadMedia', async ({ token, files }, { rejectWithValue }) => {
+>('portfolio/uploadMedia', async ({ token, files }, { rejectWithValue, dispatch }) => {
   try {
-    const response = await portfolioAPI.uploadPortfolioMedia(token, files);
+    const response = await portfolioAPI.uploadPortfolioMedia(token, files, (progress) => {
+      dispatch(setUploadProgress(progress));
+    });
     return response;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || 'Falha ao fazer upload de mídia');

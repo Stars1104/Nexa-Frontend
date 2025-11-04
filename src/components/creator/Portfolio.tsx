@@ -5,7 +5,8 @@ import { useAppDispatch } from '../../store/hooks';
 import { fetchPortfolio, updatePortfolioProfile, uploadPortfolioMedia, deletePortfolioItem } from '../../store/slices/portfolioSlice';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '../ui/dialog';
-import { Camera, Loader2, Plus } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
+import { Camera, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '../../hooks/use-toast';
 import { getAvatarUrl } from '../../lib/utils';
 
@@ -32,7 +33,7 @@ function getFileType(file: File) {
 export default function Portfolio() {
     const dispatch = useAppDispatch();
     const { user } = useSelector((state: RootState) => state.auth);
-    const { portfolio, isLoading, error } = useSelector((state: RootState) => state.portfolio);
+    const { portfolio, isLoading, error, isUploading, uploadProgress } = useSelector((state: RootState) => state.portfolio);
     const { toast } = useToast();
 
     // State for profile editing
@@ -58,7 +59,12 @@ export default function Portfolio() {
 
     // State for saving
     const [isSaving, setIsSaving] = useState(false);
-    const [token, setToken] = useState<string | null>(null)
+    const [token, setToken] = useState<string | null>(null);
+    
+    // State for delete confirmation
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     // Load portfolio data on component mount
     useEffect(() => {
         if (user?.id) {
@@ -136,8 +142,11 @@ export default function Portfolio() {
     };
 
     const handleRemoveMedia = (idx: number) => {
+        if (idx < 0 || idx >= media.length) return;
         setMedia((prev) => {
-            URL.revokeObjectURL(prev[idx].url);
+            if (prev[idx]?.url && prev[idx].url.startsWith('blob:')) {
+                URL.revokeObjectURL(prev[idx].url);
+            }
             return prev.filter((_, i) => i !== idx);
         });
     };
@@ -159,25 +168,41 @@ export default function Portfolio() {
     };
 
 
-    const handleRemovePortfolioItem = async (itemId: number) => {
-        if (!portfolio) return;
+    const handleRemovePortfolioItemClick = (itemId: number) => {
+        setItemToDelete(itemId);
+        setDeleteDialogOpen(true);
+    };
 
+    const handleRemovePortfolioItem = async () => {
+        if (!portfolio || !itemToDelete) return;
+
+        setIsDeleting(true);
         try {
             const token = localStorage.getItem('token');
             if (!token) throw new Error('Token de autenticação não encontrado');
 
-            await dispatch(deletePortfolioItem({ token, itemId })).unwrap();
+            await dispatch(deletePortfolioItem({ token, itemId: itemToDelete })).unwrap();
+            
+            // Refresh portfolio to ensure UI is updated
+            await dispatch(fetchPortfolio(token)).unwrap();
+            
             toast({
                 title: "Sucesso!",
-                description: "Portfólio removido com sucesso!",
+                description: "Item do portfólio removido com sucesso!",
                 duration: 3000,
             });
-        } catch (error) {
+            
+            setDeleteDialogOpen(false);
+            setItemToDelete(null);
+        } catch (error: any) {
+            const errorMessage = error?.message || error?.response?.data?.message || 'Falha ao remover item do portfólio. Tente novamente.';
             toast({
                 title: "Erro",
-                description: "Falha ao remover portfólio. Tente novamente.",
+                description: errorMessage,
                 variant: "destructive",
             });
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -557,11 +582,24 @@ export default function Portfolio() {
                                 <div>
                                     <h3 className="font-semibold text-base mb-4">Upload de Mídia</h3>
                                     <div
-                                        className={`border-2 border-dashed border-muted-foreground/40 rounded-lg bg-background flex flex-col items-center justify-center py-8 px-2 sm:px-8 mb-4 transition ${dragActive ? 'ring-2 ring-pink-400' : ''}`}
+                                        className={`border-2 border-dashed border-muted-foreground/40 rounded-lg bg-background flex flex-col items-center justify-center py-8 px-2 sm:px-8 mb-4 transition relative ${dragActive ? 'ring-2 ring-pink-400' : ''} ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
                                         onDragOver={handleDragOver}
                                         onDragLeave={handleDragLeave}
                                         onDrop={handleDrop}
                                     >
+                                        {isUploading && (
+                                            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-lg">
+                                                <Loader2 className="w-8 h-8 animate-spin text-[#E91E63] mb-2" />
+                                                <div className="text-sm font-medium text-foreground">Enviando mídia...</div>
+                                                <div className="text-xs text-muted-foreground mt-1">{uploadProgress}%</div>
+                                                <div className="w-48 h-2 bg-muted rounded-full mt-3 overflow-hidden">
+                                                    <div 
+                                                        className="h-full bg-[#E91E63] transition-all duration-300"
+                                                        style={{ width: `${uploadProgress}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
                                         <div className="flex flex-col items-center gap-2">
                                             <Camera className="w-10 h-10 text-muted-foreground mb-2" />
                                             <div className="font-semibold text-base text-foreground">Arraste arquivos para cá</div>
@@ -569,8 +607,17 @@ export default function Portfolio() {
                                             <Button
                                                 className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-6 py-2 rounded-md mt-2"
                                                 onClick={() => mediaInputRef.current?.click()}
-                                                disabled={getTotalMediaCount() >= MAX_TOTAL_FILES}
-                                            >Adicionar Mídia</Button>
+                                                disabled={getTotalMediaCount() >= MAX_TOTAL_FILES || isUploading}
+                                            >
+                                                {isUploading ? (
+                                                    <>
+                                                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                                        Enviando...
+                                                    </>
+                                                ) : (
+                                                    'Adicionar Mídia'
+                                                )}
+                                            </Button>
                                             <input
                                                 ref={mediaInputRef}
                                                 type="file"
@@ -586,6 +633,23 @@ export default function Portfolio() {
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-base mb-2">Meu Trabalho ({getTotalMediaCount()}/{MAX_TOTAL_FILES})</h3>
+                                    {isUploading && (
+                                        <div className="mb-4 p-3 bg-muted/50 rounded-lg border border-muted-foreground/20">
+                                            <div className="flex items-center gap-3">
+                                                <Loader2 className="w-5 h-5 animate-spin text-[#E91E63]" />
+                                                <div className="flex-1">
+                                                    <div className="text-sm font-medium text-foreground">Enviando mídia...</div>
+                                                    <div className="w-full h-2 bg-background rounded-full mt-2 overflow-hidden">
+                                                        <div 
+                                                            className="h-full bg-[#E91E63] transition-all duration-300"
+                                                            style={{ width: `${uploadProgress}%` }}
+                                                        />
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground mt-1">{uploadProgress}% concluído</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                                 
                                         {portfolio?.items?.map((item: any) => (
@@ -614,8 +678,9 @@ export default function Portfolio() {
                                                 <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
                                                     <button
                                                         className="bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow transition"
-                                                        onClick={() => handleRemovePortfolioItem(item.id)}
+                                                        onClick={() => handleRemovePortfolioItemClick(item.id)}
                                                         aria-label="Remover mídia"
+                                                        disabled={isDeleting}
                                                     >
                                                         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12" /></svg>
                                                     </button>
@@ -676,15 +741,28 @@ export default function Portfolio() {
                                 <Button
                                     variant="outline"
                                     onClick={() => setIsPortfolioEditDialogOpen(false)}
-                                    disabled={isSaving}
+                                    disabled={isSaving || isUploading}
                                 >
                                     Cancelar
                                 </Button>
                                 <Button
                                     className="bg-[#E91E63] hover:bg-pink-600 text-white"
-                                    onClick={(e)=>setIsPortfolioEditDialogOpen(false)}
+                                    onClick={handleSavePortfolioComplete}
+                                    disabled={isSaving || isUploading}
                                 >
-                                    Salvar
+                                    {isUploading ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                            Enviando... {uploadProgress}%
+                                        </>
+                                    ) : isSaving ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                            Salvando...
+                                        </>
+                                    ) : (
+                                        'Salvar'
+                                    )}
                                 </Button>
                             </DialogFooter>
                         </DialogContent>
@@ -741,8 +819,9 @@ export default function Portfolio() {
                                     <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
                                         <button
                                             className="bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow transition"
-                                            onClick={() => handleRemovePortfolioItem(item.id)}
+                                            onClick={() => handleRemovePortfolioItemClick(item.id)}
                                             aria-label="Remover mídia"
+                                            disabled={isDeleting}
                                         >
                                             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12" /></svg>
                                         </button>
@@ -809,10 +888,21 @@ export default function Portfolio() {
                 <Button
                     className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-8 py-2 rounded-md text-base"
                     onClick={handleSavePortfolioComplete}
-                    disabled={isSaving}
+                    disabled={isSaving || isUploading}
                 >
-                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                    Salvar Portfólio
+                    {isUploading ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            Enviando mídia... {uploadProgress}%
+                        </>
+                    ) : isSaving ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            Salvando...
+                        </>
+                    ) : (
+                        'Salvar Portfólio'
+                    )}
                 </Button>
             </div>
 
@@ -859,6 +949,38 @@ export default function Portfolio() {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <Trash2 className="h-5 w-5 text-destructive" />
+                            Confirmar Remoção
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-base pt-2">
+                            Tem certeza que deseja remover este item do portfólio? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleRemovePortfolioItem}
+                            disabled={isDeleting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {isDeleting ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                    Removendo...
+                                </>
+                            ) : (
+                                'Remover'
+                            )}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
