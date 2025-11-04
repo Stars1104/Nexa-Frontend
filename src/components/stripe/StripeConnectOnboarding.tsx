@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Badge } from '../ui/badge';
-import { Loader2, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, ExternalLink, RefreshCw, CreditCard, Building2 } from 'lucide-react';
 import { stripeApi, StripeAccountStatus } from '../../api/stripe';
 import { toast } from '../ui/sonner';
 
@@ -24,6 +24,7 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingLink, setIsCreatingLink] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
 
   // Load account status on component mount
   useEffect(() => {
@@ -167,11 +168,18 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
     <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <img 
-            src="https://js.stripe.com/v3/fingerprinted/img/stripe-logo-280x280.png" 
-            alt="Stripe" 
-            className="w-6 h-6"
-          />
+          {imageError ? (
+            <div className="w-6 h-6 rounded bg-[#635bff] flex items-center justify-center">
+              <CreditCard className="w-4 h-4 text-white" />
+            </div>
+          ) : (
+            <img 
+              src="https://js.stripe.com/v3/fingerprinted/img/stripe-logo-280x280.png" 
+              alt="Stripe" 
+              className="w-6 h-6"
+              onError={() => setImageError(true)}
+            />
+          )}
           Configuração Stripe Connect
         </CardTitle>
         <CardDescription>
@@ -250,12 +258,17 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
           </div>
         ) : (
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center">
-              <img 
-                src="https://js.stripe.com/v3/fingerprinted/img/stripe-logo-280x280.png" 
-                alt="Stripe" 
-                className="w-8 h-8"
-              />
+            <div className="w-20 h-20 mx-auto bg-gradient-to-br from-[#635bff] to-[#7c3aed] rounded-full flex items-center justify-center shadow-lg">
+              {imageError ? (
+                <Building2 className="w-10 h-10 text-white" />
+              ) : (
+                <img 
+                  src="https://js.stripe.com/v3/fingerprinted/img/stripe-logo-280x280.png" 
+                  alt="Stripe" 
+                  className="w-10 h-10"
+                  onError={() => setImageError(true)}
+                />
+              )}
             </div>
             
             <div>
