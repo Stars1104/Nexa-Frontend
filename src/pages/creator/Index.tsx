@@ -49,13 +49,18 @@ function Index() {
         defaultComponent: "Painel"
     });
 
-    // Handle subscription route - use the navigation hook instead of direct setComponent
+    // Handle subscription route - convert pathname route to query param route
     useEffect(() => {
         if (location.pathname === '/creator/subscription') {
-            // Use the navigation hook to properly update URL and browser history
-            setComponent("Assinatura");
+            // Convert /creator/subscription pathname to /creator?component=subscription query param
+            // This ensures proper navigation works after purchase
+            const currentSearch = location.search;
+            if (!currentSearch.includes('component=')) {
+                // Only convert if not already using query params
+                setComponent("Assinatura");
+            }
         }
-    }, [location.pathname, setComponent]);
+    }, [location.pathname, location.search, setComponent]);
 
     // Enhanced setComponent that also handles projectId
     const handleComponentChange = (newComponent: string, newProjectId?: number | null) => {

@@ -27,6 +27,8 @@ export default function PremiumAccessGuard({
 }: PremiumAccessGuardProps) {
   const [loading, setLoading] = useState(true);
   const [lastCheck, setLastCheck] = useState<number>(0);
+  const [optimisticPremium, setOptimisticPremium] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   const location = useLocation();
   
@@ -60,20 +62,33 @@ export default function PremiumAccessGuard({
     checkUserAndPremiumStatus();
   }, []);
 
-  // Only refresh premium status when user changes, not on every location change
+  // Refresh premium status when user changes, ensuring it runs even when hasPremium changes
   useEffect(() => {
-    if (user && (user.role === "creator" || user.role === "student") && !premiumLoading) {
-      // Only refresh if we don't have premium status yet
-      if (!hasPremium) {
-        refreshPremiumStatus();
-      }
+    if (user && (user.role === "creator" || user.role === "student") && !premiumLoading && !isRefreshing) {
+      // Always refresh to ensure we have the latest status
+      // This ensures refresh happens even when hasPremium changes from false to true
+      refreshPremiumStatus();
     }
-  }, [user?.id, user?.role, hasPremium, premiumLoading, refreshPremiumStatus]);
+  }, [user?.id, user?.role, premiumLoading, refreshPremiumStatus, isRefreshing]);
 
   // Listen for premium status updates and refresh premium status
   useEffect(() => {
     const handlePremiumUpdate = async () => {
-      await refreshPremiumStatus();
+      // Optimistically set premium to true when status update is triggered
+      // This prevents blocking during the refresh period
+      setOptimisticPremium(true);
+      setIsRefreshing(true);
+      
+      // Force refresh bypasses cooldown for immediate updates after subscription
+      await refreshPremiumStatus(true);
+      
+      // Clear refreshing flag after refresh completes
+      setIsRefreshing(false);
+      
+      // Clear optimistic flag after refresh completes (with a small delay to ensure status is updated)
+      setTimeout(() => {
+        setOptimisticPremium(false);
+      }, 1000);
     };
 
     window.addEventListener("premium-status-updated", handlePremiumUpdate);
@@ -153,24 +168,29 @@ export default function PremiumAccessGuard({
   };
 
   const handleSubscribeClick = () => {
-    // Update URL immediately for better UX
-    // window.history.pushState({}, "", "/creator/subscription");
-    setComponent("Assinatura");
-
-    try {
-      // Try React Router navigation
-      // navigate("/creator/subscription", { replace: true });
+    // Onconsolly set component if not currently refreshing to prevent unnecessary call
+    if (!isRefreshing && setComponent) {
       setComponent("Assinatura");
-    } catch (error) {
-      console.error("React Router navigation error:", error);
-      // Fallback to direct navigation
-      setComponent("Assinatura");
-      // window.location.href = "/creator/subscription";
     }
   };
 
+  // Allow access to profile, portfolio, and subscription pages even during loading
+  const allowedPaths = [
+    "/creator/subscription",
+    "/creator/profile",
+    "/creator/portfolio",
+  ];
+  const currentPath = location.pathname;
+  const isAllowedPath = allowedPaths.some((path) => currentPath.includes(path));
+
+  // If we're on an allowed path, always allow access (even during loading)
+  if (isAllowedPath) {
+    return <>{children}</>;
+  }
+
   // Consider loading while premiumStatus is not yet available to avoid flashing the guard
-  if (loading || premiumLoading || !premiumStatus) {
+  // But only if we're not on an allowed path and not optimistically allowing access
+  if ((loading || premiumLoading || !premiumStatus) && !optimisticPremium) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -183,30 +203,16 @@ export default function PremiumAccessGuard({
   // For creators, check if they have premium access (premium only)
   // hasPremium from context already includes is_premium_active logic
   // Considera também período de teste (is_on_trial) vindo do backend
-  const userHasPremiumAccess = hasPremium || Boolean((premiumStatus as any)?.is_on_trial) || hasStudentTrial;
+  // Include optimisticPremium to allow access immediately after subscription creation
+  const userHasPremiumAccess = hasPremium || Boolean((premiumStatus as any)?.is_on_trial) || hasStudentTrial || optimisticPremium;
 
   if (!user || (user.role !== "creator" && user.role !== "student") || userHasPremiumAccess) {
     return <>{children}</>;
   }
 
-  // Allow access to profile, portfolio, and subscription pages even for non-premium creators
-  // For creator pages, we need to check both the pathname and the component state
-  const allowedPaths = [
-    "/creator/subscription",
-    "/creator/profile",
-    "/creator/portfolio",
-  ];
-
-  const currentPath = location.pathname;
-  const isAllowedPath = allowedPaths.some((path) => currentPath.includes(path));
-
   // Special handling for creator main page - check if we're on a restricted component
   const isCreatorMainPage =
     currentPath === "/creator" || currentPath === "/creator/";
-
-  if (isAllowedPath) {
-    return <>{children}</>;
-  }
 
   // For creator main page, we need to check the component being rendered
   // This will be handled by the parent component passing the correct fallback

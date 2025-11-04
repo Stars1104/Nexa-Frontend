@@ -197,6 +197,15 @@ export const paymentApi = {
     });
     return response.data.url;
   },
+
+  // Create subscription from checkout session (without webhook)
+  createSubscriptionFromCheckout: async (sessionId: string): Promise<any> => {
+    const response = await apiClient.post('/payment/create-subscription-from-checkout', {
+      session_id: sessionId
+    });
+    console.log(response.data)
+    return response.data;
+  },
 };
 
 // Export creator payment API

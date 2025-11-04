@@ -18,7 +18,7 @@ interface PremiumStatus {
 interface PremiumContextType {
   premiumStatus: PremiumStatus | null;
   loading: boolean;
-  refreshPremiumStatus: () => Promise<void>;
+  refreshPremiumStatus: (forceRefresh?: boolean) => Promise<void>;
   hasPremium: boolean;
   isPremiumActive: boolean;
 }
@@ -53,15 +53,16 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
   const maxRetries = 3;
   const initializationTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const checkPremiumStatus = useCallback(async () => {
+  const checkPremiumStatus = useCallback(async (forceRefresh: boolean = false) => {
     // Prevent multiple simultaneous calls
     if (isCalling.current) {
       return;
     }
 
     // Add cooldown period (5 seconds) to prevent excessive calls
+    // But skip cooldown if explicitly refreshing (e.g., after subscription)
     const now = Date.now();
-    if (now - lastCallTime.current < 5000) {
+    if (!forceRefresh && now - lastCallTime.current < 5000) {
       return;
     }
 
@@ -90,6 +91,7 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
       
       const response = await apiClient.get('/payment/subscription-status');
       setPremiumStatus(response.data);
+      console.log("premiumStatus", response.data);
       retryCount.current = 0; // Reset retry count on success
     } catch (error: any) {        
       // Handle 401 errors specifically - user is not authenticated
@@ -118,9 +120,10 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
     }
   }, [isInitialized]);
 
-  const refreshPremiumStatus = useCallback(async () => {
-    if (isEnabled) {
-      await checkPremiumStatus();
+  const refreshPremiumStatus = useCallback(async (forceRefresh: boolean = false) => {
+    if (isEnabled || forceRefresh) {
+      // Force refresh bypasses cooldown and enabled check (for post-subscription updates)
+      await checkPremiumStatus(forceRefresh);
     }
   }, [checkPremiumStatus, isEnabled]);
 
@@ -170,6 +173,7 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
   // Listen for authentication changes (login/logout)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
+      console.log("handleStorageChange", e.key);
       if (e.key === 'token') {
         if (e.newValue) {
           // User logged in, check premium status
@@ -214,7 +218,7 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
     hasPremium: premiumStatus?.has_premium || premiumStatus?.is_premium_active || false,
     isPremiumActive: premiumStatus?.is_premium_active || false,
   };
-
+  console.log("uuuuuuuuuuuuuuuuuuuuuuuu", value)
   return (
     <PremiumContext.Provider value={value}>{children}</PremiumContext.Provider>
   );
