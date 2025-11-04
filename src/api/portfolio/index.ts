@@ -125,7 +125,8 @@ export const testUpload = async (
 // Upload portfolio media
 export const uploadPortfolioMedia = async (
   token: string, 
-  files: File[]
+  files: File[],
+  onUploadProgress?: (progress: number) => void
 ): Promise<{ items: PortfolioItem[]; total_items: number }> => {
   
   if (files.length === 0) {
@@ -145,6 +146,12 @@ export const uploadPortfolioMedia = async (
     headers: { 
       Authorization: `Bearer ${token}`,
       // Don't set Content-Type for FormData - let the browser set it with boundary
+    },
+    onUploadProgress: (progressEvent) => {
+      if (progressEvent.total && onUploadProgress) {
+        const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        onUploadProgress(progress);
+      }
     }
   });
   return response.data.data;
@@ -171,10 +178,11 @@ export const updatePortfolioItem = async (
 export const deletePortfolioItem = async (
   token: string,
   itemId: number
-): Promise<void> => {
-  await apiClient.delete(`/portfolio/items/${itemId}`, {
+): Promise<{ success: boolean; message?: string }> => {
+  const response = await apiClient.delete(`/portfolio/items/${itemId}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
+  return response.data;
 };
 
 // Reorder portfolio items
