@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from '@/hooks/use-toast';
 import { brandPaymentApi, BrandPaymentMethod, SavePaymentMethodRequest } from '@/api/payment/brandPayment';
 import { CreditCard, Plus, Trash2, Star, StarOff } from 'lucide-react';
+import StripeConnectOnboarding from '@/components/stripe/StripeConnectOnboarding';
 
 export default function BrandPaymentMethods() {
   const { toast } = useToast();
@@ -275,20 +276,39 @@ export default function BrandPaymentMethods() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Métodos de Pagamento</CardTitle>
-            <CardDescription>Gerencie seus cartões para pagamentos de contratos</CardDescription>
-          </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className='bg-[#e91e63] text-white hover:bg-[#e91e63]/90'>
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Cartão
-              </Button>
-            </DialogTrigger>
+    <div className="space-y-6">
+      {/* Stripe Connect Account Section */}
+      <StripeConnectOnboarding 
+        onComplete={() => {
+          toast({
+            title: 'Sucesso',
+            description: 'Conta Stripe conectada com sucesso!',
+          });
+        }}
+        onError={(error) => {
+          toast({
+            title: 'Erro',
+            description: error,
+            variant: 'destructive',
+          });
+        }}
+      />
+
+      {/* Payment Methods Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Métodos de Pagamento</CardTitle>
+              <CardDescription>Gerencie seus cartões para pagamentos de contratos</CardDescription>
+            </div>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className='bg-[#e91e63] text-white hover:bg-[#e91e63]/90'>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Cartão
+                </Button>
+              </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>Adicionar Método de Pagamento</DialogTitle>
@@ -461,5 +481,6 @@ export default function BrandPaymentMethods() {
         )}
       </CardContent>
     </Card>
+    </div>
   );
 } 
