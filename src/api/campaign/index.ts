@@ -304,8 +304,23 @@ export const GetCampaignApplications = async (campaignId: number, token: string)
 // Approve application (for brands)
 export const ApproveApplication = async (applicationId: number, token: string) => {
     setAuthToken(token);
-    const response = await CampaignAPI.post(`/api/applications/${applicationId}/approve`);
-    return response.data;
+    try {
+        const response = await CampaignAPI.post(`/api/applications/${applicationId}/approve`);
+        return response.data;
+    } catch (error: any) {
+        // Handle 402 Payment Required - requires funding
+        if (error.response?.status === 402 && error.response?.data?.requires_funding) {
+            // Return the error data so it can be handled by the caller
+            throw {
+                ...error,
+                requiresFunding: true,
+                redirectUrl: error.response.data.redirect_url,
+                checkoutSessionId: error.response.data.checkout_session_id,
+                message: error.response.data.message || 'Payment method required',
+            };
+        }
+        throw error;
+    }
 };
 
 // Reject application (for brands)

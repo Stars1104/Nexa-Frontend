@@ -10,9 +10,10 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { brandPaymentApi, BrandPaymentMethod, SavePaymentMethodRequest } from '@/api/payment/brandPayment';
-import { CreditCard, Plus, Trash2, Star, StarOff, Wallet, Shield, CheckCircle2, Info, Loader2 } from 'lucide-react';
+import { CreditCard, Plus, Trash2, Star, StarOff, Wallet, Shield, CheckCircle2, Info, Loader2, FileText, DollarSign, Clock } from 'lucide-react';
 import StripeConnectOnboarding from '@/components/stripe/StripeConnectOnboarding';
 import { useSearchParams } from 'react-router-dom';
+import { hiringApi, Contract } from '@/api/hiring';
 
 export default function BrandPaymentMethods() {
   const { toast } = useToast();
@@ -24,6 +25,9 @@ export default function BrandPaymentMethods() {
   const [isLoadingStripe, setIsLoadingStripe] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [methodToDelete, setMethodToDelete] = useState<string | null>(null);
+  const [contractsNeedingPayment, setContractsNeedingPayment] = useState<Contract[]>([]);
+  const [loadingContracts, setLoadingContracts] = useState(true);
+  const [fundingContractId, setFundingContractId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     card_number: '',
     card_holder_name: '',
@@ -35,24 +39,48 @@ export default function BrandPaymentMethods() {
 
   useEffect(() => {
     loadPaymentMethods();
+    loadContractsNeedingPayment();
   }, []);
 
   useEffect(() => {
     // Handle Stripe Checkout success callback
     const success = searchParams.get('success');
-    const sessionId = searchParams.get('session_id');
+    const sessionId = searchParams.get('sessio_idn');
     const canceled = searchParams.get('canceled');
+    const fundingSuccess = searchParams.get('funding_success');
+    const fundingCanceled = searchParams.get('funding_canceled');
+    const contractId = searchParams.get('contract_id');
+    
+    // Debug logging
+    if (success === 'true' || fundingSuccess === 'true') {
+      console.log('Checkout success detected', {
+        success,
+        fundingSuccess,
+        sessionId,
+        allParams: Object.fromEntries(searchParams.entries()),
+      });
+    }
     
     if (success === 'true' && sessionId) {
       handleStripeCheckoutSuccess(sessionId);
+    } else if (fundingSuccess === 'true' && sessionId && contractId) {
+      handleContractFundingSuccess(sessionId, parseInt(contractId));
     } else if (canceled === 'true') {
       toast({
         title: 'Cancelado',
         description: 'Adição de método de pagamento foi cancelada.',
         variant: 'default',
       });
-      // Clean up URL
       searchParams.delete('canceled');
+      setSearchParams(searchParams, { replace: true });
+    } else if (fundingCanceled === 'true') {
+      toast({
+        title: 'Cancelado',
+        description: 'Pagamento do contrato foi cancelado.',
+        variant: 'default',
+      });
+      searchParams.delete('funding_canceled');
+      if (contractId) searchParams.delete('contract_id');
       setSearchParams(searchParams, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -80,6 +108,33 @@ export default function BrandPaymentMethods() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadContractsNeedingPayment = async () => {
+    try {
+      setLoadingContracts(true);
+      // Fetch contracts with status 'pending' and workflow_status 'payment_pending'
+      const response = await hiringApi.getContracts('pending');
+      const allContracts = response.data.data || [];
+      
+      // Filter contracts that need payment
+      const contractsNeedingPayment = allContracts.filter((contract: Contract) => 
+        contract.workflow_status === 'payment_pending' && 
+        contract.status === 'pending' &&
+        (!contract.payment || contract.payment?.status !== 'completed')
+      );
+      
+      setContractsNeedingPayment(contractsNeedingPayment);
+    } catch (error) {
+      console.error('Error loading contracts needing payment:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar contratos que precisam de pagamento',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingContracts(false);
     }
   };
 
@@ -330,6 +385,17 @@ export default function BrandPaymentMethods() {
     try {
       setIsLoadingStripe(true);
       
+      // Validate sessionId before making the request
+      if (!sessionId || sessionId.trim() === '') {
+        toast({
+          title: 'Erro',
+          description: 'ID da sessão não encontrado. Por favor, tente novamente.',
+          variant: 'destructive',
+        });
+        setIsLoadingStripe(false);
+        return;
+      }
+      
       const response = await brandPaymentApi.handleCheckoutSuccess(sessionId);
       
       if (response.success) {
@@ -341,10 +407,35 @@ export default function BrandPaymentMethods() {
         // Clean up URL parameters
         searchParams.delete('success');
         searchParams.delete('session_id');
+        const applicationId = searchParams.get('application_id');
+        const campaignId = searchParams.get('campaign_id');
+        if (applicationId) searchParams.delete('application_id');
+        if (campaignId) searchParams.delete('campaign_id');
         setSearchParams(searchParams, { replace: true });
         
         // Reload payment methods
         await loadPaymentMethods();
+        
+        // Reload contracts to check if any need funding
+        await loadContractsNeedingPayment();
+        
+        // Get the updated contracts list after reload
+        const response = await hiringApi.getContracts('pending');
+        const allContracts = response.data.data || [];
+        const contractsNeedingPayment = allContracts.filter((contract: Contract) => 
+          contract.workflow_status === 'payment_pending' && 
+          contract.status === 'pending' &&
+          (!contract.payment || contract.payment?.status !== 'completed')
+        );
+        
+        // If there are contracts needing payment, redirect to fund the first one
+        if (contractsNeedingPayment.length > 0) {
+          const firstContract = contractsNeedingPayment[0];
+          if (firstContract) {
+            // Redirect to Stripe checkout for contract funding
+            handleFundContract(firstContract.id);
+          }
+        }
       } else {
         toast({
           title: 'Erro',
@@ -361,6 +452,81 @@ export default function BrandPaymentMethods() {
     } finally {
       setIsLoadingStripe(false);
     }
+  };
+
+  const handleContractFundingSuccess = async (sessionId: string, contractId: number) => {
+    try {
+      setIsLoadingStripe(true);
+      
+      // Check payment status
+      const paymentStatus = await brandPaymentApi.getContractPaymentStatus(contractId.toString());
+      
+      if (paymentStatus.success && paymentStatus.data?.payment?.status === 'completed') {
+        toast({
+          title: 'Sucesso',
+          description: 'Contrato financiado com sucesso! O valor foi depositado em garantia.',
+        });
+        
+        // Clean up URL parameters
+        searchParams.delete('funding_success');
+        searchParams.delete('session_id');
+        searchParams.delete('contract_id');
+        setSearchParams(searchParams, { replace: true });
+        
+        // Reload contracts
+        await loadContractsNeedingPayment();
+      } else {
+        toast({
+          title: 'Processando',
+          description: 'Seu pagamento está sendo processado. Atualize a página em alguns instantes.',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: 'Erro ao verificar status do pagamento. Verifique mais tarde.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingStripe(false);
+    }
+  };
+
+  const handleFundContract = async (contractId: number) => {
+    try {
+      setFundingContractId(contractId);
+      setIsLoadingStripe(true);
+      
+      const response = await brandPaymentApi.createContractCheckoutSession(contractId);
+      
+      if (response.success && response.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = response.url;
+      } else {
+        toast({
+          title: 'Erro',
+          description: response.error || 'Erro ao criar sessão de checkout',
+          variant: 'destructive',
+        });
+        setIsLoadingStripe(false);
+      }
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: 'Erro ao iniciar processo de financiamento',
+        variant: 'destructive',
+      });
+      setIsLoadingStripe(false);
+    } finally {
+      setFundingContractId(null);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(amount);
   };
 
   if (loading) {
@@ -412,6 +578,94 @@ export default function BrandPaymentMethods() {
             });
           }}
         />
+
+        {/* Contracts Needing Payment Section */}
+        {contractsNeedingPayment.length > 0 && (
+          <Card className="shadow-sm border-primary/20">
+            <CardHeader className="pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-1">
+                  <CardTitle className="text-2xl flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Contratos Aguardando Financiamento
+                  </CardTitle>
+                  <CardDescription className="text-base">
+                    Financie seus contratos através de depósito em garantia (escrow)
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                {loadingContracts ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  contractsNeedingPayment.map((contract) => (
+                    <div
+                      key={contract.id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-5 border rounded-xl bg-card hover:shadow-md transition-all gap-4"
+                    >
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-primary/10">
+                            <FileText className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg">{contract.title}</h3>
+                            <p className="text-sm text-muted-foreground line-clamp-2">
+                              {contract.description || 'Sem descrição'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground pl-12">
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="h-4 w-4" />
+                            <span className="font-semibold text-foreground">
+                              {formatCurrency(typeof contract.budget === 'number' ? contract.budget : parseFloat(contract.budget || '0') || 0)}
+                            </span>
+                          </div>
+                          {contract.estimated_days && (
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              <span>{contract.estimated_days} dias estimados</span>
+                            </div>
+                          )}
+                          {contract.other_user && (
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">Criador:</span>
+                              <span>{contract.other_user.name}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex sm:flex-col gap-2 sm:w-auto w-full">
+                        <Button
+                          onClick={() => handleFundContract(contract.id)}
+                          disabled={isLoadingStripe && fundingContractId === contract.id}
+                          className="bg-primary text-white hover:bg-primary/90 w-full sm:w-auto"
+                        >
+                          {isLoadingStripe && fundingContractId === contract.id ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Processando...
+                            </>
+                          ) : (
+                            <>
+                              <Wallet className="h-4 w-4 mr-2" />
+                              Financiar Contrato
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Payment Methods Section */}
         <Card className="shadow-sm">
@@ -691,6 +945,7 @@ export default function BrandPaymentMethods() {
                   </Tooltip>
                 </div>
               </div>
+              
             ))}
           </div>
         )}

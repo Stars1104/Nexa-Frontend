@@ -228,7 +228,7 @@ export default function PendingCampaign() {
                     <Alert className="mb-6 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
                         <AlertTitle className="text-red-800 dark:text-red-200">Erro</AlertTitle>
                         <AlertDescription className="text-red-700 dark:text-red-300">
-                            {error}
+                            {typeof error === 'string' ? error : error?.message || 'Erro desconhecido'}
                         </AlertDescription>
                     </Alert>
                 )}

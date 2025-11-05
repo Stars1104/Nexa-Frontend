@@ -232,12 +232,14 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
     }
 
     if (error) {
+        // Safely convert error to string (handle both string and object cases)
+        const errorMessage = typeof error === 'string' ? error : (error?.message || 'Erro desconhecido');
         return (
             <div className="p-6 md:p-10 dark:bg-[#171717] min-h-[92vh]">
                 <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                        Erro ao carregar campanhas: {error}
+                        Erro ao carregar campanhas: {errorMessage}
                     </AlertDescription>
                 </Alert>
             </div>

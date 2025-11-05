@@ -564,7 +564,12 @@ const campaignSlice = createSlice({
       })
       .addCase(approveApplication.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Falha ao aprovar aplicação';
+        // Handle both string and object payloads (funding requirement)
+        if (typeof action.payload === 'object' && action.payload !== null && 'message' in action.payload) {
+          state.error = action.payload.message || 'Falha ao aprovar aplicação';
+        } else {
+          state.error = (action.payload as string) || 'Falha ao aprovar aplicação';
+        }
       })
       
       // Reject application

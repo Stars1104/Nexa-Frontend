@@ -335,7 +335,7 @@ export default function CreatorBalance() {
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-blue-800">
-                      Saque via Pagar.me
+                      Saque via Stripe
                     </h4>
                     <p className="text-sm text-blue-700 mt-1">
                       Atualmente, apenas transferências bancárias via Pagar.me estão disponíveis. 
