@@ -52,8 +52,17 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
       toast.success("Aplicação aprovada com sucesso!");
       setSidebarOpen(false);
       setSelectedApp(null);
-    } catch {
-      toast.error("Erro ao aprovar aplicação");
+    } catch (error: any) {
+      // Check if this is a funding requirement error (object payload from thunk)
+      if (error && typeof error === 'object' && error.requiresFunding && error.redirectUrl) {
+        toast.info("Configure um método de pagamento para continuar");
+        // Redirect to Stripe checkout session
+        window.location.href = error.redirectUrl;
+        return;
+      }
+      // Handle string error messages
+      const errorMessage = typeof error === 'string' ? error : error?.message || "Erro ao aprovar aplicação";
+      toast.error(errorMessage);
     }
   };
 
@@ -89,7 +98,11 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
       <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1">Aplicações para: {campaignTitle || "Campanha"}</h1>
       <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm sm:text-base">{filteredApps.length} criadores se candidataram para esta campanha</p>
       {isLoading && <div className="text-center text-muted-foreground py-8">Carregando aplicações...</div>}
-      {error && <div className="text-center text-red-500 py-8">{error}</div>}
+      {error && (
+        <div className="text-center text-red-500 py-8">
+          {typeof error === 'string' ? error : error?.message || 'Erro ao carregar aplicações'}
+        </div>
+      )}
       <div className="space-y-4">
         {filteredApps.map((app) => {
           const status = app.status;

@@ -134,7 +134,12 @@ export const useComponentNavigation = (options: UseComponentNavigationOptions) =
     
     // If we're on a pathname route like /creator/subscription, we need to navigate
     // to the base path with query params instead for proper component navigation
-    if (currentPath !== '/creator' && currentPath !== '/creator/') {
+    // Check if we're NOT on a base path (creator, brand, or admin)
+    const isBasePath = currentPath === '/creator' || currentPath === '/creator/' ||
+                       currentPath === '/brand' || currentPath === '/brand/' ||
+                       currentPath === '/admin' || currentPath === '/admin/';
+    
+    if (!isBasePath) {
       // Extract base path (e.g., /creator from /creator/subscription)
       let basePath = '/creator';
       if (currentPath.startsWith('/creator/')) {
@@ -142,6 +147,8 @@ export const useComponentNavigation = (options: UseComponentNavigationOptions) =
       } else if (currentPath.startsWith('/brand/')) {
         basePath = '/brand';
       } else if (currentPath.startsWith('/admin/')) {
+        basePath = '/admin';
+      } else if (currentPath === '/admin') {
         basePath = '/admin';
       }
       

@@ -599,7 +599,7 @@ export const fetchCreatorApplications = createAsyncThunk<
 export const approveApplication = createAsyncThunk<
   { campaignId: number; applicationId: number },
   { campaignId: number; applicationId: number },
-  { state: RootState; rejectValue: string }
+  { state: RootState; rejectValue: string | { message: string; requiresFunding: boolean; redirectUrl?: string; checkoutSessionId?: string } }
 >('campaign/approveApplication', async ({ campaignId, applicationId }, { getState, rejectWithValue }) => {
   try {
     const state = getState();
@@ -611,7 +611,17 @@ export const approveApplication = createAsyncThunk<
     
     await ApproveApplication(applicationId, token);
     return { campaignId, applicationId };
-  } catch (error: unknown) {
+  } catch (error: any) {
+    // Check if this is a funding requirement error
+    if (error.requiresFunding && error.redirectUrl) {
+      return rejectWithValue({
+        message: error.message || 'Método de pagamento necessário',
+        requiresFunding: true,
+        redirectUrl: error.redirectUrl,
+        checkoutSessionId: error.checkoutSessionId,
+      });
+    }
+    
     const errorMessage = error instanceof Error ? error.message : 'Falha ao aprovar candidatura';
     return rejectWithValue(errorMessage);
   }

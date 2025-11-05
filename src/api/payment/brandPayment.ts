@@ -328,5 +328,30 @@ export const brandPaymentApi = {
         error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
       };
     }
+  },
+
+  /**
+   * Create Stripe Checkout Session for contract funding (escrow deposit)
+   * POST /api/contract-payment/checkout-session
+   */
+  createContractCheckoutSession: async (contractId: number): Promise<{ success: boolean; url?: string; session_id?: string; error?: string }> => {
+    try {
+      const response = await apiClient.post('/contract-payment/checkout-session', {
+        contract_id: contractId
+      });
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return {
+          success: false,
+          error: error.response.data.error || error.response.data.message || 'Erro ao criar sessão de checkout para contrato'
+        };
+      }
+      
+      return {
+        success: false,
+        error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
+      };
+    }
   }
 }; 
