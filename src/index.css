@@ -133,24 +133,42 @@ input[type="tel"].iti__tel-input {
   }
 }
 
+/* Hide scrollbar by default */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
-/* Track */
+/* Track - transparent by default */
 ::-webkit-scrollbar-track {
-  background: hsl(var(--background));
+  background: transparent;
 }
 
-/* Handle */
+/* Handle - transparent by default */
 ::-webkit-scrollbar-thumb {
   border-radius: 10px;
-  background: linear-gradient(135deg, #ec4899, #9333ea);
+  background: transparent;
+  transition: background 0.2s ease;
 }
 
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #ec4899, #9333ea);
+/* Show scrollbar on hover over scrollable elements */
+*:hover::-webkit-scrollbar-thumb {
+  background: lightgray;
+}
+
+/* Handle on hover - darker on direct hover */
+*:hover::-webkit-scrollbar-thumb:hover {
+  background: gray;
+}
+
+/* For Firefox - hide by default */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+/* For Firefox - show on hover */
+*:hover {
+  scrollbar-color: lightgray transparent;
 }
 
 @media (max-width: 768px) {
