@@ -471,7 +471,6 @@ export const updateCampaign = createAsyncThunk<
         console.log(pair[0] + ':', pair[1]);
       }
     }
-    
     const response = await UpdateCampaign(campaignId, formData, token, isAdmin);
     return response;
   } catch (error: unknown) {

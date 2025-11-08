@@ -75,7 +75,6 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validateForm()) {
       return;
     }
@@ -118,8 +117,6 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
         return;
       }
 
-      console.log('Campaign update data:', campaignData);
-      
       await dispatch(updateCampaign({
         campaignId: campaign.id,
         data: campaignData

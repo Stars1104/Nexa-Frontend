@@ -19,11 +19,15 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  X
+  X,
+  History,
+  Activity
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import EditCampaign from "./EditCampaign";
+import { hiringApi } from "../../api/hiring";
+import CampaignTimelineSidebar from "../CampaignTimelineSidebar";
 
 interface CampaignManagementProps {
   setComponent?: (component: string | { name: string; campaign?: any }) => void;
@@ -61,6 +65,11 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
   const [showViewModal, setShowViewModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [campaignContracts, setCampaignContracts] = useState<any[]>([]);
+  const [loadingContracts, setLoadingContracts] = useState(false);
+  const [activeTab, setActiveTab] = useState<'details' | 'log'>('details');
+  const [selectedContractId, setSelectedContractId] = useState<number | null>(null);
+  const [showTimelineSidebar, setShowTimelineSidebar] = useState(false);
 
   useEffect(() => {
     dispatch(fetchUserCampaigns());
@@ -145,9 +154,31 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
     setShowDeleteModal(true);
   };
 
-  const handleView = (campaign: Campaign) => {
+  const handleView = async (campaign: Campaign) => {
     setSelectedCampaign(campaign);
     setShowViewModal(true);
+    setActiveTab('details');
+    await loadCampaignContracts(campaign.id);
+  };
+
+  const loadCampaignContracts = async (campaignId: number) => {
+    try {
+      setLoadingContracts(true);
+      const response = await hiringApi.getContracts();
+      const allContracts = response.data.data || [];
+      
+      // Filter contracts that belong to this campaign through offers
+      const contracts = allContracts.filter((contract: any) => {
+        return contract.offer?.campaign_id === campaignId;
+      });
+      
+      setCampaignContracts(contracts);
+    } catch (error) {
+      console.error('Error loading campaign contracts:', error);
+      toast.error("Erro ao carregar contratos da campanha");
+    } finally {
+      setLoadingContracts(false);
+    }
   };
 
   const confirmDelete = async () => {
@@ -182,17 +213,17 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
     );
   }
 
-  // if (error) {
-  //   return (
-  //     <div className="text-center py-8">
-  //       <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-  //       <p className="text-red-500 mb-4">Erro ao carregar campanhas</p>
-  //       <Button onClick={() => dispatch(fetchUserCampaigns())}>
-  //         Tentar Novamente
-  //       </Button>
-  //     </div>
-  //   );
-  // }
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+        <p className="text-red-500 mb-4">Erro ao carregar campanhas</p>
+        <Button onClick={() => dispatch(fetchUserCampaigns())}>
+          Tentar Novamente
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-4 dark:bg-[#171717] h-screen">
@@ -278,7 +309,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
                     <div className="w-16 h-16 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-gray-700">
                       {campaign.logo ? (
                         <img
-                          src={`http://localhost:8000${campaign.logo}`}
+                        src={`${import.meta.env.VITE_BACKEND_URL}${campaign.logo}`}
                           alt={campaign.title}
                           className="w-full h-full rounded-lg object-cover"
                         />
@@ -428,7 +459,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
                 <div className="w-20 h-20 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-gray-700">
                   {selectedCampaign.logo ? (
                     <img
-                      src={`http://localhost:8000${selectedCampaign.logo}`}
+                      src={`${import.meta.env.VITE_BACKEND_URL}${selectedCampaign.logo}`}
                       alt={selectedCampaign.title}
                       className="w-full h-full rounded-lg object-cover"
                     />
@@ -458,6 +489,32 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
               </Button>
             </div>
 
+            {/* Tabs */}
+            <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setActiveTab('details')}
+                className={`px-4 py-2 font-medium text-sm transition-colors ${
+                  activeTab === 'details'
+                    ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                Detalhes
+              </button>
+              <button
+                onClick={() => setActiveTab('log')}
+                className={`px-4 py-2 font-medium text-sm transition-colors flex items-center gap-2 ${
+                  activeTab === 'log'
+                    ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                <History className="w-4 h-4" />
+                Log da Campanha
+              </button>
+            </div>
+
+            {activeTab === 'details' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Campaign Details */}
               <div className="space-y-6">
@@ -570,6 +627,73 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
                 </div>
               </div>
             </div>
+            )}
+
+            {activeTab === 'log' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Contratos e Timeline
+                  </h3>
+                  {loadingContracts && (
+                    <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  )}
+                </div>
+
+                {campaignContracts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400">
+                      {loadingContracts 
+                        ? 'Carregando contratos...' 
+                        : 'Nenhum contrato encontrado para esta campanha'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {campaignContracts.map((contract: any) => (
+                      <div
+                        key={contract.id}
+                        className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                              {contract.title}
+                            </h4>
+                            <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-300 mb-3">
+                              <span>
+                                <strong>Status:</strong> {contract.status}
+                              </span>
+                              <span>
+                                <strong>Criador:</strong> {contract.creator?.name || 'N/A'}
+                              </span>
+                              {contract.started_at && (
+                                <span>
+                                  <strong>Iniciado:</strong> {formatDate(contract.started_at)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedContractId(contract.id);
+                              setShowTimelineSidebar(true);
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <Activity className="w-4 h-4" />
+                            Ver Timeline
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
@@ -582,6 +706,18 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
             </div>
           </div>
         </div>
+      )}
+
+      {/* Campaign Timeline Sidebar */}
+      {selectedContractId && (
+        <CampaignTimelineSidebar
+          contractId={selectedContractId}
+          isOpen={showTimelineSidebar}
+          onClose={() => {
+            setShowTimelineSidebar(false);
+            setSelectedContractId(null);
+          }}
+        />
       )}
     </div>
   );
