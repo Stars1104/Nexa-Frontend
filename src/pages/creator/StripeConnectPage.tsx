@@ -1,16 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Shield, CreditCard, Zap } from 'lucide-react';
+import { ArrowLeft, Shield, CreditCard, Zap, Loader2 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import StripeConnectOnboarding from '../../components/stripe/StripeConnectOnboarding';
 import StripeConnectTest from '../../components/stripe/StripeConnectTest';
 import { toast } from '../../components/ui/sonner';
+import { apiClient } from '../../services/apiClient';
 
 const StripeConnectPage: React.FC = () => {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleComplete = () => {
     toast.success('Conta Stripe configurada com sucesso!');
@@ -19,6 +21,31 @@ const StripeConnectPage: React.FC = () => {
 
   const handleError = (error: string) => {
     toast.error(`Erro na configuração: ${error}`);
+  };
+
+  /**
+   * Handle payment method button click - redirect to Stripe checkout
+   */
+  const handleConnectPaymentMethod = async () => {
+    setIsLoading(true);
+    try {
+      const response = await apiClient.post('/freelancer/stripe-payment-method-checkout');
+      
+      if (response.data.success && response.data.url) {
+        // Redirect to Stripe checkout page
+        window.location.href = response.data.url;
+      } else {
+        throw new Error(response.data.message || 'Erro ao criar sessão de checkout');
+      }
+    } catch (error: any) {
+      console.error('Error connecting payment method:', error);
+      toast.error(
+        error.response?.data?.message || 
+        error.message || 
+        'Erro ao conectar método de pagamento. Tente novamente.'
+      );
+      setIsLoading(false);
+    }
   };
 
   const features = [
@@ -106,6 +133,38 @@ const StripeConnectPage: React.FC = () => {
 
             {/* Test Component - Remove after testing */}
             <StripeConnectTest />
+
+            {/* Payment Method Button Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  Método de Pagamento para Saques
+                </CardTitle>
+                <CardDescription>
+                  Conecte um cartão de crédito ou débito para receber seus saques
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={handleConnectPaymentMethod}
+                  disabled={isLoading}
+                  className="w-full"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Conectando...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      Conectar Método de Pagamento
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
 
             {/* Stripe Connect Onboarding */}
             <StripeConnectOnboarding

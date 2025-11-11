@@ -168,16 +168,19 @@ export const brandPaymentApi = {
     } catch (error: any) {
       if (error.response) {
         const errorData = error.response.data;
+        // Extract error message from all possible locations in the error response
+        const errorMessage = errorData.message || errorData.error || 'Erro ao deletar método de pagamento';
         return {
           success: false,
-          message: errorData.message,
-          error: errorData.error || errorData.message || 'Erro ao deletar método de pagamento'
+          message: errorMessage,
+          error: errorMessage
         };
       }
       
       return {
         success: false,
-        error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
+        error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.',
+        message: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
       };
     }
   },

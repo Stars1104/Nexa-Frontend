@@ -45,7 +45,7 @@ export default function BrandPaymentMethods() {
   useEffect(() => {
     // Handle Stripe Checkout success callback
     const success = searchParams.get('success');
-    const sessionId = searchParams.get('sessio_idn');
+    const sessionId = searchParams.get('session_id');
     const canceled = searchParams.get('canceled');
     const fundingSuccess = searchParams.get('funding_success');
     const fundingCanceled = searchParams.get('funding_canceled');
@@ -61,22 +61,64 @@ export default function BrandPaymentMethods() {
       });
     }
     
+    // Check if returning from offer checkout
+    const action = searchParams.get('action');
+    const creatorId = searchParams.get('creator_id');
+    const chatRoomId = searchParams.get('chat_room_id');
+    
     if (success === 'true' && sessionId) {
       handleStripeCheckoutSuccess(sessionId);
+      
+      // If returning from offer checkout, show message and redirect to chat
+      if (action === 'send_offer' && chatRoomId) {
+        toast({
+          title: 'Método de Pagamento Configurado',
+          description: 'Agora você pode enviar ofertas. Redirecionando para o chat...',
+          variant: 'default',
+        });
+        
+        // Clear URL params
+        searchParams.delete('success');
+        searchParams.delete('session_id');
+        searchParams.delete('action');
+        searchParams.delete('creator_id');
+        searchParams.delete('chat_room_id');
+        setSearchParams(searchParams, { replace: true });
+        
+        // Redirect to chat page after a short delay
+        setTimeout(() => {
+          window.location.href = `/brand/chat?room_id=${chatRoomId}`;
+        }, 1500);
+        return;
+      }
     } else if (fundingSuccess === 'true' && sessionId && contractId) {
       handleContractFundingSuccess(sessionId, parseInt(contractId));
     } else if (canceled === 'true') {
-      toast({
-        title: 'Cancelado',
-        description: 'Adição de método de pagamento foi cancelada.',
-        variant: 'default',
-      });
-      searchParams.delete('canceled');
-      setSearchParams(searchParams, { replace: true });
+      // Check if canceling from offer checkout
+      if (action === 'send_offer') {
+        toast({
+          title: 'Operação Cancelada',
+          description: 'A configuração do método de pagamento foi cancelada. Você precisa configurar um método de pagamento para enviar ofertas.',
+          variant: 'default',
+        });
+        searchParams.delete('canceled');
+        searchParams.delete('action');
+        searchParams.delete('creator_id');
+        searchParams.delete('chat_room_id');
+        setSearchParams(searchParams, { replace: true });
+      } else {
+        toast({
+          title: 'Operação Cancelada',
+          description: 'A adição do método de pagamento foi cancelada. Você pode tentar novamente quando quiser.',
+          variant: 'default',
+        });
+        searchParams.delete('canceled');
+        setSearchParams(searchParams, { replace: true });
+      }
     } else if (fundingCanceled === 'true') {
       toast({
-        title: 'Cancelado',
-        description: 'Pagamento do contrato foi cancelado.',
+        title: 'Pagamento Cancelado',
+        description: 'O pagamento do contrato foi cancelado. Você pode financiar o contrato novamente a qualquer momento.',
         variant: 'default',
       });
       searchParams.delete('funding_canceled');
@@ -95,15 +137,15 @@ export default function BrandPaymentMethods() {
         setPaymentMethods(response.data);
       } else {
         toast({
-          title: 'Erro',
-          description: response.error || 'Erro ao carregar métodos de pagamento',
+          title: 'Ops! Algo deu errado',
+          description: response.error || 'Não foi possível carregar seus métodos de pagamento. Por favor, recarregue a página ou tente novamente em alguns instantes.',
           variant: 'destructive',
         });
       }
     } catch (error) {
       toast({
-        title: 'Erro',
-        description: 'Erro ao carregar métodos de pagamento',
+        title: 'Erro ao Carregar',
+        description: 'Não foi possível carregar seus métodos de pagamento no momento. Verifique sua conexão e tente novamente.',
         variant: 'destructive',
       });
     } finally {
@@ -114,25 +156,40 @@ export default function BrandPaymentMethods() {
   const loadContractsNeedingPayment = async () => {
     try {
       setLoadingContracts(true);
-      // Fetch contracts with status 'pending' and workflow_status 'payment_pending'
-      const response = await hiringApi.getContracts('pending');
-      const allContracts = response.data.data || [];
       
-      // Filter contracts that need payment
-      const contractsNeedingPayment = allContracts.filter((contract: Contract) => 
-        contract.workflow_status === 'payment_pending' && 
-        contract.status === 'pending' &&
-        (!contract.payment || contract.payment?.status !== 'completed')
-      );
+      // Fetch contracts with status 'pending' and workflow_status 'payment_pending'
+      // This will be more efficient as backend filters by workflow_status
+      const response = await hiringApi.getContracts('pending', 'payment_pending');
+      
+      // Handle paginated response structure
+      const contractsData = response.data?.data || response.data || [];
+      const allContracts = Array.isArray(contractsData) ? contractsData : (contractsData.data || []);
+      
+      // Additional filter on frontend to ensure we only get contracts that need payment
+      // This handles edge cases where payment might have been completed but status not updated
+      const contractsNeedingPayment = allContracts.filter((contract: Contract) => {
+        // Must be pending status
+        if (contract.status !== 'pending') return false;
+        
+        // Must have payment_pending workflow status
+        if (contract.workflow_status !== 'payment_pending') return false;
+        
+        // Either no payment exists, or payment status is not completed
+        if (contract.payment && contract.payment.status === 'completed') return false;
+        
+        return true;
+      });
       
       setContractsNeedingPayment(contractsNeedingPayment);
     } catch (error) {
       console.error('Error loading contracts needing payment:', error);
       toast({
-        title: 'Erro',
-        description: 'Erro ao carregar contratos que precisam de pagamento',
+        title: 'Erro ao Carregar Contratos',
+        description: 'Não foi possível carregar os contratos que precisam de pagamento. Por favor, recarregue a página.',
         variant: 'destructive',
       });
+      // Set empty array on error to prevent UI issues
+      setContractsNeedingPayment([]);
     } finally {
       setLoadingContracts(false);
     }
@@ -186,9 +243,17 @@ export default function BrandPaymentMethods() {
 
 
     if (missingFields.length > 0) {
+      const fieldNames: { [key: string]: string } = {
+        card_number: 'Número do Cartão',
+        card_holder_name: 'Nome no Cartão',
+        card_expiration_date: 'Data de Validade',
+        card_cvv: 'CVV',
+        cnpj: 'CNPJ',
+      };
+      const missingFieldNames = missingFields.map(field => fieldNames[field] || field).join(', ');
       toast({
-        title: 'Erro de Validação',
-        description: `Campos obrigatórios não preenchidos: ${missingFields.join(', ')}`,
+        title: 'Campos Obrigatórios',
+        description: `Por favor, preencha todos os campos: ${missingFieldNames}.`,
         variant: 'destructive',
       });
       return;
@@ -200,8 +265,8 @@ export default function BrandPaymentMethods() {
       // Validate card number format (13-19 digits)
       if (!formData.card_number.match(/^[0-9]{13,19}$/)) {
         toast({
-          title: 'Erro de Validação',
-          description: 'Número do cartão inválido. Digite entre 13 e 19 dígitos.',
+          title: 'Número do Cartão Inválido',
+          description: 'O número do cartão deve conter entre 13 e 19 dígitos. Verifique e tente novamente.',
           variant: 'destructive',
         });
         return;
@@ -210,8 +275,8 @@ export default function BrandPaymentMethods() {
       // Validate expiration date format
       if (!formData.card_expiration_date.match(/^(0[1-9]|1[0-2])([0-9]{2})$/)) {
         toast({
-          title: 'Erro de Validação',
-          description: 'Formato de data inválido. Use MMAA (ex: 1225).',
+          title: 'Data de Validade Inválida',
+          description: 'Por favor, use o formato MMAA (exemplo: 1225 para dezembro de 2025).',
           variant: 'destructive',
         });
         return;
@@ -220,8 +285,8 @@ export default function BrandPaymentMethods() {
       // Validate CVV format
       if (!formData.card_cvv.match(/^[0-9]{3,4}$/)) {
         toast({
-          title: 'Erro de Validação',
-          description: 'CVV inválido. Digite 3 ou 4 dígitos.',
+          title: 'CVV Inválido',
+          description: 'O CVV deve conter 3 ou 4 dígitos. Geralmente está localizado no verso do cartão.',
           variant: 'destructive',
         });
         return;
@@ -230,8 +295,8 @@ export default function BrandPaymentMethods() {
       // Validate CNPJ format
       if (!formData.cnpj.match(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/)) {
         toast({
-          title: 'Erro de Validação',
-          description: 'CNPJ inválido. Use o formato: 12.345.678/0001-90',
+          title: 'CNPJ Inválido',
+          description: 'Por favor, use o formato correto: 12.345.678/0001-90',
           variant: 'destructive',
         });
         return;
@@ -256,8 +321,8 @@ export default function BrandPaymentMethods() {
 
       if (response.success) {
         toast({
-          title: 'Sucesso',
-          description: 'Método de pagamento salvo com sucesso!',
+          title: 'Cartão Adicionado! 🎉',
+          description: 'Seu método de pagamento foi salvo com sucesso e já está disponível para uso.',
         });
         setIsAddDialogOpen(false);
         setFormData({
@@ -271,15 +336,15 @@ export default function BrandPaymentMethods() {
         loadPaymentMethods();
       } else {
         toast({
-          title: 'Erro',
-          description: response.error || response.message || 'Erro ao salvar método de pagamento',
+          title: 'Não Foi Possível Salvar',
+          description: response.error || response.message || 'Ocorreu um erro ao salvar seu método de pagamento. Por favor, verifique os dados e tente novamente.',
           variant: 'destructive',
         });
       }
     } catch (error) {
       toast({
-        title: 'Erro',
-        description: 'Erro ao salvar método de pagamento',
+        title: 'Erro ao Salvar',
+        description: 'Não foi possível salvar seu método de pagamento no momento. Verifique sua conexão e tente novamente.',
         variant: 'destructive',
       });
     } finally {
@@ -292,21 +357,21 @@ export default function BrandPaymentMethods() {
       const response = await brandPaymentApi.setDefaultPaymentMethod(paymentMethodId);
       if (response.success) {
         toast({
-          title: 'Sucesso',
-          description: 'Método de pagamento definido como padrão!',
+          title: 'Método Padrão Atualizado! ✓',
+          description: 'Este método de pagamento agora é o seu padrão e será usado automaticamente nos próximos pagamentos.',
         });
         loadPaymentMethods();
       } else {
         toast({
-          title: 'Erro',
-          description: response.error || 'Erro ao definir método padrão',
+          title: 'Não Foi Possível Atualizar',
+          description: response.error || 'Não foi possível definir este método como padrão. Por favor, tente novamente.',
           variant: 'destructive',
         });
       }
     } catch (error) {
       toast({
-        title: 'Erro',
-        description: 'Erro ao definir método padrão',
+        title: 'Erro ao Atualizar',
+        description: 'Não foi possível definir o método padrão no momento. Tente novamente em alguns instantes.',
         variant: 'destructive',
       });
     }
@@ -324,31 +389,64 @@ export default function BrandPaymentMethods() {
       const response = await brandPaymentApi.deletePaymentMethod(methodToDelete);
       if (response.success) {
         toast({
-          title: 'Sucesso',
-          description: 'Método de pagamento deletado com sucesso!',
+          title: 'Método de Pagamento Removido com Sucesso! 🎉',
+          description: 'O método de pagamento foi removido da sua conta. Você pode adicionar um novo método a qualquer momento.',
         });
         loadPaymentMethods();
         setDeleteDialogOpen(false);
         setMethodToDelete(null);
       } else {
-        // Show error toast with the message from backend
-        const errorMessage = response.error || response.message || 'Erro ao deletar método de pagamento';
-        toast({
-          title: 'Erro',
-          description: errorMessage,
-          variant: 'destructive',
-        });
-        // Keep dialog open so user can see the error, or close it
+        // Extract error message from response - check all possible locations
+        const errorMessage = response.error || response.message || '';
+        
+        // Check if this is the "only payment method" error
+        const isOnlyPaymentMethodError = errorMessage.toLowerCase().includes('only payment method') || 
+                                         errorMessage.toLowerCase().includes('cannot delete the only') ||
+                                         errorMessage.toLowerCase().includes('único método');
+        
+        if (isOnlyPaymentMethodError) {
+          toast({
+            title: 'Não é possível remover este método de pagamento',
+            description: 'Este é o seu único método de pagamento. Por favor, adicione outro método antes de remover este. Isso garante que você sempre tenha uma forma de pagamento disponível.',
+            variant: 'destructive',
+          });
+        } else {
+          // Show error toast with the message from backend
+          const defaultErrorMessage = 'Este método de pagamento não pode ser removido no momento. Ele pode estar sendo usado em um contrato ativo ou pendente. Verifique seus contratos e tente novamente.';
+          toast({
+            title: 'Não Foi Possível Remover o Método de Pagamento',
+            description: errorMessage || defaultErrorMessage,
+            variant: 'destructive',
+          });
+        }
         setDeleteDialogOpen(false);
         setMethodToDelete(null);
       }
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || 'Erro ao deletar método de pagamento';
-      toast({
-        title: 'Erro',
-        description: errorMessage,
-        variant: 'destructive',
-      });
+      // Extract error message from all possible error response structures
+      const errorMessage = error?.response?.data?.message || 
+                          error?.response?.data?.error || 
+                          error?.message || 
+                          '';
+      
+      // Check if this is the "only payment method" error in catch block
+      const isOnlyPaymentMethodError = errorMessage.toLowerCase().includes('only payment method') || 
+                                       errorMessage.toLowerCase().includes('cannot delete the only') ||
+                                       errorMessage.toLowerCase().includes('único método');
+      
+      if (isOnlyPaymentMethodError) {
+        toast({
+          title: 'Não é possível remover este método de pagamento',
+          description: 'Este é o seu único método de pagamento. Por favor, adicione outro método antes de remover este. Isso garante que você sempre tenha uma forma de pagamento disponível.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Erro ao Remover Método de Pagamento',
+          description: errorMessage || 'Ops! Algo deu errado ao tentar remover o método de pagamento. Por favor, verifique sua conexão e tente novamente em alguns instantes.',
+          variant: 'destructive',
+        });
+      }
       setDeleteDialogOpen(false);
       setMethodToDelete(null);
     }
@@ -365,16 +463,16 @@ export default function BrandPaymentMethods() {
         window.location.href = response.url;
       } else {
         toast({
-          title: 'Erro',
-          description: response.error || 'Erro ao criar sessão de checkout',
+          title: 'Não Foi Possível Iniciar',
+          description: response.error || 'Não foi possível iniciar o processo de adição. Por favor, tente novamente em alguns instantes.',
           variant: 'destructive',
         });
         setIsLoadingStripe(false);
       }
     } catch (error) {
       toast({
-        title: 'Erro',
-        description: 'Erro ao iniciar processo de adição de método de pagamento',
+        title: 'Erro ao Conectar',
+        description: 'Não foi possível conectar ao sistema de pagamento. Verifique sua conexão e tente novamente.',
         variant: 'destructive',
       });
       setIsLoadingStripe(false);
@@ -388,8 +486,8 @@ export default function BrandPaymentMethods() {
       // Validate sessionId before making the request
       if (!sessionId || sessionId.trim() === '') {
         toast({
-          title: 'Erro',
-          description: 'ID da sessão não encontrado. Por favor, tente novamente.',
+          title: 'Sessão Inválida',
+          description: 'Não foi possível validar sua sessão de pagamento. Por favor, tente adicionar o método novamente.',
           variant: 'destructive',
         });
         setIsLoadingStripe(false);
@@ -400,8 +498,8 @@ export default function BrandPaymentMethods() {
       
       if (response.success) {
         toast({
-          title: 'Sucesso',
-          description: 'Método de pagamento adicionado com sucesso!',
+          title: 'Método Adicionado com Sucesso! 🎉',
+          description: 'Seu método de pagamento foi adicionado e já está disponível para uso nos seus contratos.',
         });
         
         // Clean up URL parameters
@@ -438,15 +536,15 @@ export default function BrandPaymentMethods() {
         }
       } else {
         toast({
-          title: 'Erro',
-          description: response.error || 'Erro ao processar método de pagamento',
+          title: 'Não Foi Possível Processar',
+          description: response.error || 'Não foi possível processar seu método de pagamento. Por favor, tente adicionar novamente.',
           variant: 'destructive',
         });
       }
     } catch (error) {
       toast({
-        title: 'Erro',
-        description: 'Erro ao processar método de pagamento',
+        title: 'Erro ao Processar',
+        description: 'Ocorreu um erro ao processar seu método de pagamento. Por favor, tente novamente ou entre em contato com o suporte.',
         variant: 'destructive',
       });
     } finally {
@@ -463,8 +561,8 @@ export default function BrandPaymentMethods() {
       
       if (paymentStatus.success && paymentStatus.data?.payment?.status === 'completed') {
         toast({
-          title: 'Sucesso',
-          description: 'Contrato financiado com sucesso! O valor foi depositado em garantia.',
+          title: 'Contrato Financiado! 🎉',
+          description: 'Pagamento realizado com sucesso! O valor foi depositado em garantia e o contrato está pronto para iniciar.',
         });
         
         // Clean up URL parameters
@@ -477,14 +575,14 @@ export default function BrandPaymentMethods() {
         await loadContractsNeedingPayment();
       } else {
         toast({
-          title: 'Processando',
-          description: 'Seu pagamento está sendo processado. Atualize a página em alguns instantes.',
+          title: 'Pagamento em Processamento',
+          description: 'Seu pagamento está sendo processado. Isso pode levar alguns minutos. Atualize a página em alguns instantes para ver o status atualizado.',
         });
       }
     } catch (error) {
       toast({
-        title: 'Erro',
-        description: 'Erro ao verificar status do pagamento. Verifique mais tarde.',
+        title: 'Erro ao Verificar Pagamento',
+        description: 'Não foi possível verificar o status do pagamento no momento. Por favor, verifique novamente em alguns minutos.',
         variant: 'destructive',
       });
     } finally {
@@ -504,16 +602,16 @@ export default function BrandPaymentMethods() {
         window.location.href = response.url;
       } else {
         toast({
-          title: 'Erro',
-          description: response.error || 'Erro ao criar sessão de checkout',
+          title: 'Não Foi Possível Iniciar o Pagamento',
+          description: response.error || 'Não foi possível iniciar o processo de financiamento. Por favor, tente novamente.',
           variant: 'destructive',
         });
         setIsLoadingStripe(false);
       }
     } catch (error) {
       toast({
-        title: 'Erro',
-        description: 'Erro ao iniciar processo de financiamento',
+        title: 'Erro ao Financiar Contrato',
+        description: 'Não foi possível iniciar o processo de financiamento no momento. Verifique sua conexão e tente novamente.',
         variant: 'destructive',
       });
       setIsLoadingStripe(false);
@@ -545,6 +643,7 @@ export default function BrandPaymentMethods() {
               </div>
             </div>
           </CardContent>
+
         </Card>
       </div>
     );
@@ -566,14 +665,14 @@ export default function BrandPaymentMethods() {
         <StripeConnectOnboarding 
           onComplete={() => {
             toast({
-              title: 'Sucesso',
-              description: 'Conta Stripe conectada com sucesso!',
+              title: 'Conta Conectada! ✓',
+              description: 'Sua conta Stripe foi conectada com sucesso! Agora você pode receber pagamentos de forma segura.',
             });
           }}
           onError={(error) => {
             toast({
-              title: 'Erro',
-              description: error,
+              title: 'Erro ao Conectar Conta',
+              description: error || 'Não foi possível conectar sua conta Stripe. Por favor, tente novamente.',
               variant: 'destructive',
             });
           }}
@@ -647,15 +746,15 @@ export default function BrandPaymentMethods() {
                           className="bg-primary text-white hover:bg-primary/90 w-full sm:w-auto"
                         >
                           {isLoadingStripe && fundingContractId === contract.id ? (
-                            <>
+                            <div>
                               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                               Processando...
-                            </>
+                            </div>
                           ) : (
-                            <>
+                            <div>
                               <Wallet className="h-4 w-4 mr-2" />
                               Financiar Contrato
-                            </>
+                            </div>
                           )}
                         </Button>
                       </div>
@@ -667,7 +766,7 @@ export default function BrandPaymentMethods() {
           </Card>
         )}
 
-        {/* Payment Methods Section */}
+        {/* Payment Methods Section
         <Card className="shadow-sm">
           <CardHeader className="pb-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -953,7 +1052,7 @@ export default function BrandPaymentMethods() {
     </Card>
 
     {/* Delete Confirmation Dialog */}
-    <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+    {/* <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
@@ -974,7 +1073,7 @@ export default function BrandPaymentMethods() {
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
-    </AlertDialog>
+    </AlertDialog> */}
     </div>
     </TooltipProvider>
   );

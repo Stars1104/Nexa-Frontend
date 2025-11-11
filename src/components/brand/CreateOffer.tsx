@@ -37,6 +37,7 @@ export default function CreateOffer({
     estimated_days: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFunding, setIsFunding] = useState(false);
   const { toast } = useToast();
 
   const handleInputChange = (field: keyof OfferFormData, value: string) => {
@@ -70,7 +71,7 @@ export default function CreateOffer({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    console.log("++++++++++++++++++++++++")
     if (!validateForm()) {
       return;
     }
@@ -84,6 +85,7 @@ export default function CreateOffer({
         budget: parseBudgetToNumber(formData.budget),
         estimated_days: parseInt(formData.estimated_days),
       };
+      console .log(payload)
 
       const response = await apiClient.post("/offers", payload);
 
@@ -100,6 +102,38 @@ export default function CreateOffer({
       }
     } catch (error: any) {
       console.error("Error creating offer:", error);
+
+      // Check if this is a funding requirement error (402 Payment Required)
+      // This happens when brand doesn't have Stripe account or payment method configured
+      if (error.response?.status === 402 && error.response?.data?.requires_funding) {
+        const redirectUrl = error.response?.data?.redirect_url;
+        const message = error.response?.data?.message || "Você precisa configurar um método de pagamento antes de enviar ofertas.";
+        
+        // Store offer data in sessionStorage to restore after payment setup
+        sessionStorage.setItem('pending_offer', JSON.stringify({
+          creator_id: creatorId,
+          creator_name: creatorName,
+          chat_room_id: chatRoomId,
+          budget: parseBudgetToNumber(formData.budget),
+          estimated_days: parseInt(formData.estimated_days),
+        }));
+        
+        toast({
+          title: "Método de Pagamento Necessário",
+          description: message,
+          variant: "default",
+        });
+        
+        // Redirect to Stripe checkout or payment page
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        } else {
+          // Fallback: redirect to payment methods page
+          window.location.href = '/brand?component=Pagamentos&requires_funding=true&action=send_offer';
+        }
+        setIsSubmitting(false);
+        return;
+      }
 
       const errorMessage =
         error.response?.data?.message || "Erro ao enviar oferta";
@@ -125,14 +159,14 @@ export default function CreateOffer({
       }
 
       // Check if it's a payment method error - TEMPORARILY DISABLED due to Pagar.me API issues
-      // if (error.response?.data?.error_code === 'NO_PAYMENT_METHOD') {
-      //   toast({
-      //     title: "Método de Pagamento Necessário",
-      //     description: "Você precisa cadastrar um cartão de crédito antes de enviar ofertas. Acesse as configurações de pagamento.",
-      //     variant: "destructive",
-      //   });
-      //   return;
-      // }
+      if (error.response?.data?.error_code === 'NO_PAYMENT_METHOD') {
+        toast({
+          title: "Método de Pagamento Necessário",
+          description: "Você precisa cadastrar um cartão de crédito antes de enviar ofertas. Acesse as configurações de pagamento.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       // Show generic error for other cases
       toast({
@@ -185,6 +219,59 @@ export default function CreateOffer({
     }
   };
 
+  const handleFundPlatform = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsFunding(true);
+
+    try {
+      const budget = parseBudgetToNumber(formData.budget);
+      
+      // Create funding checkout session
+      const response = await apiClient.post("/brand-payment/create-funding-checkout", {
+        amount: budget,
+        creator_id: creatorId,
+        chat_room_id: chatRoomId,
+      });
+
+      if (response.data.success && response.data.url) {
+        // Store offer data in sessionStorage to restore after payment
+        sessionStorage.setItem('pending_offer', JSON.stringify({
+          creator_id: creatorId,
+          creator_name: creatorName,
+          chat_room_id: chatRoomId,
+          budget: budget,
+          estimated_days: parseInt(formData.estimated_days),
+        }));
+        
+        toast({
+          title: "Redirecionando para Pagamento",
+          description: "Você será redirecionado para finalizar o pagamento.",
+          variant: "default",
+        });
+        
+        // Redirect to Stripe checkout
+        window.location.href = response.data.url;
+      } else {
+        throw new Error(response.data.error || "Erro ao criar sessão de checkout");
+      }
+    } catch (error: any) {
+      console.error("Error creating funding checkout:", error);
+      
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || "Erro ao criar sessão de checkout. Tente novamente.";
+      
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsFunding(false);
+    }
+  };
+
   return (
     <Card className="w-full max-w-2xl mx-auto bg-background">
       <CardHeader>
@@ -223,25 +310,42 @@ export default function CreateOffer({
             </div>
           </div>
 
-          <div className="flex gap-3 justify-end">
+          <div className="flex gap-3 justify-between">
             <Button
               type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isSubmitting}
+              variant="default"
+              onClick={handleFundPlatform}
+              disabled={isSubmitting || isFunding}
             >
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
+              {isFunding ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Enviando...
+                  Processando...
                 </>
               ) : (
-                "Enviar Oferta"
+                "💳 Financiar Plataforma"
               )}
             </Button>
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                disabled={isSubmitting || isFunding}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting || isFunding}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  "Enviar Oferta"
+                )}
+              </Button>
+            </div>
           </div>
         </form>
       </CardContent>

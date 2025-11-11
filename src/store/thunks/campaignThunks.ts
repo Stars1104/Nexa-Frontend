@@ -598,7 +598,7 @@ export const fetchCreatorApplications = createAsyncThunk<
 export const approveApplication = createAsyncThunk<
   { campaignId: number; applicationId: number },
   { campaignId: number; applicationId: number },
-  { state: RootState; rejectValue: string | { message: string; requiresFunding: boolean; redirectUrl?: string; checkoutSessionId?: string } }
+  { state: RootState; rejectValue: string | { message: string; requiresFunding: boolean; requiresStripeAccount?: boolean; redirectUrl?: string; checkoutSessionId?: string; contractId?: number } }
 >('campaign/approveApplication', async ({ campaignId, applicationId }, { getState, rejectWithValue }) => {
   try {
     const state = getState();
@@ -611,13 +611,15 @@ export const approveApplication = createAsyncThunk<
     await ApproveApplication(applicationId, token);
     return { campaignId, applicationId };
   } catch (error: any) {
-    // Check if this is a funding requirement error
+    // Check if this is a funding requirement error (payment method or contract funding)
     if (error.requiresFunding && error.redirectUrl) {
       return rejectWithValue({
         message: error.message || 'Método de pagamento necessário',
         requiresFunding: true,
+        requiresStripeAccount: error.requiresStripeAccount || false,
         redirectUrl: error.redirectUrl,
         checkoutSessionId: error.checkoutSessionId,
+        contractId: error.contractId,
       });
     }
     

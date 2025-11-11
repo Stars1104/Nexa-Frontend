@@ -282,9 +282,10 @@ export const hiringApi = {
   },
 
   // Contracts
-  getContracts: async (status?: string): Promise<{ data: { data: Contract[] } }> => {
+  getContracts: async (status?: string, workflowStatus?: string): Promise<{ data: { data: Contract[] } }> => {
     const params = new URLSearchParams();
     if (status) params.append('status', status);
+    if (workflowStatus) params.append('workflow_status', workflowStatus);
     
     const response = await apiClient.get(`/contracts?${params.toString()}`);
     return response.data;
