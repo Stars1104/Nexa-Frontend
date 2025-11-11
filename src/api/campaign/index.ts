@@ -308,16 +308,23 @@ export const ApproveApplication = async (applicationId: number, token: string) =
         const response = await CampaignAPI.post(`/api/applications/${applicationId}/approve`);
         return response.data;
     } catch (error: any) {
-        // Handle 402 Payment Required - requires funding
-        if (error.response?.status === 402 && error.response?.data?.requires_funding) {
-            // Return the error data so it can be handled by the caller
-            throw {
-                ...error,
-                requiresFunding: true,
-                redirectUrl: error.response.data.redirect_url,
-                checkoutSessionId: error.response.data.checkout_session_id,
-                message: error.response.data.message || 'Payment method required',
-            };
+        // Handle 402 Payment Required - requires funding or Stripe account
+        if (error.response?.status === 402) {
+            const errorData = error.response?.data || {};
+            
+            // Check for funding requirement (payment method or contract funding)
+            if (errorData.requires_funding || errorData.requires_stripe_account) {
+                // Return the error data so it can be handled by the caller
+                throw {
+                    ...error,
+                    requiresFunding: true,
+                    requiresStripeAccount: errorData.requires_stripe_account || false,
+                    redirectUrl: errorData.redirect_url,
+                    checkoutSessionId: errorData.checkout_session_id,
+                    contractId: errorData.contract_id,
+                    message: errorData.message || 'Payment method required',
+                };
+            }
         }
         throw error;
     }

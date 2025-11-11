@@ -55,8 +55,16 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
     } catch (error: any) {
       // Check if this is a funding requirement error (object payload from thunk)
       if (error && typeof error === 'object' && error.requiresFunding && error.redirectUrl) {
-        toast.info("Configure um método de pagamento para continuar");
-        // Redirect to Stripe checkout session
+        const message = error.message || "Configure um método de pagamento para continuar";
+        toast.info(message);
+        // Redirect to Stripe checkout session or payment page
+        window.location.href = error.redirectUrl;
+        return;
+      }
+      // Check if this is a Stripe account requirement error
+      if (error && typeof error === 'object' && error.requiresStripeAccount && error.redirectUrl) {
+        const message = error.message || "Você precisa conectar sua conta Stripe antes de aprovar propostas";
+        toast.info(message);
         window.location.href = error.redirectUrl;
         return;
       }

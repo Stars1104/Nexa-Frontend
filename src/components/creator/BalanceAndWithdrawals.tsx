@@ -115,6 +115,7 @@ export default function BalanceAndWithdrawals() {
       }
       
       const response = await hiringApi.getCreatorBalance();
+      console.log("+++++++++++++++++++++++++",response.data);
       setBalance(response.data);
     } catch (error) {
       console.error('Error loading balance:', error);

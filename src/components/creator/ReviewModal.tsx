@@ -14,6 +14,7 @@ import { Checkbox } from "../ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { hiringApi } from "@/api/hiring";
 import { Star, User, RefreshCw } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface ReviewModalProps {
   isOpen: boolean;
@@ -52,6 +53,7 @@ export default function ReviewModal({
   const [isPublic, setIsPublic] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async () => {
     if (rating < 1) {
@@ -93,6 +95,11 @@ export default function ReviewModal({
 
         onReviewSubmitted();
         onClose();
+
+        // Redirect to withdrawal page after successful review
+        setTimeout(() => {
+          navigate('/creator?component=Saldo e Saques');
+        }, 500);
       } else {
         throw new Error(response.message || "Erro ao enviar avaliação");
       }

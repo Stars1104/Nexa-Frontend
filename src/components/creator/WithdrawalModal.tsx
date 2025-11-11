@@ -43,6 +43,13 @@ interface WithdrawalMethod {
   fee: number;
   required_fields?: string[];
   field_config?: Record<string, any>;
+  // Stripe payment method fields (optional)
+  stripe_payment_method_id?: string;
+  stripe_customer_id?: string;
+  card_brand?: string;
+  card_last4?: string;
+  card_exp_month?: number;
+  card_exp_year?: number;
 }
 
 interface CreatorBalance {
@@ -127,6 +134,16 @@ export default function WithdrawalModal({
         "/freelancer/withdrawal-methods"
       );
       if (response.data.success) {
+        console.log("Withdrawal methods received:", response.data.data);
+        console.log("Methods count:", response.data.data.length);
+        // Log each method to see what's included
+        response.data.data.forEach((method: WithdrawalMethod, index: number) => {
+          console.log(`Method ${index}:`, {
+            id: method.id,
+            name: method.name,
+            isStripeCard: method.id === 'stripe_card',
+          });
+        });
         setWithdrawalMethods(response.data.data);
         if (response.data.data.length > 0) {
           setSelectedMethod(response.data.data[0].id);
@@ -256,6 +273,7 @@ export default function WithdrawalModal({
       case "pagarme_bank_transfer":
         return <BanknoteIcon className="h-4 w-4" />;
       case "pagarme_account":
+      case "stripe_card":
         return <CreditCard className="h-4 w-4" />;
       default:
         return <CreditCard className="h-4 w-4" />;
@@ -502,6 +520,36 @@ export default function WithdrawalModal({
                 placeholder="Nome completo do titular"
                 required
               />
+            </div>
+          </div>
+        );
+
+      case "stripe_card":
+        return (
+          <div className="space-y-3">
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <CreditCard className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-green-800">
+                    Cartão Cadastrado
+                  </h4>
+                  <p className="text-sm text-green-700 mt-1">
+                    O saque será processado para o cartão cadastrado no Stripe:{" "}
+                    <strong>{selectedMethodData.name}</strong>
+                    {selectedMethodData.card_brand && selectedMethodData.card_last4 && (
+                      <span className="block mt-1">
+                        {selectedMethodData.card_brand.toUpperCase()} •••• {selectedMethodData.card_last4}
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-xs text-green-600 mt-2">
+                    Não são necessárias informações adicionais. O valor será creditado diretamente no cartão.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         );
