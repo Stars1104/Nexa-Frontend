@@ -314,16 +314,16 @@ export const ApproveApplication = async (applicationId: number, token: string) =
             
             // Check for funding requirement (payment method or contract funding)
             if (errorData.requires_funding || errorData.requires_stripe_account) {
-                // Return the error data so it can be handled by the caller
-                throw {
-                    ...error,
-                    requiresFunding: true,
+            // Return the error data so it can be handled by the caller
+            throw {
+                ...error,
+                requiresFunding: true,
                     requiresStripeAccount: errorData.requires_stripe_account || false,
                     redirectUrl: errorData.redirect_url,
                     checkoutSessionId: errorData.checkout_session_id,
                     contractId: errorData.contract_id,
                     message: errorData.message || 'Payment method required',
-                };
+            };
             }
         }
         throw error;

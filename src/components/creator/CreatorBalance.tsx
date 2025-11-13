@@ -42,7 +42,23 @@ export default function CreatorBalance() {
 
       setBalance(balanceRes.data);
       setWithdrawals(withdrawalsRes.data.data);
-      setWithdrawalMethods(methodsRes.data);
+      
+      // Deduplicate methods by ID to prevent duplicate keys
+      const methods = methodsRes.data || [];
+      const uniqueMethods = methods.reduce((acc: WithdrawalMethod[], method: WithdrawalMethod) => {
+        const existingIndex = acc.findIndex((m) => m.id === method.id);
+        if (existingIndex === -1) {
+          acc.push(method);
+        } else {
+          // If duplicate found, prefer the one with stripe_payment_method_id (user-specific)
+          if (method.stripe_payment_method_id && !acc[existingIndex].stripe_payment_method_id) {
+            acc[existingIndex] = method;
+          }
+        }
+        return acc;
+      }, []);
+      
+      setWithdrawalMethods(uniqueMethods);
     } catch (error) {
       console.error('Error loading balance data:', error);
       toast({
@@ -440,24 +456,56 @@ function WithdrawalForm({ availableBalance, withdrawalMethods, onSuccess }: With
     setIsSubmitting(true);
 
     try {
-      await hiringApi.createWithdrawal({
+      const response = await hiringApi.createWithdrawal({
         amount: parseFloat(amount),
         withdrawal_method: selectedMethod,
         withdrawal_details: formData,
       });
 
+      const withdrawalData = response.data?.data;
+      const netAmount = selectedMethodData 
+        ? parseFloat(amount) - (parseFloat(amount) * (selectedMethodData.fee / 100)) - 5.00
+        : parseFloat(amount) - 5.00;
+      const totalFees = selectedMethodData
+        ? (parseFloat(amount) * (selectedMethodData.fee / 100)) + 5.00
+        : 5.00;
+      const processingTime = selectedMethodData?.processing_time || "1-3 dias úteis";
+      const formattedAmount = `R$ ${parseFloat(amount).toFixed(2).replace('.', ',')}`;
+      const formattedNetAmount = `R$ ${netAmount.toFixed(2).replace('.', ',')}`;
+      const formattedFees = `R$ ${totalFees.toFixed(2).replace('.', ',')}`;
+
+      // Show success toast with detailed information
       toast({
-        title: "Sucesso",
-        description: "Solicitação de saque enviada com sucesso",
+        title: "✅ Saque Solicitado com Sucesso!",
+        description: `${formattedAmount} via ${selectedMethodData?.name || withdrawalData?.method || 'método selecionado'}\n\n` +
+          `💰 Valor líquido: ${formattedNetAmount}\n` +
+          `💳 Taxas: ${formattedFees} • ⏱️ Processamento: ${processingTime}\n\n` +
+          `📊 Você pode acompanhar o status do saque na aba "Saques"`,
+        duration: 7000,
       });
 
       onSuccess();
     } catch (error: any) {
       console.error('Error creating withdrawal:', error);
+      
+      // Enhanced error toast with helpful guidance
+      const errorMessage = error.response?.data?.message || 'Erro ao solicitar saque';
+      let helpfulMessage = errorMessage;
+      
+      if (errorMessage.includes("Saldo insuficiente")) {
+        helpfulMessage = "Seu saldo disponível não é suficiente para este saque. Verifique seu saldo e tente novamente.";
+      } else if (errorMessage.includes("muitos saques pendentes")) {
+        helpfulMessage = "Você tem muitos saques pendentes. Aguarde o processamento dos saques atuais antes de solicitar um novo.";
+      } else if (errorMessage.includes("Valor deve estar entre")) {
+        helpfulMessage = errorMessage;
+      }
+      
       toast({
-        title: "Erro",
-        description: error.response?.data?.message || 'Erro ao solicitar saque',
+        title: "❌ Erro ao Solicitar Saque",
+        description: `${helpfulMessage}\n\n` +
+          `💡 Se o problema persistir, entre em contato com o suporte.`,
         variant: "destructive",
+        duration: 6000,
       });
     } finally {
       setIsSubmitting(false);
