@@ -136,17 +136,34 @@ export default function WithdrawalModal({
       if (response.data.success) {
         console.log("Withdrawal methods received:", response.data.data);
         console.log("Methods count:", response.data.data.length);
+        
+        // Deduplicate methods by ID to prevent duplicate keys
+        const uniqueMethods = response.data.data.reduce((acc: WithdrawalMethod[], method: WithdrawalMethod) => {
+          const existingIndex = acc.findIndex((m) => m.id === method.id);
+          if (existingIndex === -1) {
+            acc.push(method);
+          } else {
+            // If duplicate found, prefer the one with stripe_payment_method_id (user-specific)
+            if (method.stripe_payment_method_id && !acc[existingIndex].stripe_payment_method_id) {
+              acc[existingIndex] = method;
+            }
+          }
+          return acc;
+        }, []);
+        
+        console.log("Unique methods count:", uniqueMethods.length);
         // Log each method to see what's included
-        response.data.data.forEach((method: WithdrawalMethod, index: number) => {
+        uniqueMethods.forEach((method: WithdrawalMethod, index: number) => {
           console.log(`Method ${index}:`, {
             id: method.id,
             name: method.name,
             isStripeCard: method.id === 'stripe_card',
           });
         });
-        setWithdrawalMethods(response.data.data);
-        if (response.data.data.length > 0) {
-          setSelectedMethod(response.data.data[0].id);
+        
+        setWithdrawalMethods(uniqueMethods);
+        if (uniqueMethods.length > 0) {
+          setSelectedMethod(uniqueMethods[0].id);
         }
       }
     } catch (error) {
@@ -163,7 +180,6 @@ export default function WithdrawalModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!selectedMethod || !amount || parseFloat(amount) <= 0) {
       toast({
         title: "Erro",
@@ -222,9 +238,19 @@ export default function WithdrawalModal({
       const response = await apiClient.post("/freelancer/withdrawals", requestData);
 
       if (response.data.success) {
+        const withdrawalData = response.data.data;
+        const netAmount = calculateNetAmount();
+        const totalFees = calculateTotalFees();
+        const processingTime = selectedMethodData?.processing_time || "1-3 dias úteis";
+        
+        // Show success toast with detailed information
         toast({
-          title: "Saque Solicitado",
-          description: "Sua solicitação de saque foi enviada com sucesso!",
+          title: "✅ Saque Solicitado com Sucesso!",
+          description: `${formatCurrency(amount)} via ${selectedMethodData?.name || withdrawalData.method}\n\n` +
+            `💰 Valor líquido: ${formatCurrency(netAmount)}\n` +
+            `💳 Taxas: ${formatCurrency(totalFees)} • ⏱️ Processamento: ${processingTime}\n\n` +
+            `📊 Você pode acompanhar o status do saque na aba "Histórico de Saques"`,
+          duration: 7000,
         });
 
         onWithdrawalCreated();
@@ -235,10 +261,25 @@ export default function WithdrawalModal({
       }
     } catch (error: any) {
       console.error("Error creating withdrawal:", error);
+      
+      // Enhanced error toast with helpful guidance
+      const errorMessage = error.response?.data?.message || "Erro ao solicitar saque";
+      let helpfulMessage = errorMessage;
+      
+      if (errorMessage.includes("Saldo insuficiente")) {
+        helpfulMessage = "Seu saldo disponível não é suficiente para este saque. Verifique seu saldo e tente novamente.";
+      } else if (errorMessage.includes("muitos saques pendentes")) {
+        helpfulMessage = "Você tem muitos saques pendentes. Aguarde o processamento dos saques atuais antes de solicitar um novo.";
+      } else if (errorMessage.includes("Valor deve estar entre")) {
+        helpfulMessage = errorMessage;
+      }
+      
       toast({
-        title: "Erro",
-        description: error.response?.data?.message || "Erro ao solicitar saque",
+        title: "❌ Erro ao Solicitar Saque",
+        description: `${helpfulMessage}\n\n` +
+          `💡 Se o problema persistir, entre em contato com o suporte.`,
         variant: "destructive",
+        duration: 6000,
       });
     } finally {
       setIsLoading(false);

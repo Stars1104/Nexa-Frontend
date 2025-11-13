@@ -327,24 +327,24 @@ export default function CreateOffer({
               )}
             </Button>
             <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancel}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
                 disabled={isSubmitting || isFunding}
-              >
-                Cancelar
-              </Button>
+            >
+              Cancelar
+            </Button>
               <Button type="submit" disabled={isSubmitting || isFunding}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Enviando...
-                  </>
-                ) : (
-                  "Enviar Oferta"
-                )}
-              </Button>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                "Enviar Oferta"
+              )}
+            </Button>
             </div>
           </div>
         </form>
