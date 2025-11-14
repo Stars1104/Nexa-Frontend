@@ -174,10 +174,9 @@ export default function CreatorBalance() {
 
       {/* Tabs for Details */}
       <Tabs defaultValue="transactions" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="transactions">Transações Recentes</TabsTrigger>
           <TabsTrigger value="withdrawals">Saques</TabsTrigger>
-          <TabsTrigger value="methods">Métodos de Saque</TabsTrigger>
         </TabsList>
 
         <TabsContent value="transactions" className="space-y-4">
@@ -257,59 +256,6 @@ export default function CreatorBalance() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="methods" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Métodos de Saque Disponíveis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
-                      <span className="text-white text-xs">ℹ</span>
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-blue-800">
-                      Saque via Stripe
-                    </h4>
-                    <p className="text-sm text-blue-700 mt-1">
-                      Atualmente, apenas transferências bancárias via Pagar.me estão disponíveis. 
-                      Você precisa ter uma conta bancária registrada para solicitar saques.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="grid gap-4">
-                {withdrawalMethods.map((method) => (
-                  <div key={method.id} className="p-4 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium">{method.name}</h4>
-                      <Badge variant="outline">
-                        Taxa: R$ {method.fee.toFixed(2)}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{method.description}</p>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-500">Mínimo:</span>
-                        <span className="ml-1 font-medium">R$ {method.min_amount.toFixed(2)}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Máximo:</span>
-                        <span className="ml-1 font-medium">R$ {method.max_amount.toFixed(2)}</span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Processamento: {method.processing_time}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );
