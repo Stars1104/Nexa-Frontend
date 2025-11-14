@@ -93,6 +93,8 @@ export default function BrandPaymentMethods() {
       }
     } else if (fundingSuccess === 'true' && sessionId && contractId) {
       handleContractFundingSuccess(sessionId, parseInt(contractId));
+    } else if (searchParams.get('offer_funding_success') === 'true' && sessionId) {
+      handleOfferFundingSuccess(sessionId);
     } else if (canceled === 'true') {
       // Check if canceling from offer checkout
       if (action === 'send_offer') {
@@ -583,6 +585,45 @@ export default function BrandPaymentMethods() {
       toast({
         title: 'Erro ao Verificar Pagamento',
         description: 'Não foi possível verificar o status do pagamento no momento. Por favor, verifique novamente em alguns minutos.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingStripe(false);
+    }
+  };
+
+  const handleOfferFundingSuccess = async (sessionId: string) => {
+    try {
+      setIsLoadingStripe(true);
+      
+      const response = await brandPaymentApi.handleOfferFundingSuccess(sessionId);
+      
+      if (response.success) {
+        toast({
+          title: 'Fundos Adicionados com Sucesso! 🎉',
+          description: `Seu pagamento foi processado com sucesso. Os fundos foram adicionados à sua conta.`,
+        });
+        
+        // Clean up URL parameters
+        searchParams.delete('offer_funding_success');
+        searchParams.delete('session_id');
+        const creatorId = searchParams.get('creator_id');
+        const chatRoomId = searchParams.get('chat_room_id');
+        if (creatorId) searchParams.delete('creator_id');
+        if (chatRoomId) searchParams.delete('chat_room_id');
+        setSearchParams(searchParams, { replace: true });
+      } else {
+        toast({
+          title: 'Erro ao Processar',
+          description: response.error || 'Não foi possível processar o financiamento. Por favor, tente novamente.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error handling offer funding success:', error);
+      toast({
+        title: 'Erro ao Processar',
+        description: 'Ocorreu um erro ao processar o financiamento. Por favor, tente novamente ou entre em contato com o suporte.',
         variant: 'destructive',
       });
     } finally {
