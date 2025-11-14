@@ -34,6 +34,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import PaymentMethods from "./pages/PaymentMethods";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
+import { disableTranslation } from "./utils/translationUtils";
  
 
 const queryClient = new QueryClient();
@@ -44,6 +45,11 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
 const App = () => {
   const [isAppReady, setIsAppReady] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Carregando...');
+  
+  // Disable browser translation on app mount
+  useEffect(() => {
+    disableTranslation();
+  }, []);
   
   // Initialize auth rehydration
   const authState = useAuthRehydration();

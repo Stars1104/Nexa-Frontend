@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks';
+import { cleanupTranslationArtifacts, isTranslationActive } from '../utils/translationUtils';
 
 export const useRoleNavigation = () => {
   const navigate = useNavigate();
@@ -23,12 +24,20 @@ export const useRoleNavigation = () => {
   const navigateToRoleDashboard = (role?: string, options?: { replace?: boolean }) => {
     const userRole = role || user?.role;
     if (userRole) {
+      // Clean up translation artifacts before navigation to prevent errors
+      if (isTranslationActive()) {
+        cleanupTranslationArtifacts();
+      }
       const dashboard = getDefaultDashboard(userRole);
       navigate(dashboard, { replace: options?.replace ?? false });
     }
   };
 
   const navigateToStudentVerification = () => {
+    // Clean up translation artifacts before navigation
+    if (isTranslationActive()) {
+      cleanupTranslationArtifacts();
+    }
     navigate("/student-verify", { replace: true });
   };
 

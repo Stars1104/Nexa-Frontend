@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks';
+import { cleanupTranslationArtifacts, isTranslationActive } from '../utils/translationUtils';
 
 interface UsePostLoginNavigationOptions {
   dashboardPath: string;
@@ -64,6 +65,11 @@ export const usePostLoginNavigation = (options: UsePostLoginNavigationOptions) =
     // Only run this effect when user is authenticated and we're on the dashboard path
     if (isAuthenticated && user && location.pathname === dashboardPath && !hasNavigatedRef.current) {
       hasNavigatedRef.current = true;
+      
+      // Clean up translation artifacts before navigation to prevent errors
+      if (isTranslationActive()) {
+        cleanupTranslationArtifacts();
+      }
       
       // If there's no component in the URL, set the default component
       if (defaultComponent && !location.search.includes('component=')) {
