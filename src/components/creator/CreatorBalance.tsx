@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { hiringApi, CreatorBalance as CreatorBalanceType, Withdrawal, WithdrawalMethod } from '@/api/hiring';
 import { 
@@ -13,8 +12,6 @@ import {
   CheckCircle, 
   AlertCircle,
   Download,
-  Plus,
-  Eye,
   Calendar,
   BarChart3
 } from 'lucide-react';
@@ -24,7 +21,6 @@ export default function CreatorBalance() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [withdrawalMethods, setWithdrawalMethods] = useState<WithdrawalMethod[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showWithdrawalDialog, setShowWithdrawalDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,14 +43,9 @@ export default function CreatorBalance() {
       const methods = methodsRes.data || [];
       const uniqueMethods = methods.reduce((acc: WithdrawalMethod[], method: WithdrawalMethod) => {
         const existingIndex = acc.findIndex((m) => m.id === method.id);
-        if (existingIndex === -1) {
+       
           acc.push(method);
-        } else {
-          // If duplicate found, prefer the one with stripe_payment_method_id (user-specific)
-          if (method.stripe_payment_method_id && !acc[existingIndex].stripe_payment_method_id) {
-            acc[existingIndex] = method;
-          }
-        }
+        
         return acc;
       }, []);
       
@@ -199,38 +190,6 @@ export default function CreatorBalance() {
         </Card>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-4">
-        <Dialog open={showWithdrawalDialog} onOpenChange={setShowWithdrawalDialog}>
-          <DialogTrigger asChild>
-            <Button 
-              className="flex-1 bg-[#e91e63] text-white hover:bg-[#e91e63]/90" 
-              disabled={balance.balance.available_balance <= 0}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Solicitar Saque
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Solicitar Saque</DialogTitle>
-            </DialogHeader>
-            <WithdrawalForm 
-              availableBalance={Number(balance.balance.available_balance) || 0}
-              withdrawalMethods={withdrawalMethods}
-              onSuccess={() => {
-                setShowWithdrawalDialog(false);
-                loadData();
-              }}
-            />
-          </DialogContent>
-        </Dialog>
-
-        <Button variant="outline" className="flex-1">
-          <Eye className="h-4 w-4 mr-2" />
-          Ver Histórico
-        </Button>
-      </div>
 
       {/* Pending Withdrawals Alert */}
       {balance.withdrawals.pending_count > 0 && (
