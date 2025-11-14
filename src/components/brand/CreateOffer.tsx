@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/services/apiClient";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 
 interface CreateOfferProps {
   creatorId: number;
@@ -38,7 +38,43 @@ export default function CreateOffer({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFunding, setIsFunding] = useState(false);
+  const [hasFunded, setHasFunded] = useState<boolean | null>(null);
+  const [isCheckingFunding, setIsCheckingFunding] = useState(true);
   const { toast } = useToast();
+
+  // Check funding status function
+  const checkFundingStatus = async () => {
+    try {
+      setIsCheckingFunding(true);
+      const response = await apiClient.get('/brand-payment/check-funding-status');
+      
+      if (response.data.success) {
+        setHasFunded(response.data.data.has_funded || false);
+      } else {
+        setHasFunded(false);
+      }
+    } catch (error) {
+      console.error('Error checking funding status:', error);
+      setHasFunded(false);
+    } finally {
+      setIsCheckingFunding(false);
+    }
+  };
+
+  // Check funding status on component mount and when window regains focus
+  useEffect(() => {
+    checkFundingStatus();
+
+    // Also check when window regains focus (e.g., after returning from Stripe)
+    const handleFocus = () => {
+      checkFundingStatus();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
   const handleInputChange = (field: keyof OfferFormData, value: string) => {
     setFormData((prev) => ({
@@ -310,6 +346,22 @@ export default function CreateOffer({
             </div>
           </div>
 
+          {!hasFunded && !isCheckingFunding && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <h4 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-1">
+                    Financiamento Necessário
+                  </h4>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                    Você precisa financiar a plataforma antes de enviar ofertas. Clique em "Financiar Plataforma" para adicionar fundos.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-3 justify-between">
             <Button
               type="button"
@@ -335,7 +387,11 @@ export default function CreateOffer({
             >
               Cancelar
             </Button>
-              <Button type="submit" disabled={isSubmitting || isFunding}>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || isFunding || !hasFunded || isCheckingFunding}
+                title={!hasFunded && !isCheckingFunding ? "Você precisa financiar a plataforma antes de enviar ofertas" : undefined}
+              >
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
