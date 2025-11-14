@@ -89,57 +89,7 @@ const PaymentMethods = () => {
               }}
             />
           </CardContent>
-        </Card>
-
-        {/* Withdrawal Payment Method Section */}
-        <div className="space-y-6">
-          {/* Show existing payment method if available */}
-          <CreatorPaymentMethodCard />
-
-          {/* Connect new payment method card */}
-          <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Wallet className="w-5 h-5 text-primary" />
-                Método de Pagamento para Saques
-              </CardTitle>
-              <CardDescription className="text-base">
-                Conecte um cartão de crédito ou débito para receber seus saques de forma rápida e segura
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <Info className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-green-800 dark:text-green-200">
-                    <p className="font-medium mb-1">Por que preciso conectar um método de pagamento?</p>
-                    <p>
-                      Para realizar saques do seu saldo disponível, você precisa ter um método de pagamento cadastrado. 
-                      Você pode usar um cartão de crédito ou débito que será usado exclusivamente para receber seus saques.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <Button
-                onClick={handleConnectPaymentMethod}
-                disabled={isLoadingPaymentMethod}
-                className="w-full bg-[#e91e63] hover:bg-[#e91e63]/90 text-white"
-              >
-                {isLoadingPaymentMethod ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Conectando...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Conectar Método de Pagamento
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        </Card>   
       </div>
     </div>
   );
