@@ -11,30 +11,32 @@ import { useBrowserCloseLogout } from "./hooks/useBrowserCloseLogout";
 import SessionWarningModal from "./components/SessionWarningModal";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import AuthStep from "./pages/auth/AuthStep";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import ResetPassword from "./pages/auth/ResetPassword";
-import Signup from "./pages/auth/CreatorSignUp";
-import StudentVerify from "./pages/auth/StudentVerify";
-import PurchaseSubscription from "./pages/PurchaseSubscription";
-import GoogleOAuthCallback from "./components/GoogleOAuthCallback";
-import CreatorIndex from "./pages/creator/Index";
-import BrandIndex from "./pages/brand/Index";
-import AdminIndex from "./pages/admin";
-import NotificationsPage from "./pages/Notifications";
-import BankRegistrationPage from "./pages/creator/BankRegistrationPage";
-import StripeConnectPage from "./pages/creator/StripeConnectPage";
-import Guide from "./pages/Guide";
-import Documentation from "./pages/Documentation";
 import { HelmetProvider } from "react-helmet-async";
-import { useState, useEffect } from "react";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import PaymentMethods from "./pages/PaymentMethods";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { disableTranslation } from "./utils/translationUtils";
+
+// Lazy load routes for code splitting
+const Index = lazy(() => import("./pages/Index"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const AuthStep = lazy(() => import("./pages/auth/AuthStep"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const Signup = lazy(() => import("./pages/auth/CreatorSignUp"));
+const StudentVerify = lazy(() => import("./pages/auth/StudentVerify"));
+const PurchaseSubscription = lazy(() => import("./pages/PurchaseSubscription"));
+const GoogleOAuthCallback = lazy(() => import("./components/GoogleOAuthCallback"));
+const CreatorIndex = lazy(() => import("./pages/creator/Index"));
+const BrandIndex = lazy(() => import("./pages/brand/Index"));
+const AdminIndex = lazy(() => import("./pages/admin"));
+const NotificationsPage = lazy(() => import("./pages/Notifications"));
+const BankRegistrationPage = lazy(() => import("./pages/creator/BankRegistrationPage"));
+const StripeConnectPage = lazy(() => import("./pages/creator/StripeConnectPage"));
+const Guide = lazy(() => import("./pages/Guide"));
+const Documentation = lazy(() => import("./pages/Documentation"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const PaymentMethods = lazy(() => import("./pages/PaymentMethods"));
  
 
 const queryClient = new QueryClient();
@@ -93,6 +95,16 @@ const App = () => {
     };
   }, [authState.isRehydrating, isAppReady]);
 
+  // Loading component for lazy routes
+  const RouteLoading = () => (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    </div>
+  );
+
   // Show loading state while app initializes
   if (!isAppReady) {
     const message = authState.isRehydrating 
@@ -131,79 +143,81 @@ const App = () => {
                     onExtendSession={sessionTimeout.onExtendSession}
                     onLogout={sessionTimeout.onLogout}
                   />
-                  <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<AuthStep />} />
-                  <Route path="/auth/login" element={<Signup />} />
-                  <Route path="/auth/signup" element={<Signup />} />
-                  <Route path="/signup/:role" element={<Signup />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />
-                  <Route path="/student-verify" element={
-                    <ProtectedRoute allowedRoles={['creator', 'student']}>
-                      <StudentVerify />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/creator" element={
-                    <ProtectedRoute allowedRoles={['creator', 'student']}>
-                      <CreatorIndex />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/creator/subscription" element={
-                    <ProtectedRoute allowedRoles={['creator', 'student']}>
-                      <CreatorIndex />
-                    </ProtectedRoute>
-                  } />
-                   <Route path="/creator/purchase-subscription" element={
-                     <ProtectedRoute allowedRoles={['creator', 'student']}>
-                        <Elements stripe={stripePromise}>
-                          <PurchaseSubscription />
-                        </Elements>
-                      </ProtectedRoute>
-                  } />
-                  <Route path="/creator/bank-registration" element={
-                    <ProtectedRoute allowedRoles={['creator', 'student']}>
-                      <BankRegistrationPage />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/creator/stripe-connect" element={
-                    <ProtectedRoute allowedRoles={['creator', 'student']}>
-                      <StripeConnectPage />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/creator/payment-method" element={
-                    <ProtectedRoute allowedRoles={['creator', 'student']}>
-                      <PaymentMethods />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/brand/*" element={
-                    <ProtectedRoute allowedRoles={['brand']}>
-                      <BrandIndex />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <AdminIndex />
-                    </ProtectedRoute>
-                  } />
-                  
-                  <Route path="/notifications" element={
-                    <ProtectedRoute>
-                      <NotificationsPage />
-                    </ProtectedRoute>
-                  } />             
-                          {/* Guide route - accessible to everyone */}
-                <Route path="/guides" element={<Guide />} />
-                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        
-                  {/* Documentation route - accessible to everyone */}
-                <Route path="/docs" element={<Documentation />} />
-                <Route path="/docs/:section" element={<Documentation />} />
-                  
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                  <Suspense fallback={<RouteLoading />}>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/auth" element={<AuthStep />} />
+                      <Route path="/auth/login" element={<Signup />} />
+                      <Route path="/auth/signup" element={<Signup />} />
+                      <Route path="/signup/:role" element={<Signup />} />
+                      <Route path="/forgot-password" element={<ForgotPassword />} />
+                      <Route path="/reset-password" element={<ResetPassword />} />
+                      <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />
+                      <Route path="/student-verify" element={
+                        <ProtectedRoute allowedRoles={['creator', 'student']}>
+                          <StudentVerify />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/creator" element={
+                        <ProtectedRoute allowedRoles={['creator', 'student']}>
+                          <CreatorIndex />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/creator/subscription" element={
+                        <ProtectedRoute allowedRoles={['creator', 'student']}>
+                          <CreatorIndex />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/creator/purchase-subscription" element={
+                        <ProtectedRoute allowedRoles={['creator', 'student']}>
+                          <Elements stripe={stripePromise}>
+                            <PurchaseSubscription />
+                          </Elements>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/creator/bank-registration" element={
+                        <ProtectedRoute allowedRoles={['creator', 'student']}>
+                          <BankRegistrationPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/creator/stripe-connect" element={
+                        <ProtectedRoute allowedRoles={['creator', 'student']}>
+                          <StripeConnectPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/creator/payment-method" element={
+                        <ProtectedRoute allowedRoles={['creator', 'student']}>
+                          <PaymentMethods />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/brand/*" element={
+                        <ProtectedRoute allowedRoles={['brand']}>
+                          <BrandIndex />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/admin" element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                          <AdminIndex />
+                        </ProtectedRoute>
+                      } />
+                      
+                      <Route path="/notifications" element={
+                        <ProtectedRoute>
+                          <NotificationsPage />
+                        </ProtectedRoute>
+                      } />             
+                      {/* Guide route - accessible to everyone */}
+                      <Route path="/guides" element={<Guide />} />
+                      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              
+                      {/* Documentation route - accessible to everyone */}
+                      <Route path="/docs" element={<Documentation />} />
+                      <Route path="/docs/:section" element={<Documentation />} />
+                      
+                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
               </BrowserRouter>
               </TooltipProvider>
             </PremiumProvider>
