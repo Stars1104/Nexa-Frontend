@@ -11,9 +11,7 @@ import {
   Clock, 
   CheckCircle, 
   AlertCircle,
-  Download,
-  Calendar,
-  BarChart3
+  Download
 } from 'lucide-react';
 
 export default function CreatorBalance() {
@@ -153,42 +151,6 @@ export default function CreatorBalance() {
         </Card>
       </div>
 
-      {/* Earnings This Month/Year */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Ganhos do Mês
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-green-600 mb-2">
-              {balance.earnings.formatted_this_month}
-            </div>
-            <p className="text-sm text-gray-600">
-              Janeiro 2024
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Ganhos do Ano
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-600 mb-2">
-              {balance.earnings.formatted_this_year}
-            </div>
-            <p className="text-sm text-gray-600">
-              2024
-            </p>
-          </CardContent>
-        </Card>
-      </div>
 
 
       {/* Pending Withdrawals Alert */}
