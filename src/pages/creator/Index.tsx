@@ -49,6 +49,19 @@ function Index() {
         defaultComponent: "Painel"
     });
 
+    // Check if user is ONLY a student (not a creator) and not verified - show verification page
+    // This runs after post-login navigation to ensure student verification takes priority
+    useEffect(() => {
+        // Only check if user is loaded and is a student
+        if (user && user.role === 'student') {
+            // If student_verified is explicitly false or undefined, show verification page
+            // This should override any default component set by post-login navigation
+            if (user.student_verified !== true && component !== "Verificação de Aluno") {
+                setComponent("Verificação de Aluno");
+            }
+        }
+    }, [user?.id, user?.role, user?.student_verified, component, setComponent]);
+
     // Handle subscription route - convert pathname route to query param route
     useEffect(() => {
         if (location.pathname === '/creator/subscription') {
@@ -71,6 +84,12 @@ function Index() {
     };
 
     const CreatorComponent = () => {
+        // If user is ONLY a student (not a creator) and not verified, force verification page
+        // Check if student_verified is explicitly not true (false or undefined)
+        if (user && user.role === 'student' && user.student_verified !== true) {
+            return <StudentVerify setComponent={handleComponentChange} />;
+        }
+
         // Define which components require premium access
         const premiumRequiredComponents = ["Painel", "Detalhes do Projeto", "Minha Aplicação", "Chat", "Notificações"];
         const isPremiumRequired = premiumRequiredComponents.includes(component || "");

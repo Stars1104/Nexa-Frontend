@@ -9,6 +9,7 @@ interface User {
   role: 'creator' | 'brand' | 'student' | 'admin';
   whatsapp?: string;
   isStudent?: boolean;
+  student_verified?: boolean;
   isPremium?: boolean; // Legacy field, use has_premium instead
   has_premium?: boolean;
   premium_expires_at?: string;
