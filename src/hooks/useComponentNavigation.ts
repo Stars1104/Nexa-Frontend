@@ -20,7 +20,6 @@ const COMPONENT_MAPPING: Record<string, string> = {
   'notifications': 'Notificações',
   'subscription': 'Assinatura',
   'payment-history': 'Histórico de Pagamentos',
-  'bank-registration': 'Cadastro Bancário',
   'guide': 'Guia da Plataforma',
   
   // Brand components

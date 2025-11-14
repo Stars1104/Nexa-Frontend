@@ -284,6 +284,33 @@ export const brandPaymentApi = {
   },
 
   /**
+   * Handle offer funding success callback
+   * POST /api/brand-payment/handle-offer-funding-success
+   */
+  handleOfferFundingSuccess: async (sessionId: string): Promise<{ success: boolean; data?: any; error?: string; message?: string }> => {
+    try {
+      const response = await apiClient.post('/brand-payment/handle-offer-funding-success', {
+        session_id: sessionId,
+      });
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return {
+          success: false,
+          error: error.response.data.error || error.response.data.message || 'Erro ao processar financiamento da plataforma',
+          message: error.response.data.message
+        };
+      }
+      
+      return {
+        success: false,
+        error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.',
+        message: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
+      };
+    }
+  },
+
+  /**
    * Create Stripe Checkout Session for adding payment method
    * POST /api/brand-payment/create-checkout-session
    */

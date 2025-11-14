@@ -16,7 +16,6 @@ const navLinks = [
     { label: "Assinatura", icon: CreditCard, key: "Assinatura" },
     { label: "Métodos de Pagamento", icon: PaymentMethodsIcon, key: "Pagamento" },
     { label: "Histórico de Pagamentos", icon: Receipt, key: "Histórico de Pagamentos" },
-    { label: "Cadastro Bancário", icon: BanknoteIcon, key: "Cadastro Bancário" },
     { label: "Verificação de Aluno", icon: GraduationCap, key: "Verificação de Aluno" },
     { label: "Guia da Plataforma", icon: BookOpen, key: "Guia da Plataforma" },
 ];

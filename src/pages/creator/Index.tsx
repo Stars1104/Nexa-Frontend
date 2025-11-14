@@ -112,8 +112,8 @@ function Index() {
                 return <Subscription />;
             case "Histórico de Pagamentos":
                 return <TransactionHistory />;
-            case "Cadastro Bancário":
-                return <BankRegistrationDemo />;
+            // case "Cadastro Bancário":
+            //     return <BankRegistrationDemo />;
             case "Configuração Stripe":
                 return <StripeConnectPage />;
             case "Verificação de Aluno":
