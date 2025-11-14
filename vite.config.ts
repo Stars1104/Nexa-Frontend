@@ -23,14 +23,52 @@ export default defineConfig(({ mode }) => ({
     // Optimize build for production
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'redux-vendor': ['@reduxjs/toolkit'],
-          'ui-vendor': ['lucide-react'],
+        manualChunks: (id) => {
+          // React and React DOM
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'react-vendor';
+          }
+          
+          // React Router
+          if (id.includes('node_modules/react-router')) {
+            return 'react-router-vendor';
+          }
+          
+          // Redux
+          if (id.includes('node_modules/@reduxjs') || id.includes('node_modules/redux')) {
+            return 'redux-vendor';
+          }
+          
+          // Stripe
+          if (id.includes('node_modules/@stripe')) {
+            return 'stripe-vendor';
+          }
+          
+          // UI libraries (Radix UI, Lucide, etc.)
+          if (id.includes('node_modules/@radix-ui') || 
+              id.includes('node_modules/lucide-react') ||
+              id.includes('node_modules/@radix-ui')) {
+            return 'ui-vendor';
+          }
+          
+          // TanStack Query
+          if (id.includes('node_modules/@tanstack')) {
+            return 'tanstack-vendor';
+          }
+          
+          // Socket.io
+          if (id.includes('node_modules/socket.io')) {
+            return 'socket-vendor';
+          }
+          
+          // Other large vendor libraries
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
         },
       },
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 1500,
     // Enable minification
     minify: 'terser',
     terserOptions: {
@@ -39,6 +77,8 @@ export default defineConfig(({ mode }) => ({
         drop_debugger: mode === 'production',
       },
     },
+    // Enable source maps in production for debugging (optional)
+    sourcemap: mode === 'development',
   },
   // Optimize dependencies
   optimizeDeps: {
