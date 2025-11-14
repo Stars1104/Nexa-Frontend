@@ -4,6 +4,7 @@ import { PersistGate } from 'redux-persist/integration/react'
 import { store, persistor } from './store/index.ts'
 import { Elements } from '@stripe/react-stripe-js'
 import App from './App.tsx'
+import ErrorBoundary from './components/ErrorBoundary'
 import './index.css'
 import { isTranslationError, cleanupTranslationArtifacts, disableTranslation } from './utils/translationUtils'
 
@@ -91,11 +92,13 @@ const initApp = () => {
     const root = createRoot(container);
     
     root.render(
-      <Provider store={store}>
-        <PersistGate loading={<Loading />} persistor={persistor}>
-          <App />
-        </PersistGate>
-      </Provider>
+      <ErrorBoundary>
+        <Provider store={store}>
+          <PersistGate loading={<Loading />} persistor={persistor}>
+            <App />
+          </PersistGate>
+        </Provider>
+      </ErrorBoundary>
     );
 
     return root;
