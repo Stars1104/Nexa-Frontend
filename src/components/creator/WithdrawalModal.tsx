@@ -306,20 +306,20 @@ export default function WithdrawalModal({
     }).format(typeof value === "string" ? parseFloat(value) : value);
   };
 
-  const getMethodIcon = (methodId: string) => {
-    switch (methodId) {
-      case "pix":
-        return <Smartphone className="h-4 w-4" />;
-      case "bank_transfer":
-      case "pagarme_bank_transfer":
-        return <BanknoteIcon className="h-4 w-4" />;
-      case "pagarme_account":
-      case "stripe_card":
-        return <CreditCard className="h-4 w-4" />;
-      default:
-        return <CreditCard className="h-4 w-4" />;
-    }
-  };
+  // const getMethodIcon = (methodId: string) => {
+  //   switch (methodId) {
+  //     case "pix":
+  //       return <Smartphone className="h-4 w-4" />;
+  //     case "bank_transfer":
+  //     case "pagarme_bank_transfer":
+  //       return <BanknoteIcon className="h-4 w-4" />;
+  //     case "pagarme_account":
+  //     case "stripe_card":
+  //       return <CreditCard className="h-4 w-4" />;
+  //     default:
+  //       return <CreditCard className="h-4 w-4" />;
+  //   }
+  // };
 
   const renderMethodFields = () => {
     if (!selectedMethodData) return null;
@@ -338,7 +338,7 @@ export default function WithdrawalModal({
                   Conta Bancária Registrada
                 </h4>
                 <p className="text-sm text-blue-700 mt-1">
-                  O saque será processado para sua conta bancária registrada via Pagar.me. 
+                  O saque será processado para sua conta bancária registrada via Stripe. 
                   Não são necessárias informações adicionais.
                 </p>
               </div>

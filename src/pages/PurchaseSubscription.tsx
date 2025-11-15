@@ -346,12 +346,12 @@ export default function PurchaseSubscription() {
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold text-pink-600 dark:text-pink-400">
-                        R$ {typeof plan.price === 'number' ? plan.price.toFixed(2).replace('.', ',') : '0,00'}
+                        {plan.name === 'Six-Month Plan' ? '$' : 'R$'} {typeof plan.price === 'number' ? plan.price.toFixed(2).replace('.', ',') : '0,00'}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {plan.duration_months === 1 
                           ? 'por mês' 
-                          : `por ${plan.duration_months || 1} meses${typeof plan.monthly_price === 'number' ? ` (R$ ${plan.monthly_price.toFixed(2).replace('.', ',')}/mês)` : ''}`
+                          : `por ${plan.duration_months || 1} meses${typeof plan.monthly_price === 'number' ? ` (${plan.name === 'Six-Month Plan' ? '$' : 'R$'} ${plan.monthly_price.toFixed(2).replace('.', ',')}/mês)` : ''}`
                         }
                       </p>
                     </div>
@@ -382,12 +382,12 @@ export default function PurchaseSubscription() {
                       <p className="font-semibold text-lg text-foreground">Total</p>
                       {plan.duration_months && plan.duration_months > 1 && typeof plan.monthly_price === 'number' && (
                         <p className="text-sm text-muted-foreground">
-                          (R$ {plan.monthly_price.toFixed(2).replace('.', ',')}/mês)
+                          ({plan.name === 'Six-Month Plan' ? '$' : 'R$'} {plan.monthly_price.toFixed(2).replace('.', ',')}/mês)
                         </p>
                       )}
                     </div>
                     <p className="text-2xl font-bold text-foreground">
-                      R$ {typeof plan.price === 'number' ? plan.price.toFixed(2).replace('.', ',') : '0,00'}
+                      {plan.name === 'Six-Month Plan' ? '$' : 'R$'} {typeof plan.price === 'number' ? plan.price.toFixed(2).replace('.', ',') : '0,00'}
                     </p>
                   </div>
                 </div>

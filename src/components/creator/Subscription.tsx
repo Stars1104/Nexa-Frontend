@@ -422,7 +422,7 @@ export default function Subscription() {
                                                 {plan.name || 'Plano'}
                                             </div>
                                             <div className="text-2xl font-bold text-pink-600 dark:text-pink-400 mb-1">
-                                                R$ {typeof plan.price === 'number' ? plan.price.toFixed(2).replace('.', ',') : '0,00'}
+                                                {plan.name === 'Six-Month Plan' ? '$' : 'R$'} {typeof plan.price === 'number' ? plan.price.toFixed(2).replace('.', ',') : '0,00'}
                                             </div>
                                             <div className="text-sm text-muted-foreground mb-2">
                                                 {plan.duration_months === 1 

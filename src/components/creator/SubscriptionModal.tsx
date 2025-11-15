@@ -133,7 +133,7 @@ export default function SubscriptionModal({
           <div className="flex gap-2 pt-4">
             <Button variant="outline" onClick={handleClose} disabled={isLoading} className="flex-1">Cancelar</Button>
             <Button onClick={handlePay} disabled={isLoading || !selectedPlan} className="flex-1">
-              {isLoading ? "Processando..." : `Pagar R$ ${selectedPlan?.price?.toFixed(2).replace(".", ",")}`}
+              {isLoading ? "Processando..." : `Pagar ${selectedPlan?.name === 'Six-Month Plan' ? '$' : 'R$'} ${selectedPlan?.price?.toFixed(2).replace(".", ",")}`}
             </Button>
           </div>
         </CardContent>
