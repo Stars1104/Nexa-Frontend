@@ -100,88 +100,55 @@ export default function Subscription() {
             console.log('Subscription: handleCheckoutSuccess called', { sessionId });
             setPaymentProcessing(true);
             
-            try {
-                const result = await paymentApi.createSubscriptionFromCheckout(sessionId);
-                console.log('Subscription: createSubscriptionFromCheckout result', result);
+            const result = await paymentApi.createSubscriptionFromCheckout(sessionId);
+            console.log('Subscription: createSubscriptionFromCheckout result', result);
+            
+            // Reload subscription status
+            await loadSubscriptionStatus();
+            
+            // Immediately dispatch premium status update to refresh PremiumContext
+            dispatchPremiumStatusUpdate();
+            
+            // Give a small delay to ensure context is updated, then refresh again
+            setTimeout(() => {
+                dispatchPremiumStatusUpdate();
+                loadSubscriptionStatus();
+            }, 1000);
+            
+            // Set up polling as fallback in case webhook is delayed
+            let pollCount = 0;
+            const pollInterval = setInterval(async () => {
+                pollCount++;
+                await loadSubscriptionStatus();
                 
-                if (result?.success) {
-                    // Success - reload status and update UI
-                    await loadSubscriptionStatus();
-                    dispatchPremiumStatusUpdate();
-                    
-                    setTimeout(() => {
-                        dispatchPremiumStatusUpdate();
-                    }, 500);
-                    
-                    toast({
-                        title: "🎉 Assinatura Criada!",
-                        description: "Sua assinatura premium foi ativada com sucesso!",
-                    });
-                } else {
-                    // If endpoint returns but subscription not created, wait for webhook
-                    console.log('Subscription: Endpoint called but subscription may be processing via webhook');
-                    toast({
-                        title: "Processando...",
-                        description: "Sua assinatura está sendo processada. Isso pode levar alguns segundos.",
-                    });
-                    
-                    // Poll for subscription status
-                    let pollCount = 0;
-                    const pollInterval = setInterval(async () => {
-                        pollCount++;
-                        await loadSubscriptionStatus();
-                        
-                        // Check status after reload
-                        const currentStatus = await paymentApi.getSubscriptionStatus();
-                        if (currentStatus?.has_premium || pollCount >= 10) {
-                            clearInterval(pollInterval);
-                            if (currentStatus?.has_premium) {
-                                dispatchPremiumStatusUpdate();
-                                toast({
-                                    title: "🎉 Assinatura Ativada!",
-                                    description: "Sua assinatura premium foi ativada!",
-                                });
-                            }
-                        }
-                    }, 2000);
-                }
-            } catch (endpointError: any) {
-                // If endpoint fails, webhook should handle it
-                console.warn('Subscription: Endpoint call failed, waiting for webhook', endpointError);
-                toast({
-                    title: "Processando...",
-                    description: "Aguardando confirmação do pagamento. Isso pode levar alguns segundos.",
-                });
-                
-                // Poll for subscription status (webhook should process it)
-                let pollCount = 0;
-                const pollInterval = setInterval(async () => {
-                    pollCount++;
-                    await loadSubscriptionStatus();
-                    
-                    // Check status after reload
+                // Check status after reload
+                try {
                     const currentStatus = await paymentApi.getSubscriptionStatus();
-                    if (currentStatus?.has_premium || pollCount >= 15) {
+                    if (currentStatus?.has_premium) {
                         clearInterval(pollInterval);
-                        if (currentStatus?.has_premium) {
-                            dispatchPremiumStatusUpdate();
-                            toast({
-                                title: "🎉 Assinatura Ativada!",
-                                description: "Sua assinatura premium foi ativada!",
-                            });
-                        } else if (pollCount >= 15) {
-                            toast({
-                                title: "Aviso",
-                                description: "A assinatura pode estar sendo processada. Por favor, aguarde alguns minutos e atualize a página.",
-                                variant: "destructive",
-                            });
-                        }
+                        dispatchPremiumStatusUpdate();
+                        toast({
+                            title: "🎉 Assinatura Ativada!",
+                            description: "Sua assinatura premium foi ativada!",
+                        });
+                        return;
                     }
-                }, 2000);
-            }
+                } catch (error) {
+                    console.warn('Subscription: Error checking status during poll', error);
+                }
+                
+                // Stop polling after 20 seconds (10 attempts)
+                if (pollCount >= 10) {
+                    clearInterval(pollInterval);
+                }
+            }, 2000);
+            
+            // Clean up polling after 20 seconds
+            setTimeout(() => {
+                clearInterval(pollInterval);
+            }, 20000);
             
             // Remove query params from URL but keep the subscription component active
-            // IMPORTANT: Only navigate AFTER processing is complete
             setTimeout(() => {
                 const currentPath = location.pathname;
                 if (currentPath === '/creator/subscription') {
@@ -197,14 +164,54 @@ export default function Subscription() {
                 }
             }, 500);
             
-        } catch (error: any) {
-            console.error("Error in handleCheckoutSuccess:", error);
             toast({
-                title: "Erro",
-                description: error.response?.data?.message || "Não foi possível processar a assinatura. O webhook processará automaticamente.",
-                variant: "destructive",
+                title: "🎉 Assinatura Criada!",
+                description: "Sua assinatura premium foi ativada com sucesso!",
             });
-            // Don't reset ref - let webhook handle it
+        } catch (error: any) {
+            console.error("Error creating subscription from checkout:", error);
+            toast({
+                title: "Processando...",
+                description: "Aguardando confirmação do pagamento. Isso pode levar alguns segundos.",
+            });
+            
+            // Poll for subscription status (webhook should process it)
+            let pollCount = 0;
+            const pollInterval = setInterval(async () => {
+                pollCount++;
+                await loadSubscriptionStatus();
+                
+                // Check status after reload
+                try {
+                    const currentStatus = await paymentApi.getSubscriptionStatus();
+                    if (currentStatus?.has_premium) {
+                        clearInterval(pollInterval);
+                        dispatchPremiumStatusUpdate();
+                        toast({
+                            title: "🎉 Assinatura Ativada!",
+                            description: "Sua assinatura premium foi ativada!",
+                        });
+                        return;
+                    }
+                } catch (error) {
+                    console.warn('Subscription: Error checking status during poll', error);
+                }
+                
+                // Stop polling after 30 seconds (15 attempts)
+                if (pollCount >= 15) {
+                    clearInterval(pollInterval);
+                    toast({
+                        title: "Aviso",
+                        description: "A assinatura pode estar sendo processada. Por favor, aguarde alguns minutos e atualize a página.",
+                        variant: "destructive",
+                    });
+                }
+            }, 2000);
+            
+            // Clean up polling after 30 seconds
+            setTimeout(() => {
+                clearInterval(pollInterval);
+            }, 30000);
         } finally {
             setPaymentProcessing(false);
         }
