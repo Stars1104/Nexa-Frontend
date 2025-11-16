@@ -383,5 +383,45 @@ export const brandPaymentApi = {
         error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
       };
     }
+  },
+
+  /**
+   * Get brand's transaction history (transactions related to brand's contracts)
+   * GET /api/brand/transactions
+   */
+  getBrandTransactionHistory: async (
+    page: number = 1,
+    perPage: number = 10
+  ): Promise<{
+    success: boolean;
+    transactions?: any[];
+    pagination?: {
+      current_page: number;
+      last_page: number;
+      per_page: number;
+      total: number;
+      from: number | null;
+      to: number | null;
+    };
+    error?: string;
+  }> => {
+    try {
+      const response = await apiClient.get('/brand/transactions', {
+        params: { page, per_page: perPage }
+      });
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return {
+          success: false,
+          error: error.response.data.error || error.response.data.message || 'Erro ao buscar histórico de transações'
+        };
+      }
+      
+      return {
+        success: false,
+        error: 'Erro de Conexão. Não foi possível conectar ao servidor. Tente novamente.'
+      };
+    }
   }
 }; 

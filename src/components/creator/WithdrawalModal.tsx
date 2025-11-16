@@ -338,7 +338,7 @@ export default function WithdrawalModal({
                   Conta Bancária Registrada
                 </h4>
                 <p className="text-sm text-blue-700 mt-1">
-                  O saque será processado para sua conta bancária registrada via Pagar.me. 
+                  O saque será processado para sua conta bancária registrada via Stripe Connect. 
                   Não são necessárias informações adicionais.
                 </p>
               </div>
@@ -655,8 +655,8 @@ export default function WithdrawalModal({
                 Conta Bancária Necessária
               </h4>
               <p className="text-sm text-amber-700 mt-1">
-                Para solicitar um saque, você precisa ter uma conta bancária registrada via Pagar.me. 
-                Se ainda não registrou sua conta, acesse seu perfil para fazer o cadastro.
+                Para solicitar um saque, você precisa ter uma conta bancária registrada via Stripe Connect. 
+                Se ainda não registrou sua conta, acesse seu perfil para fazer o cadastro via Stripe Connect.
               </p>
             </div>
           </div>

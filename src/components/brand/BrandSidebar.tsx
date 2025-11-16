@@ -1,5 +1,5 @@
 import { Button } from "../ui/button";
-import { Home, FileText, MessageCircle, User, BanknoteIcon, Bell, BookOpen, Settings } from "lucide-react";
+import { Home, FileText, MessageCircle, User, BanknoteIcon, Bell, BookOpen, Settings, Receipt } from "lucide-react";
 import LightLogo from "../../assets/light-logo.png";
 import DarkLogo from "../../assets/dark-logo.png";
 import { useEffect, useState, useRef } from "react";
@@ -12,6 +12,7 @@ const navLinks = [
     { label: "Chat", icon: MessageCircle, key: "Chat" },
     { label: "Meu Perfil", icon: User, key: "Meu perfil" },
     { label: "Pagamentos", icon: BanknoteIcon, key: "Pagamentos" },
+    { label: "Transações", icon: Receipt, key: "Transações" },
     { label: "Notificações", icon: Bell, key: "Notificações" },
     { label: "Guia da Plataforma", icon: BookOpen, key: "Guia da Plataforma" },
 ];
