@@ -71,6 +71,7 @@ export default function Subscription() {
     }, [user?.role, location.search]);
     
     // Separate useEffect to handle checkout success from URL params
+    // This must run FIRST before any navigation happens
     useEffect(() => {
         // Skip if already processed or currently processing
         if (checkoutProcessedRef.current || paymentProcessing) {
@@ -78,21 +79,37 @@ export default function Subscription() {
         }
         
         // Check if user returned from Stripe checkout
+        // Check both pathname route and query params
         const urlParams = new URLSearchParams(location.search);
         const success = urlParams.get('success');
         const sessionId = urlParams.get('session_id');
         
+        // Log for debugging
+        if (success || sessionId) {
+            console.log('Subscription: Checkout params detected', {
+                success,
+                sessionId,
+                pathname: location.pathname,
+                search: location.search,
+                checkoutProcessed: checkoutProcessedRef.current,
+                paymentProcessing
+            });
+        }
+        
         if (success === 'true' && sessionId && !checkoutProcessedRef.current) {
+            console.log('Subscription: Processing checkout success', { sessionId });
             checkoutProcessedRef.current = true;
             handleCheckoutSuccess(sessionId);
         }
-    }, [location.search]); // Watch location.search for changes
+    }, [location.search, location.pathname]); // Watch both search and pathname
     
     const handleCheckoutSuccess = async (sessionId: string) => {
         try {
+            console.log('Subscription: handleCheckoutSuccess called', { sessionId });
             setPaymentProcessing(true);
             
             const result = await paymentApi.createSubscriptionFromCheckout(sessionId);
+            console.log('Subscription: createSubscriptionFromCheckout result', result);
             
             // Reload subscription status first
             await loadSubscriptionStatus();
@@ -106,16 +123,25 @@ export default function Subscription() {
             }, 500);
             
             // Remove query params from URL but keep the subscription component active
+            // IMPORTANT: Only navigate AFTER processing is complete
             // Use replace: true to avoid adding to history, but keep the component in URL
-            const currentPath = location.pathname;
-            if (currentPath === '/creator/subscription') {
-                // If we're on the subscription route, update to use component query param instead
-                // This allows proper navigation after purchase
-                navigate('/creator?component=subscription', { replace: true });
-            } else {
-                // Otherwise just clean the query params
-                navigate(currentPath, { replace: true });
-            }
+            setTimeout(() => {
+                const currentPath = location.pathname;
+                if (currentPath === '/creator/subscription') {
+                    // If we're on the subscription route, update to use component query param instead
+                    // This allows proper navigation after purchase
+                    navigate('/creator?component=subscription', { replace: true });
+                } else {
+                    // Otherwise just clean the query params but keep component
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('success');
+                    url.searchParams.delete('session_id');
+                    if (!url.searchParams.has('component')) {
+                        url.searchParams.set('component', 'subscription');
+                    }
+                    navigate(url.pathname + url.search, { replace: true });
+                }
+            }, 100);
             
             toast({
                 title: "🎉 Assinatura Criada!",
