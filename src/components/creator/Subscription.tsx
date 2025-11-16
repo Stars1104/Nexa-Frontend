@@ -459,7 +459,10 @@ export default function Subscription() {
                                                 ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/20 ring-2 ring-pink-500/20'
                                                 : 'border-border hover:border-pink-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                                         }`}
-                                        onClick={() => setSelectedPlan(plan)}
+                                        onClick={() => {
+                                            console.log('Subscription: Plan selected', { planId: plan.id, planName: plan.name });
+                                            setSelectedPlan(plan);
+                                        }}
                                     >
                                         <div className="text-center">
                                             <div className="font-bold text-lg text-foreground mb-1">
@@ -544,8 +547,13 @@ export default function Subscription() {
                                 return;
                             }
                             try {
+                                console.log('Subscription: Starting checkout', { 
+                                    selectedPlanId: selectedPlan.id, 
+                                    selectedPlanName: selectedPlan.name 
+                                });
                                 setPaymentProcessing(true);
                                 const checkoutUrl = await paymentApi.getCheckoutUrl(selectedPlan.id);
+                                console.log('Subscription: Checkout URL received', { checkoutUrl });
                                 window.location.href = checkoutUrl;
                             } catch (error: any) {
                                 toast({
@@ -567,7 +575,9 @@ export default function Subscription() {
                             </>
                         ) : subscriptionStatus?.is_premium_active 
                             ? 'Assinatura Ativa' 
-                            : `Assinar ${selectedPlan.name || 'Plano'}`
+                            : selectedPlan 
+                            ? `Assinar ${selectedPlan.name || 'Plano'}`
+                            : 'Selecione um plano'
                         }
                     </Button>
                 </div>
