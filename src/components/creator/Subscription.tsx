@@ -427,7 +427,7 @@ export default function Subscription() {
                                             <div className="text-sm text-muted-foreground mb-2">
                                                 {plan.duration_months === 1 
                                                     ? 'por mês' 
-                                                    : `por ${plan.duration_months || 1} meses`
+                                                    : `por mês • ${plan.duration_months || 1} meses de acesso`
                                                 }
                                             </div>
                                             {plan.savings_percentage && typeof plan.savings_percentage === 'number' && (
@@ -460,7 +460,7 @@ export default function Subscription() {
                                             <div className="text-sm text-muted-foreground">
                                                 {selectedPlan.duration_months === 1 
                                                     ? 'por mês' 
-                                                    : `por ${selectedPlan.duration_months || 1} meses (R$ ${typeof selectedPlan.monthly_price === 'number' ? selectedPlan.monthly_price.toFixed(2).replace('.', ',') : '0,00'}/mês)`
+                                                    : `por mês • ${selectedPlan.duration_months || 1} meses de acesso`
                                                 }
                                             </div>
                                         </div>
