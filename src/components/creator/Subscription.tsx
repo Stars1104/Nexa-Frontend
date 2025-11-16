@@ -37,6 +37,20 @@ export default function Subscription() {
     const [studentLoading, setStudentLoading] = useState(false);
     const checkoutProcessedRef = useRef(false);
 
+    // CRITICAL: Process checkout params FIRST, before any other effects
+    // This must run immediately on mount to catch params before navigation removes them
+    useEffect(() => {
+        // Check if user returned from Stripe checkout - use window.location to get params immediately
+        const urlParams = new URLSearchParams(window.location.search);
+        const success = urlParams.get('success');
+        const sessionId = urlParams.get('session_id');
+        
+        if (success === 'true' && sessionId && !checkoutProcessedRef.current && !paymentProcessing) {
+            checkoutProcessedRef.current = true;
+            handleCheckoutSuccess(sessionId);
+        }
+    }, []); // Run only once on mount
+    
     useEffect(() => {
         // Load subscription plans first (public endpoint)
         loadSubscriptionPlans();
@@ -52,7 +66,7 @@ export default function Subscription() {
         }
     }, [user?.role]);
     
-    // Separate useEffect to handle checkout success from URL params
+    // Also watch location.search as fallback in case params are added after mount
     useEffect(() => {
         // Skip if already processed or currently processing
         if (checkoutProcessedRef.current || paymentProcessing) {
