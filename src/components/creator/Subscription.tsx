@@ -50,70 +50,10 @@ export default function Subscription() {
             loadSubscriptionStatus();
             // Load student status if user is a student
         }
-        
-        // Check if user has active Stripe subscription but no local subscription
-        // This handles cases where webhook didn't arrive or frontend didn't process
-        const checkForPendingSubscription = async () => {
-            if (user && !subscriptionStatus?.has_premium) {
-                // Check if there's a session_id in URL that wasn't processed
-                const urlParams = new URLSearchParams(location.search);
-                const sessionId = urlParams.get('session_id');
-                const success = urlParams.get('success');
-                
-                if (sessionId && success === 'true' && !checkoutProcessedRef.current) {
-                    console.log('Subscription: Found unprocessed session_id in URL, processing...', { sessionId });
-                    checkoutProcessedRef.current = true;
-                    handleCheckoutSuccess(sessionId);
-                }
-            }
-        };
-        
-        // Small delay to ensure user data is loaded
-        setTimeout(checkForPendingSubscription, 1000);
-        
-        // Also set up a polling mechanism to check for subscription status if user just returned from checkout
-        // This is a fallback in case the endpoint call fails or webhook is delayed
-        const urlParams = new URLSearchParams(location.search);
-        if (urlParams.get('success') === 'true' && urlParams.get('session_id')) {
-            // User just returned from checkout - poll subscription status
-            let pollAttempts = 0;
-            const pollInterval = setInterval(async () => {
-                pollAttempts++;
-                
-                // Check current status
-                try {
-                    const currentStatus = await paymentApi.getSubscriptionStatus();
-                    if (currentStatus?.has_premium) {
-                        clearInterval(pollInterval);
-                        await loadSubscriptionStatus();
-                        dispatchPremiumStatusUpdate();
-                        console.log('Subscription: Premium activated via polling (initial check)');
-                        return;
-                    }
-                } catch (error) {
-                    console.warn('Subscription: Error polling status', error);
-                }
-                
-                // Poll for up to 30 seconds (6 attempts with 5 second intervals)
-                if (pollAttempts >= 6) {
-                    clearInterval(pollInterval);
-                    console.log('Subscription: Polling stopped after 6 attempts');
-                    return;
-                }
-                
-                console.log('Subscription: Polling subscription status...', { attempt: pollAttempts });
-                await loadSubscriptionStatus();
-            }, 5000);
-            
-            // Clean up after 30 seconds
-            setTimeout(() => {
-                clearInterval(pollInterval);
-            }, 30000);
-        }
-    }, [user?.role, location.search]);
+    }, [user?.role]);
     
     // Separate useEffect to handle checkout success from URL params
-    // This must run FIRST before any navigation happens
+    // This MUST run when component mounts and when URL changes
     useEffect(() => {
         // Skip if already processed or currently processing
         if (checkoutProcessedRef.current || paymentProcessing) {
@@ -121,29 +61,28 @@ export default function Subscription() {
         }
         
         // Check if user returned from Stripe checkout
-        // Check both pathname route and query params
-        const urlParams = new URLSearchParams(location.search);
-        const success = urlParams.get('success');
-        const sessionId = urlParams.get('session_id');
+        // Use window.location.search as primary source to catch params immediately
+        const searchParams = new URLSearchParams(window.location.search);
+        const success = searchParams.get('success');
+        const sessionId = searchParams.get('session_id');
         
-        // Also check window.location.search directly as fallback
-        const windowSearch = new URLSearchParams(window.location.search);
-        const windowSuccess = windowSearch.get('success');
-        const windowSessionId = windowSearch.get('session_id');
+        // Also check location.search as fallback (React Router)
+        const locationParams = new URLSearchParams(location.search);
+        const locationSuccess = locationParams.get('success');
+        const locationSessionId = locationParams.get('session_id');
         
-        // Use window location if location.search doesn't have it (React Router might not have updated yet)
-        const finalSuccess = success || windowSuccess;
-        const finalSessionId = sessionId || windowSessionId;
+        // Use whichever has the values
+        const finalSuccess = success || locationSuccess;
+        const finalSessionId = sessionId || locationSessionId;
         
         // Log for debugging
         if (finalSuccess || finalSessionId) {
             console.log('Subscription: Checkout params detected', {
                 success: finalSuccess,
                 sessionId: finalSessionId,
-                pathname: location.pathname,
-                windowPathname: window.location.pathname,
-                search: location.search,
                 windowSearch: window.location.search,
+                locationSearch: location.search,
+                pathname: location.pathname,
                 checkoutProcessed: checkoutProcessedRef.current,
                 paymentProcessing
             });
@@ -152,10 +91,7 @@ export default function Subscription() {
         if (finalSuccess === 'true' && finalSessionId && !checkoutProcessedRef.current) {
             console.log('Subscription: Processing checkout success', { sessionId: finalSessionId });
             checkoutProcessedRef.current = true;
-            // Use a small delay to ensure component is fully mounted
-            setTimeout(() => {
-                handleCheckoutSuccess(finalSessionId);
-            }, 100);
+            handleCheckoutSuccess(finalSessionId);
         }
     }, [location.search, location.pathname]); // Watch both search and pathname
     
