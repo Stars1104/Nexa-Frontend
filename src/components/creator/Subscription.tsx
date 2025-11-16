@@ -53,75 +53,30 @@ export default function Subscription() {
     }, [user?.role]);
     
     // Separate useEffect to handle checkout success from URL params
-    // This MUST run when component mounts and when URL changes
     useEffect(() => {
-        console.log('Subscription: useEffect triggered', {
-            windowSearch: window.location.search,
-            locationSearch: location.search,
-            pathname: location.pathname,
-            checkoutProcessed: checkoutProcessedRef.current,
-            paymentProcessing
-        });
-        
         // Skip if already processed or currently processing
         if (checkoutProcessedRef.current || paymentProcessing) {
-            console.log('Subscription: Skipping - already processed or processing');
             return;
         }
         
         // Check if user returned from Stripe checkout
-        // Use window.location.search as primary source to catch params immediately
-        const searchParams = new URLSearchParams(window.location.search);
-        const success = searchParams.get('success');
-        const sessionId = searchParams.get('session_id');
+        const urlParams = new URLSearchParams(location.search);
+        const success = urlParams.get('success');
+        const sessionId = urlParams.get('session_id');
         
-        // Also check location.search as fallback (React Router)
-        const locationParams = new URLSearchParams(location.search);
-        const locationSuccess = locationParams.get('success');
-        const locationSessionId = locationParams.get('session_id');
-        
-        // Use whichever has the values
-        const finalSuccess = success || locationSuccess;
-        const finalSessionId = sessionId || locationSessionId;
-        
-        // Log for debugging - ALWAYS log, not just when params exist
-        console.log('Subscription: Checkout params check', {
-            success: finalSuccess,
-            sessionId: finalSessionId,
-            windowSuccess: success,
-            windowSessionId: sessionId,
-            locationSuccess: locationSuccess,
-            locationSessionId: locationSessionId,
-            windowSearch: window.location.search,
-            locationSearch: location.search,
-            pathname: location.pathname,
-            checkoutProcessed: checkoutProcessedRef.current,
-            paymentProcessing
-        });
-        
-        if (finalSuccess === 'true' && finalSessionId && !checkoutProcessedRef.current) {
-            console.log('Subscription: ✅ Processing checkout success', { sessionId: finalSessionId });
+        if (success === 'true' && sessionId && !checkoutProcessedRef.current) {
             checkoutProcessedRef.current = true;
-            handleCheckoutSuccess(finalSessionId);
-        } else {
-            console.log('Subscription: ❌ Not processing', {
-                finalSuccess,
-                finalSessionId,
-                checkoutProcessed: checkoutProcessedRef.current,
-                reason: !finalSuccess ? 'no success param' : !finalSessionId ? 'no session_id' : 'already processed'
-            });
+            handleCheckoutSuccess(sessionId);
         }
-    }, [location.search, location.pathname]); // Watch both search and pathname
+    }, [location.search]); // Watch location.search for changes
     
     const handleCheckoutSuccess = async (sessionId: string) => {
         try {
-            console.log('Subscription: handleCheckoutSuccess called', { sessionId });
             setPaymentProcessing(true);
             
             const result = await paymentApi.createSubscriptionFromCheckout(sessionId);
-            console.log('Subscription: createSubscriptionFromCheckout result', result);
             
-            // Reload subscription status
+            // Reload subscription status first
             await loadSubscriptionStatus();
             
             // Immediately dispatch premium status update to refresh PremiumContext
@@ -130,57 +85,19 @@ export default function Subscription() {
             // Give a small delay to ensure context is updated, then refresh again
             setTimeout(() => {
                 dispatchPremiumStatusUpdate();
-                loadSubscriptionStatus();
-            }, 1000);
-            
-            // Set up polling as fallback in case webhook is delayed
-            let pollCount = 0;
-            const pollInterval = setInterval(async () => {
-                pollCount++;
-                await loadSubscriptionStatus();
-                
-                // Check status after reload
-                try {
-                    const currentStatus = await paymentApi.getSubscriptionStatus();
-                    if (currentStatus?.has_premium) {
-                        clearInterval(pollInterval);
-                        dispatchPremiumStatusUpdate();
-                        toast({
-                            title: "🎉 Assinatura Ativada!",
-                            description: "Sua assinatura premium foi ativada!",
-                        });
-                        return;
-                    }
-                } catch (error) {
-                    console.warn('Subscription: Error checking status during poll', error);
-                }
-                
-                // Stop polling after 20 seconds (10 attempts)
-                if (pollCount >= 10) {
-                    clearInterval(pollInterval);
-                }
-            }, 2000);
-            
-            // Clean up polling after 20 seconds
-            setTimeout(() => {
-                clearInterval(pollInterval);
-            }, 20000);
+            }, 500);
             
             // Remove query params from URL but keep the subscription component active
-            setTimeout(() => {
-                const currentPath = location.pathname;
-                if (currentPath === '/creator/subscription') {
-                    navigate('/creator?component=subscription', { replace: true });
-                } else {
-                    const url = new URL(window.location.href);
-                    url.searchParams.delete('success');
-                    url.searchParams.delete('session_id');
-                    if (!url.searchParams.has('component')) {
-                        url.searchParams.set('component', 'subscription');
-                    }
-                    navigate(url.pathname + url.search, { replace: true });
-                }
-            }, 500);
+            // Use replace: true to avoid adding to history, but keep the component in URL
+            const currentPath = location.pathname;
+            if (currentPath === '/creator/subscription') {
+                // If we're on the subscription route, update to use component query param instead
+                // This allows proper navigation after purchase
+                navigate('/creator?component=subscription', { replace: true });
+            } else {
+                // Otherwise just clean the query params
+                navigate(currentPath, { replace: true });
+            }
             
             toast({
                 title: "🎉 Assinatura Criada!",
@@ -189,47 +106,12 @@ export default function Subscription() {
         } catch (error: any) {
             console.error("Error creating subscription from checkout:", error);
             toast({
-                title: "Processando...",
-                description: "Aguardando confirmação do pagamento. Isso pode levar alguns segundos.",
+                title: "Erro",
+                description: error.response?.data?.message || "Não foi possível criar a assinatura. Tente novamente.",
+                variant: "destructive",
             });
-            
-            // Poll for subscription status (webhook should process it)
-            let pollCount = 0;
-            const pollInterval = setInterval(async () => {
-                pollCount++;
-                await loadSubscriptionStatus();
-                
-                // Check status after reload
-                try {
-                    const currentStatus = await paymentApi.getSubscriptionStatus();
-                    if (currentStatus?.has_premium) {
-                        clearInterval(pollInterval);
-                        dispatchPremiumStatusUpdate();
-                        toast({
-                            title: "🎉 Assinatura Ativada!",
-                            description: "Sua assinatura premium foi ativada!",
-                        });
-                        return;
-                    }
-                } catch (error) {
-                    console.warn('Subscription: Error checking status during poll', error);
-                }
-                
-                // Stop polling after 30 seconds (15 attempts)
-                if (pollCount >= 15) {
-                    clearInterval(pollInterval);
-                    toast({
-                        title: "Aviso",
-                        description: "A assinatura pode estar sendo processada. Por favor, aguarde alguns minutos e atualize a página.",
-                        variant: "destructive",
-                    });
-                }
-            }, 2000);
-            
-            // Clean up polling after 30 seconds
-            setTimeout(() => {
-                clearInterval(pollInterval);
-            }, 30000);
+            // Reset the ref so user can retry
+            checkoutProcessedRef.current = false;
         } finally {
             setPaymentProcessing(false);
         }
