@@ -256,8 +256,19 @@ export default function Subscription() {
                 
                 setSubscriptionPlans(validatedPlans);
                 
-                // Set default selected plan to monthly plan
-                setSelectedPlan(validatedPlans[0]);
+                // Set default selected plan to monthly plan only if no plan is currently selected
+                // OR if the currently selected plan no longer exists in the list
+                if (!selectedPlan) {
+                    setSelectedPlan(validatedPlans[0]);
+                } else {
+                    // Check if the currently selected plan still exists in the new list
+                    const currentPlanExists = validatedPlans.find(p => p.id === selectedPlan.id);
+                    if (!currentPlanExists) {
+                        // If current plan doesn't exist, select the first one
+                        setSelectedPlan(validatedPlans[0]);
+                    }
+                    // Otherwise, keep the current selection
+                }
             } else {
                 setSubscriptionPlans([]);
                 setSelectedPlan(null);
