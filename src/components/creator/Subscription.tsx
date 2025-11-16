@@ -76,21 +76,32 @@ export default function Subscription() {
         const urlParams = new URLSearchParams(location.search);
         if (urlParams.get('success') === 'true' && urlParams.get('session_id')) {
             // User just returned from checkout - poll subscription status
+            let pollAttempts = 0;
             const pollInterval = setInterval(async () => {
-                if (subscriptionStatus?.has_premium) {
-                    clearInterval(pollInterval);
-                    return;
+                pollAttempts++;
+                
+                // Check current status
+                try {
+                    const currentStatus = await paymentApi.getSubscriptionStatus();
+                    if (currentStatus?.has_premium) {
+                        clearInterval(pollInterval);
+                        await loadSubscriptionStatus();
+                        dispatchPremiumStatusUpdate();
+                        console.log('Subscription: Premium activated via polling (initial check)');
+                        return;
+                    }
+                } catch (error) {
+                    console.warn('Subscription: Error polling status', error);
                 }
                 
                 // Poll for up to 30 seconds (6 attempts with 5 second intervals)
-                const attempts = pollInterval['_attempts'] || 0;
-                if (attempts >= 6) {
+                if (pollAttempts >= 6) {
                     clearInterval(pollInterval);
+                    console.log('Subscription: Polling stopped after 6 attempts');
                     return;
                 }
-                pollInterval['_attempts'] = attempts + 1;
                 
-                console.log('Subscription: Polling subscription status...', { attempt: attempts + 1 });
+                console.log('Subscription: Polling subscription status...', { attempt: pollAttempts });
                 await loadSubscriptionStatus();
             }, 5000);
             
@@ -99,7 +110,7 @@ export default function Subscription() {
                 clearInterval(pollInterval);
             }, 30000);
         }
-    }, [user?.role, location.search, subscriptionStatus?.has_premium]);
+    }, [user?.role, location.search]);
     
     // Separate useEffect to handle checkout success from URL params
     // This must run FIRST before any navigation happens
