@@ -63,22 +63,13 @@ function Index() {
     }, [user?.id, user?.role, user?.student_verified, component, setComponent]);
 
     // Handle subscription route - convert pathname route to query param route
-    // IMPORTANT: Don't convert if there are checkout params (success/session_id) - let Subscription component handle it first
     useEffect(() => {
         if (location.pathname === '/creator/subscription') {
+            // Convert /creator/subscription pathname to /creator?component=subscription query param
+            // This ensures proper navigation works after purchase
             const currentSearch = location.search;
-            const urlParams = new URLSearchParams(currentSearch);
-            const hasCheckoutParams = urlParams.has('success') || urlParams.has('session_id');
-            
-            // If there are checkout params, ALWAYS set component to "Assinatura" to ensure Subscription is rendered
-            if (hasCheckoutParams) {
-                console.log('Index: Checkout params detected, setting component to Assinatura', {
-                    success: urlParams.get('success'),
-                    session_id: urlParams.get('session_id'),
-                });
-                setComponent("Assinatura");
-            } else if (!currentSearch.includes('component=')) {
-                // Only convert if not already using query params AND no checkout params
+            if (!currentSearch.includes('component=')) {
+                // Only convert if not already using query params
                 setComponent("Assinatura");
             }
         }
