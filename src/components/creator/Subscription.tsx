@@ -55,8 +55,17 @@ export default function Subscription() {
     // Separate useEffect to handle checkout success from URL params
     // This MUST run when component mounts and when URL changes
     useEffect(() => {
+        console.log('Subscription: useEffect triggered', {
+            windowSearch: window.location.search,
+            locationSearch: location.search,
+            pathname: location.pathname,
+            checkoutProcessed: checkoutProcessedRef.current,
+            paymentProcessing
+        });
+        
         // Skip if already processed or currently processing
         if (checkoutProcessedRef.current || paymentProcessing) {
+            console.log('Subscription: Skipping - already processed or processing');
             return;
         }
         
@@ -75,23 +84,32 @@ export default function Subscription() {
         const finalSuccess = success || locationSuccess;
         const finalSessionId = sessionId || locationSessionId;
         
-        // Log for debugging
-        if (finalSuccess || finalSessionId) {
-            console.log('Subscription: Checkout params detected', {
-                success: finalSuccess,
-                sessionId: finalSessionId,
-                windowSearch: window.location.search,
-                locationSearch: location.search,
-                pathname: location.pathname,
-                checkoutProcessed: checkoutProcessedRef.current,
-                paymentProcessing
-            });
-        }
+        // Log for debugging - ALWAYS log, not just when params exist
+        console.log('Subscription: Checkout params check', {
+            success: finalSuccess,
+            sessionId: finalSessionId,
+            windowSuccess: success,
+            windowSessionId: sessionId,
+            locationSuccess: locationSuccess,
+            locationSessionId: locationSessionId,
+            windowSearch: window.location.search,
+            locationSearch: location.search,
+            pathname: location.pathname,
+            checkoutProcessed: checkoutProcessedRef.current,
+            paymentProcessing
+        });
         
         if (finalSuccess === 'true' && finalSessionId && !checkoutProcessedRef.current) {
-            console.log('Subscription: Processing checkout success', { sessionId: finalSessionId });
+            console.log('Subscription: ✅ Processing checkout success', { sessionId: finalSessionId });
             checkoutProcessedRef.current = true;
             handleCheckoutSuccess(finalSessionId);
+        } else {
+            console.log('Subscription: ❌ Not processing', {
+                finalSuccess,
+                finalSessionId,
+                checkoutProcessed: checkoutProcessedRef.current,
+                reason: !finalSuccess ? 'no success param' : !finalSessionId ? 'no session_id' : 'already processed'
+            });
         }
     }, [location.search, location.pathname]); // Watch both search and pathname
     
