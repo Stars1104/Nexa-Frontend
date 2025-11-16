@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Helmet } from 'react-helmet-async';
+import { translateWithdrawalStatus } from '@/utils/translationUtils';
 
 interface WithdrawalVerification {
   id: number;
@@ -534,7 +535,7 @@ export default function WithdrawalVerification() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={withdrawal.status === 'completed' ? 'default' : 'secondary'}>
-                          {withdrawal.status}
+                          {translateWithdrawalStatus(withdrawal.status)}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -595,7 +596,7 @@ export default function WithdrawalVerification() {
                                       <div className="space-y-1">
                                         <Label className="text-sm font-medium">Status</Label>
                                         <div>
-                                          <Badge>{selectedWithdrawal.withdrawal.status}</Badge>
+                                          <Badge>{translateWithdrawalStatus(selectedWithdrawal.withdrawal.status)}</Badge>
                                         </div>
                                       </div>
                                       <div className="space-y-1 sm:col-span-2 lg:col-span-3">

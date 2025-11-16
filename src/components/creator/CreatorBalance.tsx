@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Download
 } from 'lucide-react';
+import { translateWithdrawalStatus, translateTransactionStatus } from '@/utils/translationUtils';
 
 export default function CreatorBalance() {
   const [balance, setBalance] = useState<CreatorBalanceType | null>(null);
@@ -198,7 +199,7 @@ export default function CreatorBalance() {
                       <div className="text-right">
                         <p className="font-semibold text-green-600">{transaction.amount}</p>
                         <Badge variant="outline" className="text-xs">
-                          {transaction.status}
+                          {translateTransactionStatus(transaction.status)}
                         </Badge>
                       </div>
                     </div>
@@ -231,7 +232,7 @@ export default function CreatorBalance() {
                       </div>
                       <div className="text-right">
                         <Badge className={withdrawal.status_badge_color}>
-                          {withdrawal.status}
+                          {translateWithdrawalStatus(withdrawal.status)}
                         </Badge>
                         {withdrawal.can_be_cancelled && (
                           <Button

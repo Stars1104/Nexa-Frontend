@@ -145,3 +145,34 @@ export const reloadWithoutTranslation = (): void => {
   window.location.reload();
 };
 
+/**
+ * Translate withdrawal status from English to Portuguese
+ */
+export const translateWithdrawalStatus = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    'pending': 'Pendente',
+    'processing': 'Processando',
+    'completed': 'Concluído',
+    'failed': 'Falhou',
+    'cancelled': 'Cancelado',
+  };
+  return statusMap[status.toLowerCase()] || status;
+};
+
+/**
+ * Translate transaction status from English to Portuguese
+ */
+export const translateTransactionStatus = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    'pending': 'Pendente',
+    'processing': 'Processando',
+    'paid': 'Pago',
+    'completed': 'Concluído',
+    'failed': 'Falhou',
+    'cancelled': 'Cancelado',
+    'refunded': 'Reembolsado',
+    'expired': 'Expirado',
+  };
+  return statusMap[status.toLowerCase()] || status;
+};
+

@@ -17,6 +17,7 @@ import ViewApplication from "@/components/brand/ViewApplication";
 import CreateCampaign from "@/components/brand/CreateCampaign";
 import CampaignManagement from "@/components/brand/CampaignManagement";
 import BrandPaymentMethods from "@/components/brand/BrandPaymentMethods";
+import BrandTransactions from "@/components/brand/BrandTransactions";
 import Notification from "@/components/Notification";
 import CreatorProfile from "@/components/brand/CreatorProfile";
 import GuideEmbedded from "@/components/GuideEmbedded";
@@ -53,6 +54,8 @@ function Index() {
                     return <CampaignManagement setComponent={setComponent} />
                 case "Pagamentos":
                     return <BrandPaymentMethods />
+                case "Transações":
+                    return <BrandTransactions />
                 case "Notificações":
                     return <Notification />
                 case "Perfil do Criador":
