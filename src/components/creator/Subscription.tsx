@@ -50,7 +50,25 @@ export default function Subscription() {
             loadSubscriptionStatus();
             // Load student status if user is a student
         }
-    }, [user?.role]);
+        
+        // Check if user has active Stripe subscription but no local subscription
+        // This handles cases where webhook didn't arrive or frontend didn't process
+        const checkForPendingSubscription = async () => {
+            if (user && !subscriptionStatus?.has_premium) {
+                // Check if there's a session_id in URL that wasn't processed
+                const urlParams = new URLSearchParams(location.search);
+                const sessionId = urlParams.get('session_id');
+                if (sessionId && !checkoutProcessedRef.current) {
+                    console.log('Found unprocessed session_id in URL, processing...');
+                    checkoutProcessedRef.current = true;
+                    handleCheckoutSuccess(sessionId);
+                }
+            }
+        };
+        
+        // Small delay to ensure user data is loaded
+        setTimeout(checkForPendingSubscription, 1000);
+    }, [user?.role, location.search]);
     
     // Separate useEffect to handle checkout success from URL params
     useEffect(() => {
