@@ -70,9 +70,15 @@ function Index() {
             const urlParams = new URLSearchParams(currentSearch);
             const hasCheckoutParams = urlParams.has('success') || urlParams.has('session_id');
             
-            // Only convert if not already using query params AND no checkout params
-            // This allows Subscription component to process checkout first
-            if (!currentSearch.includes('component=') && !hasCheckoutParams) {
+            // If there are checkout params, ALWAYS set component to "Assinatura" to ensure Subscription is rendered
+            if (hasCheckoutParams) {
+                console.log('Index: Checkout params detected, setting component to Assinatura', {
+                    success: urlParams.get('success'),
+                    session_id: urlParams.get('session_id'),
+                });
+                setComponent("Assinatura");
+            } else if (!currentSearch.includes('component=')) {
+                // Only convert if not already using query params AND no checkout params
                 setComponent("Assinatura");
             }
         }
