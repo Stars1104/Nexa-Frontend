@@ -181,7 +181,14 @@ export default function WithdrawalModal({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
+    console.log("=== WITHDRAWAL HANDLE SUBMIT START ===", {
+      selectedMethod,
+      amount,
+      hasUser: !!user,
+      userId: user?.id,
+      stripeAccountId: userData?.stripe_account_id,
+    });
     e.preventDefault();
     if (!selectedMethod || !amount || parseFloat(amount) <= 0) {
       toast({
@@ -240,6 +247,8 @@ export default function WithdrawalModal({
       return;
     }
 
+    console.log("Stripe account OK, proceeding with withdrawal");
+
     setIsLoading(true);
 
     try {
@@ -248,8 +257,10 @@ export default function WithdrawalModal({
         withdrawal_method: selectedMethod,
         withdrawal_details: withdrawalDetails,
       };
+      console.log("Sending withdrawal request", requestData);
       
       const response = await apiClient.post("/freelancer/withdrawals", requestData);
+      console.log("Withdrawal response received", response.data);
 
       if (response.data.success) {
         const withdrawalData = response.data.data;
@@ -818,7 +829,11 @@ export default function WithdrawalModal({
             Cancelar
           </Button>
           <Button
-            onClick={handleSubmit}
+            type="button"
+            onClick={(e) => {
+              console.log("=== WITHDRAWAL CONFIRM BUTTON CLICKED ===");
+              handleSubmit(e);
+            }}
             disabled={
               isLoading || !selectedMethod || !amount || parseFloat(amount) <= 0
             }
