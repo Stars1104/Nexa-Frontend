@@ -115,7 +115,9 @@ export default function BalanceAndWithdrawals() {
       }
       
       const response = await hiringApi.getCreatorBalance();
-      console.log("+++++++++++++++++++++++++",response.data);
+      console.log("Balance API Response:", response.data);
+      console.log("Available Balance:", response.data?.balance?.available_balance, "Type:", typeof response.data?.balance?.available_balance);
+      console.log("Button disabled check:", !response.data || response.data.balance.available_balance <= 0);
       setBalance(response.data);
     } catch (error) {
       console.error('Error loading balance:', error);
@@ -192,7 +194,7 @@ export default function BalanceAndWithdrawals() {
         <Button 
           onClick={() => setShowWithdrawalModal(true)}
           className="flex items-center gap-2 bg-[#e91e63] text-white hover:bg-[#e91e63]/90"
-          disabled={!balance || balance.balance.available_balance <= 0}
+          disabled={!balance || !balance.balance || (typeof balance.balance.available_balance === 'number' ? balance.balance.available_balance <= 0 : parseFloat(balance.balance.available_balance || '0') <= 0)}
         >
           <Wallet className="h-4 w-4" />
           Solicitar Saque
