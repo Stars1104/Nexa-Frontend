@@ -115,20 +115,28 @@ export default function BalanceAndWithdrawals() {
       }
       
       const response = await hiringApi.getCreatorBalance();
-      console.log("Balance API Response:", response.data);
-      console.log("Available Balance:", response.data?.balance?.available_balance, "Type:", typeof response.data?.balance?.available_balance);
+      console.log("=== BALANCE API DEBUG ===");
+      console.log("Full Response:", JSON.stringify(response.data, null, 2));
+      console.log("Response.data exists:", !!response.data);
+      console.log("Response.data.balance exists:", !!response.data?.balance);
+      console.log("Available Balance raw:", response.data?.balance?.available_balance);
+      console.log("Available Balance type:", typeof response.data?.balance?.available_balance);
+      
       const availableBalance = response.data?.balance?.available_balance;
       const isNumber = typeof availableBalance === 'number';
-      const numericValue = isNumber ? availableBalance : parseFloat(availableBalance || '0');
+      const numericValue = isNumber ? availableBalance : parseFloat(String(availableBalance || '0'));
       const isDisabled = !response.data || !response.data.balance || numericValue <= 0;
-      console.log("Button disabled check:", {
-        hasBalance: !!response.data,
-        hasBalanceData: !!response.data?.balance,
-        availableBalance,
-        isNumber,
-        numericValue,
-        isDisabled
-      });
+      
+      console.log("=== BUTTON DISABLED CHECK ===");
+      console.log("hasBalance:", !!response.data);
+      console.log("hasBalanceData:", !!response.data?.balance);
+      console.log("availableBalance:", availableBalance);
+      console.log("isNumber:", isNumber);
+      console.log("numericValue:", numericValue);
+      console.log("isDisabled:", isDisabled);
+      console.log("Will button be disabled?", isDisabled);
+      console.log("===========================");
+      
       setBalance(response.data);
     } catch (error) {
       console.error('Error loading balance:', error);
@@ -207,14 +215,12 @@ export default function BalanceAndWithdrawals() {
             e.preventDefault();
             e.stopPropagation();
             const availableBalance = balance?.balance?.available_balance;
-            const numericValue = typeof availableBalance === 'number' ? availableBalance : parseFloat(availableBalance || '0');
-            console.log('Button clicked!', { 
-              balance, 
-              availableBalance, 
-              numericValue,
-              isDisabled: numericValue <= 0,
-              willOpenModal: numericValue > 0
-            });
+            const numericValue = typeof availableBalance === 'number' ? availableBalance : parseFloat(String(availableBalance || '0'));
+            console.log('=== BUTTON CLICKED ===');
+            console.log('Balance object:', balance);
+            console.log('Available Balance:', availableBalance);
+            console.log('Numeric Value:', numericValue);
+            console.log('Will open modal?', numericValue > 0);
             if (numericValue > 0) {
               setShowWithdrawalModal(true);
             } else {
@@ -222,7 +228,23 @@ export default function BalanceAndWithdrawals() {
             }
           }}
           className="flex items-center gap-2 bg-[#e91e63] text-white hover:bg-[#e91e63]/90 relative z-10 cursor-pointer"
-          disabled={!balance || !balance.balance || (typeof balance.balance.available_balance === 'number' ? balance.balance.available_balance <= 0 : parseFloat(balance.balance.available_balance || '0') <= 0)}
+          disabled={(() => {
+            const hasBalance = !!balance && !!balance.balance;
+            const availableBalance = balance?.balance?.available_balance;
+            const numericValue = typeof availableBalance === 'number' 
+              ? availableBalance 
+              : parseFloat(String(availableBalance || '0'));
+            const shouldDisable = !hasBalance || numericValue <= 0;
+            
+            console.log('=== BUTTON DISABLED CALCULATION ===');
+            console.log('hasBalance:', hasBalance);
+            console.log('availableBalance:', availableBalance);
+            console.log('numericValue:', numericValue);
+            console.log('shouldDisable:', shouldDisable);
+            console.log('===================================');
+            
+            return shouldDisable;
+          })()}
         >
           <Wallet className="h-4 w-4" />
           Solicitar Saque
