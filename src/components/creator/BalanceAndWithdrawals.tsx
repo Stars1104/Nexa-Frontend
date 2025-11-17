@@ -212,22 +212,42 @@ export default function BalanceAndWithdrawals() {
         </div>
         <Button 
           onClick={(e) => {
+            console.log('=== BUTTON CLICKED - START ===');
+            console.log('Event:', e);
+            console.log('Event type:', e.type);
+            console.log('Event target:', e.target);
+            console.log('Event currentTarget:', e.currentTarget);
+            
             e.preventDefault();
             e.stopPropagation();
+            
             const availableBalance = balance?.balance?.available_balance;
             const numericValue = typeof availableBalance === 'number' ? availableBalance : parseFloat(String(availableBalance || '0'));
-            console.log('=== BUTTON CLICKED ===');
+            
             console.log('Balance object:', balance);
             console.log('Available Balance:', availableBalance);
             console.log('Numeric Value:', numericValue);
             console.log('Will open modal?', numericValue > 0);
+            console.log('showWithdrawalModal state before:', showWithdrawalModal);
+            
             if (numericValue > 0) {
+              console.log('Setting showWithdrawalModal to true');
               setShowWithdrawalModal(true);
+              console.log('Modal should open now');
             } else {
               console.warn('Button clicked but balance is 0 or invalid');
             }
+            
+            console.log('=== BUTTON CLICKED - END ===');
           }}
-          className="flex items-center gap-2 bg-[#e91e63] text-white hover:bg-[#e91e63]/90 relative z-10 cursor-pointer"
+          onMouseDown={(e) => {
+            console.log('=== BUTTON MOUSE DOWN ===', e);
+          }}
+          onMouseUp={(e) => {
+            console.log('=== BUTTON MOUSE UP ===', e);
+          }}
+          className="flex items-center gap-2 bg-[#e91e63] text-white hover:bg-[#e91e63]/90 relative z-50 cursor-pointer"
+          style={{ position: 'relative', zIndex: 50 }}
           disabled={(() => {
             const hasBalance = !!balance && !!balance.balance;
             const availableBalance = balance?.balance?.available_balance;
@@ -235,13 +255,6 @@ export default function BalanceAndWithdrawals() {
               ? availableBalance 
               : parseFloat(String(availableBalance || '0'));
             const shouldDisable = !hasBalance || numericValue <= 0;
-            
-            console.log('=== BUTTON DISABLED CALCULATION ===');
-            console.log('hasBalance:', hasBalance);
-            console.log('availableBalance:', availableBalance);
-            console.log('numericValue:', numericValue);
-            console.log('shouldDisable:', shouldDisable);
-            console.log('===================================');
             
             return shouldDisable;
           })()}
