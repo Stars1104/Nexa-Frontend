@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/services/apiClient";
+import { useAppSelector } from "@/store/hooks";
 import {
   DollarSign,
   CreditCard,
@@ -116,6 +117,8 @@ export default function WithdrawalModal({
     Record<string, string>
   >({});
   const { toast } = useToast();
+  const { user, profile } = useAppSelector((state) => state.auth);
+  const userData = profile || user;
 
   const selectedMethodData = withdrawalMethods.find(
     (method) => method.id === selectedMethod
@@ -222,6 +225,17 @@ export default function WithdrawalModal({
           selectedMethodData.name
         } é ${formatCurrency(selectedMethodData.max_amount)}`,
         variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if Stripe Connect is configured before proceeding
+    if (!userData?.stripe_account_id) {
+      toast({
+        title: "⚠️ Conta Stripe Connect Necessária",
+        description: "Você precisa configurar sua conta Stripe Connect antes de solicitar um saque. Acesse as configurações do Stripe para completar o cadastro.",
+        variant: "destructive",
+        duration: 8000, // 8 segundos para dar tempo de ler
       });
       return;
     }

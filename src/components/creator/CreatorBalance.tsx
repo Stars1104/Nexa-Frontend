@@ -14,6 +14,7 @@ import {
   Download
 } from 'lucide-react';
 import { translateWithdrawalStatus, translateTransactionStatus } from '@/utils/translationUtils';
+import { useAppSelector } from '@/store/hooks';
 
 export default function CreatorBalance() {
   const [balance, setBalance] = useState<CreatorBalanceType | null>(null);
@@ -21,6 +22,8 @@ export default function CreatorBalance() {
   const [withdrawalMethods, setWithdrawalMethods] = useState<WithdrawalMethod[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user, profile } = useAppSelector((state) => state.auth);
+  const userData = profile || user;
 
   useEffect(() => {
     loadData();
@@ -288,6 +291,17 @@ function WithdrawalForm({ availableBalance, withdrawalMethods, onSuccess }: With
         title: "Erro",
         description: "Preencha todos os campos obrigatórios",
         variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if Stripe Connect is configured before proceeding
+    if (!userData?.stripe_account_id) {
+      toast({
+        title: "⚠️ Conta Stripe Connect Necessária",
+        description: "Você precisa configurar sua conta Stripe Connect antes de solicitar um saque. Acesse as configurações do Stripe para completar o cadastro.",
+        variant: "destructive",
+        duration: 8000, // 8 segundos para dar tempo de ler
       });
       return;
     }
