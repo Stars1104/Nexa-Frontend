@@ -206,12 +206,23 @@ export default function BalanceAndWithdrawals() {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Button clicked!', { balance, availableBalance: balance?.balance?.available_balance });
-            setShowWithdrawalModal(true);
+            const availableBalance = balance?.balance?.available_balance;
+            const numericValue = typeof availableBalance === 'number' ? availableBalance : parseFloat(availableBalance || '0');
+            console.log('Button clicked!', { 
+              balance, 
+              availableBalance, 
+              numericValue,
+              isDisabled: numericValue <= 0,
+              willOpenModal: numericValue > 0
+            });
+            if (numericValue > 0) {
+              setShowWithdrawalModal(true);
+            } else {
+              console.warn('Button clicked but balance is 0 or invalid');
+            }
           }}
-          className="flex items-center gap-2 bg-[#e91e63] text-white hover:bg-[#e91e63]/90 relative z-10"
+          className="flex items-center gap-2 bg-[#e91e63] text-white hover:bg-[#e91e63]/90 relative z-10 cursor-pointer"
           disabled={!balance || !balance.balance || (typeof balance.balance.available_balance === 'number' ? balance.balance.available_balance <= 0 : parseFloat(balance.balance.available_balance || '0') <= 0)}
-          style={{ pointerEvents: (!balance || !balance.balance || (typeof balance.balance.available_balance === 'number' ? balance.balance.available_balance <= 0 : parseFloat(balance.balance.available_balance || '0') <= 0)) ? 'none' : 'auto' }}
         >
           <Wallet className="h-4 w-4" />
           Solicitar Saque
