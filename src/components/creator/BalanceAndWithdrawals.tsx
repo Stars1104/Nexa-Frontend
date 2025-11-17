@@ -203,65 +203,73 @@ export default function BalanceAndWithdrawals() {
     <div className="w-full p-6 space-y-6 dark:bg-[#171717]">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between relative" style={{ zIndex: 100 }}>
         <div>
           <h1 className="text-3xl font-bold text-foreground">Saldo e Saques</h1>
           <p className="text-muted-foreground mt-2">
             Gerencie seu saldo e solicite saques dos seus ganhos
           </p>
         </div>
-        <Button 
+        <div 
           onClick={(e) => {
-            console.log('=== BUTTON CLICKED - START ===');
-            console.log('Event:', e);
-            console.log('Event type:', e.type);
-            console.log('Event target:', e.target);
-            console.log('Event currentTarget:', e.currentTarget);
-            
-            e.preventDefault();
+            console.log('=== WRAPPER CLICKED ===');
             e.stopPropagation();
-            
             const availableBalance = balance?.balance?.available_balance;
             const numericValue = typeof availableBalance === 'number' ? availableBalance : parseFloat(String(availableBalance || '0'));
             
-            console.log('Balance object:', balance);
-            console.log('Available Balance:', availableBalance);
-            console.log('Numeric Value:', numericValue);
-            console.log('Will open modal?', numericValue > 0);
-            console.log('showWithdrawalModal state before:', showWithdrawalModal);
-            
             if (numericValue > 0) {
-              console.log('Setting showWithdrawalModal to true');
+              console.log('Opening modal from wrapper');
               setShowWithdrawalModal(true);
-              console.log('Modal should open now');
-            } else {
-              console.warn('Button clicked but balance is 0 or invalid');
             }
-            
-            console.log('=== BUTTON CLICKED - END ===');
           }}
-          onMouseDown={(e) => {
-            console.log('=== BUTTON MOUSE DOWN ===', e);
-          }}
-          onMouseUp={(e) => {
-            console.log('=== BUTTON MOUSE UP ===', e);
-          }}
-          className="flex items-center gap-2 bg-[#e91e63] text-white hover:bg-[#e91e63]/90 relative z-50 cursor-pointer"
-          style={{ position: 'relative', zIndex: 50 }}
-          disabled={(() => {
-            const hasBalance = !!balance && !!balance.balance;
-            const availableBalance = balance?.balance?.available_balance;
-            const numericValue = typeof availableBalance === 'number' 
-              ? availableBalance 
-              : parseFloat(String(availableBalance || '0'));
-            const shouldDisable = !hasBalance || numericValue <= 0;
-            
-            return shouldDisable;
-          })()}
+          style={{ position: 'relative', zIndex: 100 }}
         >
-          <Wallet className="h-4 w-4" />
-          Solicitar Saque
-        </Button>
+          <Button 
+            onClick={(e) => {
+              console.log('=== BUTTON CLICKED - START ===');
+              e.preventDefault();
+              e.stopPropagation();
+              
+              const availableBalance = balance?.balance?.available_balance;
+              const numericValue = typeof availableBalance === 'number' ? availableBalance : parseFloat(String(availableBalance || '0'));
+              
+              console.log('Balance:', balance);
+              console.log('Numeric Value:', numericValue);
+              
+              if (numericValue > 0) {
+                console.log('Setting showWithdrawalModal to true');
+                setShowWithdrawalModal(true);
+              }
+              
+              console.log('=== BUTTON CLICKED - END ===');
+            }}
+            onMouseDown={(e) => {
+              console.log('=== BUTTON MOUSE DOWN ===');
+              e.stopPropagation();
+            }}
+            onMouseUp={(e) => {
+              console.log('=== BUTTON MOUSE UP ===');
+              e.stopPropagation();
+            }}
+            className="flex items-center gap-2 bg-[#e91e63] text-white hover:bg-[#e91e63]/90 cursor-pointer"
+            style={{ position: 'relative', zIndex: 100, pointerEvents: 'auto' }}
+            disabled={(() => {
+              const hasBalance = !!balance && !!balance.balance;
+              const availableBalance = balance?.balance?.available_balance;
+              const numericValue = typeof availableBalance === 'number' 
+                ? availableBalance 
+                : parseFloat(String(availableBalance || '0'));
+              const shouldDisable = !hasBalance || numericValue <= 0;
+              
+              console.log('Button disabled check:', { hasBalance, availableBalance, numericValue, shouldDisable });
+              
+              return shouldDisable;
+            })()}
+          >
+            <Wallet className="h-4 w-4" />
+            Solicitar Saque
+          </Button>
+        </div>
       </div>
 
       {/* Quick Stats Cards */}
