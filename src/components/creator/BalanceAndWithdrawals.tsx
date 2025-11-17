@@ -117,7 +117,18 @@ export default function BalanceAndWithdrawals() {
       const response = await hiringApi.getCreatorBalance();
       console.log("Balance API Response:", response.data);
       console.log("Available Balance:", response.data?.balance?.available_balance, "Type:", typeof response.data?.balance?.available_balance);
-      console.log("Button disabled check:", !response.data || response.data.balance.available_balance <= 0);
+      const availableBalance = response.data?.balance?.available_balance;
+      const isNumber = typeof availableBalance === 'number';
+      const numericValue = isNumber ? availableBalance : parseFloat(availableBalance || '0');
+      const isDisabled = !response.data || !response.data.balance || numericValue <= 0;
+      console.log("Button disabled check:", {
+        hasBalance: !!response.data,
+        hasBalanceData: !!response.data?.balance,
+        availableBalance,
+        isNumber,
+        numericValue,
+        isDisabled
+      });
       setBalance(response.data);
     } catch (error) {
       console.error('Error loading balance:', error);
@@ -192,9 +203,15 @@ export default function BalanceAndWithdrawals() {
           </p>
         </div>
         <Button 
-          onClick={() => setShowWithdrawalModal(true)}
-          className="flex items-center gap-2 bg-[#e91e63] text-white hover:bg-[#e91e63]/90"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Button clicked!', { balance, availableBalance: balance?.balance?.available_balance });
+            setShowWithdrawalModal(true);
+          }}
+          className="flex items-center gap-2 bg-[#e91e63] text-white hover:bg-[#e91e63]/90 relative z-10"
           disabled={!balance || !balance.balance || (typeof balance.balance.available_balance === 'number' ? balance.balance.available_balance <= 0 : parseFloat(balance.balance.available_balance || '0') <= 0)}
+          style={{ pointerEvents: (!balance || !balance.balance || (typeof balance.balance.available_balance === 'number' ? balance.balance.available_balance <= 0 : parseFloat(balance.balance.available_balance || '0') <= 0)) ? 'none' : 'auto' }}
         >
           <Wallet className="h-4 w-4" />
           Solicitar Saque
