@@ -210,10 +210,19 @@ export default function Portfolio() {
         if (!user?.id) return;
 
         setIsSaving(true);
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) throw new Error('Token de autenticação não encontrado');
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setIsSaving(false);
+            toast({
+                title: "Erro de Autenticação",
+                description: "Token de autenticação não encontrado. Por favor, faça login novamente.",
+                variant: "destructive",
+            });
+            return;
+        }
 
+        try {
+            // Save profile data first
             const formData = new FormData();
             formData.append('title', profileTitle);
             formData.append('bio', bio);
@@ -240,37 +249,62 @@ export default function Portfolio() {
 
             await dispatch(updatePortfolioProfile({ token, data: formData })).unwrap();
 
+            // Upload media files if any
+            if (media.length > 0) {
+                const files = media.map(item => item.file);
+                
+                await dispatch(uploadPortfolioMedia({ token, files })).unwrap();
+                
+                // Clear the media state after successful upload
+                setMedia([]);
+            }
+
             toast({
                 title: "Sucesso!",
                 description: "Portfólio salvo com sucesso!",
                 duration: 3000,
             });
-        } catch (error) {
+        } catch (error: any) {
+            console.error('Save portfolio error:', error);
+            
+            // Extract specific error message
+            let errorMessage = "Falha ao salvar portfólio. Tente novamente.";
+            
+            if (error?.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error?.response?.data?.errors) {
+                // Handle validation errors
+                const errors = error.response.data.errors;
+                const firstError = Object.values(errors)[0];
+                if (Array.isArray(firstError) && firstError.length > 0) {
+                    errorMessage = firstError[0] as string;
+                }
+            } else if (error?.message) {
+                errorMessage = error.message;
+            } else if (typeof error === 'string') {
+                errorMessage = error;
+            }
+
+            // Check for specific error types
+            if (error?.response?.status === 413) {
+                errorMessage = "Arquivo muito grande. O tamanho máximo permitido é 2GB por arquivo.";
+            } else if (error?.response?.status === 422) {
+                // Validation error - already handled above
+            } else if (error?.response?.status === 403) {
+                errorMessage = "Você não tem permissão para realizar esta ação.";
+            } else if (error?.response?.status === 401) {
+                errorMessage = "Sessão expirada. Por favor, faça login novamente.";
+            } else if (error?.code === 'ERR_NETWORK' || error?.message?.includes('Network Error')) {
+                errorMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
+            } else if (error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')) {
+                errorMessage = "Tempo de upload excedido. Tente novamente com arquivos menores ou verifique sua conexão.";
+            }
+
             toast({
-                title: "Erro",
-                description: "Falha ao salvar portfólio. Tente novamente.",
+                title: "Erro ao Salvar",
+                description: errorMessage,
                 variant: "destructive",
-            });
-        } ;
-        try {
-            const files = media.map(item => item.file);
-            
-            await dispatch(uploadPortfolioMedia({ token, files })).unwrap();
-            
-            // Clear the media state after successful upload
-            setMedia([]);
-            
-            toast({
-                title: "Sucesso!",
-                description: "Mídia adicionada com sucesso!",
-                duration: 3000,
-            });
-        } catch (error) {
-            console.error('Media upload error:', error);
-            toast({
-                title: "Erro",
-                description: "Falha ao adicionar mídia. Tente novamente.",
-                variant: "destructive",
+                duration: 5000,
             });
         } finally {
             setIsSaving(false);
@@ -747,7 +781,7 @@ export default function Portfolio() {
                                 </Button>
                                 <Button
                                     className="bg-[#E91E63] hover:bg-pink-600 text-white"
-                                    onClick={handleSavePortfolioComplete}
+                                    onClick={() => {setIsPortfolioEditDialogOpen(false)}}
                                     disabled={isSaving || isUploading}
                                 >
                                     {isUploading ? (
@@ -946,6 +980,43 @@ export default function Portfolio() {
                         >
                             &times;
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Full-screen Loading Overlay */}
+            {(isSaving || isUploading) && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]">
+                    <div className="bg-background rounded-lg p-8 max-w-md w-full mx-4 shadow-xl border border-border">
+                        <div className="flex flex-col items-center gap-4">
+                            <Loader2 className="w-12 h-12 animate-spin text-[#E91E63]" />
+                            <div className="text-center">
+                                <h3 className="text-lg font-semibold text-foreground mb-2">
+                                    {isUploading ? 'Enviando Mídia...' : 'Salvando Portfólio...'}
+                                </h3>
+                                {isUploading && (
+                                    <>
+                                        <div className="w-full h-3 bg-muted rounded-full mt-4 overflow-hidden">
+                                            <div 
+                                                className="h-full bg-[#E91E63] transition-all duration-300"
+                                                style={{ width: `${uploadProgress}%` }}
+                                            />
+                                        </div>
+                                        <p className="text-sm text-muted-foreground mt-2">
+                                            {uploadProgress}% concluído
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-2">
+                                            Por favor, não feche esta página
+                                        </p>
+                                    </>
+                                )}
+                                {isSaving && !isUploading && (
+                                    <p className="text-sm text-muted-foreground mt-2">
+                                        Isso pode levar alguns instantes...
+                                    </p>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
