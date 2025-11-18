@@ -91,10 +91,10 @@ export const paymentClient = axios.create({
 });
 
 // Create a separate client for file uploads with extended timeout
-// Large files (200MB+) can take several minutes to upload
+// Large files (2GB+) can take several minutes to upload
 export const uploadClient = axios.create({
     baseURL: `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/api`,
-    timeout: 300000, // 5 minutes (300 seconds) for large file uploads
+    timeout: 600000, // 10 minutes (600 seconds) for very large video file uploads
     headers: {
         'Accept': 'application/json',
         // Don't set Content-Type - let browser set it with boundary for FormData
