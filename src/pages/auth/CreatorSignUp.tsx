@@ -219,6 +219,13 @@ const CreatorSignUp = () => {
     if (loginType === "login") setAuthType("signin");
   }, [loginType])
 
+  // Set authType to signup when coming from /signup/creator route
+  useEffect(() => {
+    if (role === "creator" && location.pathname === "/signup/creator") {
+      setAuthType("signup");
+    }
+  }, [role, location.pathname])
+
   // Cleanup effect
   useEffect(() => {
     return () => {

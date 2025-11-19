@@ -2,8 +2,15 @@ import { Check } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { useNavigate } from "react-router-dom";
 
 export const Pricing = () => {
+  const navigate = useNavigate();
+
+  const handleCreatorSignup = () => {
+    navigate("/signup/creator");
+  };
+
   return (
     <section className="py-12 md:py-20">
       <div className="max-w-7xl w-full mx-auto px-4 md:px-6">
@@ -19,7 +26,10 @@ export const Pricing = () => {
                 <div className="text-2xl md:text-3xl font-bold text-foreground mt-2">R$ 39,90</div>
                 <p className="text-sm text-muted-foreground mt-1">por mês</p>
               </div>
-              <Button className="w-full bg-pink-500 hover:bg-pink-600 text-white">
+              <Button 
+                className="w-full bg-pink-500 hover:bg-pink-600 text-white"
+                onClick={handleCreatorSignup}
+              >
                 Quero ser um criador
               </Button>
             </CardContent>
@@ -35,7 +45,10 @@ export const Pricing = () => {
                 <div className="text-2xl md:text-3xl font-bold text-foreground mt-2">R$ 19,90</div>
                 <p className="text-sm text-muted-foreground mt-1">por mês • 12 meses de acesso</p>
               </div>
-              <Button className="w-full bg-pink-500 hover:bg-pink-600 text-white">
+              <Button 
+                className="w-full bg-pink-500 hover:bg-pink-600 text-white"
+                onClick={handleCreatorSignup}
+              >
                 Quero ser um criador
               </Button>
             </CardContent>
@@ -48,7 +61,10 @@ export const Pricing = () => {
                 <div className="text-2xl md:text-3xl font-bold text-foreground mt-2">R$ 29,90</div>
                 <p className="text-sm text-muted-foreground mt-1">por mês • 6 meses de acesso</p>
               </div>
-              <Button className="w-full bg-pink-500 hover:bg-pink-600 text-white">
+              <Button 
+                className="w-full bg-pink-500 hover:bg-pink-600 text-white"
+                onClick={handleCreatorSignup}
+              >
                 Quero ser um criador
               </Button>
             </CardContent>
