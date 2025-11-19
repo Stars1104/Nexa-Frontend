@@ -22,7 +22,7 @@ export default function Subscription() {
     const { toast } = useToast();
     const navigate = useNavigate();
     const location = useLocation();
-    const { user } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated, token } = useAppSelector((state) => state.auth);
     const { profile } = useAppSelector((state) => state.user);
     const userData = profile||user;
     const [showCoupon, setShowCoupon] = useState(false);
@@ -37,26 +37,49 @@ export default function Subscription() {
     const [studentLoading, setStudentLoading] = useState(false);
     const checkoutProcessedRef = useRef(false);
 
-    // CRITICAL: Process checkout params FIRST, before any other effects
-    // This must run immediately on mount to catch params before navigation removes them
+    // Check authentication status on mount and when auth state changes
     useEffect(() => {
-        // Check if user returned from Stripe checkout - use window.location to get params immediately
-        const urlParams = new URLSearchParams(window.location.search);
-        const success = urlParams.get('success');
-        const sessionId = urlParams.get('session_id');
-        
-        if (success === 'true' && sessionId && !checkoutProcessedRef.current && !paymentProcessing) {
-            checkoutProcessedRef.current = true;
-            handleCheckoutSuccess(sessionId);
+        // Check if user is NOT logged in
+        const hasToken = token || localStorage.getItem('token');
+        if (!isAuthenticated || !hasToken || !user?.id) {
+            // Store the current location to redirect back after login
+            // Use the query parameter format to ensure proper component navigation
+            const subscriptionPath = '/creator?component=subscription';
+            navigate('/auth', { 
+                state: { 
+                    from: { pathname: subscriptionPath },
+                    redirectTo: subscriptionPath 
+                }, 
+                replace: true 
+            });
+            return;
         }
-    }, []); // Run only once on mount
-    
+        // User IS logged in - subscription check will happen in separate useEffect
+    }, [isAuthenticated, token, user?.id, navigate]);
+
+    // Check subscription status and redirect if subscribed
+    useEffect(() => {
+        // Only check if user is authenticated and subscription status has been loaded
+        if (!isAuthenticated || !user?.id || loading || !subscriptionStatus) {
+            return;
+        }
+
+        // Check if user has active premium subscription
+        const hasActiveSubscription = subscriptionStatus.is_premium_active || false;
+        
+        if (hasActiveSubscription) {
+            // User is logged in and subscribed - redirect to dashboard
+            navigate('/creator', { replace: true });
+        }
+        // If not subscribed, the subscription page will be shown (no redirect)
+    }, [subscriptionStatus, isAuthenticated, user, loading, navigate]);
+
     useEffect(() => {
         // Load subscription plans first (public endpoint)
         loadSubscriptionPlans();
         // Load subscription status only if user is authenticated
         const token = localStorage.getItem('token');
-        if (token) {
+        if (token && isAuthenticated && user?.id) {
              if (user?.role ==="student") {
                 loadStudentStatus();
                 
@@ -64,9 +87,9 @@ export default function Subscription() {
             loadSubscriptionStatus();
             // Load student status if user is a student
         }
-    }, [user?.role]);
+    }, [user?.role, isAuthenticated, user?.id]);
     
-    // Also watch location.search as fallback in case params are added after mount
+    // Separate useEffect to handle checkout success from URL params
     useEffect(() => {
         // Skip if already processed or currently processing
         if (checkoutProcessedRef.current || paymentProcessing) {
@@ -226,19 +249,8 @@ export default function Subscription() {
                 
                 setSubscriptionPlans(validatedPlans);
                 
-                // Set default selected plan to monthly plan only if no plan is currently selected
-                // OR if the currently selected plan no longer exists in the list
-                if (!selectedPlan) {
-                    setSelectedPlan(validatedPlans[0]);
-                } else {
-                    // Check if the currently selected plan still exists in the new list
-                    const currentPlanExists = validatedPlans.find(p => p.id === selectedPlan.id);
-                    if (!currentPlanExists) {
-                        // If current plan doesn't exist, select the first one
-                        setSelectedPlan(validatedPlans[0]);
-                    }
-                    // Otherwise, keep the current selection
-                }
+                // Set default selected plan to monthly plan
+                setSelectedPlan(validatedPlans[0]);
             } else {
                 setSubscriptionPlans([]);
                 setSelectedPlan(null);
@@ -440,10 +452,7 @@ export default function Subscription() {
                                                 ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/20 ring-2 ring-pink-500/20'
                                                 : 'border-border hover:border-pink-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                                         }`}
-                                        onClick={() => {
-                                            console.log('Subscription: Plan selected', { planId: plan.id, planName: plan.name });
-                                            setSelectedPlan(plan);
-                                        }}
+                                        onClick={() => setSelectedPlan(plan)}
                                     >
                                         <div className="text-center">
                                             <div className="font-bold text-lg text-foreground mb-1">
@@ -455,7 +464,7 @@ export default function Subscription() {
                                             <div className="text-sm text-muted-foreground mb-2">
                                                 {plan.duration_months === 1 
                                                     ? 'por mês' 
-                                                    : `por mês • ${plan.duration_months || 1} meses de acesso`
+                                                    : `por ${plan.duration_months || 1} meses`
                                                 }
                                             </div>
                                             {plan.savings_percentage && typeof plan.savings_percentage === 'number' && (
@@ -488,7 +497,7 @@ export default function Subscription() {
                                             <div className="text-sm text-muted-foreground">
                                                 {selectedPlan.duration_months === 1 
                                                     ? 'por mês' 
-                                                    : `por mês • ${selectedPlan.duration_months || 1} meses de acesso`
+                                                    : `por ${selectedPlan.duration_months || 1} meses (R$ ${typeof selectedPlan.monthly_price === 'number' ? selectedPlan.monthly_price.toFixed(2).replace('.', ',') : '0,00'}/mês)`
                                                 }
                                             </div>
                                         </div>
@@ -528,13 +537,8 @@ export default function Subscription() {
                                 return;
                             }
                             try {
-                                console.log('Subscription: Starting checkout', { 
-                                    selectedPlanId: selectedPlan.id, 
-                                    selectedPlanName: selectedPlan.name 
-                                });
                                 setPaymentProcessing(true);
                                 const checkoutUrl = await paymentApi.getCheckoutUrl(selectedPlan.id);
-                                console.log('Subscription: Checkout URL received', { checkoutUrl });
                                 window.location.href = checkoutUrl;
                             } catch (error: any) {
                                 toast({
@@ -556,9 +560,7 @@ export default function Subscription() {
                             </>
                         ) : subscriptionStatus?.is_premium_active 
                             ? 'Assinatura Ativa' 
-                            : selectedPlan 
-                            ? `Assinar ${selectedPlan.name || 'Plano'}`
-                            : 'Selecione um plano'
+                            : `Assinar ${selectedPlan.name || 'Plano'}`
                         }
                     </Button>
                 </div>
