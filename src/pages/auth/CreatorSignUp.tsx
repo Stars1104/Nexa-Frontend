@@ -244,12 +244,33 @@ const CreatorSignUp = () => {
         if (user.isStudent && user.role === 'creator') {
           navigateToStudentVerification();
         } else if (isNewRegistration && user.role === 'creator') {
-          // Redirect new Creator registrations to subscription page
-          navigateToSubscription();
+          // Check if there's a specific redirect location (e.g., from pricing page)
+          const redirectTo = location.state?.redirectTo;
+          if (redirectTo) {
+            // Preserve any pending checkout session_id when redirecting
+            const pendingCheckoutSessionId = location.state?.pendingCheckoutSessionId || 
+                                           localStorage.getItem('pending_checkout_session_id');
+            if (pendingCheckoutSessionId) {
+              // Ensure the session_id is preserved in localStorage for Subscription component
+              localStorage.setItem('pending_checkout_session_id', pendingCheckoutSessionId);
+              localStorage.setItem('pending_checkout_success', 'true');
+            }
+            navigate(redirectTo, { replace: true });
+          } else {
+            // Redirect new Creator registrations to subscription page
+            navigateToSubscription();
+          }
         } else {
           // Check if there's a redirect location from ProtectedRoute
           const from = location.state?.from?.pathname;
           if (from) {
+            // Preserve any pending checkout session_id when redirecting
+            const pendingCheckoutSessionId = location.state?.pendingCheckoutSessionId || 
+                                           localStorage.getItem('pending_checkout_session_id');
+            if (pendingCheckoutSessionId) {
+              localStorage.setItem('pending_checkout_session_id', pendingCheckoutSessionId);
+              localStorage.setItem('pending_checkout_success', 'true');
+            }
             navigate(from, { replace: true });
           } else {
             navigateToRoleDashboard(user.role);
@@ -259,7 +280,7 @@ const CreatorSignUp = () => {
 
       return () => clearTimeout(timeoutId);
     }
-  }, [isAuthenticated, user, role, navigateToRoleDashboard, navigateToStudentVerification, navigateToSubscription, location, isNewRegistration]);
+  }, [isAuthenticated, user, role, navigateToRoleDashboard, navigateToStudentVerification, navigateToSubscription, location, isNewRegistration, navigate]);
 
   // Clear error when switching auth types
   useEffect(() => {
