@@ -13,6 +13,7 @@ interface User {
   isPremium?: boolean; // Legacy field, use has_premium instead
   has_premium?: boolean;
   premium_expires_at?: string;
+  stripe_account_id?: string;
   avatar?: string;
   avatar_url?: string;
   bio?: string;

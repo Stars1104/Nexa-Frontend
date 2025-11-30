@@ -351,7 +351,7 @@ export default function PurchaseSubscription() {
                       <p className="text-sm text-muted-foreground">
                         {plan.duration_months === 1 
                           ? 'por mês' 
-                          : `por ${plan.duration_months || 1} meses${typeof plan.monthly_price === 'number' ? ` (R$ ${plan.monthly_price.toFixed(2).replace('.', ',')}/mês)` : ''}`
+                          : `por mês • ${plan.duration_months || 1} meses de acesso`
                         }
                       </p>
                     </div>

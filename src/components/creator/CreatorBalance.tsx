@@ -14,6 +14,7 @@ import {
   Download
 } from 'lucide-react';
 import { translateWithdrawalStatus, translateTransactionStatus } from '@/utils/translationUtils';
+import { useAppSelector } from '@/store/hooks';
 
 export default function CreatorBalance() {
   const [balance, setBalance] = useState<CreatorBalanceType | null>(null);
@@ -21,6 +22,8 @@ export default function CreatorBalance() {
   const [withdrawalMethods, setWithdrawalMethods] = useState<WithdrawalMethod[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user, profile } = useAppSelector((state) => state.auth);
+  const userData = profile || user;
 
   useEffect(() => {
     loadData();

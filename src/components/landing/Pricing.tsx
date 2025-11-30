@@ -35,6 +35,7 @@ export const Pricing = () => {
               <div>
                 <h3 className="text-xl md:text-2xl font-bold text-foreground">Acesso Mensal</h3>
                 <div className="text-2xl md:text-3xl font-bold text-foreground mt-2">R$ 39,90</div>
+                <p className="text-sm text-muted-foreground mt-1">por mês</p>
               </div>
               <Button 
                 className="w-full bg-pink-500 hover:bg-pink-600 text-white"
@@ -51,8 +52,9 @@ export const Pricing = () => {
             </Badge>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="text-xl md:text-2xl font-bold text-foreground">Acesso Anual </h3>
+                <h3 className="text-xl md:text-2xl font-bold text-foreground">Acesso Anual</h3>
                 <div className="text-2xl md:text-3xl font-bold text-foreground mt-2">R$ 19,90</div>
+                <p className="text-sm text-muted-foreground mt-1">por mês • 12 meses de acesso</p>
               </div>
               <Button 
                 className="w-full bg-pink-500 hover:bg-pink-600 text-white"
@@ -68,6 +70,7 @@ export const Pricing = () => {
               <div>
                 <h3 className="text-xl md:text-2xl font-bold text-foreground">Acesso Semestral</h3>
                 <div className="text-2xl md:text-3xl font-bold text-foreground mt-2">R$ 29,90</div>
+                <p className="text-sm text-muted-foreground mt-1">por mês • 6 meses de acesso</p>
               </div>
               <Button 
                 className="w-full bg-pink-500 hover:bg-pink-600 text-white"

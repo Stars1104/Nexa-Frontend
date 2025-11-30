@@ -43,7 +43,8 @@ export const useRoleNavigation = () => {
 
   const navigateToSubscription = () => {
     // Don't replace for subscription navigation to allow back button to work
-    navigate("/creator", { replace: false });
+    // Navigate to creator page with subscription component active
+    navigate("/creator?component=subscription", { replace: false });
   };
 
   const navigateToLogin = (from?: string) => {

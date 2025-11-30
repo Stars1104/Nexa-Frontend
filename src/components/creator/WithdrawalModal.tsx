@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/services/apiClient";
+import { useAppSelector } from "@/store/hooks";
 import {
   DollarSign,
   CreditCard,
@@ -116,6 +117,8 @@ export default function WithdrawalModal({
     Record<string, string>
   >({});
   const { toast } = useToast();
+  const { user, profile } = useAppSelector((state) => state.auth);
+  const userData = profile || user;
 
   const selectedMethodData = withdrawalMethods.find(
     (method) => method.id === selectedMethod
@@ -178,7 +181,7 @@ export default function WithdrawalModal({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!selectedMethod || !amount || parseFloat(amount) <= 0) {
       toast({
@@ -234,7 +237,6 @@ export default function WithdrawalModal({
         withdrawal_method: selectedMethod,
         withdrawal_details: withdrawalDetails,
       };
-      
       const response = await apiClient.post("/freelancer/withdrawals", requestData);
 
       if (response.data.success) {
@@ -804,7 +806,10 @@ export default function WithdrawalModal({
             Cancelar
           </Button>
           <Button
-            onClick={handleSubmit}
+            type="button"
+            onClick={(e) => {
+              handleSubmit(e);
+            }}
             disabled={
               isLoading || !selectedMethod || !amount || parseFloat(amount) <= 0
             }
