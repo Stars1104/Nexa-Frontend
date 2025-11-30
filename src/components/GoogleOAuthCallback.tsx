@@ -84,8 +84,29 @@ const GoogleOAuthCallback: React.FC = () => {
         }
       } catch (error: any) {
         setStatus('error');
-        setError(error.message || 'Falha na autenticação');
-        toast.error(error.message || 'Falha ao fazer login com Google');
+        
+        // Extract error message (could be from thunk as string or from axios response)
+        let errorMessage = error.message;
+        
+        // Check if error is a string (from thunk rejectWithValue)
+        if (typeof error === 'string') {
+          errorMessage = error;
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response?.data?.errors) {
+          // Handle validation errors
+          const errors = error.response.data.errors;
+          if (errors.email && Array.isArray(errors.email)) {
+            errorMessage = errors.email[0];
+          } else if (errors.email) {
+            errorMessage = errors.email;
+          }
+        }
+        
+        setError(errorMessage || 'Falha na autenticação');
+        
+        // Show toast with error message (will show blocked account message if applicable)
+        toast.error(errorMessage || 'Falha ao fazer login com Google');
         
         // Redirect to auth page after error
         setTimeout(() => {

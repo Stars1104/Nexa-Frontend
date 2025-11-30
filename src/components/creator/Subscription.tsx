@@ -37,18 +37,41 @@ export default function Subscription() {
     const [studentLoading, setStudentLoading] = useState(false);
     const checkoutProcessedRef = useRef(false);
 
+    // CRITICAL: Check for checkout success params FIRST, before authentication check
+    // This ensures we preserve session_id even if user needs to authenticate
+    useEffect(() => {
+        // Check if user returned from Stripe checkout
+        const urlParams = new URLSearchParams(location.search);
+        const success = urlParams.get('success');
+        const sessionId = urlParams.get('session_id');
+        
+        // If we have checkout success params, store them immediately
+        if (success === 'true' && sessionId) {
+            // Store session_id in localStorage to preserve it through auth redirects
+            localStorage.setItem('pending_checkout_session_id', sessionId);
+            // Also store a flag to indicate we need to process checkout after auth
+            localStorage.setItem('pending_checkout_success', 'true');
+            console.log('Stored checkout session_id for later processing:', sessionId);
+        }
+    }, [location.search]); // Run immediately on mount and when URL changes
+
     // Check authentication status on mount and when auth state changes
     useEffect(() => {
         // Check if user is NOT logged in
         const hasToken = token || localStorage.getItem('token');
         if (!isAuthenticated || !hasToken || !user?.id) {
+            // Check if we have pending checkout - preserve it in redirect state
+            const pendingSessionId = localStorage.getItem('pending_checkout_session_id');
+            const subscriptionPath = '/creator?component=subscription';
+            
             // Store the current location to redirect back after login
             // Use the query parameter format to ensure proper component navigation
-            const subscriptionPath = '/creator?component=subscription';
             navigate('/auth', { 
                 state: { 
                     from: { pathname: subscriptionPath },
-                    redirectTo: subscriptionPath 
+                    redirectTo: subscriptionPath,
+                    // Preserve checkout session_id in state as backup
+                    pendingCheckoutSessionId: pendingSessionId
                 }, 
                 replace: true 
             });
@@ -89,23 +112,44 @@ export default function Subscription() {
         }
     }, [user?.role, isAuthenticated, user?.id]);
     
-    // Separate useEffect to handle checkout success from URL params
+    // Handle checkout success - check both URL params and localStorage
     useEffect(() => {
         // Skip if already processed or currently processing
         if (checkoutProcessedRef.current || paymentProcessing) {
             return;
         }
         
-        // Check if user returned from Stripe checkout
+        // Only process if user is authenticated
+        if (!isAuthenticated || !user?.id) {
+            return;
+        }
+        
+        // Check URL params first
         const urlParams = new URLSearchParams(location.search);
         const success = urlParams.get('success');
         const sessionId = urlParams.get('session_id');
         
-        if (success === 'true' && sessionId && !checkoutProcessedRef.current) {
-            checkoutProcessedRef.current = true;
-            handleCheckoutSuccess(sessionId);
+        // Also check localStorage for stored session_id (in case URL params were lost)
+        const storedSessionId = localStorage.getItem('pending_checkout_session_id');
+        const storedSuccess = localStorage.getItem('pending_checkout_success');
+        
+        // Determine which session_id to use
+        let finalSessionId: string | null = null;
+        if (success === 'true' && sessionId) {
+            finalSessionId = sessionId;
+        } else if (storedSuccess === 'true' && storedSessionId) {
+            finalSessionId = storedSessionId;
         }
-    }, [location.search]); // Watch location.search for changes
+        
+        // Process checkout if we have a session_id
+        if (finalSessionId && !checkoutProcessedRef.current) {
+            checkoutProcessedRef.current = true;
+            // Clear stored values
+            localStorage.removeItem('pending_checkout_session_id');
+            localStorage.removeItem('pending_checkout_success');
+            handleCheckoutSuccess(finalSessionId);
+        }
+    }, [location.search, isAuthenticated, user?.id]); // Watch location.search AND auth state
     
     const handleCheckoutSuccess = async (sessionId: string) => {
         try {

@@ -3,12 +3,23 @@ import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { useNavigate } from "react-router-dom";
+import { useAppSelector } from "../../store/hooks";
 
 export const Pricing = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
 
-  const handleCreatorSignup = () => {
-    navigate("/signup/creator");
+  const handleButtonClick = () => {
+    // Check if user is authenticated
+    if (!isAuthenticated || !user) {
+      // If not logged in, redirect to register page with state to redirect to subscription after registration
+      navigate("/signup/creator", { 
+        state: { redirectTo: "/creator/subscription" } 
+      });
+    } else {
+      // If logged in, redirect to subscription page
+      navigate("/creator/subscription");
+    }
   };
 
   return (
@@ -28,7 +39,7 @@ export const Pricing = () => {
               </div>
               <Button 
                 className="w-full bg-pink-500 hover:bg-pink-600 text-white"
-                onClick={handleCreatorSignup}
+                onClick={handleButtonClick}
               >
                 Quero ser um criador
               </Button>
@@ -47,7 +58,7 @@ export const Pricing = () => {
               </div>
               <Button 
                 className="w-full bg-pink-500 hover:bg-pink-600 text-white"
-                onClick={handleCreatorSignup}
+                onClick={handleButtonClick}
               >
                 Quero ser um criador
               </Button>
@@ -63,7 +74,7 @@ export const Pricing = () => {
               </div>
               <Button 
                 className="w-full bg-pink-500 hover:bg-pink-600 text-white"
-                onClick={handleCreatorSignup}
+                onClick={handleButtonClick}
               >
                 Quero ser um criador
               </Button>
