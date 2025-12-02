@@ -14,10 +14,12 @@ const BackendAPI = axios.create({
 // Guide Create Function
 export const GuideCreate = async (formData: FormData) => {
     try {
+        const token = localStorage.getItem('token');
         // Use admin endpoint
         const res = await BackendAPI.post("/api/admin/guides", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
+                "Authorization": `Bearer ${token}`, // Explicitly include token for FormData requests
             },
         });
         
@@ -50,9 +52,11 @@ export const UpdateGuide = async (id: number, data: any) => {
         });
 
         // Send request
+        const token = localStorage.getItem('token');
         const res = await BackendAPI.post(`/api/admin/guides/${id}`, formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
+                "Authorization": `Bearer ${token}`, // Explicitly include token for FormData requests
             },
         });
 
