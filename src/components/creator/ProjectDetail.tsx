@@ -264,7 +264,14 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                     Prazo final
                   </div>
                   <div className="font-bold text-base text-foreground">
-                    {formatDate(new Date(project.deadline), "dd/MM/yyyy")}
+                    {(() => {
+                        // Handle YYYY-MM-DD format by creating Date in local timezone
+                        if (project.deadline && /^\d{4}-\d{2}-\d{2}$/.test(project.deadline)) {
+                            const [year, month, day] = project.deadline.split('-').map(Number);
+                            return formatDate(new Date(year, month - 1, day), "dd/MM/yyyy");
+                        }
+                        return formatDate(new Date(project.deadline), "dd/MM/yyyy");
+                    })()}
                   </div>
                 </div>
               </div>

@@ -285,7 +285,14 @@ export default function PendingCampaign() {
                                                     <span className="font-medium text-foreground">Prazo:</span> {campaign.created_at ? new Date(campaign.created_at).toLocaleDateString("pt-BR") : 'Prazo não definido'}
                                                 </span>
                                                 <span>
-                                                    <span className="font-medium text-foreground">Estados:</span> {campaign.deadline ? new Date(campaign.deadline).toLocaleDateString("pt-BR") : 'Prazo não definido'}
+                                                    <span className="font-medium text-foreground">Estados:</span> {campaign.deadline ? (() => {
+                                                        // Handle YYYY-MM-DD format by creating Date in local timezone
+                                                        if (/^\d{4}-\d{2}-\d{2}$/.test(campaign.deadline)) {
+                                                            const [year, month, day] = campaign.deadline.split('-').map(Number);
+                                                            return new Date(year, month - 1, day).toLocaleDateString("pt-BR");
+                                                        }
+                                                        return new Date(campaign.deadline).toLocaleDateString("pt-BR");
+                                                    })() : 'Prazo não definido'}
                                                 </span>
                                             </div>
                                         </div>

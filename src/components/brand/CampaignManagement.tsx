@@ -140,7 +140,16 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
     }).format(amount);
   };
 
+  // Use utility function that handles timezone correctly for YYYY-MM-DD dates
   const formatDate = (dateString: string) => {
+    // Check if date is in YYYY-MM-DD format (from backend)
+    // If so, create Date in local timezone to avoid UTC conversion issues
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const [year, month, day] = dateString.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      return format(date, 'dd/MM/yyyy', { locale: ptBR });
+    }
+    // For other formats, use standard parsing
     return format(new Date(dateString), 'dd/MM/yyyy', { locale: ptBR });
   };
 

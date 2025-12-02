@@ -165,6 +165,14 @@ const CampaignList: React.FC = () => {
 
   // Format date for display
   const formatDate = (dateString: string) => {
+    // Check if date is in YYYY-MM-DD format (from backend)
+    // If so, create Date in local timezone to avoid UTC conversion issues
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const [year, month, day] = dateString.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      return date.toLocaleDateString('pt-BR');
+    }
+    // For other formats, use standard parsing
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR');
   };

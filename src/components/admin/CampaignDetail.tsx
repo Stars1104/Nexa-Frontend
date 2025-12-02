@@ -150,7 +150,14 @@ const CampaignDetail = ({
             <div>
               <div className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">Prazo Final</div>
               <div className="text-base font-semibold text-gray-800 dark:text-gray-100">
-                {displayData.deadline ? new Date(displayData.deadline).toLocaleDateString("pt-BR") : 'Não especificado'}
+                {displayData.deadline ? (() => {
+                    // Handle YYYY-MM-DD format by creating Date in local timezone
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(displayData.deadline)) {
+                        const [year, month, day] = displayData.deadline.split('-').map(Number);
+                        return new Date(year, month - 1, day).toLocaleDateString("pt-BR");
+                    }
+                    return new Date(displayData.deadline).toLocaleDateString("pt-BR");
+                })() : 'Não especificado'}
               </div>
             </div>
             <div>
