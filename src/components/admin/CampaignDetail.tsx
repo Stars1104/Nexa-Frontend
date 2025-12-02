@@ -14,6 +14,7 @@ import {
   CarouselPrevious,
 } from "../ui/carousel";
 import { File, FileText, Image, Download, ExternalLink } from "lucide-react";
+import { getCampaignLogoUrl } from "../../utils/imageUtils";
 
 const statesColors = [
   "bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-200",
@@ -108,15 +109,28 @@ const CampaignDetail = ({
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 border-b border-gray-200 dark:border-neutral-700 pb-4 mb-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg overflow-hidden border">
-              {displayData.logo ? (
-                <img
-                  src={`${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${displayData.logo}`}
-                  alt={`${displayData.brand?.name || 'Campaign'} logo`}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                displayData.brand?.name?.charAt(0)?.toUpperCase() || 'N'
-              )}
+              {(() => {
+                const logoUrl = getCampaignLogoUrl(displayData.logo);
+                if (logoUrl) {
+                  return (
+                    <img
+                      src={logoUrl}
+                      alt={`${displayData.brand?.name || 'Campaign'} logo`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Hide image and show initials on error
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.textContent = displayData.brand?.name?.charAt(0)?.toUpperCase() || displayData.title?.charAt(0)?.toUpperCase() || 'N';
+                        }
+                      }}
+                    />
+                  );
+                }
+                return <span>{displayData.brand?.name?.charAt(0)?.toUpperCase() || displayData.title?.charAt(0)?.toUpperCase() || 'N'}</span>;
+              })()}
             </div>
             <div className="flex-1 text-center sm:text-left">
               <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">

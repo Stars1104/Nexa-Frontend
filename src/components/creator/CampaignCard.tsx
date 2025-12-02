@@ -5,6 +5,7 @@ import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Separator } from "../ui/separator";
 import { Eye, Clock, MapPin, DollarSign, Calendar, Users, Heart, User, Star, RefreshCw } from "lucide-react";
+import { getCampaignLogoUrl } from "../../utils/imageUtils";
 
 interface CampaignCardProps {
     campaign: any;
@@ -126,16 +127,22 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                         <Avatar className="h-8 w-8">
-                            {campaign.logo && campaign.logo.trim() !== '' ? (
-                                <AvatarImage 
-                                    src={`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}${campaign.logo}`} 
-                                    alt={campaign.title}
-                                    onError={(e) => {
-                                        // Hide the image if it fails to load, fallback will show
-                                        e.currentTarget.style.display = 'none';
-                                    }}
-                                />
-                            ) : null}
+                            {(() => {
+                                const logoUrl = getCampaignLogoUrl(campaign.logo);
+                                if (logoUrl) {
+                                    return (
+                                        <AvatarImage 
+                                            src={logoUrl} 
+                                            alt={campaign.title}
+                                            onError={(e) => {
+                                                // Hide the image if it fails to load, fallback will show
+                                                e.currentTarget.style.display = 'none';
+                                            }}
+                                        />
+                                    );
+                                }
+                                return null;
+                            })()}
                             <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
                                 {campaign.title?.charAt(0)?.toUpperCase() || 'C'}
                             </AvatarFallback>
