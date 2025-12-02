@@ -85,7 +85,15 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
     const currentCampaigns = campaigns.slice(startIndex, endIndex);
 
     // Format date for display
+    // Handle YYYY-MM-DD format by creating Date in local timezone to avoid UTC conversion issues
     const formatDate = (dateString: string) => {
+        // Check if date is in YYYY-MM-DD format (from backend)
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            const [year, month, day] = dateString.split('-').map(Number);
+            const date = new Date(year, month - 1, day);
+            return date.toLocaleDateString('pt-BR');
+        }
+        // For other formats, use standard parsing
         const date = new Date(dateString);
         return date.toLocaleDateString('pt-BR');
     };
