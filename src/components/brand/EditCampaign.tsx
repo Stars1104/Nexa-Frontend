@@ -35,7 +35,9 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
     title: campaign.title,
     description: campaign.description,
     budget: campaign.budget,
-    deadline: format(new Date(campaign.deadline), 'yyyy-MM-dd'),
+    // Work directly with date string to avoid timezone conversion issues
+    // campaign.deadline comes as "YYYY-MM-DD" from backend, use it directly
+    deadline: campaign.deadline ? (typeof campaign.deadline === 'string' ? campaign.deadline.split('T')[0] : format(new Date(campaign.deadline), 'yyyy-MM-dd')) : '',
     remuneration_type: campaign.remuneration_type,
     requirements: campaign.requirements || '',
   });
@@ -60,7 +62,10 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
     if (!formData.deadline) {
       newErrors.deadline = 'Prazo é obrigatório';
     } else {
-      const deadlineDate = new Date(formData.deadline);
+      // Create Date in local timezone to avoid UTC conversion issues
+      // formData.deadline is in format "YYYY-MM-DD"
+      const [year, month, day] = formData.deadline.split('-').map(Number);
+      const deadlineDate = new Date(year, month - 1, day);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
@@ -80,8 +85,18 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
     }
     setIsUpdating(true);
     try {
-      // Validate deadline date
-      const deadlineDate = new Date(formData.deadline);
+      // Validate deadline date format (YYYY-MM-DD)
+      if (!formData.deadline || !/^\d{4}-\d{2}-\d{2}$/.test(formData.deadline)) {
+        toast.error("Data de prazo inválida");
+        setIsUpdating(false);
+        return;
+      }
+      
+      // Create Date in local timezone to avoid UTC conversion issues
+      // This ensures the date is interpreted in the user's local timezone, not UTC
+      const [year, month, day] = formData.deadline.split('-').map(Number);
+      const deadlineDate = new Date(year, month - 1, day);
+      
       if (isNaN(deadlineDate.getTime())) {
         toast.error("Data de prazo inválida");
         setIsUpdating(false);
