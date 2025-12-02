@@ -124,7 +124,7 @@ function Index() {
             case "Portfólio":
                 return <Portfolio />;
             case "Saldo e Saques":
-                return <BalanceAndWithdrawals />;
+                return <BalanceAndWithdrawals setComponent={handleComponentChange} />;
             case "Notificações":
                 return <Notification />;
             case "Assinatura":
