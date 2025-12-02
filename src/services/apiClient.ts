@@ -95,6 +95,8 @@ export const paymentClient = axios.create({
 export const uploadClient = axios.create({
     baseURL: `${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}/api`,
     timeout: 600000, // 10 minutes (600 seconds) for very large video file uploads
+    maxContentLength: Infinity, // Allow unlimited content length
+    maxBodyLength: Infinity, // Allow unlimited body length
     headers: {
         'Accept': 'application/json',
         // Don't set Content-Type - let browser set it with boundary for FormData

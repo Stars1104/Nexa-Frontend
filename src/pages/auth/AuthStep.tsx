@@ -5,7 +5,7 @@ import { ArrowRight, Home, User } from "lucide-react";
 import { useTheme } from "../../components/ThemeProvider";
 import { ThemeToggle } from "../../components/ThemeToggle";
 import { useSystemTheme } from "../../hooks/use-system-theme";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 
 const AuthStep = () => {
@@ -13,13 +13,20 @@ const AuthStep = () => {
     const systemTheme = useSystemTheme();
     const isDarkMode = theme === "dark" || (theme === "system" && systemTheme);
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleInfluencer = () => {
-        navigate("/signup/creator");
+        // Preserve any redirect state (e.g., redirectTo, pendingCheckoutSessionId) when navigating to signup
+        navigate("/signup/creator", { 
+            state: location.state || {} 
+        });
     };
 
     const handleCompany = () => {
-        navigate("/signup/brand");
+        // Preserve any redirect state when navigating to signup
+        navigate("/signup/brand", { 
+            state: location.state || {} 
+        });
     };
 
     const canonical = typeof window !== "undefined" ? window.location.href : "";

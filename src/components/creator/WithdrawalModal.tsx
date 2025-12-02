@@ -182,13 +182,6 @@ export default function WithdrawalModal({
   };
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
-    console.log("=== WITHDRAWAL HANDLE SUBMIT START ===", {
-      selectedMethod,
-      amount,
-      hasUser: !!user,
-      userId: user?.id,
-      stripeAccountId: userData?.stripe_account_id,
-    });
     e.preventDefault();
     if (!selectedMethod || !amount || parseFloat(amount) <= 0) {
       toast({
@@ -236,19 +229,6 @@ export default function WithdrawalModal({
       return;
     }
 
-    // Check if Stripe Connect is configured before proceeding
-    if (!userData?.stripe_account_id) {
-      toast({
-        title: "⚠️ Conta Stripe Connect Necessária",
-        description: "Você precisa configurar sua conta Stripe Connect antes de solicitar um saque. Acesse as configurações do Stripe para completar o cadastro.",
-        variant: "destructive",
-        duration: 8000, // 8 segundos para dar tempo de ler
-      });
-      return;
-    }
-
-    console.log("Stripe account OK, proceeding with withdrawal");
-
     setIsLoading(true);
 
     try {
@@ -257,8 +237,6 @@ export default function WithdrawalModal({
         withdrawal_method: selectedMethod,
         withdrawal_details: withdrawalDetails,
       };
-      console.log("Sending withdrawal request", requestData);
-      
       const response = await apiClient.post("/freelancer/withdrawals", requestData);
       console.log("Withdrawal response received", response.data);
 
@@ -831,7 +809,6 @@ export default function WithdrawalModal({
           <Button
             type="button"
             onClick={(e) => {
-              console.log("=== WITHDRAWAL CONFIRM BUTTON CLICKED ===");
               handleSubmit(e);
             }}
             disabled={

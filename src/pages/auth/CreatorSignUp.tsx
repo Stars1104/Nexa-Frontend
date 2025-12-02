@@ -219,6 +219,13 @@ const CreatorSignUp = () => {
     if (loginType === "login") setAuthType("signin");
   }, [loginType])
 
+  // Set authType to signup when coming from /signup/creator route
+  useEffect(() => {
+    if (role === "creator" && location.pathname === "/signup/creator") {
+      setAuthType("signup");
+    }
+  }, [role, location.pathname])
+
   // Cleanup effect
   useEffect(() => {
     return () => {
@@ -244,12 +251,33 @@ const CreatorSignUp = () => {
         if (user.isStudent && user.role === 'creator') {
           navigateToStudentVerification();
         } else if (isNewRegistration && user.role === 'creator') {
-          // Redirect new Creator registrations to subscription page
-          navigateToSubscription();
+          // Check if there's a specific redirect location (e.g., from pricing page)
+          const redirectTo = location.state?.redirectTo;
+          if (redirectTo) {
+            // Preserve any pending checkout session_id when redirecting
+            const pendingCheckoutSessionId = location.state?.pendingCheckoutSessionId || 
+                                           localStorage.getItem('pending_checkout_session_id');
+            if (pendingCheckoutSessionId) {
+              // Ensure the session_id is preserved in localStorage for Subscription component
+              localStorage.setItem('pending_checkout_session_id', pendingCheckoutSessionId);
+              localStorage.setItem('pending_checkout_success', 'true');
+            }
+            navigate(redirectTo, { replace: true });
+          } else {
+            // Redirect new Creator registrations to subscription page
+            navigateToSubscription();
+          }
         } else {
           // Check if there's a redirect location from ProtectedRoute
           const from = location.state?.from?.pathname;
           if (from) {
+            // Preserve any pending checkout session_id when redirecting
+            const pendingCheckoutSessionId = location.state?.pendingCheckoutSessionId || 
+                                           localStorage.getItem('pending_checkout_session_id');
+            if (pendingCheckoutSessionId) {
+              localStorage.setItem('pending_checkout_session_id', pendingCheckoutSessionId);
+              localStorage.setItem('pending_checkout_success', 'true');
+            }
             navigate(from, { replace: true });
           } else {
             navigateToRoleDashboard(user.role);
@@ -259,7 +287,7 @@ const CreatorSignUp = () => {
 
       return () => clearTimeout(timeoutId);
     }
-  }, [isAuthenticated, user, role, navigateToRoleDashboard, navigateToStudentVerification, navigateToSubscription, location, isNewRegistration]);
+  }, [isAuthenticated, user, role, navigateToRoleDashboard, navigateToStudentVerification, navigateToSubscription, location, isNewRegistration, navigate]);
 
   // Clear error when switching auth types
   useEffect(() => {
@@ -489,15 +517,50 @@ const CreatorSignUp = () => {
       else if (error.response?.status >= 500) {
         toast.error("Erro interno do servidor. Tente novamente em alguns minutos.");
       }
-      // Handle validation errors
+      // Handle validation errors (including blocked account)
       else if (error.response?.status === 422) {
-        const errorMessage = error.response?.data?.message || "Dados inválidos. Verifique os campos e tente novamente.";
-        toast.error(errorMessage);
+        // Check for validation errors in errors object (Laravel format)
+        let errorMessage = error.response?.data?.message;
+        
+        if (!errorMessage && error.response?.data?.errors) {
+          // Extract first error message from validation errors
+          const errors = error.response.data.errors;
+          if (errors.email && Array.isArray(errors.email)) {
+            errorMessage = errors.email[0];
+          } else if (errors.email) {
+            errorMessage = errors.email;
+          } else {
+            // Get first error from any field
+            const firstErrorKey = Object.keys(errors)[0];
+            if (firstErrorKey) {
+              const firstError = errors[firstErrorKey];
+              errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
+            }
+          }
+        }
+        
+        // Check if this is a blocked account message
+        if (errorMessage && errorMessage.includes('bloqueada')) {
+          toast.error(errorMessage);
+        } else {
+          toast.error(errorMessage || "Dados inválidos. Verifique os campos e tente novamente.");
+        }
       }
-      // Handle other errors
+      // Handle other errors (including when error is already a string message from thunk)
       else {
-        const errorMessage = error.response?.data?.message || error.message || "Erro ao fazer login. Tente novamente.";
-        toast.error(errorMessage);
+        let errorMessage = error.response?.data?.message || error.message;
+        
+        // If error is a string (from thunk rejectWithValue), use it directly
+        if (typeof error === 'string') {
+          errorMessage = error;
+        }
+        
+        // Check if this is a blocked account message
+        if (errorMessage && errorMessage.includes('bloqueada')) {
+          toast.error(errorMessage);
+        } else {
+          toast.error(errorMessage || "Erro ao fazer login. Tente novamente.");
+        }
       }
       console.error('Sign in error:', error);
     }

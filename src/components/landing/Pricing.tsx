@@ -2,8 +2,26 @@ import { Check } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { useNavigate } from "react-router-dom";
+import { useAppSelector } from "../../store/hooks";
 
 export const Pricing = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+
+  const handleButtonClick = () => {
+    // Check if user is authenticated
+    if (!isAuthenticated || !user) {
+      // If not logged in, redirect to register page with state to redirect to subscription after registration
+      navigate("/signup/creator", { 
+        state: { redirectTo: "/creator/subscription" } 
+      });
+    } else {
+      // If logged in, redirect to subscription page
+      navigate("/creator/subscription");
+    }
+  };
+
   return (
     <section className="py-12 md:py-20">
       <div className="max-w-7xl w-full mx-auto px-4 md:px-6">
@@ -19,7 +37,10 @@ export const Pricing = () => {
                 <div className="text-2xl md:text-3xl font-bold text-foreground mt-2">R$ 39,90</div>
                 <p className="text-sm text-muted-foreground mt-1">por mês</p>
               </div>
-              <Button className="w-full bg-pink-500 hover:bg-pink-600 text-white">
+              <Button 
+                className="w-full bg-pink-500 hover:bg-pink-600 text-white"
+                onClick={handleButtonClick}
+              >
                 Quero ser um criador
               </Button>
             </CardContent>
@@ -35,7 +56,10 @@ export const Pricing = () => {
                 <div className="text-2xl md:text-3xl font-bold text-foreground mt-2">R$ 19,90</div>
                 <p className="text-sm text-muted-foreground mt-1">por mês • 12 meses de acesso</p>
               </div>
-              <Button className="w-full bg-pink-500 hover:bg-pink-600 text-white">
+              <Button 
+                className="w-full bg-pink-500 hover:bg-pink-600 text-white"
+                onClick={handleButtonClick}
+              >
                 Quero ser um criador
               </Button>
             </CardContent>
@@ -48,7 +72,10 @@ export const Pricing = () => {
                 <div className="text-2xl md:text-3xl font-bold text-foreground mt-2">R$ 29,90</div>
                 <p className="text-sm text-muted-foreground mt-1">por mês • 6 meses de acesso</p>
               </div>
-              <Button className="w-full bg-pink-500 hover:bg-pink-600 text-white">
+              <Button 
+                className="w-full bg-pink-500 hover:bg-pink-600 text-white"
+                onClick={handleButtonClick}
+              >
                 Quero ser um criador
               </Button>
             </CardContent>
