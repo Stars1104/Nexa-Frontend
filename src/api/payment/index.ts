@@ -206,6 +206,16 @@ export const paymentApi = {
     console.log(response.data)
     return response.data;
   },
+
+  // Create subscription from checkout session (PUBLIC - no auth required)
+  // Used as fallback when user is logged out after Stripe redirect
+  createSubscriptionFromCheckoutPublic: async (sessionId: string): Promise<any> => {
+    const BackendURL = import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br";
+    const response = await axios.post(`${BackendURL}/api/payment/create-subscription-from-checkout-public`, {
+      session_id: sessionId
+    });
+    return response.data;
+  },
 };
 
 // Export creator payment API
