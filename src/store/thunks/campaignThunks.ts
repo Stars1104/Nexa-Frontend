@@ -387,8 +387,12 @@ export const updateCampaign = createAsyncThunk<
     }
     
     // Validate and append deadline
+    // Format date locally to avoid timezone issues (toISOString() converts to UTC which can cause 1-day difference)
     if (data.deadline instanceof Date && !isNaN(data.deadline.getTime())) {
-      formData.append('deadline', data.deadline.toISOString().split('T')[0]);
+      const year = data.deadline.getFullYear();
+      const month = String(data.deadline.getMonth() + 1).padStart(2, '0');
+      const day = String(data.deadline.getDate()).padStart(2, '0');
+      formData.append('deadline', `${year}-${month}-${day}`);
     } else {
       throw new Error('Prazo inválido');
     }
