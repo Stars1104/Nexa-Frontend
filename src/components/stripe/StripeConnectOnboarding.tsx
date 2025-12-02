@@ -54,9 +54,30 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
       const accountLink = await stripeApi.createAccountLink();
       console.log(accountLink)
       
+      // Detect browser language and add locale parameter to URL
+      // Stripe detects language from browser, but we can help by adding it to the URL
+      const browserLang = navigator.language || navigator.languages?.[0] || 'pt-BR';
+      const isPortuguese = browserLang.startsWith('pt') || document.documentElement.lang === 'pt-BR';
+      const locale = isPortuguese ? 'pt-BR' : browserLang;
+      
+      // Add locale parameter to the URL if not already present
+      let stripeUrl = accountLink.url;
+      try {
+        const url = new URL(stripeUrl);
+        if (!url.searchParams.has('locale')) {
+          url.searchParams.set('locale', locale);
+          stripeUrl = url.toString();
+        }
+      } catch (e) {
+        // If URL parsing fails, try simple string append
+        stripeUrl = stripeUrl.includes('?') 
+          ? `${stripeUrl}&locale=${locale}`
+          : `${stripeUrl}?locale=${locale}`;
+      }
+      
       // Open Stripe onboarding in a new window
       const newWindow = window.open(
-        accountLink.url,
+        stripeUrl,
         'stripe-onboarding',
         'width=800,height=600,scrollbars=yes,resizable=yes'
       );
