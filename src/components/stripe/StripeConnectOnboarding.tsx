@@ -194,7 +194,7 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
       const translatedFields = formatRequirements(past_due);
       return (
         <div className="space-y-2">
-          <p className="font-semibold text-destructive">⚠️ Ação necessária para ativar sua conta:</p>
+          <p className="font-semibold text-neutral-800 dark:text-neutral-100">Ação necessária para ativar sua conta:</p>
           <ul className="list-disc list-inside space-y-1 text-sm">
             {translatedFields.map((field, index) => (
               <li key={index}>{field}</li>
