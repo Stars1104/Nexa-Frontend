@@ -238,6 +238,7 @@ export default function WithdrawalModal({
         withdrawal_details: withdrawalDetails,
       };
       const response = await apiClient.post("/freelancer/withdrawals", requestData);
+      console.log("Withdrawal response received", response.data);
 
       if (response.data.success) {
         const withdrawalData = response.data.data;

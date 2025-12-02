@@ -155,7 +155,19 @@ export default function Subscription() {
         try {
             setPaymentProcessing(true);
             
-            const result = await paymentApi.createSubscriptionFromCheckout(sessionId);
+            // Try authenticated endpoint first
+            let result;
+            try {
+                result = await paymentApi.createSubscriptionFromCheckout(sessionId);
+            } catch (error: any) {
+                // If 401 (unauthorized), try public endpoint as fallback
+                if (error.response?.status === 401) {
+                    console.log('User not authenticated, trying public endpoint...');
+                    result = await paymentApi.createSubscriptionFromCheckoutPublic(sessionId);
+                } else {
+                    throw error;
+                }
+            }
             
             // Reload subscription status first
             await loadSubscriptionStatus();
