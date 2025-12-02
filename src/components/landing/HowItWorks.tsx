@@ -1,7 +1,13 @@
 import { Button } from "../ui/button";
 import { User, Eye, Image, DollarSign, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export const HowItWorks = () => {
+  const navigate = useNavigate();
+  
+  const handleCompany = () => {
+    navigate("/signup/brand");
+  };
   const steps = [
     {
       step: "1",
@@ -55,7 +61,10 @@ export const HowItWorks = () => {
           })}
         </div>
         <div className="text-center">
-          <Button className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 rounded-full font-semibold">
+          <Button 
+            className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 rounded-full font-semibold"
+            onClick={handleCompany}
+          >
             Começar agora
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
