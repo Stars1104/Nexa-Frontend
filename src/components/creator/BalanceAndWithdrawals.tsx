@@ -51,7 +51,11 @@ interface WithdrawalModalBalance {
   }>;
 }
 
-export default function BalanceAndWithdrawals() {
+interface BalanceAndWithdrawalsProps {
+  setComponent?: (component: string) => void;
+}
+
+export default function BalanceAndWithdrawals({ setComponent }: BalanceAndWithdrawalsProps) {
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [balance, setBalance] = useState<CreatorBalanceType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -330,6 +334,7 @@ export default function BalanceAndWithdrawals() {
           onClose={() => setShowWithdrawalModal(false)}
           balance={transformedBalance}
           onWithdrawalCreated={handleWithdrawalCreated}
+          setComponent={setComponent}
         />
       )}
     </div>

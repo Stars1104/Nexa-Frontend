@@ -832,6 +832,7 @@ const handleRefreshProfile = useCallback(async () => {
           onClose={() => setShowWithdrawalModal(false)}
           balance={balance}
           onWithdrawalCreated={handleWithdrawalCreated}
+          setComponent={undefined}
         />
       )}
 
