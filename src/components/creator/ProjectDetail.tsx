@@ -6,6 +6,7 @@ import { formatDate } from "date-fns";
 import { toast } from "../ui/sonner";
 import { fetchCreatorApplications } from "../../store/thunks/campaignThunks";
 import { fetchApprovedCampaigns, fetchCampaignById } from "../../store/thunks/campaignThunks";
+import { getCampaignLogoUrl } from "../../utils/imageUtils";
 import {
   Dialog,
   DialogContent,
@@ -168,32 +169,36 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             <div className="flex items-center gap-4 mb-8">
               {/* Campaign Logo */}
               <div className="flex-shrink-0">
-                {(project.logo || (project as any).logo_url) ? (
-                  <img
-                    src={`${import.meta.env.VITE_BACKEND_URL ||
-                      "https://nexacreators.com.br"
-                      }${project.logo || (project as any).logo_url || ''}`}
-                    alt={`${project.title} logo`}
-                    className="w-16 h-16 rounded-xl object-cover border border-border cursor-pointer hover:opacity-80 transition-opacity"
-                    style={{
-                      minWidth: 0,
-                      minHeight: 0,
-                      objectFit: 'cover',
-                      maxWidth: '100%',
-                      maxHeight: '100%'
-                    }}
-                    onClick={() => {
-                      const logoUrl = `${import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br"}${project.logo || (project as any).logo_url || ''}`;
-                      setSelectedImageUrl(logoUrl);
-                      setImageModalOpen(true);
-                    }}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = "none";
-                      target.nextElementSibling?.classList.remove("hidden");
-                    }}
-                  />
-                ) : null}
+                {(() => {
+                  const logoPath = project.logo || (project as any).logo_url;
+                  const logoUrl = getCampaignLogoUrl(logoPath);
+                  if (logoUrl) {
+                    return (
+                      <img
+                        src={logoUrl}
+                        alt={`${project.title} logo`}
+                        className="w-16 h-16 rounded-xl object-cover border border-border cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{
+                          minWidth: 0,
+                          minHeight: 0,
+                          objectFit: 'cover',
+                          maxWidth: '100%',
+                          maxHeight: '100%'
+                        }}
+                        onClick={() => {
+                          setSelectedImageUrl(logoUrl);
+                          setImageModalOpen(true);
+                        }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = "none";
+                          target.nextElementSibling?.classList.remove("hidden");
+                        }}
+                      />
+                    );
+                  }
+                  return null;
+                })()}
                 {(!project.logo && !(project as any).logo_url) && (
                   <div className="w-16 h-16 rounded-xl border border-border flex items-center justify-center text-2xl font-bold text-white bg-gradient-to-br from-primary to-primary/80">
                     {project.title.charAt(0).toUpperCase()}

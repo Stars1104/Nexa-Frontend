@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
 import { fetchCampaignById } from "../../store/thunks/campaignThunks";
 import { Campaign } from "../../store/slices/campaignSlice";
+import { getCampaignLogoUrl } from "../../utils/imageUtils";
 
 const labelClass =
   "text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1";
@@ -264,24 +265,30 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
         <div className="flex flex-col sm:flex-row items-center justify-between sm:items-start gap-4 border-b border-gray-200 dark:border-neutral-700 pb-4 mb-4">
           <div className="flex justify-center items-center gap-4">
             <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gray-200 dark:bg-neutral-700 flex items-center justify-center text-3xl font-bold text-gray-400 overflow-hidden">
-              {campaign.logo ? (
-                <img
-                  src={`${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${campaign.logo}`}
-                  alt="Campaign Logo" 
-                  className="w-full h-full object-cover"
-                  style={{ 
-                    minWidth: 0, 
-                    minHeight: 0,
-                    objectFit: 'cover',
-                    maxWidth: '100%',
-                    maxHeight: '100%'
-                  }}
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                  }}
-                />
-              ) : null}
+              {(() => {
+                const logoUrl = getCampaignLogoUrl(campaign.logo);
+                if (logoUrl) {
+                  return (
+                    <img
+                      src={logoUrl}
+                      alt="Campaign Logo" 
+                      className="w-full h-full object-cover"
+                      style={{ 
+                        minWidth: 0, 
+                        minHeight: 0,
+                        objectFit: 'cover',
+                        maxWidth: '100%',
+                        maxHeight: '100%'
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  );
+                }
+                return null;
+              })()}
               <span className={`text-gray-400 ${campaign.logo ? 'hidden' : ''}`}>
                 {campaign.title ? campaign.title.charAt(0).toUpperCase() : '📷'}
               </span>

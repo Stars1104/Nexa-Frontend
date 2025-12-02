@@ -28,6 +28,7 @@ import { ptBR } from "date-fns/locale";
 import EditCampaign from "./EditCampaign";
 import { hiringApi } from "../../api/hiring";
 import CampaignTimelineSidebar from "../CampaignTimelineSidebar";
+import { getCampaignLogoUrl } from "../../utils/imageUtils";
 
 interface CampaignManagementProps {
   setComponent?: (component: string | { name: string; campaign?: any }) => void;
@@ -322,16 +323,29 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
                 {/* Campaign Info */}
                 <div className="flex-1">
                   <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-gray-700">
-                      {campaign.logo ? (
-                        <img
-                        src={`${import.meta.env.VITE_BACKEND_URL}${campaign.logo}`}
-                          alt={campaign.title}
-                          className="w-full h-full rounded-lg object-cover"
-                        />
-                      ) : (
-                        <FileText className="w-8 h-8 text-gray-400" />
-                      )}
+                    <div className="w-16 h-16 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-gray-700 overflow-hidden">
+                      {(() => {
+                        const logoUrl = getCampaignLogoUrl(campaign.logo);
+                        if (logoUrl) {
+                          return (
+                            <img
+                              src={logoUrl}
+                              alt={campaign.title}
+                              className="w-full h-full rounded-lg object-cover"
+                              onError={(e) => {
+                                // Hide image and show fallback on error
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = '<svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
+                                }
+                              }}
+                            />
+                          );
+                        }
+                        return <FileText className="w-8 h-8 text-gray-400" />;
+                      })()}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
@@ -472,16 +486,29 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
           <div className="bg-white dark:bg-[#0d0d0d] border rounded-xl shadow-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-6">
               <div className="flex items-start gap-4">
-                <div className="w-20 h-20 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-gray-700">
-                  {selectedCampaign.logo ? (
-                    <img
-                      src={`${import.meta.env.VITE_BACKEND_URL}${selectedCampaign.logo}`}
-                      alt={selectedCampaign.title}
-                      className="w-full h-full rounded-lg object-cover"
-                    />
-                  ) : (
-                    <FileText className="w-10 h-10 text-gray-400" />
-                  )}
+                <div className="w-20 h-20 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-gray-700 overflow-hidden">
+                  {(() => {
+                    const logoUrl = getCampaignLogoUrl(selectedCampaign.logo);
+                    if (logoUrl) {
+                      return (
+                        <img
+                          src={logoUrl}
+                          alt={selectedCampaign.title}
+                          className="w-full h-full rounded-lg object-cover"
+                          onError={(e) => {
+                            // Hide image and show fallback on error
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                              parent.innerHTML = '<svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
+                            }
+                          }}
+                        />
+                      );
+                    }
+                    return <FileText className="w-10 h-10 text-gray-400" />;
+                  })()}
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">

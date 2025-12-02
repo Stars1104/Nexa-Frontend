@@ -16,6 +16,7 @@ import {
 import { Skeleton } from "../ui/skeleton";
 import { Alert, AlertDescription } from "../ui/alert";
 import { AlertCircle, User, RefreshCw, DollarSign } from "lucide-react";
+import { getCampaignLogoUrl, getCampaignInitials } from "../../utils/imageUtils";
 
 const tagColors: Record<string, string> = {
     Photo: "bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-200",
@@ -297,11 +298,30 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                                 className="bg-background rounded-xl shadow-sm border border-mute p-5 flex flex-col gap-3 hover:shadow-md transition-shadow"
                             >
                                 <div className="flex items-center gap-3">
-                                    <img
-                                        src={`${import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br'}${campaign.logo}`}
-                                        alt="campaign"
-                                        className="w-12 h-12 rounded-full object-cover border border-zinc-200 dark:border-zinc-700"
-                                    />
+                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold overflow-hidden border border-zinc-200 dark:border-zinc-700 flex-shrink-0">
+                                        {(() => {
+                                            const logoUrl = getCampaignLogoUrl(campaign.logo);
+                                            if (logoUrl) {
+                                                return (
+                                                    <img
+                                                        src={logoUrl}
+                                                        alt={campaign.title || "campaign"}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            // Hide image and show initials on error
+                                                            const target = e.target as HTMLImageElement;
+                                                            target.style.display = 'none';
+                                                            const parent = target.parentElement;
+                                                            if (parent) {
+                                                                parent.textContent = getCampaignInitials(campaign.title);
+                                                            }
+                                                        }}
+                                                    />
+                                                );
+                                            }
+                                            return <span>{getCampaignInitials(campaign.title)}</span>;
+                                        })()}
+                                    </div>
                                     <div className="flex-1">
                                         <div className="font-semibold text-base md:text-lg text-black dark:text-white line-clamp-1">
                                             {campaign.title}
