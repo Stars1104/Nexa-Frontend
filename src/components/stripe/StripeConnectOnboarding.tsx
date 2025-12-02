@@ -130,25 +130,134 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
     }
   };
 
-  const getRequirementsText = () => {
+  // Mapeamento de campos técnicos do Stripe para mensagens amigáveis em português
+  const translateRequirementField = (field: string): string => {
+    const translations: { [key: string]: string } = {
+      // Informações do negócio
+      'business_profile.mcc': 'Código de categoria do negócio',
+      'business_profile.product_description': 'Descrição dos produtos/serviços',
+      'business_type': 'Tipo de negócio',
+      
+      // Conta bancária
+      'external_account': 'Conta bancária',
+      
+      // Representante legal
+      'representative.address.city': 'Cidade do representante',
+      'representative.address.line1': 'Endereço do representante',
+      'representative.address.postal_code': 'CEP do representante',
+      'representative.address.state': 'Estado do representante',
+      'representative.dob.day': 'Dia de nascimento do representante',
+      'representative.dob.month': 'Mês de nascimento do representante',
+      'representative.dob.year': 'Ano de nascimento do representante',
+      'representative.email': 'E-mail do representante',
+      'representative.first_name': 'Nome do representante',
+      'representative.id_number': 'CPF/CNPJ do representante',
+      'representative.last_name': 'Sobrenome do representante',
+      'representative.phone': 'Telefone do representante',
+      'representative.political_exposure': 'Exposição política do representante',
+      'representative.verification.additional_document': 'Documento adicional do representante',
+      'representative.verification.document': 'Documento de verificação do representante',
+      
+      // Aceite de termos
+      'tos_acceptance.date': 'Data de aceite dos termos',
+      'tos_acceptance.ip': 'IP de aceite dos termos',
+      
+      // Outros campos comuns
+      'individual.address.city': 'Cidade',
+      'individual.address.line1': 'Endereço',
+      'individual.address.postal_code': 'CEP',
+      'individual.address.state': 'Estado',
+      'individual.dob.day': 'Dia de nascimento',
+      'individual.dob.month': 'Mês de nascimento',
+      'individual.dob.year': 'Ano de nascimento',
+      'individual.email': 'E-mail',
+      'individual.first_name': 'Nome',
+      'individual.id_number': 'CPF',
+      'individual.last_name': 'Sobrenome',
+      'individual.phone': 'Telefone',
+      'individual.verification.document': 'Documento de verificação',
+    };
+    
+    return translations[field] || field.replace(/_/g, ' ').replace(/\./g, ' → ');
+  };
+
+  const getRequirementsText = (): React.ReactNode => {
     if (!accountStatus?.requirements) return null;
     
     const { currently_due, eventually_due, past_due, pending_verification } = accountStatus.requirements;
     
+    const formatRequirements = (fields: string[]): string[] => {
+      return fields.map(field => translateRequirementField(field));
+    };
+    
     if (past_due.length > 0) {
-      return `Ação necessária: ${past_due.join(', ')}`;
-    }
-    if (currently_due.length > 0) {
-      return `Pendente: ${currently_due.join(', ')}`;
-    }
-    if (pending_verification.length > 0) {
-      return `Aguardando verificação: ${pending_verification.join(', ')}`;
-    }
-    if (eventually_due.length > 0) {
-      return `Futuro: ${eventually_due.join(', ')}`;
+      const translatedFields = formatRequirements(past_due);
+      return (
+        <div className="space-y-2">
+          <p className="font-semibold text-destructive">⚠️ Ação necessária para ativar sua conta:</p>
+          <ul className="list-disc list-inside space-y-1 text-sm">
+            {translatedFields.map((field, index) => (
+              <li key={index}>{field}</li>
+            ))}
+          </ul>
+          <p className="text-xs text-muted-foreground mt-2">
+            Clique em "Completar Configuração" para preencher essas informações.
+          </p>
+        </div>
+      );
     }
     
-    return 'Conta configurada com sucesso!';
+    if (currently_due.length > 0) {
+      const translatedFields = formatRequirements(currently_due);
+      return (
+        <div className="space-y-2">
+          <p className="font-semibold text-yellow-600 dark:text-yellow-500">📋 Informações pendentes:</p>
+          <ul className="list-disc list-inside space-y-1 text-sm">
+            {translatedFields.map((field, index) => (
+              <li key={index}>{field}</li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+    
+    if (pending_verification.length > 0) {
+      const translatedFields = formatRequirements(pending_verification);
+      return (
+        <div className="space-y-2">
+          <p className="font-semibold text-blue-600 dark:text-blue-500">⏳ Aguardando verificação:</p>
+          <ul className="list-disc list-inside space-y-1 text-sm">
+            {translatedFields.map((field, index) => (
+              <li key={index}>{field}</li>
+            ))}
+          </ul>
+          <p className="text-xs text-muted-foreground mt-2">
+            Nossa equipe está verificando suas informações. Isso pode levar alguns dias úteis.
+          </p>
+        </div>
+      );
+    }
+    
+    if (eventually_due.length > 0) {
+      const translatedFields = formatRequirements(eventually_due);
+      return (
+        <div className="space-y-2">
+          <p className="font-semibold text-muted-foreground">ℹ️ Informações futuras necessárias:</p>
+          <ul className="list-disc list-inside space-y-1 text-sm">
+            {translatedFields.map((field, index) => (
+              <li key={index}>{field}</li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="flex items-center gap-2 text-green-600 dark:text-green-500">
+        <CheckCircle className="w-4 h-4" />
+        <span className="font-medium">Conta configurada com sucesso!</span>
+      </div>
+    );
   };
 
   if (isLoading) {
