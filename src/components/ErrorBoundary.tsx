@@ -20,41 +20,41 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
-    // Update state so the next render will show the fallback UI
+    
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log the error to console
+    
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     
-    // Update state with error info
+    
     this.setState({ error, errorInfo });
     
-    // You can also log the error to an error reporting service here
-    // logErrorToService(error, errorInfo);
+    
+    
   }
 
   componentDidMount() {
-    // Add global error handlers for uncaught promise rejections
+    
     window.addEventListener('unhandledrejection', this.handleUnhandledRejection);
   }
 
   componentWillUnmount() {
-    // Clean up global error handlers
+    
     window.removeEventListener('unhandledrejection', this.handleUnhandledRejection);
   }
 
   handleUnhandledRejection = (event: PromiseRejectionEvent) => {
     console.error('Rejeição de promessa não tratada:', event.reason);
     
-    // Check if it's a 403 error
+    
     if (event.reason?.code === 403 || event.reason?.status === 403) {
       this.setState({
         hasError: true,
         error: new Error('Acesso negado. Você não tem permissão para realizar esta ação.')
       });
-      event.preventDefault(); // Prevent the default browser behavior
+      event.preventDefault(); 
     }
   };
 
@@ -109,14 +109,7 @@ class ErrorBoundary extends Component<Props, State> {
               )}
             </div>
             
-            {/* {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mt-4 text-sm text-muted-foreground">
-                <summary>Detalhes do erro (desenvolvimento)</summary>
-                <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-auto">
-                  {this.state.error.stack}
-                </pre>
-              </details>
-            )} */}
+            {}
           </div>
         </div>
       );

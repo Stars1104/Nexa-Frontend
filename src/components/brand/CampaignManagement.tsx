@@ -141,19 +141,19 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
     }).format(amount);
   };
 
-  // Use utility function that handles timezone correctly for YYYY-MM-DD dates
+  
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Não especificada';
     
-    // Extract YYYY-MM-DD from string (handles formats like "2025-12-07" or "2025-12-07T00:00:00")
+    
     const dateMatch = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (dateMatch) {
       const [, year, month, day] = dateMatch;
-      // Create Date in local timezone to avoid UTC conversion issues
+      
       const date = new Date(Number(year), Number(month) - 1, Number(day));
       return format(date, 'dd/MM/yyyy', { locale: ptBR });
     }
-    // For other formats, use standard parsing
+    
     try {
       return format(new Date(dateString), 'dd/MM/yyyy', { locale: ptBR });
     } catch {
@@ -184,7 +184,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
       const response = await hiringApi.getContracts();
       const allContracts = response.data.data || [];
       
-      // Filter contracts that belong to this campaign through offers
+      
       const contracts = allContracts.filter((contract: any) => {
         return contract.offer?.campaign_id === campaignId;
       });
@@ -207,7 +207,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
       toast.success("Campanha deletada com sucesso!");
       setShowDeleteModal(false);
       setSelectedCampaign(null);
-      dispatch(fetchUserCampaigns()); // Refresh the list
+      dispatch(fetchUserCampaigns()); 
     } catch (error) {
       toast.error("Erro ao deletar campanha");
       console.error("Delete error:", error);
@@ -219,7 +219,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
   const handleUpdate = () => {
     setShowEditModal(false);
     setSelectedCampaign(null);
-    dispatch(fetchUserCampaigns()); // Refresh the list
+    dispatch(fetchUserCampaigns()); 
   };
 
   if (isLoading) {
@@ -244,7 +244,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
 
   return (
     <div className="space-y-6 p-4 dark:bg-[#171717] h-screen">
-      {/* Header */}
+      {}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
@@ -263,7 +263,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
         </Button>
       </div>
 
-      {/* Filters */}
+      {}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -292,7 +292,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
         </div>
       </div>
 
-      {/* Campaigns List */}
+      {}
       <div className="space-y-4">
         {filteredCampaigns.length === 0 ? (
           <div className="text-center py-12">
@@ -320,7 +320,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
               className="bg-white dark:bg-[#0d0d0d] rounded-xl shadow-sm border p-6 hover:shadow-md transition-shadow"
             >
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                {/* Campaign Info */}
+                {}
                 <div className="flex-1">
                   <div className="flex items-start gap-4">
                     <div className="w-16 h-16 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-gray-700 overflow-hidden">
@@ -333,7 +333,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
                               alt={campaign.title}
                               className="w-full h-full rounded-lg object-cover"
                               onError={(e) => {
-                                // Hide image and show fallback on error
+                                
                                 const target = e.target as HTMLImageElement;
                                 target.style.display = 'none';
                                 const parent = target.parentElement;
@@ -383,7 +383,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
                   </div>
                 </div>
 
-                {/* Actions */}
+                {}
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -419,7 +419,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {}
       {showDeleteModal && selectedCampaign && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
@@ -471,7 +471,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
         </div>
       )}
 
-      {/* Edit Modal */}
+      {}
       {showEditModal && selectedCampaign && (
         <EditCampaign
           campaign={selectedCampaign}
@@ -480,7 +480,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
         />
       )}
 
-      {/* Campaign Details Modal */}
+      {}
       {showViewModal && selectedCampaign && (
         <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-[#0d0d0d] border rounded-xl shadow-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -496,7 +496,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
                           alt={selectedCampaign.title}
                           className="w-full h-full rounded-lg object-cover"
                           onError={(e) => {
-                            // Hide image and show fallback on error
+                            
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
                             const parent = target.parentElement;
@@ -532,7 +532,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
               </Button>
             </div>
 
-            {/* Tabs */}
+            {}
             <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setActiveTab('details')}
@@ -559,7 +559,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
 
             {activeTab === 'details' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Campaign Details */}
+              {}
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
@@ -615,7 +615,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
                 </div>
               </div>
 
-              {/* Requirements and Additional Info */}
+              {}
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
@@ -738,7 +738,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
               </div>
             )}
 
-            {/* Action Buttons */}
+            {}
             <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
               <Button
                 variant="outline"
@@ -751,7 +751,7 @@ const CampaignManagement: React.FC<CampaignManagementProps> = ({ setComponent })
         </div>
       )}
 
-      {/* Campaign Timeline Sidebar */}
+      {}
       {selectedContractId && (
         <CampaignTimelineSidebar
           contractId={selectedContractId}

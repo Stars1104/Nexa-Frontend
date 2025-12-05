@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const BackendURL = import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br";
 
-// Create axios instance for notification API
+
 const NotificationAPI = axios.create({
     baseURL: BackendURL,
     headers: {
@@ -10,7 +10,7 @@ const NotificationAPI = axios.create({
     },
 });
 
-// Set auth token for requests
+
 const setAuthToken = (token: string) => {
     if (token) {
         NotificationAPI.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -19,7 +19,7 @@ const setAuthToken = (token: string) => {
     }
 };
 
-// Get user notifications
+
 export const getNotifications = async (token: string, params?: {
     per_page?: number;
     type?: string;
@@ -34,7 +34,7 @@ export const getNotifications = async (token: string, params?: {
     }
 };
 
-// Get unread notification count
+
 export const getUnreadCount = async (token: string) => {
     setAuthToken(token);
     try {
@@ -45,7 +45,7 @@ export const getUnreadCount = async (token: string) => {
     }
 };
 
-// Mark notification as read
+
 export const markAsRead = async (notificationId: number, token: string) => {
     setAuthToken(token);
     try {
@@ -56,7 +56,7 @@ export const markAsRead = async (notificationId: number, token: string) => {
     }
 };
 
-// Mark all notifications as read
+
 export const markAllAsRead = async (token: string) => {
     setAuthToken(token);
     try {
@@ -67,7 +67,7 @@ export const markAllAsRead = async (token: string) => {
     }
 };
 
-// Delete notification
+
 export const deleteNotification = async (notificationId: number, token: string) => {
     setAuthToken(token);
     try {
@@ -78,7 +78,7 @@ export const deleteNotification = async (notificationId: number, token: string) 
     }
 };
 
-// Get notification statistics
+
 export const getNotificationStatistics = async (token: string) => {
     setAuthToken(token);
     try {

@@ -43,7 +43,7 @@ export interface CampaignMilestone {
   is_extended?: boolean;
   total_extension_days?: number;
   
-  // Materials loaded with the milestone
+  
   deliveryMaterials?: DeliveryMaterial[];
 }
 
@@ -74,9 +74,7 @@ export interface DownloadFileResponse {
 }
 
 class CampaignTimelineApi {
-  /**
-   * Get timeline for a contract
-   */
+  
   async getTimeline(contractId: number): Promise<CampaignMilestone[]> {
     const response = await apiClient.get('/campaign-timeline', {
       params: { contract_id: contractId }
@@ -84,9 +82,7 @@ class CampaignTimelineApi {
     return response.data.data;
   }
 
-  /**
-   * Create timeline milestones for a contract
-   */
+  
   async createMilestones(contractId: number): Promise<CampaignMilestone[]> {
     const response = await apiClient.post('/campaign-timeline/create-milestones', {
       contract_id: contractId
@@ -94,9 +90,7 @@ class CampaignTimelineApi {
     return response.data.data;
   }
 
-  /**
-   * Upload file for a milestone
-   */
+  
   async uploadFile(milestoneId: number, file: File): Promise<FileUploadResponse> {
     const formData = new FormData();
     formData.append('milestone_id', milestoneId.toString());
@@ -110,9 +104,7 @@ class CampaignTimelineApi {
     return response.data;
   }
 
-  /**
-   * Approve a milestone
-   */
+  
   async approveMilestone(milestoneId: number, comment?: string): Promise<CampaignMilestone> {
     const response = await apiClient.post('/campaign-timeline/approve-milestone', {
       milestone_id: milestoneId,
@@ -121,9 +113,7 @@ class CampaignTimelineApi {
     return response.data.data;
   }
 
-  /**
-   * Reject a milestone
-   */
+  
   async rejectMilestone(milestoneId: number, comment?: string): Promise<CampaignMilestone> {
     const response = await apiClient.post('/campaign-timeline/reject-milestone', {
       milestone_id: milestoneId,
@@ -132,9 +122,7 @@ class CampaignTimelineApi {
     return response.data.data;
   }
 
-  /**
-   * Complete a milestone
-   */
+  
   async completeMilestone(milestoneId: number): Promise<CampaignMilestone> {
     const response = await apiClient.post('/campaign-timeline/complete-milestone', {
       milestone_id: milestoneId
@@ -142,9 +130,7 @@ class CampaignTimelineApi {
     return response.data.data;
   }
 
-  /**
-   * Justify delay for a milestone
-   */
+  
   async justifyDelay(milestoneId: number, justification: string): Promise<CampaignMilestone> {
     const response = await apiClient.post('/campaign-timeline/justify-delay', {
       milestone_id: milestoneId,
@@ -153,9 +139,7 @@ class CampaignTimelineApi {
     return response.data.data;
   }
 
-  /**
-   * Mark milestone as delayed
-   */
+  
   async markAsDelayed(milestoneId: number, justification?: string): Promise<CampaignMilestone> {
     const response = await apiClient.post('/campaign-timeline/mark-delayed', {
       milestone_id: milestoneId,
@@ -164,9 +148,7 @@ class CampaignTimelineApi {
     return response.data.data;
   }
 
-  /**
-   * Extend timeline deadline
-   */
+  
   async extendTimeline(milestoneId: number, extensionDays: number, extensionReason: string): Promise<CampaignMilestone> {
     const response = await apiClient.post('/campaign-timeline/extend-timeline', {
       milestone_id: milestoneId,
@@ -176,9 +158,7 @@ class CampaignTimelineApi {
     return response.data.data;
   }
 
-  /**
-   * Download file for a milestone
-   */
+  
   async downloadFile(milestoneId: number): Promise<DownloadFileResponse> {
     const response = await apiClient.get('/campaign-timeline/download-file', {
       params: { milestone_id: milestoneId }
@@ -186,9 +166,7 @@ class CampaignTimelineApi {
     return response.data;
   }
 
-  /**
-   * Get timeline statistics
-   */
+  
   async getStatistics(contractId: number): Promise<TimelineStatistics> {
     const response = await apiClient.get('/campaign-timeline/statistics', {
       params: { contract_id: contractId }

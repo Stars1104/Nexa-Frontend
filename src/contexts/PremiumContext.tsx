@@ -25,7 +25,7 @@ interface PremiumContextType {
 
 const PremiumContext = createContext<PremiumContextType | undefined>(undefined);
 
-// Simplified export for testing
+
 export const usePremiumContext = () => {
   const context = useContext(PremiumContext);
   if (context === undefined) {
@@ -44,7 +44,7 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
   const [premiumStatus, setPremiumStatus] = useState<PremiumStatus | null>(
     null
   );
-  const [loading, setLoading] = useState(false); // Start as false, not loading
+  const [loading, setLoading] = useState(false); 
   const [isInitialized, setIsInitialized] = useState(false);
   const [isEnabled, setIsEnabled] = useState(false);
   const lastCallTime = useRef<number>(0);
@@ -54,19 +54,19 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
   const initializationTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const checkPremiumStatus = useCallback(async (forceRefresh: boolean = false) => {
-    // Prevent multiple simultaneous calls
+    
     if (isCalling.current) {
       return;
     }
 
-    // Add cooldown period (5 seconds) to prevent excessive calls
-    // But skip cooldown if explicitly refreshing (e.g., after subscription)
+    
+    
     const now = Date.now();
     if (!forceRefresh && now - lastCallTime.current < 5000) {
       return;
     }
 
-    // Check if user is authenticated before making API call
+    
     const token = localStorage.getItem('token');
     if (!token) {
       setLoading(false);
@@ -75,7 +75,7 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
       return;
     }
 
-    // Check if we've exceeded max retries
+    
     if (retryCount.current >= maxRetries) {
       setLoading(false);
       setIsInitialized(true);
@@ -92,24 +92,24 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
       const response = await apiClient.get('/payment/subscription-status');
       setPremiumStatus(response.data);
       console.log("premiumStatus", response.data);
-      retryCount.current = 0; // Reset retry count on success
+      retryCount.current = 0; 
     } catch (error: any) {        
-      // Handle 401 errors specifically - user is not authenticated
+      
       if (error.response?.status === 401) {
         setPremiumStatus(null);
         setIsEnabled(false);
-        // Don't retry on 401 errors
+        
         setIsInitialized(true);
       }
-      // Handle 429 rate limiting errors
+      
       else if (error.response?.status === 429) {
         retryCount.current++;
-        // Don't mark as initialized on rate limiting, allow retry
+        
       }
-      // Handle other errors
+      
       else {
         retryCount.current++;
-        // Don't clear existing status on other errors to prevent UI flicker
+        
       }
     } finally {
       setLoading(false);
@@ -122,24 +122,24 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
 
   const refreshPremiumStatus = useCallback(async (forceRefresh: boolean = false) => {
     if (isEnabled || forceRefresh) {
-      // Force refresh bypasses cooldown and enabled check (for post-subscription updates)
+      
       await checkPremiumStatus(forceRefresh);
     }
   }, [checkPremiumStatus, isEnabled]);
 
-  // Initialize immediately for better performance
+  
   useEffect(() => {
     if (!isInitialized) {
-      // Check if user is authenticated before making API call
+      
       const token = localStorage.getItem('token');
       if (token) {
-        // Use requestIdleCallback or immediate call for better performance
+        
         if (window.requestIdleCallback) {
           window.requestIdleCallback(() => {
             checkPremiumStatus();
           }, { timeout: 500 });
         } else {
-          // Fallback: use small timeout instead of 2 seconds
+          
           initializationTimeout.current = setTimeout(() => {
             checkPremiumStatus();
           }, 100);
@@ -157,7 +157,7 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
     };
   }, [isInitialized, checkPremiumStatus]);
 
-  // Listen for custom events to refresh premium status
+  
   useEffect(() => {
     const handlePremiumUpdate = () => {
       refreshPremiumStatus();
@@ -170,27 +170,27 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
     };
   }, [refreshPremiumStatus]);
 
-  // Listen for authentication changes (login/logout)
+  
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       console.log("handleStorageChange", e.key);
       if (e.key === 'token') {
         if (e.newValue) {
-          // User logged in, check premium status
+          
           setIsEnabled(true);
           checkPremiumStatus();
         } else {
-          // User logged out, clear premium status
+          
           setPremiumStatus(null);
           setIsEnabled(false);
         }
       }
     };
 
-    // Listen for storage changes (when user logs in/out in another tab)
+    
     window.addEventListener('storage', handleStorageChange);
 
-    // Also check for token changes in current tab
+    
     const checkTokenChange = () => {
       const token = localStorage.getItem('token');
       if (token && !isEnabled) {
@@ -202,7 +202,7 @@ export const PremiumProvider: React.FC<PremiumProviderProps> = ({
       }
     };
 
-    // Check for token changes periodically
+    
     const tokenCheckInterval = setInterval(checkTokenChange, 1000);
 
     return () => {

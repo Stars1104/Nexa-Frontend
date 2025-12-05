@@ -1,22 +1,4 @@
-/**
- * PurchaseSubscription Page
- * 
- * This page handles subscription purchase with Stripe integration.
- * 
- * Backend API Routes:
- * - POST /api/payment/subscription - Create subscription with Stripe
- *   Required: { subscription_plan_id, payment_method_id }
- * 
- * Frontend API (imported from '../api/payment'):
- * - paymentApi.processSubscription({ subscription_plan_id, payment_method_id })
- * 
- * TODO for Full Stripe Integration:
- * 1. Add Stripe Elements Provider wrapper in App.tsx or main.tsx
- * 2. Import useStripe, useElements, CardElement from "@stripe/react-stripe-js"
- * 3. Add card input form using CardElement
- * 4. Create payment method before calling handlePurchase
- * 5. Implement actual payment flow (see handlePurchase TODOs)
- */
+
 
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -42,7 +24,7 @@ export default function PurchaseSubscription() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   
-  // Stripe hooks
+  
   const stripe = useStripe();
   const elements = useElements();
   
@@ -56,7 +38,7 @@ export default function PurchaseSubscription() {
   useEffect(() => {
     loadPlan();
     
-    // Check if Stripe is ready
+    
     if (!stripe || !elements) {
       console.warn('Stripe Elements not ready yet');
     }
@@ -117,7 +99,7 @@ export default function PurchaseSubscription() {
         return;
       }
 
-      // Get card element
+      
       const cardElement = elements.getElement(CardElement);
       if (!cardElement) {
         setCardError("Por favor, preencha os dados do cartão");
@@ -125,7 +107,7 @@ export default function PurchaseSubscription() {
         return;
       }
 
-      // Create PaymentMethod with Stripe
+      
       const { paymentMethod, error: pmError } = await stripe.createPaymentMethod({
         type: "card",
         card: cardElement,
@@ -147,7 +129,7 @@ export default function PurchaseSubscription() {
         payment_method_id: paymentMethod.id
       });
 
-      // Call backend API to create subscription
+      
       const response = await paymentApi.processSubscription({
         subscription_plan_id: plan.id,
         payment_method_id: paymentMethod.id,
@@ -155,7 +137,7 @@ export default function PurchaseSubscription() {
 
       console.log('Subscription response:', response);
 
-      // Check if requires action (3D Secure)
+      
       if (response.requires_action && response.client_secret) {
         const { error: confirmError } = await stripe.confirmCardPayment(response.client_secret);
         
@@ -165,18 +147,18 @@ export default function PurchaseSubscription() {
           return;
         }
         
-        // After 3DS confirmation, poll for activation
+        
         await pollSubscriptionStatus(response.subscription_id);
         return;
       }
 
-      // Check if subscription was activated immediately
+      
       if (response.activated && response.subscription_status === 'active') {
         await handleSuccess();
         return;
       }
 
-      // Subscription is pending, poll for activation status
+      
       await pollSubscriptionStatus(response.subscription_id);
 
 
@@ -185,7 +167,7 @@ export default function PurchaseSubscription() {
       
       const errorMessage = err.response?.data?.message || err.message || "Tente novamente";
       
-      // Handle 409 Conflict - user already has premium
+      
       if (err.response?.status === 409 || errorMessage.includes('premium') || errorMessage.includes('already has')) {
         toast({
           title: "Você já possui uma assinatura ativa",
@@ -208,9 +190,9 @@ export default function PurchaseSubscription() {
   };
 
   const pollSubscriptionStatus = async (subscriptionId: number, attempts = 0): Promise<void> => {
-    const maxAttempts = 20; // Poll for up to 20 seconds (20 attempts * 1 second)
+    const maxAttempts = 20; 
     
-    // Show loading message on first attempt
+    
     if (attempts === 0) {
       toast({
         title: "Processando pagamento",
@@ -238,13 +220,13 @@ export default function PurchaseSubscription() {
         return;
       }
 
-      // If still pending, wait and poll again
+      
       await new Promise(resolve => setTimeout(resolve, 1000));
       await pollSubscriptionStatus(subscriptionId, attempts + 1);
       console.log('Polling again...');
     } catch (err) {
       console.error("Erro ao verificar status da assinatura:", err);
-      // Continue polling despite errors
+      
       await new Promise(resolve => setTimeout(resolve, 1000));
       await pollSubscriptionStatus(subscriptionId, attempts + 1);
       console.log('Error polling subscription status:', err);
@@ -253,7 +235,7 @@ export default function PurchaseSubscription() {
 
   const handleSuccess = async () => {
     try {
-      // Fetch latest user data from backend
+      
       const userResponse = await apiClient.get("/user");
       dispatch(updateUser({ ...userResponse.data }));
       await dispatch(checkAuthStatus());
@@ -273,7 +255,7 @@ export default function PurchaseSubscription() {
         description: "Assinatura processada, mas houve problema ao atualizar dados.",
         variant: "destructive"
       });
-      // Still navigate even if update fails
+      
       navigate('/creator/subscription');
     }
   };
@@ -311,7 +293,7 @@ export default function PurchaseSubscription() {
   return (
     <div className="min-h-screen bg-[#f6f6f6] dark:bg-[#18181b] py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
+        {}
         <div className="mb-6">
           <Button
             variant="ghost"
@@ -328,14 +310,14 @@ export default function PurchaseSubscription() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Order Summary */}
+          {}
           <div className="lg:col-span-2">
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Resumo do Pedido</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Plan Details */}
+                {}
                 <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
                   <div className="flex justify-between items-start mb-3">
                     <div>
@@ -357,7 +339,7 @@ export default function PurchaseSubscription() {
                     </div>
                   </div>
                   
-                  {/* Features */}
+                  {}
                   {plan.features && Array.isArray(plan.features) && plan.features.length > 0 && (
                     <div className="mt-4 pt-4 border-t">
                       <p className="text-sm font-semibold mb-2 text-foreground">
@@ -375,7 +357,7 @@ export default function PurchaseSubscription() {
                   )}
                 </div>
 
-                {/* Total */}
+                {}
                 <div className="pt-4 border-t">
                   <div className="flex justify-between items-center">
                     <div>
@@ -394,7 +376,7 @@ export default function PurchaseSubscription() {
               </CardContent>
             </Card>
 
-            {/* Payment Method Info */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle>Forma de Pagamento</CardTitle>
@@ -420,7 +402,7 @@ export default function PurchaseSubscription() {
             </Card>
           </div>
 
-          {/* Payment Form */}
+          {}
           <div className="lg:col-span-1">
             <Card>
               <CardHeader>
@@ -431,7 +413,7 @@ export default function PurchaseSubscription() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Card Input */}
+                  {}
                   <div className="space-y-2">
                     <Label htmlFor="card-element">Dados do Cartão</Label>
                     <div className="p-4 border rounded-lg bg-background">

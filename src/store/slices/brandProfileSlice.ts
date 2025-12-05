@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { apiClient } from '../../services/apiClient';
 
-// Types
+
 export interface BrandProfile {
   id: number;
   name: string;
@@ -54,7 +54,7 @@ const initialState: BrandProfileState = {
   passwordError: null,
 };
 
-// Async thunks
+
 export const fetchBrandProfile = createAsyncThunk(
   'brandProfile/fetchProfile',
   async (_, { rejectWithValue }) => {
@@ -71,10 +71,10 @@ export const updateBrandProfile = createAsyncThunk(
   'brandProfile/updateProfile',
   async (data: UpdateProfileData, { rejectWithValue }) => {
     try {
-      // Create FormData to handle file uploads properly
+      
       const formData = new FormData();
       
-      // Add all profile fields to FormData
+      
       Object.keys(data).forEach(key => {
         if (key === 'avatar' && data.avatar instanceof File) {
           formData.append('avatar', data.avatar);
@@ -109,9 +109,9 @@ export const changePassword = createAsyncThunk(
   }
 );
 
-// Remove the separate uploadAvatar thunk - we'll handle avatar upload in updateBrandProfile
 
-// Slice
+
+
 const brandProfileSlice = createSlice({
   name: 'brandProfile',
   initialState,
@@ -129,7 +129,7 @@ const brandProfileSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Fetch profile
+    
     builder
       .addCase(fetchBrandProfile.pending, (state) => {
         state.isLoading = true;
@@ -145,7 +145,7 @@ const brandProfileSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // Update profile
+    
     builder
       .addCase(updateBrandProfile.pending, (state) => {
         state.isUpdating = true;
@@ -161,7 +161,7 @@ const brandProfileSlice = createSlice({
         state.updateError = action.payload as string;
       });
 
-    // Change password
+    
     builder
       .addCase(changePassword.pending, (state) => {
         state.isChangingPassword = true;
@@ -176,7 +176,7 @@ const brandProfileSlice = createSlice({
         state.passwordError = action.payload as string;
       });
 
-    // Avatar upload is now handled in updateBrandProfile
+    
   },
 });
 

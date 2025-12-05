@@ -297,9 +297,9 @@ function GuideContent({ guide }: { guide: Guide }) {
                       <p className="text-muted-foreground mt-2 leading-relaxed">{step.description}</p>
                     </div>
 
-                    {/* Media Content */}
+                    {}
                     <div className="space-y-4">
-                      {/* Screenshots */}
+                      {}
                       {step.screenshot_urls && step.screenshot_urls.length > 0 && (
                         <div className="space-y-3">
                           <h4 className="text-sm font-medium flex items-center gap-2">
@@ -340,7 +340,7 @@ function GuideContent({ guide }: { guide: Guide }) {
                         </div>
                       )}
 
-                      {/* Video */}
+                      {}
                       {step.video_url && (
                         <div className="space-y-3">
                           <h4 className="text-sm font-medium flex items-center gap-2">
@@ -406,7 +406,7 @@ export default function Documentation() {
     navigate(`/docs/${sectionId}`, { replace: true });
   };
 
-  // Organize guides by topic
+  
   const sections: DocSection[] = [
     {
       id: 'brand-registration',
@@ -487,7 +487,7 @@ export default function Documentation() {
       return <OverviewContent />;
     }
 
-    // Check if it's a specific guide
+    
     if (activeSection.startsWith('guide-')) {
       const guideId = parseInt(activeSection.replace('guide-', ''));
       const guide = guides.find(g => g.id === guideId);
@@ -496,7 +496,7 @@ export default function Documentation() {
       }
     }
 
-    // Check if it's a section with guides
+    
     const section = sections.find(s => s.id === activeSection);
     if (section && section.guides.length > 0) {
       return (

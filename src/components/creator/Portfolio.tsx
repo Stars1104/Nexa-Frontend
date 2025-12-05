@@ -15,7 +15,7 @@ const MAX_FILES_PER_UPLOAD = 5;
 const MAX_TOTAL_FILES = 12;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/jpg", "video/mp4", "video/quicktime", "video/mov", "video/avi", "video/mpeg", "video/x-msvideo", "video/webm", "video/ogg", "video/x-matroska", "video/x-flv", "video/3gpp", "video/x-ms-wmv", "application/octet-stream"];
 
-// Function to get user initials from name
+
 const getInitials = (name: string) => {
     return name
         .split(" ")
@@ -36,36 +36,36 @@ export default function Portfolio() {
     const { portfolio, isLoading, error, isUploading, uploadProgress } = useSelector((state: RootState) => state.portfolio);
     const { toast } = useToast();
 
-    // State for profile editing
+    
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [profileTitle, setProfileTitle] = useState('');
     const [bio, setBio] = useState('');
     const [profilePic, setProfilePic] = useState<string | null>(null);
     const [projectLinks, setProjectLinks] = useState<{title: string; url: string}[]>([]);
 
-    // State for portfolio editing
+    
     const [isPortfolioEditDialogOpen, setIsPortfolioEditDialogOpen] = useState(false);
     const [media, setMedia] = useState<Array<{ file: File; url: string; type: string }>>([]);
     const [dragActive, setDragActive] = useState(false);
     const mediaInputRef = useRef<HTMLInputElement>(null);
 
-    // State for image modal
+    
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
-    // State for video modal
+    
     const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
-    // State for saving
+    
     const [isSaving, setIsSaving] = useState(false);
     const [token, setToken] = useState<string | null>(null);
     
-    // State for delete confirmation
+    
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-    // Load portfolio data on component mount
+    
     useEffect(() => {
         if (user?.id) {
             const token = localStorage.getItem('token');
@@ -76,7 +76,7 @@ export default function Portfolio() {
         }
     }, [dispatch, user?.id]);
 
-    // Update local state when portfolio data is loaded
+    
     useEffect(() => {
         if (portfolio) {
 
@@ -84,14 +84,14 @@ export default function Portfolio() {
             setProfileTitle(portfolio.title || "");
             setProfilePic(portfolio.profile_picture_url || null);
             
-            // Handle project links with backward compatibility
+            
             if (portfolio.project_links && portfolio.project_links.length > 0) {
                 const links = portfolio.project_links.map((link: any, index: number) => {
                     if (typeof link === 'string') {
-                        // Legacy string format
+                        
                         return { title: `Projecto ${index + 1}`, url: link };
                     } else {
-                        // New object format
+                        
                         return { title: link.title || `Projecto ${index + 1}`, url: link.url || '' };
                     }
                 });
@@ -102,7 +102,7 @@ export default function Portfolio() {
         }
     }, [portfolio]);
 
-    // Show error toast if there's an error
+    
     useEffect(() => {
         if (error) {
             toast({
@@ -113,12 +113,12 @@ export default function Portfolio() {
         }
     }, [error, toast]);
 
-    // --- Media Upload Logic ---
-    //-----this is Input change function------------
+    
+    
     const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []) as File[];
         addMediaFiles(files);
-        e.preventDefault(); // reset input
+        e.preventDefault(); 
     };
     const addMediaFiles = (files: File[]) => {    
         let validFiles = files.filter(
@@ -151,7 +151,7 @@ export default function Portfolio() {
         });
     };
 
-    // Drag and drop
+    
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         setDragActive(true);
@@ -183,7 +183,7 @@ export default function Portfolio() {
 
             await dispatch(deletePortfolioItem({ token, itemId: itemToDelete })).unwrap();
             
-            // Refresh portfolio to ensure UI is updated
+            
             await dispatch(fetchPortfolio(token)).unwrap();
             
             toast({
@@ -222,12 +222,12 @@ export default function Portfolio() {
         }
 
         try {
-            // Save profile data first
+            
             const formData = new FormData();
             formData.append('title', profileTitle);
             formData.append('bio', bio);
 
-            // Add project links
+            
             let validLinks2: { title: string; url: string }[] = [];
             if (projectLinks && projectLinks.length > 0) {
                 validLinks2 = projectLinks
@@ -249,13 +249,13 @@ export default function Portfolio() {
 
             await dispatch(updatePortfolioProfile({ token, data: formData })).unwrap();
 
-            // Upload media files if any
+            
             if (media.length > 0) {
                 const files = media.map(item => item.file);
                 
                 await dispatch(uploadPortfolioMedia({ token, files })).unwrap();
                 
-                // Clear the media state after successful upload
+                
                 setMedia([]);
             }
 
@@ -267,13 +267,13 @@ export default function Portfolio() {
         } catch (error: any) {
             console.error('Save portfolio error:', error);
             
-            // Extract specific error message
+            
             let errorMessage = "Falha ao salvar portfólio. Tente novamente.";
             
             if (error?.response?.data?.message) {
                 errorMessage = error.response.data.message;
             } else if (error?.response?.data?.errors) {
-                // Handle validation errors
+                
                 const errors = error.response.data.errors;
                 const firstError = Object.values(errors)[0];
                 if (Array.isArray(firstError) && firstError.length > 0) {
@@ -285,11 +285,11 @@ export default function Portfolio() {
                 errorMessage = error;
             }
 
-            // Check for specific error types
+            
             if (error?.response?.status === 413) {
                 errorMessage = "Arquivo muito grande. O tamanho máximo permitido é 2GB por arquivo.";
             } else if (error?.response?.status === 422) {
-                // Validation error - already handled above
+                
             } else if (error?.response?.status === 403) {
                 errorMessage = "Você não tem permissão para realizar esta ação.";
             } else if (error?.response?.status === 401) {
@@ -311,7 +311,7 @@ export default function Portfolio() {
         }
     };
 
-    // Get user avatar
+    
     const getUserAvatar = () => {
         if (profilePic) return getAvatarUrl(profilePic);
         if (user?.avatar_url) return getAvatarUrl(user.avatar_url);
@@ -319,18 +319,18 @@ export default function Portfolio() {
         return null;
     };
 
-    // Get user name
+    
     const getUserName = () => {
         return user?.name || "User";
     };
 
-    // Get total media count
+    
     const getTotalMediaCount = () => {
         const existingItems = portfolio?.items?.length || 0;
         return existingItems + media.length;
     };
 
-    // Project links management
+    
     const addProjectLink = () => {
         setProjectLinks([...projectLinks, {title: '', url: ''}]);
     };
@@ -346,7 +346,7 @@ export default function Portfolio() {
         setProjectLinks(newLinks);
     };
 
-    // Image modal handlers
+    
     const handleImageClick = (imageUrl: string) => {    
         setSelectedImage(imageUrl);
         setIsImageModalOpen(true);
@@ -357,7 +357,7 @@ export default function Portfolio() {
         setSelectedImage(null);
     };
 
-    // Video modal handlers
+    
     const handleVideoClick = (videoUrl: string) => {
         setSelectedVideo(videoUrl);
         setIsVideoModalOpen(true);
@@ -379,13 +379,13 @@ export default function Portfolio() {
 
     return (
         <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 w-full mx-auto min-h-screen dark:bg-[#171717]">
-            {/* Info Banner */}
+            {}
             <div className="rounded-md bg-purple-50 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 px-4 py-3 text-sm flex items-center gap-2 border border-purple-200 dark:border-purple-800">
                 <span className="font-semibold">Dica:</span>
                 <span>Um portfólio bem completo aumenta suas chances de ser aprovado! <span role="img" aria-label="rocket">🚀</span></span>
             </div>
 
-            {/* Profile Section */}
+            {}
             <section className="rounded-xl border bg-card p-4 sm:p-6 flex flex-col gap-4 shadow-sm">
                 <h2 className="font-semibold text-base sm:text-lg mb-2">Perfil</h2>
                 <div className="flex flex-col items-start gap-4">
@@ -398,7 +398,7 @@ export default function Portfolio() {
                                         alt="Profile" 
                                         className="object-cover w-full h-full rounded-full"
                                         onError={(e) => {
-                                            // Fallback to initials if image fails to load
+                                            
                                             const target = e.target as HTMLImageElement;
                                             target.style.display = 'none';
                                             const parent = target.parentElement;
@@ -429,7 +429,7 @@ export default function Portfolio() {
                         </div>
                     </div>
                     
-                    {/* Project Links Display */}
+                    {}
                     {projectLinks && projectLinks.length > 0 && (
                         <div className="flex flex-col gap-2 mt-4">
                             <h3 className="font-semibold text-base"></h3>
@@ -464,7 +464,7 @@ export default function Portfolio() {
                                                         {linkData.title}
                                                     </div>
                                                     <div className="text-xs text-muted-foreground truncate">
-                                                        {linkData.url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                                                        {linkData.url.replace(/^https?:\/\
                                                     </div>
                                                 </div>
                                                 <svg className="w-4 h-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -520,7 +520,7 @@ export default function Portfolio() {
                                         </div>
                                     </div>
                                     
-                                    {/* Project Links Section */}
+                                    {}
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Links de Projetos Anteriores</label>
                                         <div className="space-y-2">
@@ -595,7 +595,7 @@ export default function Portfolio() {
                 </div>
             </section>
 
-            {/* Portfolio Section */}
+            {}
             <section className="rounded-xl border bg-card p-4 sm:p-6 flex flex-col gap-4 shadow-sm">
                 <div className="flex justify-between items-center">
                     <h2 className="font-semibold text-base sm:text-lg">Portfólio</h2>
@@ -721,7 +721,7 @@ export default function Portfolio() {
                                                 </div>
                                             </div>
                                         ))}
-                                        {/* New media items */}
+                                        {}
                                         {media?.map((item, idx) => (
                                             <div key={`new-${idx}`} className="rounded-lg bg-background flex flex-col items-start justify-between aspect-[4/3] p-2 relative overflow-hidden group">
                                                 <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full z-10 ${item.type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.type === 'image' ? 'Foto' : 'Vídeo'}</span>
@@ -752,7 +752,7 @@ export default function Portfolio() {
                                                 </div>
                                             </div>
                                         ))}
-                                        {/* Add new media button if not at max */}
+                                        {}
                                         {getTotalMediaCount() < MAX_TOTAL_FILES && (
                                             <button
                                                 className="rounded-lg border-2 border-dashed border-muted-foreground/40 bg-background flex items-center justify-center aspect-[4/3] text-3xl text-muted-foreground hover:bg-muted/70 transition"
@@ -764,7 +764,7 @@ export default function Portfolio() {
                                             </button>
                                         )}
                                     </div>
-                                    {/* Tips */}
+                                    {}
                                     <div className="flex flex-col sm:flex-row gap-2 mt-4 text-xs">
                                         <div className="flex items-center gap-1 text-green-600 dark:text-green-400"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>Inclua pelo menos 3 trabalhos para se destacar!</div>
                                         <div className="flex items-center gap-1 text-green-600 dark:text-green-400"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>Mostre variedade – vídeos curtos, fotos, reviews...</div>
@@ -802,7 +802,7 @@ export default function Portfolio() {
                         </DialogContent>
                     </Dialog>
                 </div>
-                {/* Media Grid */}
+                {}
                 <div>
                     <h3 className="font-semibold text-base mb-2">Meu Trabalho ({getTotalMediaCount()}/{MAX_TOTAL_FILES})</h3>
                     {getTotalMediaCount() === 0 ? (
@@ -813,7 +813,7 @@ export default function Portfolio() {
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                            {/* Existing portfolio items */}
+                            {}
                             {portfolio?.items?.map((item: any) => (
                                 <div key={`existing-${item.id}`} className="rounded-lg bg-background flex flex-col items-start justify-between aspect-[4/3] p-2 relative overflow-hidden group">
                                     <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full ${item.media_type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.media_type === 'image' ? 'Foto' : 'Vídeo'}</span>
@@ -862,7 +862,7 @@ export default function Portfolio() {
                                     </div>
                                 </div>
                             ))}
-                            {/* New media items */}
+                            {}
                             {media.map((item, idx) => (
                                 <div key={`new-${idx}`} className="rounded-lg bg-background flex flex-col items-start justify-between aspect-[4/3] p-2 relative overflow-hidden group">
                                     <span className={`absolute top-2 left-2 text-white text-xs px-2 py-0.5 rounded-full z-10 ${item.type === 'image' ? 'bg-purple-500' : 'bg-blue-500'}`}>{item.type === 'image' ? 'Foto' : 'Vídeo'}</span>
@@ -909,7 +909,7 @@ export default function Portfolio() {
                             ))}
                         </div>
                     )}
-                    {/* Tips */}
+                    {}
                     <div className="flex flex-col sm:flex-row gap-2 mt-4 text-xs">
                         <div className="flex items-center gap-1 text-green-600 dark:text-green-400"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>Inclua pelo menos 3 trabalhos para se destacar!</div>
                         <div className="flex items-center gap-1 text-green-600 dark:text-green-400"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>Mostre variedade – vídeos curtos, fotos, reviews...</div>
@@ -917,7 +917,7 @@ export default function Portfolio() {
                 </div>
             </section>
 
-            {/* Save Button */}
+            {}
             <div className="flex justify-end mt-6">
                 <Button
                     className="bg-[#E91E63] hover:bg-pink-600 text-white font-semibold px-8 py-2 rounded-md text-base"
@@ -940,7 +940,7 @@ export default function Portfolio() {
                 </Button>
             </div>
 
-            {/* Image Modal */}
+            {}
             {isImageModalOpen && selectedImage && (
                 <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={handleCloseImageModal}>
                     <div className="relative max-w-full max-h-full p-4">
@@ -960,7 +960,7 @@ export default function Portfolio() {
                 </div>
             )}
 
-            {/* Video Modal */}
+            {}
             {isVideoModalOpen && selectedVideo && (
                 <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={handleCloseVideoModal}>
                     <div className="relative max-w-4xl max-h-full p-4">
@@ -984,7 +984,7 @@ export default function Portfolio() {
                 </div>
             )}
 
-            {/* Full-screen Loading Overlay */}
+            {}
             {(isSaving || isUploading) && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]">
                     <div className="bg-background rounded-lg p-8 max-w-md w-full mx-4 shadow-xl border border-border">
@@ -1021,7 +1021,7 @@ export default function Portfolio() {
                 </div>
             )}
 
-            {/* Delete Confirmation Dialog */}
+            {}
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>

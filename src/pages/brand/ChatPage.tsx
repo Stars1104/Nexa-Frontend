@@ -84,7 +84,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
   const [searchQuery, setSearchQuery] = useState("");
   const [openDropdowns, setOpenDropdowns] = useState<Set<number>>(new Set());
 
-  // Offer-related state
+  
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [isLoadingOffers, setIsLoadingOffers] = useState(false);
@@ -92,11 +92,11 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
   const [existingOfferId, setExistingOfferId] = useState<number | null>(null);
   const [showExistingOfferModal, setShowExistingOfferModal] = useState(false);
 
-  // Contract-related state
+  
   const [contracts, setContracts] = useState<any[]>([]);
   const [isLoadingContracts, setIsLoadingContracts] = useState(false);
 
-  // Image viewer state
+  
   const [imageViewer, setImageViewer] = useState<{
     isOpen: boolean;
     imageUrl: string;
@@ -111,20 +111,20 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
   const [imageZoom, setImageZoom] = useState(1);
   const [imageRotation, setImageRotation] = useState(0);
 
-  // Review modal state
+  
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [contractToReview, setContractToReview] = useState<any>(null);
 
-  // Campaign finalization modal state
+  
   const [showCampaignFinalizationModal, setShowCampaignFinalizationModal] = useState(false);
   const [contractToFinalize, setContractToFinalize] = useState<any>(null);
 
-  // Contract termination modal state
+  
   const [showTerminateModal, setShowTerminateModal] = useState(false);
   const [contractToTerminate, setContractToTerminate] = useState<any>(null);
   const [terminationMessage, setTerminationMessage] = useState("");
 
-  // Timeline sidebar state
+  
   const [showTimelineSidebar, setShowTimelineSidebar] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -157,7 +157,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
   const imageViewerRef = useRef<HTMLDivElement>(null);
 
 
-  // Socket.IO hook
+  
   const {
     socket,
     isConnected,
@@ -179,13 +179,13 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     reconnect,
   } = useSocket({ enableNotifications: false, enableChat: true });
 
-  // Component mount/unmount tracking
+  
   useEffect(() => {
     isMountedRef.current = true;
 
     return () => {
       isMountedRef.current = false;
-      // Clear any pending timeouts
+      
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = null;
@@ -194,14 +194,14 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     };
   }, []);
 
-  // Load chat rooms on component mount
+  
   useEffect(() => {
     if (isMountedRef.current) {
       loadChatRooms();
     }
-  }, []); // Remove selectedRoom dependency to prevent infinite reloading
+  }, []); 
 
-  // Cleanup typing indicators when component unmounts
+  
   useEffect(() => {
     return () => {
       if (selectedRoom && isCurrentUserTyping) {
@@ -215,12 +215,12 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     };
   }, [selectedRoom, isCurrentUserTyping, stopTyping]);
 
-  // Clear typing users when room changes
+  
   useEffect(() => {
     setTypingUsers(new Set());
   }, [selectedRoom?.room_id]);
 
-  // Check for selected room from localStorage
+  
   useEffect(() => {
     if (!isMountedRef.current) return;
 
@@ -229,16 +229,16 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       const room = chatRooms.find((r) => r.room_id === selectedRoomId);
       if (room) {
         setSelectedRoom(room);
-        localStorage.removeItem("selectedChatRoom"); // Clear after use
+        localStorage.removeItem("selectedChatRoom"); 
       }
     }
   }, [chatRooms]);
 
-  // Check for campaignId and creatorId parameters to automatically select the correct room
+  
   useEffect(() => {
     if (!isMountedRef.current || !campaignId || !creatorId || chatRooms.length === 0) return;
     
-    // Find the room that matches both campaignId and creatorId
+    
     const room = chatRooms.find((r) => 
       r.campaign_id === campaignId && 
       r.other_user.id === parseInt(creatorId)
@@ -249,11 +249,11 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   }, [campaignId, creatorId, chatRooms]);
 
-  // Auto-scroll to bottom when new messages arrive
+  
   useEffect(() => {
     if (!isMountedRef.current) return;
 
-    // Use requestAnimationFrame to ensure DOM is ready
+    
     const scrollToBottom = () => {
       if (messagesEndRef.current && isMountedRef.current) {
         try {
@@ -267,26 +267,26 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     requestAnimationFrame(scrollToBottom);
   }, [messages]);
 
-  // Join/leave room when selection changes
+  
   useEffect(() => {
     if (!isMountedRef.current) return;
 
     if (selectedRoom) {
       joinRoom(selectedRoom.room_id);
       
-      // Reset offers ready state when changing rooms
+      
       setOffersReady(false);
       
-      // Load data in sequence to avoid race conditions
+      
       const loadRoomData = async () => {
         try {
-          // First load offers and contracts
+          
           await Promise.all([
             loadOffers(selectedRoom.room_id),
             loadContracts(selectedRoom.room_id)
           ]);
           
-          // Then load messages (which may contain offer messages that need the offers data)
+          
           await loadMessages(selectedRoom.room_id);
         } catch (error) {
           console.error('Error loading room data:', error);
@@ -303,23 +303,23 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   }, [selectedRoom, joinRoom, leaveRoom]);
 
-      // Guide messages are now handled directly in loadMessages function
+      
 
 
 
-  // Socket event listeners for real-time updates
+  
   useEffect(() => {
     if (!socket || !isMountedRef.current) return;
 
-    // Listen for new messages from other users
+    
     const handleNewMessage = (data: any) => {
       if (!isMountedRef.current) return;
 
       if (data.roomId === selectedRoom?.room_id) {
-        // Only add message if it's from another user (not the current user)
+        
         if (data.senderId !== user?.id) {
           const newMessage: Message = {
-            id: data.messageId || Date.now(), // Use server ID if available
+            id: data.messageId || Date.now(), 
             message: data.message,
             message_type: data.messageType,
             sender_id: data.senderId,
@@ -333,11 +333,11 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             file_url: data.fileData?.file_url,
             is_read: false,
             created_at: data.timestamp || new Date().toISOString(),
-            offer_data: data.offerData, // Map socket offerData to offer_data
+            offer_data: data.offerData, 
           };
 
           setMessages((prev) => {
-            // Check if message already exists to prevent duplicates
+            
             if (prev.some(msg => msg.id === newMessage.id)) {
               console.warn('Attempted to add duplicate socket message:', newMessage.id);
               return prev;
@@ -345,15 +345,15 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             return [...prev, newMessage];
           });
 
-          // Mark as read if it's not from current user
+          
           markMessagesAsRead(data.roomId, [newMessage.id]).catch((error) => {
             console.warn("Error marking message as read:", error);
           });
         }
       }
 
-      // Update the specific room's last message in the chat rooms list
-      // Create a new message object for room list update
+      
+      
       const roomUpdateMessage: Message = {
         id: data.messageId || Date.now(),
         message: data.message,
@@ -392,7 +392,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           return room;
         });
         
-        // Sort rooms by last_message_at timestamp (most recent first)
+        
         return updatedRooms.sort((a, b) => {
           const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
           const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
@@ -401,7 +401,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       });
     };
 
-    // Listen for typing indicators
+    
     const handleUserTyping = (data: any) => {
       if (!isMountedRef.current) return;
 
@@ -418,7 +418,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       }
     };
 
-    // Listen for read receipts
+    
     const handleMessagesRead = (data: any) => {
       if (!isMountedRef.current) return;
 
@@ -448,16 +448,16 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     };
   }, [socket, selectedRoom, user, markMessagesAsRead]);
 
-  // Socket event listeners for real-time contract and offer updates
+  
   useEffect(() => {
     if (!socket || !isMountedRef.current) return;
 
-    // Listen for offer created events
+    
     const handleOfferCreated = (data: any) => {
       if (!isMountedRef.current) return;
 
       if (data.roomId === selectedRoom?.room_id) {
-        // Add new offer to the offers list
+        
         setOffers((prev) => {
           const newOffer: Offer = {
             id: data.offerData.id,
@@ -471,8 +471,8 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             days_until_expiry: data.offerData.days_until_expiry,
             is_expiring_soon: data.offerData.days_until_expiry <= 1,
             is_expired: data.offerData.status === 'expired',
-            can_be_accepted: false, // Brand cannot accept their own offers
-            can_be_rejected: false, // Brand cannot reject their own offers
+            can_be_accepted: false, 
+            can_be_rejected: false, 
             can_be_cancelled: data.offerData.status === 'pending' && user?.role === 'brand',
             other_user: {
               id: user?.role === 'brand' ? data.offerData.creator_id : data.offerData.brand_id,
@@ -484,17 +484,17 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           return [newOffer, ...prev];
         });
 
-        // Reload messages to show the offer message
+        
         loadMessages(selectedRoom.room_id);
       }
     };
 
-    // Listen for offer accepted events
+    
     const handleOfferAccepted = (data: any) => {
       if (!isMountedRef.current) return;
 
       if (data.roomId === selectedRoom?.room_id) {
-        // Update offer status
+        
         setOffers((prev) =>
           prev.map((offer) =>
             offer.id === data.offerData.id
@@ -503,7 +503,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           )
         );
 
-        // Add new contract if contract data is provided
+        
         if (data.contractData) {
           setContracts((prev) => {
             const newContract = {
@@ -518,21 +518,21 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           });
         }
 
-        // Reload messages to show the acceptance message
+        
         loadMessages(selectedRoom.room_id);
       }
     };
 
-    // Listen for offer acceptance confirmation messages
+    
     const handleOfferAcceptanceMessage = (data: any) => {
       
       if (!isMountedRef.current) return;
 
       if (data.roomId === selectedRoom?.room_id) {
         
-        // Add the acceptance confirmation message to the chat
+        
         const confirmationMessage: Message = {
-          id: Date.now(), // Temporary ID
+          id: Date.now(), 
           message: `✅ Oferta aceita com sucesso! Contrato criado.`,
           message_type: 'text',
           sender_id: data.senderId,
@@ -545,7 +545,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
 
         setMessages((prev) => [...prev, confirmationMessage]);
 
-        // Scroll to bottom to show new message
+        
         setTimeout(() => {
           if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -554,12 +554,12 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       } 
     };
 
-    // Listen for offer rejected events
+    
     const handleOfferRejected = (data: any) => {
       if (!isMountedRef.current) return;
 
       if (data.roomId === selectedRoom?.room_id) {
-        // Update offer status
+        
         setOffers((prev) =>
           prev.map((offer) =>
             offer.id === data.offerData.id
@@ -568,17 +568,17 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           )
         );
 
-        // Reload messages to show the rejection message
+        
         loadMessages(selectedRoom.room_id);
       }
     };
 
-    // Listen for offer cancelled events
+    
     const handleOfferCancelled = (data: any) => {
       if (!isMountedRef.current) return;
 
       if (data.roomId === selectedRoom?.room_id) {
-        // Update offer status
+        
         setOffers((prev) =>
           prev.map((offer) =>
             offer.id === data.offerData.id
@@ -587,17 +587,17 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           )
         );
 
-        // Reload messages to show the cancellation message
+        
         loadMessages(selectedRoom.room_id);
       }
     };
 
-    // Listen for contract completed events
+    
     const handleContractCompleted = (data: any) => {
       if (!isMountedRef.current) return;
 
       if (data.roomId === selectedRoom?.room_id) {
-        // Update contract with complete data from server
+        
         setContracts((prev) =>
           prev.map((contract) =>
             contract.id === data.contractData.id
@@ -612,23 +612,23 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           )
         );
 
-        // Show success toast
+        
         toast({
           title: "Contrato Finalizado",
           description: "O contrato foi finalizado com sucesso!",
         });
 
-        // Reload messages to show the completion message
+        
         loadMessages(selectedRoom.room_id);
       }
     };
 
-    // Listen for contract terminated events
+    
     const handleContractTerminated = (data: any) => {
       if (!isMountedRef.current) return;
 
       if (data.roomId === selectedRoom?.room_id) {
-        // Update contract with complete data from server
+        
         setContracts((prev) =>
           prev.map((contract) =>
             contract.id === data.contractData.id
@@ -642,23 +642,23 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           )
         );
 
-        // Show notification
+        
         toast({
           title: "Contrato Terminado",
           description: data.terminationReason || "O contrato foi terminado",
         });
 
-        // Reload messages to show the termination message
+        
         loadMessages(selectedRoom.room_id);
       }
     };
 
-    // Listen for contract activated events
+    
     const handleContractActivated = (data: any) => {
       if (!isMountedRef.current) return;
 
       if (data.roomId === selectedRoom?.room_id) {
-        // Update contract with complete data from server
+        
         setContracts((prev) => {
           const existingContract = prev.find(c => c.id === data.contractData.id);
           if (existingContract) {
@@ -673,25 +673,25 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                 : contract
             );
           } else {
-            // Add new contract with complete data
+            
             return [data.contractData, ...prev];
           }
         });
 
-        // The accepted offer will be cleared when contracts are reloaded
+        
 
-        // Show success toast
+        
         toast({
           title: "Contrato Ativado",
           description: "O contrato foi ativado com sucesso!",
         });
 
-        // Reload messages to show the activation message
+        
         loadMessages(selectedRoom.room_id);
       }
     };
 
-    // Set up event listeners
+    
     socket.on('offer_created', handleOfferCreated);
     socket.on('offer_accepted', handleOfferAccepted);
     socket.on('offer_acceptance_message', handleOfferAcceptanceMessage);
@@ -702,7 +702,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     socket.on('contract_activated', handleContractActivated);
 
     return () => {
-      // Cleanup event listeners
+      
       socket.off('offer_created', handleOfferCreated);
       socket.off('offer_accepted', handleOfferAccepted);
       socket.off('offer_acceptance_message', handleOfferAcceptanceMessage);
@@ -714,12 +714,12 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     };
   }, [socket, selectedRoom, user, onOfferCreated, onOfferAccepted, onOfferRejected, onOfferCancelled, onContractCompleted, onContractActivated]);
 
-  // Auto-clear typing users after 3 seconds to prevent them from persisting
+  
   useEffect(() => {
     if (typingUsers.size > 0) {
       const timeoutId = setTimeout(() => {
         setTypingUsers(new Set());
-      }, 3000); // Clear after 3 seconds
+      }, 3000); 
 
       return () => {
         clearTimeout(timeoutId);
@@ -735,7 +735,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       const response = await chatService.getChatRooms();
       if (isMountedRef.current) {
         const roomsData = response || [];
-        // Sort rooms by last_message_at timestamp (most recent first)
+        
         const sortedRooms = roomsData.sort((a, b) => {
           const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
           const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
@@ -743,7 +743,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         });
         setChatRooms(sortedRooms);
 
-        // Auto-select first room if none selected and rooms exist
+        
         if (!selectedRoom && sortedRooms.length > 0) {
           handleConversationSelect(sortedRooms[0]);
         }
@@ -761,11 +761,11 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   };
 
-  // Handle conversation selection
+  
   const handleConversationSelect = async (room: ChatRoom) => {
     if (!isMountedRef.current) return;
 
-    // Stop typing indicator for previous room
+    
     if (selectedRoom && isCurrentUserTyping) {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
@@ -775,23 +775,23 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       stopTyping(selectedRoom.room_id);
     }
 
-    // Clear typing users for previous room
+    
     setTypingUsers(new Set());
 
     setSelectedRoom(room);
 
-    // Load messages for the selected room
+    
     await loadMessages(room.room_id);
 
-    // Load contracts for the selected room
+    
     await loadContracts(room.room_id);
 
-    // Load offers for the selected room
+    
     await loadOffers(room.room_id);
 
-    // Guide messages are now handled by a dedicated useEffect that triggers whenever selectedRoom changes
+    
 
-    // Focus input
+    
     setTimeout(() => {
       if (inputRef.current && isMountedRef.current) {
         inputRef.current.focus();
@@ -799,7 +799,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }, 100);
   };
 
-  // Load messages for a specific room
+  
   const loadMessages = useCallback(async (roomId: string) => {
     if (!isMountedRef.current) return;
 
@@ -807,22 +807,22 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       setIsLoading(true);
       const response = await chatService.getMessages(roomId);
       if (isMountedRef.current) {
-        // Only deduplicate if there are actual duplicates (same message ID)
+        
         const messageIds = new Set();
         const deduplicatedMessages = response.messages.filter((message) => {
           if (messageIds.has(message.id)) {
-            return false; // Skip duplicate message IDs
+            return false; 
           }
           messageIds.add(message.id);
           return true;
         });
 
-        // Check if this room needs guide messages
+        
         const guideMessagesKey = `guide_messages_${roomId}`;
         const hasGuideMessagesInStorage = localStorage.getItem(guideMessagesKey);
         const needsGuideMessages = !hasGuideMessagesInStorage;
 
-        // If guide messages are needed, add them immediately to the messages array
+        
         let finalMessages = [...deduplicatedMessages];
         if (needsGuideMessages && user) {
           
@@ -869,7 +869,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             "Status: 🟢 Conectado\n\n" +
             "Você está agora conectado e pode começar a conversar. Use o chat para todas as comunicações e siga as diretrizes da plataforma para uma parceria de sucesso.";
           
-          // Create guide message
+          
           const guideMsg: Message = {
             id: Date.now() + Math.floor(Math.random() * 1000),
             message: guideMessage,
@@ -882,7 +882,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             created_at: new Date().toISOString(),
           };
           
-          // Create quote message
+          
           const quoteMsg: Message = {
             id: Date.now() + Math.floor(Math.random() * 1000) + 1,
             message: quoteMessage,
@@ -895,15 +895,15 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             created_at: new Date().toISOString(),
           };
           
-          // Add guide messages to the beginning
+          
           finalMessages = [guideMsg, quoteMsg, ...deduplicatedMessages];
           
-          // Mark that this room has received guide messages
+          
           localStorage.setItem(guideMessagesKey, 'true');
           
   
         } else if (hasGuideMessagesInStorage) {
-          // If guide messages exist in localStorage but not in current messages, restore them
+          
           const existingGuideMessages = deduplicatedMessages.filter(msg => 
             msg.message_type === 'system' && 
             (msg.message.includes('Parabéns') || msg.message.includes('parceria'))
@@ -955,7 +955,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
               "Status: 🟢 Conectado\n\n" +
               "Você está agora conectado e pode começar a conversar. Use o chat para todas as comunicações e siga as diretrizes da plataforma para uma parceria de sucesso.";
             
-            // Create guide message
+            
             const guideMsg: Message = {
               id: Date.now() + Math.floor(Math.random() * 1000),
               message: guideMessage,
@@ -968,7 +968,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
               created_at: new Date().toISOString(),
             };
             
-            // Create quote message
+            
             const quoteMsg: Message = {
               id: Date.now() + Math.floor(Math.random() * 1000) + 1,
               message: quoteMessage,
@@ -981,7 +981,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
               created_at: new Date().toISOString(),
             };
             
-            // Add guide messages to the beginning
+            
             finalMessages = [guideMsg, quoteMsg, ...deduplicatedMessages];
           }
         }
@@ -990,10 +990,10 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         
 
 
-        // Join the room for real-time updates
+        
         joinRoom(roomId);
 
-        // Mark all unread messages from other users as read
+        
         const unreadMessages = deduplicatedMessages.filter(
           (msg) => !msg.is_sender && !msg.is_read
         );
@@ -1006,7 +1006,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             );
           } catch (error) {
             console.warn('Failed to mark messages as read:', error);
-            // Don't show toast for this error as it's not critical
+            
           }
         }
       }
@@ -1023,7 +1023,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   }, [joinRoom, markMessagesAsRead, toast, user]);
 
-  // Load contracts for the selected room
+  
   const loadContracts = useCallback(async (roomId: string): Promise<void> => {
     if (!isMountedRef.current) return;
 
@@ -1033,7 +1033,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       const contractsData = response.data;
 
       if (isMountedRef.current) {
-        // Fetch review status for each contract
+        
         const contractsWithReviewStatus = await Promise.all(
           contractsData.map(async (contract: any) => {
             try {
@@ -1044,7 +1044,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                 ...reviewStatusResponse.data,
               };
             } catch (error) {
-              // Handle error silently for individual contract review status
+              
               return contract;
             }
           })
@@ -1065,7 +1065,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   }, [hiringApi, toast]);
 
-  // Load offers for the selected room
+  
   const loadOffers = useCallback(async (roomId: string): Promise<void> => {
     if (!isMountedRef.current) return;
 
@@ -1104,7 +1104,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         setIsUploading(true);
         setUploadProgress(0);
         
-        // Simulate progress for better UX
+        
         const progressInterval = setInterval(() => {
           setUploadProgress(prev => {
             if (prev >= 90) {
@@ -1117,7 +1117,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
 
         newMessage = await sendMessage(
           selectedRoom.room_id,
-          input.trim(), // Send the actual text message, not filename
+          input.trim(), 
           selectedFile
         );
         
@@ -1133,15 +1133,15 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       }
 
       if (isMountedRef.current) {
-        // Add the message to the UI immediately for better UX
-        // The message from the API response is already complete with proper ID
+        
+        
         setMessages(prev => {
           const updated = [...prev, newMessage];
           return updated;
         });
         setInput("");
 
-        // Stop typing indicator immediately when message is sent
+        
         if (typingTimeoutRef.current) {
           clearTimeout(typingTimeoutRef.current);
           typingTimeoutRef.current = null;
@@ -1173,34 +1173,34 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
 
-    // Handle typing indicators
+    
     if (selectedRoom) {
-      // Clear any existing timeout
+      
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
 
-      // Start typing indicator immediately when user types
+      
       if (!isCurrentUserTyping) {
         setIsCurrentUserTyping(true);
         startTyping(selectedRoom.room_id);
       }
 
-      // Set timeout to stop typing indicator 1 second after user stops typing
+      
       typingTimeoutRef.current = setTimeout(() => {
         if (isMountedRef.current) {
           stopTyping(selectedRoom.room_id);
           setIsCurrentUserTyping(false);
         }
-      }, 1000); // 1 second delay after stopping
+      }, 1000); 
     }
   };
 
-  // Handle when user stops typing (keyup event)
+  
   const handleKeyUp = () => {
     if (!isMountedRef.current || !selectedRoom) return;
 
-    // Set a shorter timeout for immediate response when user stops pressing keys
+    
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
@@ -1210,14 +1210,14 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         stopTyping(selectedRoom.room_id);
         setIsCurrentUserTyping(false);
       }
-    }, 500); // Shorter timeout for keyup events
+    }, 500); 
   };
 
-  // Handle when input loses focus
+  
   const handleInputBlur = () => {
     if (!isMountedRef.current || !selectedRoom) return;
 
-    // Stop typing indicator immediately when input loses focus
+    
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = null;
@@ -1234,8 +1234,8 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
 
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file size (10MB max)
-      const maxSize = 10 * 1024 * 1024; // 10MB
+      
+      const maxSize = 10 * 1024 * 1024; 
       if (file.size > maxSize) {
         toast({
           title: "Arquivo muito grande",
@@ -1245,7 +1245,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         return;
       }
 
-      // Validate file type
+      
       const allowedTypes = [
         'image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp',
         'application/pdf',
@@ -1270,7 +1270,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
 
       setSelectedFile(file);
 
-      // Create preview for images
+      
       if (file.type.startsWith("image/")) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -1283,7 +1283,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   };
 
-  // Handle drag and drop
+  
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setDragActive(true);
@@ -1301,28 +1301,28 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
-      // Create a synthetic event for handleFileSelect (cast via unknown to satisfy TS)
+      
       const syntheticEvent = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
       handleFileSelect(syntheticEvent);
     }
   };
 
   const handleBackNavigation = () => {
-    // Ensure all cleanup is done before navigation
+    
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = null;
     }
 
-    // Clear any file selections
+    
     setSelectedFile(null);
     setFilePreview(null);
 
-    // Navigate back
+    
     setComponent?.("Minhas campanhas");
   };
 
-  // Utility function to format file sizes
+  
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
 
@@ -1333,12 +1333,12 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  // Utility function to get file extension from filename
+  
   const getFileExtension = (filename: string): string => {
     return filename.split(".").pop()?.toLowerCase() || "";
   };
 
-  // Utility function to get appropriate MIME type based on file extension
+  
   const getMimeType = (filename: string): string => {
     const extension = getFileExtension(filename);
     const mimeTypes: { [key: string]: string } = {
@@ -1368,7 +1368,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         room.campaign_title.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .sort((a, b) => {
-      // Sort by last_message_at timestamp (most recent first)
+      
       const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
       const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
       return bTime - aTime;
@@ -1385,7 +1385,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   };
 
-  // Check if there's an active contract for this chat room
+  
   const activeContract = contracts.find(
     (contract) => contract.status === "active"
   );
@@ -1394,54 +1394,54 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
 
 
 
-  // Check if current user can send offer (brand only)
-  // Allow repeat offers to creators after previous contracts are completed
+  
+  
   const canSendOffer =
     user?.role === "brand" &&
     selectedRoom &&
     !activeContract &&
     !contracts.some(
       (contract) =>
-        contract.status === "active" // Only prevent if there's an active contract
+        contract.status === "active" 
     ) &&
-    !offers.some((offer) => offer.status === "accepted" || offer.status === "pending"); // Prevent if there's an accepted or pending offer
+    !offers.some((offer) => offer.status === "accepted" || offer.status === "pending"); 
 
-  // Check if there's a completed contract that allows new offers
+  
   const hasCompletedContract = contracts.some(
     (contract) => 
       contract.status === "completed" && 
       (contract.workflow_status === "payment_available" || 
        contract.workflow_status === "payment_withdrawn" ||
-       contract.workflow_status === undefined) // Handle legacy completed contracts without workflow_status
+       contract.workflow_status === undefined) 
   );
 
 
 
-  // Check if current user can review (brand only)
+  
   const canReview = contracts.some(
     (contract) =>
       contract.status === "completed" && contract.can_review === true
   );
 
-  // Handle offer creation
+  
   const handleOfferCreated = () => {
     setShowOfferModal(false);
     loadChatRooms();
   };
 
-  // Handle offer cancellation
+  
   const handleOfferCancel = () => {
     setShowOfferModal(false);
   };
 
-  // Handle existing offer
+  
   const handleExistingOffer = (offerId: number) => {
     setExistingOfferId(offerId);
     setShowExistingOfferModal(true);
     setShowOfferModal(false);
   };
 
-  // Handle cancel existing offer
+  
   const handleCancelExistingOffer = async () => {
     if (!existingOfferId) return;
 
@@ -1455,7 +1455,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         description: "Oferta existente cancelada com sucesso!",
       });
 
-      setShowOfferModal(true); // Reopen the offer modal
+      setShowOfferModal(true); 
     } catch (error: any) {
       console.error("Error cancelling existing offer:", error);
 
@@ -1468,10 +1468,10 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   };
 
-  // Handle offer actions from chat
+  
   const handleAcceptOfferById = useCallback(async (offerId: number) => {
     
-    // Basic validation
+    
     if (!offerId || offerId <= 0 || isNaN(offerId)) {
       console.error('Invalid offerId:', offerId);
       toast({
@@ -1496,12 +1496,12 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           description: "Oferta aceita com sucesso!",
         });
 
-        // Send acceptance confirmation message via socket
+        
         if (selectedRoom && response.data?.offer && response.data?.contract && user) {
           
-          // Ensure we're in the room before sending the message
+          
           if (isConnected) {
-            // Add a small delay to ensure everything is ready
+            
             setTimeout(() => {
               sendOfferAcceptanceMessage(
                 selectedRoom.room_id,
@@ -1515,7 +1515,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           }
         } 
 
-        // Reload data to show updated status
+        
         if (selectedRoom) {
           await Promise.all([
             loadMessages(selectedRoom.room_id),
@@ -1527,7 +1527,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         throw new Error(response.message || "Erro ao aceitar oferta");
       }
 
-      // Socket.IO will handle real-time updates automatically
+      
     } catch (error: any) {
       console.error("Error accepting offer:", error);
       
@@ -1541,7 +1541,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         variant: "destructive",
       });
 
-      // Reload data on error to show current status
+      
       if (selectedRoom) {
         await Promise.all([
           loadMessages(selectedRoom.room_id),
@@ -1553,7 +1553,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
   }, [selectedRoom, offers, user?.role, toast, hiringApi, loadMessages, loadOffers, loadContracts, sendOfferAcceptanceMessage, user]);
 
   const handleRejectOffer = useCallback(async (offerId: number) => {
-    // Add validation to ensure offerId is valid
+    
     if (!offerId || offerId === undefined || offerId === null || offerId <= 0 || isNaN(offerId)) {
       console.error('Invalid offerId:', offerId);
       toast({
@@ -1565,7 +1565,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
 
     try {
-      // Final validation before API call
+      
       if (!offerId || offerId <= 0 || isNaN(offerId)) {
         console.error('Final validation failed for offer ID:', offerId);
         throw new Error(`Invalid offer ID: ${offerId}`);
@@ -1584,7 +1584,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         description: "Oferta rejeitada com sucesso!",
       });
 
-      // Socket.IO will handle real-time updates automatically
+      
     } catch (error: any) {
       console.error("Error rejecting offer:", error);
       toast({
@@ -1593,7 +1593,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         variant: "destructive",
       });
 
-      // Reload data on error to show current status
+      
       if (selectedRoom) {
         loadMessages(selectedRoom.room_id);
         loadOffers(selectedRoom.room_id);
@@ -1603,7 +1603,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
   }, [selectedRoom, offers, user?.role, toast, hiringApi, loadMessages, loadOffers, loadContracts]);
 
   const handleCancelOffer = useCallback(async (offerId: number) => {
-    // Add validation to ensure offerId is valid
+    
     if (!offerId || offerId === undefined || offerId === null || offerId <= 0 || isNaN(offerId)) {
       console.error('Invalid offerId:', offerId);
       toast({
@@ -1615,7 +1615,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
 
     try {
-      // Final validation before API call
+      
       if (!offerId || offerId <= 0 || isNaN(offerId)) {
         console.error('Final validation failed for offer ID:', offerId);
         throw new Error(`Invalid offer ID: ${offerId}`);
@@ -1626,7 +1626,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         title: "Sucesso",
         description: "Oferta cancelada com sucesso!",
       });
-      // Socket.IO will handle real-time updates automatically
+      
     } catch (error: any) {
       console.error("Error cancelling offer:", error);
       toast({
@@ -1637,7 +1637,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   }, [toast, hiringApi]);
 
-  // Handle contract completion - show confirmation modal first
+  
   const handleEndContract = (contractId: number) => {
     const contractToEnd = contracts.find((c) => c.id === contractId);
     if (contractToEnd) {
@@ -1646,7 +1646,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   };
 
-  // Handle campaign finalization after confirmation
+  
   const handleCampaignFinalized = () => {
     if (contractToFinalize) {
       setContractToReview(contractToFinalize);
@@ -1655,7 +1655,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   };
 
-  // Handle contract termination - show termination modal first
+  
   const handleTerminateContract = (contractId: number) => {
     const contractToTerminate = contracts.find((c) => c.id === contractId);
     if (contractToTerminate) {
@@ -1664,7 +1664,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   };
 
-  // Handle contract termination confirmation
+  
   const handleTerminationConfirmed = async () => {
     if (!contractToTerminate) return;
 
@@ -1683,7 +1683,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         setContractToTerminate(null);
         setTerminationMessage("");
         
-        // Reload messages and contracts to show updated status
+        
         if (selectedRoom) {
           loadMessages(selectedRoom.room_id);
           loadContracts(selectedRoom.room_id);
@@ -1705,12 +1705,12 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
 
 
 
-  // Review modal handlers
+  
   const handleReviewSubmitted = () => {
     setShowReviewModal(false);
     setContractToReview(null);
 
-    // Update contract status to show review was submitted
+    
     if (contractToReview) {
       setContracts((prev) =>
         prev.map((contract) =>
@@ -1719,7 +1719,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
               ...contract,
               workflow_status: 'payment_available',
               review: {
-                id: Date.now(), // Temporary ID
+                id: Date.now(), 
                 rating: 5,
                 comment: "Review submitted",
                 created_at: new Date().toISOString(),
@@ -1736,7 +1736,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     setContractToReview(null);
   };
 
-  // Utility function to create a robust download link
+  
   const createDownloadLink = (
     url: string,
     fileName: string,
@@ -1750,18 +1750,18 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     link.setAttribute("type", mimeType);
     link.setAttribute("target", "_blank");
     link.setAttribute("rel", "noopener noreferrer");
-    // Add additional attributes for better browser compatibility
+    
     link.setAttribute("data-downloadurl", `${mimeType}:${fileName}:${url}`);
     return link;
   };
 
-  // Utility function to trigger download with proper cleanup
+  
   const triggerDownload = (link: HTMLAnchorElement, blobUrl?: string): void => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    // Clean up blob URL if provided
+    
     if (blobUrl) {
       setTimeout(() => {
         window.URL.revokeObjectURL(blobUrl);
@@ -1769,19 +1769,19 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   };
 
-  // Enhanced image download function that FORCES download to local folder (CORS bypass)
+  
   const downloadImageToLocal = async (
     imageUrl: string,
     fileName: string
   ): Promise<void> => {
     return new Promise(async (resolve, reject) => {
       try {
-        // Convert storage URL to API download URL to bypass CORS
+        
         const downloadUrl = imageUrl.replace("/storage/", "/api/download/");
 
-        // Method 1: Try to create a download link with proper attributes (most reliable)
+        
         try {
-          // Create a temporary anchor element
+          
           const link = document.createElement("a");
           link.href = downloadUrl;
           link.download = fileName;
@@ -1791,14 +1791,14 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           link.setAttribute("target", "_blank");
           link.setAttribute("rel", "noopener noreferrer");
 
-          // Add timestamp to prevent caching
+          
           const url = new URL(downloadUrl);
           url.searchParams.set("download", Date.now().toString());
           url.searchParams.set("filename", fileName);
           url.searchParams.set("disposition", "attachment");
           link.href = url.toString();
 
-          // Trigger download
+          
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -1812,14 +1812,14 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           );
         }
 
-        // Method 2: Try fetch with proxy endpoint
+        
         try {
           const response = await fetch(downloadUrl, {
             method: "GET",
             mode: "cors",
             credentials: "include",
             headers: {
-              Accept: "image/*,*/*;q=0.8",
+              Accept: "image*;q=0.8",
               "Cache-Control": "no-cache",
               Pragma: "no-cache",
             },
@@ -1832,7 +1832,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           const blob = await response.blob();
           const blobUrl = window.URL.createObjectURL(blob);
 
-          // Create download link
+          
           const link = document.createElement("a");
           link.href = blobUrl;
           link.download = fileName;
@@ -1840,12 +1840,12 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           link.setAttribute("download", fileName);
           link.setAttribute("type", getMimeType(fileName));
 
-          // Trigger download
+          
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
 
-          // Clean up blob URL
+          
           setTimeout(() => {
             window.URL.revokeObjectURL(blobUrl);
           }, 1000);
@@ -1859,7 +1859,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           );
         }
 
-        // Method 3: Try XMLHttpRequest with proxy endpoint
+        
         try {
           const xhr = new XMLHttpRequest();
           xhr.open("GET", downloadUrl, true);
@@ -1871,7 +1871,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
               const blob = xhr.response;
               const blobUrl = window.URL.createObjectURL(blob);
 
-              // Create download link
+              
               const link = document.createElement("a");
               link.href = blobUrl;
               link.download = fileName;
@@ -1879,12 +1879,12 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
               link.setAttribute("download", fileName);
               link.setAttribute("type", getMimeType(fileName));
 
-              // Trigger download
+              
               document.body.appendChild(link);
               link.click();
               document.body.removeChild(link);
 
-              // Clean up blob URL
+              
               setTimeout(() => {
                 window.URL.revokeObjectURL(blobUrl);
               }, 1000);
@@ -1905,7 +1905,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           console.warn("Proxy XHR failed, using manual download:", xhrError);
         }
 
-        // Method 4: Manual download as fallback
+        
         console.warn(
           "All proxy methods failed, opening in new tab for manual download"
         );
@@ -1934,537 +1934,22 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     });
   };
 
-  // Enhanced file download function that FORCES download to local folder (CORS bypass)
+  
   const downloadFileToLocal = async (message: Message): Promise<void> => {
     const fileName = message.file_name || "download";
     const fileSize = message.file_size ? parseInt(message.file_size) : 0;
 
-    // Convert storage URL to API download URL to bypass CORS
+    
     const downloadUrl = message.file_url.replace("/storage/", "/api/download/");
 
-    // Method 1: Force download using fetch and blob conversion (most reliable)
+    
     try {
       const response = await fetch(downloadUrl, {
         method: "GET",
         mode: "cors",
         credentials: "include",
         headers: {
-          Accept: "*/*",
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const blob = await response.blob();
-
-      // Validate blob size if we have file size info
-      if (fileSize > 0 && blob.size !== fileSize) {
-        console.warn(
-          `File size mismatch: expected ${fileSize}, got ${blob.size}`
-        );
-      }
-
-      // Create blob URL with proper MIME type
-      const mimeType = getMimeType(fileName);
-      const blobUrl = window.URL.createObjectURL(
-        new Blob([blob], { type: mimeType })
-      );
-
-      // Create download link
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = fileName;
-      link.style.display = "none";
-      link.setAttribute("download", fileName);
-      link.setAttribute("type", mimeType);
-
-      // Trigger download
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Clean up blob URL
-      setTimeout(() => {
-        window.URL.revokeObjectURL(blobUrl);
-      }, 1000);
-
-      return;
-    } catch (fetchError) {
-      console.warn("Proxy fetch method failed, trying XHR method:", fetchError);
-    }
-
-    // Method 2: Try XMLHttpRequest with proxy endpoint
-    try {
-      const xhr = new XMLHttpRequest();
-      xhr.open("GET", downloadUrl, true);
-      xhr.responseType = "blob";
-      xhr.withCredentials = true;
-
-      xhr.onload = function () {
-        if (xhr.status === 200) {
-          const blob = xhr.response;
-          const blobUrl = window.URL.createObjectURL(blob);
-
-          // Create download link
-          const link = document.createElement("a");
-          link.href = blobUrl;
-          link.download = fileName;
-          link.style.display = "none";
-          link.setAttribute("download", fileName);
-          link.setAttribute("type", getMimeType(fileName));
-
-          // Trigger download
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-
-          // Clean up blob URL
-          setTimeout(() => {
-            window.URL.revokeObjectURL(blobUrl);
-          }, 1000);
-        } else {
-          throw new Error(`XHR failed with status: ${xhr.status}`);
-        }
-      };
-
-      xhr.onerror = function () {
-        throw new Error("XHR request failed");
-      };
-
-      xhr.send();
-      return;
-    } catch (xhrError) {
-      console.warn(
-        "Proxy XHR method failed, trying image-specific method:",
-        xhrError
-      );
-    }
-
-    // Method 3: For images, try the optimized image download method
-    if (message.message_type === "image") {
-      try {
-        await downloadImageToLocal(message.file_url, fileName);
-        return;
-      } catch (imageError) {
-        console.warn("Image download method failed:", imageError);
-      }
-    }
-
-    // Method 4: Try direct link with proxy endpoint
-    try {
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = fileName;
-      link.style.display = "none";
-      link.setAttribute("download", fileName);
-      link.setAttribute("type", getMimeType(fileName));
-
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      return;
-    } catch (directError) {
-      console.warn(
-        "Proxy direct link failed, using manual download:",
-        directError
-      );
-    }
-
-    // Method 5: Open in new tab as absolute last resort
-    try {
-      const newWindow = window.open(
-        downloadUrl,
-        "_blank",
-        "noopener,noreferrer"
-      );
-      if (newWindow) {
-        return;
-      } else {
-        throw new Error("Popup blocked");
-      }
-    } catch (openError) {
-      console.warn("Open in new tab failed:", openError);
-    }
-
-    // If all methods fail, throw error
-    throw new Error(
-      'All download methods failed. Please try right-clicking the file and selecting "Save as".'
-    );
-  };
-
-  // File Dropdown Component - Enhanced with beautiful design
-  const FileDropdown = ({ message }: { message: Message }) => {
-    const dropdownRef = useRef<HTMLDivElement>(null);
-    const buttonRef = useRef<HTMLButtonElement>(null);
-    const isOpen = openDropdowns[message.id];
-    const [isDownloading, setIsDownloading] = useState(false);
-    const [downloadProgress, setDownloadProgress] = useState<number>(0);
-
-    const toggleDropdown = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      e.preventDefault();
-
-      setOpenDropdowns((prev) => {
-        const newState = {
-          ...prev,
-          [message.id]: !prev[message.id],
-        };
-        return newState;
-      });
-    };
-
-    const handleOpen = () => {
-      if (message.file_url) {
-        if (message.message_type === "image") {
-          // Use image viewer for images
-          setImageViewer({
-            isOpen: true,
-            imageUrl: message.file_url,
-            imageName: message.file_name || "Image",
-            imageSize: message.file_size
-              ? formatFileSize(parseInt(message.file_size))
-              : undefined,
-          });
-        } else {
-          // Open in new tab for other file types
-          window.open(message.file_url, "_blank");
-        }
-      }
-      setOpenDropdowns((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(message.id);
-        return newSet;
-      });
-    };
-
-    const handleDownload = async () => {
-      if (message.file_url && !isDownloading) {
-        setIsDownloading(true);
-        setDownloadProgress(0);
-        try {
-          if (message.message_type === "image") {
-            // Use enhanced image download for images
-            await downloadImageToLocal(
-              message.file_url,
-              message.file_name || "image"
-            );
-          } else {
-            // Use regular download for other files
-            await downloadFileToLocal(message);
-          }
-        } catch (error) {
-          toast({
-            title: "Erro",
-            description: "Falha ao baixar arquivo",
-            variant: "destructive",
-          });
-
-          // Try alternative download method
-          try {
-            const link = createDownloadLink(
-              message.file_url,
-              message.file_name || "download",
-              getMimeType(message.file_name || "")
-            );
-            triggerDownload(link);
-          } catch (altError) {
-            toast({
-              title: "Erro",
-              description: "Método alternativo também falhou",
-              variant: "destructive",
-            });
-          }
-        } finally {
-          setIsDownloading(false);
-          setDownloadProgress(0);
-        }
-      }
-      setOpenDropdowns((prev) => ({
-        ...prev,
-        [message.id]: false,
-      }));
-    };
-
-    const handleCopyLink = () => {
-      if (message.file_url) {
-        navigator.clipboard.writeText(message.file_url);
-      }
-      setOpenDropdowns((prev) => ({
-        ...prev,
-        [message.id]: false,
-      }));
-    };
-
-    const handleShare = () => {
-      if (navigator.share && message.file_url) {
-        navigator.share({
-          title: message.file_name,
-          url: message.file_url,
-        });
-      } else {
-        handleCopyLink();
-      }
-      setOpenDropdowns((prev) => ({
-        ...prev,
-        [message.id]: false,
-      }));
-    };
-
-    // Get file icon based on type
-    const getFileIcon = (fileName: string, messageType: string) => {
-      const extension = getFileExtension(fileName);
-
-      if (messageType === "image") return <ImageIcon className="w-5 h-5" />;
-
-      switch (extension) {
-        case "pdf":
-          return <FileText className="w-5 h-5" />;
-        case "doc":
-        case "docx":
-          return <FileText className="w-5 h-5" />;
-        case "mp4":
-        case "avi":
-        case "mov":
-        case "wmv":
-          return <FileVideo className="w-5 h-5" />;
-        case "mp3":
-        case "wav":
-        case "flac":
-          return <FileAudio className="w-5 h-5" />;
-        case "zip":
-        case "rar":
-        case "7z":
-          return <Archive className="w-5 h-5" />;
-        case "js":
-        case "ts":
-        case "jsx":
-        case "tsx":
-        case "html":
-        case "css":
-        case "json":
-          return <Code className="w-5 h-5" />;
-        default:
-          return <File className="w-5 h-5" />;
-      }
-    };
-
-    // Get file color based on type
-    const getFileColor = (fileName: string, messageType: string) => {
-      const extension = getFileExtension(fileName);
-
-      if (messageType === "image") return "from-emerald-500 to-teal-600";
-
-      switch (extension) {
-        case "pdf":
-          return "from-red-500 to-pink-600";
-        case "doc":
-        case "docx":
-          return "from-blue-500 to-indigo-600";
-        case "mp4":
-        case "avi":
-        case "mov":
-        case "wmv":
-          return "from-purple-500 to-violet-600";
-        case "mp3":
-        case "wav":
-        case "flac":
-          return "from-orange-500 to-amber-600";
-        case "zip":
-        case "rar":
-        case "7z":
-          return "from-yellow-500 to-orange-600";
-        case "js":
-        case "ts":
-        case "jsx":
-        case "tsx":
-        case "html":
-        case "css":
-        case "json":
-          return "from-indigo-500 to-purple-600";
-        default:
-          return "from-slate-500 to-gray-600";
-      }
-    };
-
-    // Close dropdown when clicking outside
-    useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
-        if (
-          dropdownRef.current &&
-          !dropdownRef.current.contains(event.target as Node)
-        ) {
-          setOpenDropdowns((prev) => ({
-            ...prev,
-            [message.id]: false,
-          }));
-        }
-      };
-
-      if (isOpen) {
-        document.addEventListener("mousedown", handleClickOutside);
-      }
-
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }, [isOpen, message.id]);
-
-    return (
-      <div className="relative" ref={dropdownRef}>
-        <button
-          ref={buttonRef}
-          onClick={toggleDropdown}
-          className={`p-2.5 rounded-xl transition-all duration-300 border-2 ${isOpen
-              ? "bg-gradient-to-r from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30 border-pink-300 dark:border-pink-700 shadow-lg scale-105"
-              : "hover:bg-gradient-to-r hover:from-slate-100 hover:to-gray-100 dark:hover:from-slate-700 dark:hover:to-gray-700 border-transparent hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md hover:scale-105"
-            }`}
-          aria-label="File options"
-        >
-          <MoreVertical
-            className={`w-4 h-4 transition-colors duration-300 ${isOpen ? "text-pink-600 dark:text-pink-400" : "text-slate-500"
-              }`}
-          />
-        </button>
-
-        {isOpen && (
-          <div className="absolute top-full right-0 mt-3 w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-[9999] backdrop-blur-xl animate-in slide-in-from-top-2 duration-300">
-            {/* File Info Header */}
-            <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800/50 dark:to-gray-800/50 rounded-t-2xl">
-              <div className="flex items-center gap-4">
-                <div
-                  className={`w-12 h-12 bg-gradient-to-br ${getFileColor(
-                    message.file_name || "",
-                    message.message_type
-                  )} rounded-xl flex items-center justify-center shadow-lg`}
-                >
-                  {getFileIcon(message.file_name || "", message.message_type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                    {message.file_name}
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    {message.formatted_file_size ||
-                      (message.file_size
-                        ? formatFileSize(parseInt(message.file_size))
-                        : "Unknown size")}
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 capitalize mt-1 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" />
-                    {getFileExtension(message.file_name || "")} file
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="p-3 space-y-2">
-              <button
-                onClick={handleOpen}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/20 dark:hover:to-indigo-900/20 rounded-xl transition-all duration-300 hover:shadow-md group"
-              >
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  {message.message_type === "image" ? (
-                    <Maximize2 className="w-4 h-4 text-white" />
-                  ) : (
-                    <Eye className="w-4 h-4 text-white" />
-                  )}
-                </div>
-                <span className="font-semibold">
-                  {message.message_type === "image"
-                    ? "View Image"
-                    : "Open File"}
-                </span>
-                <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors duration-300" />
-              </button>
-
-              <button
-                onClick={handleDownload}
-                disabled={isDownloading}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 dark:hover:from-green-900/20 dark:hover:to-emerald-900/20 rounded-xl transition-all duration-300 hover:shadow-md group disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
-              >
-                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  {isDownloading ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Download className="w-4 h-4 text-white" />
-                  )}
-                </div>
-                <span className="font-semibold">
-                  {isDownloading
-                    ? downloadProgress > 0
-                      ? `Downloading ${downloadProgress}%`
-                      : "Downloading..."
-                    : message.message_type === "image"
-                      ? "Download Image"
-                      : "Download File"}
-                </span>
-                {isDownloading && downloadProgress > 0 && (
-                  <div
-                    className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-green-500 to-emerald-600 transition-all duration-300 rounded-b-xl"
-                    style={{ width: `${downloadProgress}%` }}
-                  />
-                )}
-              </button>
-
-              <button
-                onClick={handleShare}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 dark:hover:from-purple-900/20 dark:hover:to-pink-900/20 rounded-xl transition-all duration-300 hover:shadow-md group"
-              >
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <Share2 className="w-4 h-4 text-white" />
-                </div>
-                <span className="font-semibold">Share File</span>
-                <Zap className="w-4 h-4 text-slate-400 group-hover:text-purple-500 transition-colors duration-300" />
-              </button>
-
-              <button
-                onClick={handleCopyLink}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 dark:hover:from-orange-900/20 dark:hover:to-amber-900/20 rounded-xl transition-all duration-300 hover:shadow-md group"
-              >
-                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <Copy className="w-4 h-4 text-white" />
-                </div>
-                <span className="font-semibold">Copy Link</span>
-                <Star className="w-4 h-4 text-slate-400 group-hover:text-orange-500 transition-colors duration-300" />
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Helper function to format guide messages with proper styling
-  const formatGuideMessage = (text: string) => {
-    // Split the message into lines
-    const lines = text.split('\n');
-    
-    return (
-      <div className="space-y-4">
-        {lines.map((line, index) => {
-          // Skip empty lines
-          if (!line.trim()) return null;
-          
-          // Handle main title (first line with emoji)
-          if (index === 0 && line.includes('🎉')) {
-            return (
-              <div key={index} className="text-center">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                  {line.replace('🎉 ', '')}
-                </h2>
-              </div>
-            );
-          }
-          
-          // Handle section headers (lines starting with **)
-          if (line.startsWith('**') && line.endsWith('**')) {
-            const headerText = line.replace(/\*\*/g, '');
+          Accept: "*g, '');
             return (
               <div key={index} className="flex items-center gap-3 pt-2">
                 <div className="w-2 h-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex-shrink-0"></div>
@@ -2475,7 +1960,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             );
           }
           
-          // Handle bullet points
+          
           if (line.startsWith('•')) {
             return (
               <div key={index} className="flex items-start gap-3 pl-4">
@@ -2487,7 +1972,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             );
           }
           
-          // Handle bold text within lines
+          
           if (line.includes('**')) {
             const parts = line.split('**');
             return (
@@ -2505,7 +1990,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             );
           }
           
-          // Handle regular text
+          
           return (
             <p key={index} className="text-sm text-slate-900 dark:text-white leading-relaxed">
               {line}
@@ -2610,7 +2095,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       );
     } else if (message.message_type === "offer" && message.offer_data) {
       
-      // If offers are still loading or not ready, show a loading state
+      
       if (isLoadingOffers || !offersReady) {
         return (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-3">
@@ -2624,31 +2109,31 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         );
       }
       
-      // Try to find the actual offer ID from multiple sources
+      
       let actualOfferId: number | null = null;
       
-      // First, try to get the offer ID from the message data
+      
       if (message.offer_data.offer_id && typeof message.offer_data.offer_id === 'number' && message.offer_data.offer_id > 0) {
         actualOfferId = message.offer_data.offer_id;
       }
       
-      // If no valid offer ID from message, try to find a matching offer from the offers list
+      
       if (!actualOfferId && offers.length > 0) {
         
-        // Try to find the offer by matching multiple properties for better accuracy
+        
         const matchingOffer = offers.find(offer => {
-          // Match by budget (handle both string and number formats)
+          
           const budgetMatch = offer.budget === message.offer_data.budget || 
                              offer.budget === `R$ ${message.offer_data.budget},00` ||
                              offer.budget === message.offer_data.formatted_budget;
           
-          // Match by estimated days
+          
           const daysMatch = offer.estimated_days === message.offer_data.estimated_days;
           
-          // Match by title if available
+          
           const titleMatch = !message.offer_data.title || offer.title === message.offer_data.title;
           
-          // Match by status if available
+          
           const statusMatch = !message.offer_data.status || offer.status === message.offer_data.status;
           
           const isMatch = budgetMatch && daysMatch && titleMatch && statusMatch;
@@ -2661,7 +2146,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         } 
       }
       
-      // Final check - if we still don't have a valid offer ID, show an error
+      
       if (!actualOfferId || actualOfferId <= 0) {
         console.error('Could not determine valid offer ID for message:', {
           message_id: message.id,
@@ -2670,7 +2155,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           offers_count: offers.length
         });
         
-        // Try to reload offers as a last resort
+        
         if (selectedRoom && offers.length === 0) {
           loadOffers(selectedRoom.room_id);
         }
@@ -2694,9 +2179,9 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         );
       }
 
-      // Convert message to ChatOffer format
+      
       const chatOffer: ChatOffer = {
-        id: actualOfferId!, // We know this is valid at this point due to the check above
+        id: actualOfferId!, 
         title: message.offer_data.title || "Oferta de Projeto",
         description:
           message.offer_data.description || "Oferta enviada via chat",
@@ -2714,8 +2199,8 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           name: message.offer_data.sender?.name || "Usuário",
           avatar_url: message.offer_data.sender?.avatar_url || null,
         },
-        can_be_accepted: false, // Brand cannot accept their own offers
-        can_be_rejected: false, // Brand cannot reject their own offers
+        can_be_accepted: false, 
+        can_be_rejected: false, 
         can_be_cancelled:
           message.offer_data.status === "pending" && user?.role === "brand",
         contract_id: message.offer_data.contract_id,
@@ -2723,7 +2208,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         can_be_completed: message.offer_data.can_be_completed,
       };
 
-      // Additional validation before rendering
+      
       if (!chatOffer.id || chatOffer.id <= 0) {
         console.error('ChatOffer created with invalid ID:', chatOffer);
         return (
@@ -2735,7 +2220,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         );
       }
 
-      // Final validation before rendering
+      
       if (!chatOffer.id || chatOffer.id <= 0 || isNaN(chatOffer.id)) {
         console.error('ChatOffer created with invalid ID:', chatOffer);
         return (
@@ -2761,24 +2246,24 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             onCancel={handleCancelOffer}
             onEndContract={handleEndContract}
             onTerminateContract={handleTerminateContract}
-            isCreator={false} // Brand is not a creator
+            isCreator={false} 
           />
         );
     }
 
-    // Handle contract completion messages
+    
     if (message.message_type === "contract_completion") {
       return (
         <ContractCompletionMessage
           message={message}
           onReview={async () => {
             try {
-              // Force reload contracts for this room
+              
               if (selectedRoom) {
                 const response = await hiringApi.getContractsForChatRoom(selectedRoom.room_id);
                 const freshContracts = response.data;
                 
-                // Find completed contract waiting for review
+                
                 const contractToReview = freshContracts.find((c: any) => 
                   c.status === "completed" && 
                   (c.workflow_status === "waiting_review" || c.can_review === true)
@@ -2789,7 +2274,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                   setShowReviewModal(true);
                 } else {
                   const fallbackContract = {
-                    id: 34, // We know this contract exists from database check
+                    id: 34, 
                     title: "Projeto de Campanha",
                     status: "completed",
                     workflow_status: "waiting_review",
@@ -2817,13 +2302,13 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
               });
             }
           }}
-          isCreator={false} // Brand is not a creator
+          isCreator={false} 
           contractData={message.offer_data}
         />
       );
     }
 
-    // Handle system messages (like contract completion messages)
+    
     if (message.message_type === "system") {
       
       const isReviewMessage =
@@ -2831,21 +2316,21 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         message.message?.includes("avaliação")) &&
         !message.message?.includes("finalizou o contrato");
 
-      // Check if this is a guide message (contains "Parabéns" or campaign guidance)
+      
       const isGuideMessage = message.message?.includes("Parabéns") || 
                            message.message?.includes("parceria iniciada") ||
                            message.message?.includes("Detalhes da Campanha");
       
 
 
-      // Check if this is a contract completion message
+      
       const isContractCompletionMessage = message.message?.includes("O contrato foi finalizado com sucesso") ||
                                         message.message?.includes("Vocês podem avaliar um ao outro") ||
                                         message.message?.includes("Contrato finalizado com sucesso") ||
                                         message.message?.includes("finalizado com sucesso") ||
                                         message.message?.includes("aguardando avaliação");
       
-      // Check if user can review completed contracts
+      
       const canReviewContract = contracts.some(
         (contract) =>
           contract.status === "completed" && 
@@ -2853,7 +2338,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           contract.can_review === true
       );
 
-      // Handle contract completion messages with review button for creators
+      
       if (isContractCompletionMessage && canReviewContract) {
         return (
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-700 rounded-2xl p-6 shadow-lg">
@@ -2868,14 +2353,14 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                 <div className="flex justify-center">
                   <Button
                     onClick={() => {
-                      // Find contract with waiting_review status
+                      
                       let contractToReview = contracts.find(
                         (c) =>
                           c.status === "completed" &&
                           c.workflow_status === "waiting_review"
                       );
 
-                      // If not found, try to find any completed contract
+                      
                       if (!contractToReview) {
                         contractToReview = contracts.find(
                           (c) => c.status === "completed"
@@ -2883,7 +2368,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                       }
 
                       if (contractToReview) {
-                        // Check if user can review this contract
+                        
                         if (contractToReview.can_review === false) {
                           toast({
                             title: "Avaliação já realizada",
@@ -2916,7 +2401,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         );
       }
 
-      // Handle contract completion messages with new offer button for brands when contract is fully complete
+      
       if (isContractCompletionMessage && hasCompletedContract && user?.role === "brand") {
         return (
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-700 rounded-2xl p-6 shadow-lg">
@@ -2988,27 +2473,27 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                   <Button
                     size="sm"
                     onClick={() => {
-                      // Try to find contract with waiting_review status first
+                      
                       let contractToReview = contracts.find(
                         (c) =>
                           c.status === "completed" &&
                           c.workflow_status === "waiting_review"
                       );
 
-                      // If not found, try to find any completed contract
+                      
                       if (!contractToReview) {
                         contractToReview = contracts.find(
                           (c) => c.status === "completed"
                         );
                       }
 
-                      // If still not found, try to find any contract
+                      
                       if (!contractToReview && contracts.length > 0) {
                         contractToReview = contracts[0];
                       }
 
                       if (contractToReview) {
-                        // Check if user can review this contract
+                        
                         if (contractToReview.can_review === false) {
                           toast({
                             title: "Avaliação já realizada",
@@ -3050,7 +2535,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     );
   };
 
-  // Get file icon based on type (for use in renderMessageContent)
+  
   const getFileIcon = (fileName: string, messageType: string) => {
     const extension = getFileExtension(fileName);
 
@@ -3089,7 +2574,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     }
   };
 
-  // Get file color based on type (for use in renderMessageContent)
+  
   const getFileColor = (fileName: string, messageType: string) => {
     const extension = getFileExtension(fileName);
 
@@ -3129,14 +2614,14 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
 
   return (
     <div className="flex h-full bg-background overflow-hidden">
-  {/* Mobile Hamburger Button - Moved to chat header */}
+  {}
 
   <div className="flex flex-1 overflow-hidden">
-    {/* Sidebar */}
+    {}
     <div
       data-sidebar
       className={cn(
-        // ensure the sidebar can be full-width on small screens and constrained on md+
+        
         "flex flex-col w-full max-w-[100vw] md:max-w-sm border-r bg-background transition-all duration-300 ease-in-out",
         "md:relative md:translate-x-0 md:shadow-none",
         sidebarOpen
@@ -3144,7 +2629,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           : "fixed inset-0 z-40 -translate-x-full md:relative md:translate-x-0"
       )}
     >
-      {/* Sidebar Header */}
+      {}
       <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-4 border-b bg-background">
         <div className="flex flex-col">
           <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
@@ -3181,7 +2666,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         </button>
       </div>
 
-      {/* Search */}
+      {}
       <div className="p-3 sm:p-4 pb-3">
         <div className="relative">
           <Input
@@ -3194,9 +2679,9 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
         </div>
       </div>
 
-      {/* Conversation List */}
+      {}
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-pink-500 scrollbar-track-transparent hover:scrollbar-thumb-pink-600">
-        {/* Make inner container fluid on mobile, constrained on md+. avoids horizontal overflow */}
+        {}
         <div className="p-2 w-full md:w-[383px] md:mx-0 mx-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
@@ -3213,7 +2698,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                 key={room.id}
                 onClick={() => {
                   setSelectedRoom(room);
-                  // close sidebar on mobile for a native "WhatsApp-like" behavior
+                  
                   if (window.innerWidth < 768) setSidebarOpen(false);
                 }}
                 className={cn(
@@ -3261,14 +2746,14 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       </div>
     </div>
 
-    {/* Chat Area */}
+    {}
     <div className="flex-1 flex flex-col">
       {selectedRoom ? (
         <>
-          {/* Chat Header */}
+          {}
           <div className="flex items-center justify-between p-3 sm:p-4 border-b bg-background">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              {/* Mobile Back Button */}
+              {}
               <button
                 className="md:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 flex-shrink-0"
                 onClick={() => setSidebarOpen(true)}
@@ -3319,7 +2804,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Buttons (unchanged behaviour) */}
+              {}
               {activeContract && (
                 <Button
                   onClick={() => setShowTimelineSidebar(true)}
@@ -3452,7 +2937,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             </div>
           </div>
 
-          {/* Review Notification Banner */}
+          {}
           {canReview && (
             <div className="mx-4 mt-4 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-300 dark:border-yellow-600 rounded-lg shadow-sm">
               <div className="flex items-center justify-between">
@@ -3483,7 +2968,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             </div>
           )}
 
-          {/* Existing Offer Notification Banner */}
+          {}
           {user?.role === "brand" && selectedRoom && offers.some(offer => offer.status === 'pending') && (
             <div className="mx-4 mt-4 p-3 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border border-orange-300 dark:border-orange-600 rounded-lg shadow-sm">
               <div className="flex items-center justify-between">
@@ -3509,7 +2994,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             </div>
           )}
 
-          {/* New Offer Notification Banner for Completed Contracts */}
+          {}
           {hasCompletedContract && user?.role === "brand" && selectedRoom && !activeContract && (
             <div className="mx-4 mt-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-300 dark:border-green-600 rounded-lg shadow-sm">
               <div className="flex items-center justify-between">
@@ -3531,7 +3016,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             </div>
           )}
 
-          {/* Messages */}
+          {}
           <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 scrollbar-hide">
             <div className="space-y-4">
               {messages.map((message) => {
@@ -3603,7 +3088,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             </div>
           </div>
 
-          {/* Message Input */}
+          {}
           <form
             className={`flex items-end gap-3 px-3 sm:px-4 py-3 border-t bg-background transition-colors ${
               dragActive ? 'bg-pink-50 dark:bg-pink-900/10' : ''
@@ -3614,7 +3099,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
             onDrop={handleDrop}
             style={{ paddingBottom: viewportOffset ? viewportOffset + 8 : undefined }}
           >
-            {/* File attachment button */}
+            {}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -3632,7 +3117,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
               accept="image/*,.pdf,.doc,.docx,.txt,.zip,.rar,.mp3,.mp4,.wav,.flac,.avi,.mov,.wmv,.js,.ts,.jsx,.tsx,.html,.css,.json"
             />
 
-            {/* Enhanced File preview */}
+            {}
             {selectedFile && (
               <div className="group relative overflow-hidden bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-2xl border border-pink-200 dark:border-pink-800 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] animate-in slide-in-from-bottom-2 duration-300">
                 <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -3740,7 +3225,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
                 onBlur={handleInputBlur}
               />
 
-              {/* Typing Indicator */}
+              {}
               {typingUsers.size > 0 && (
                 <div className="absolute -top-8 left-0 right-0 flex items-center gap-2 px-4 py-2">
                   <div className="flex items-center gap-2">
@@ -3798,7 +3283,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     </div>
   </div>
 
-  {/* Mobile Overlay */}
+  {}
   {sidebarOpen && (
     <div
       className="md:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-30"
@@ -3806,7 +3291,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     />
   )}
 
-  {/* Image Viewer */}
+  {}
   {imageViewer.isOpen &&
     createPortal(
       <div
@@ -3823,7 +3308,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           setImageRotation(0);
         }}
       >
-        {/* Image Container */}
+        {}
         <div
           className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center"
           onClick={(e) => e.stopPropagation()}
@@ -3840,7 +3325,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           />
         </div>
 
-        {/* Controls */}
+        {}
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-black/50 backdrop-blur-sm rounded-xl p-2 border border-white/20">
           <button
             onClick={() =>
@@ -3913,7 +3398,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           </button>
         </div>
 
-        {/* Image Info */}
+        {}
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 backdrop-blur-sm rounded-xl p-3 border border-white/20">
           <div className="text-white text-center">
             <div className="font-medium">{imageViewer.imageName}</div>
@@ -3932,7 +3417,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
       document.body
     )}
 
-  {/* Offer Modal */}
+  {}
   {showOfferModal && selectedRoom && (
     <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
       <CreateOffer
@@ -3949,7 +3434,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     </div>
   )}
 
-  {/* Existing Offer Modal */}
+  {}
   {showExistingOfferModal && (
     <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-background rounded-lg p-6 max-w-md w-full">
@@ -3958,7 +3443,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
           Oferta Existente
         </h3>
 
-        {/* Show existing offer details */}
+        {}
         {existingOfferId && (
           <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
             <p className="text-sm text-orange-800 dark:text-orange-200 mb-2">
@@ -4007,7 +3492,7 @@ export default function ChatPage({ setComponent, campaignId, creatorId }: ChatPa
     </div>
   )}
 
-  {/* Review, Campaign, Terminate modals etc. — keep as before */}
+  {}
   {showReviewModal && contractToReview && (
     <div className="w-full h-screen flex justify-center items-center bg-black/60 backdrop-blur-sm">
       <ReviewModal

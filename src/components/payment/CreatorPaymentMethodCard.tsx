@@ -26,21 +26,21 @@ const CreatorPaymentMethodCard: React.FC = () => {
   useEffect(() => {
     loadPaymentMethod();
     
-    // Check if returning from successful payment method connection
+    
     const paymentMethodParam = searchParams.get('payment_method');
     const sessionId = searchParams.get('session_id');
     
-    // Always call backend to store payment method if we have session_id
-    // This ensures payment method is stored directly without waiting for webhook
+    
+    
     if (paymentMethodParam === 'connected' && sessionId) {
-      // Call backend immediately to verify and store payment method
+      
       handleCheckoutSuccess(sessionId);
     } else if (sessionId && !paymentMethodParam) {
-      // Also handle case where session_id exists but payment_method param is missing
-      // This can happen if URL is modified or parameters are lost
+      
+      
       handleCheckoutSuccess(sessionId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [searchParams]);
 
   const handleCheckoutSuccess = async (sessionId: string) => {
@@ -51,13 +51,13 @@ const CreatorPaymentMethodCard: React.FC = () => {
       });
       
       if (response.data.success) {
-        // Remove the parameters from URL
+        
         const newSearchParams = new URLSearchParams(searchParams);
         newSearchParams.delete('payment_method');
         newSearchParams.delete('session_id');
         setSearchParams(newSearchParams, { replace: true });
         
-        // Reload payment method to show the new one
+        
         await loadPaymentMethod();
         
         toast({
@@ -87,7 +87,7 @@ const CreatorPaymentMethodCard: React.FC = () => {
       const response = await hiringApi.getWithdrawalMethods();
       
       if (response.data && Array.isArray(response.data)) {
-        // Find the Stripe card payment method
+        
         const stripeCardMethod = response.data.find(
           (method: any) => method.id === 'stripe_card' || method.stripe_payment_method_id
         );
@@ -98,7 +98,7 @@ const CreatorPaymentMethodCard: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Error loading payment method:', error);
-      // Don't show error toast - it's okay if no payment method exists yet
+      
     } finally {
       setLoading(false);
     }
@@ -137,7 +137,7 @@ const CreatorPaymentMethodCard: React.FC = () => {
   }
 
   if (!paymentMethod) {
-    return null; // Don't show anything if no payment method exists
+    return null; 
   }
 
   return (

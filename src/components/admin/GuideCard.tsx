@@ -43,7 +43,7 @@ export const GuideCard: React.FC<GuideCardProps> = ({ guide, onEdit, onRemove })
 
   return (
     <Card id={`guide-${guide.id}`} className="relative">
-      {/* Action icons */}
+      {}
       <div className="absolute top-3 right-3 flex items-center gap-2">
         <button
           type="button"
@@ -80,7 +80,7 @@ export const GuideCard: React.FC<GuideCardProps> = ({ guide, onEdit, onRemove })
           <p className="text-muted-foreground">{guide.description}</p>
         </div>
 
-        {/* Steps Section */}
+        {}
         {sortedSteps.length > 0 && (
           <div className="mt-6">
             <button

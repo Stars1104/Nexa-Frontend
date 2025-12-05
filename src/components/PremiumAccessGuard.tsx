@@ -32,7 +32,7 @@ export default function PremiumAccessGuard({
   const { toast } = useToast();
   const location = useLocation();
   
-  // Use Redux state instead of local state
+  
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   
   const {
@@ -42,7 +42,7 @@ export default function PremiumAccessGuard({
     refreshPremiumStatus,
   } = usePremiumContext();
 
-  // Fallback: considerar trial de estudante diretamente via endpoint de estudante
+  
   const [hasStudentTrial, setHasStudentTrial] = useState<boolean>(false);
   useEffect(() => {
     let cancelled = false;
@@ -62,30 +62,30 @@ export default function PremiumAccessGuard({
     checkUserAndPremiumStatus();
   }, []);
 
-  // Refresh premium status when user changes, ensuring it runs even when hasPremium changes
+  
   useEffect(() => {
     if (user && (user.role === "creator" || user.role === "student") && !premiumLoading && !isRefreshing) {
-      // Always refresh to ensure we have the latest status
-      // This ensures refresh happens even when hasPremium changes from false to true
+      
+      
       refreshPremiumStatus();
     }
   }, [user?.id, user?.role, premiumLoading, refreshPremiumStatus, isRefreshing]);
 
-  // Listen for premium status updates and refresh premium status
+  
   useEffect(() => {
     const handlePremiumUpdate = async () => {
-      // Optimistically set premium to true when status update is triggered
-      // This prevents blocking during the refresh period
+      
+      
       setOptimisticPremium(true);
       setIsRefreshing(true);
       
-      // Force refresh bypasses cooldown for immediate updates after subscription
+      
       await refreshPremiumStatus(true);
       
-      // Clear refreshing flag after refresh completes
+      
       setIsRefreshing(false);
       
-      // Clear optimistic flag after refresh completes (with a small delay to ensure status is updated)
+      
       setTimeout(() => {
         setOptimisticPremium(false);
       }, 1000);
@@ -100,7 +100,7 @@ export default function PremiumAccessGuard({
 
   const checkUserAndPremiumStatus = async () => {
     try {
-      // Prevent rapid successive calls
+      
       const now = Date.now();
       if (now - lastCheck < 3000) {
         return;
@@ -114,16 +114,16 @@ export default function PremiumAccessGuard({
 
       setLastCheck(now);
 
-      // Add a small delay to prevent rapid successive calls
+      
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // User data is now managed by Redux, no need to set local state
+      
       const response = await apiClient.get("/user");
       const userData = response.data;
 
-      // Check premium for creators and students
+      
       if (userData.role === "creator" || userData.role === "student") {
-        // Only decide after premium status is loaded to avoid false positives
+        
         if (premiumStatus && !hasPremium && !premiumLoading) {
           showPremiumWarning();
         }
@@ -131,12 +131,12 @@ export default function PremiumAccessGuard({
     } catch (error: any) {
       console.error("Error checking user status:", error);
 
-      // If it's a 401 error, clear token (user data is managed by Redux)
+      
       if (error.response?.status === 401) {
         localStorage.removeItem("token");
       }
 
-      // If it's a premium required error, show the warning
+      
       if (
         error.response?.status === 403 &&
         error.response?.data?.error === "premium_required"
@@ -168,13 +168,13 @@ export default function PremiumAccessGuard({
   };
 
   const handleSubscribeClick = () => {
-    // Onconsolly set component if not currently refreshing to prevent unnecessary call
+    
     if (!isRefreshing && setComponent) {
       setComponent("Assinatura");
     }
   };
 
-  // Allow access to profile, portfolio, and subscription pages even during loading
+  
   const allowedPaths = [
     "/creator/subscription",
     "/creator/profile",
@@ -183,13 +183,13 @@ export default function PremiumAccessGuard({
   const currentPath = location.pathname;
   const isAllowedPath = allowedPaths.some((path) => currentPath.includes(path));
 
-  // If we're on an allowed path, always allow access (even during loading)
+  
   if (isAllowedPath) {
     return <>{children}</>;
   }
 
-  // Consider loading while premiumStatus is not yet available to avoid flashing the guard
-  // But only if we're not on an allowed path and not optimistically allowing access
+  
+  
   if ((loading || premiumLoading || !premiumStatus) && !optimisticPremium) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -198,31 +198,31 @@ export default function PremiumAccessGuard({
     );
   }
 
-  // If user is not a creator or student, or has premium access, show children
-  // For students, check if they have premium access (includes free trial)
-  // For creators, check if they have premium access (premium only)
-  // hasPremium from context already includes is_premium_active logic
-  // Considera também período de teste (is_on_trial) vindo do backend
-  // Include optimisticPremium to allow access immediately after subscription creation
+  
+  
+  
+  
+  
+  
   const userHasPremiumAccess = hasPremium || Boolean((premiumStatus as any)?.is_on_trial) || hasStudentTrial || optimisticPremium;
 
   if (!user || (user.role !== "creator" && user.role !== "student") || userHasPremiumAccess) {
     return <>{children}</>;
   }
 
-  // Special handling for creator main page - check if we're on a restricted component
+  
   const isCreatorMainPage =
     currentPath === "/creator" || currentPath === "/creator/";
 
-  // For creator main page, we need to check the component being rendered
-  // This will be handled by the parent component passing the correct fallback
+  
+  
 
-  // If fallback is provided, use it
+  
   if (fallback) {
     return <>{fallback}</>;
   }
 
-  // Default premium required screen
+  
   return (
     <div className="flex items-center justify-center min-h-[91vh] dark:bg-[#171717] p-4">
       <Card className="w-full max-w-md bg-background border">

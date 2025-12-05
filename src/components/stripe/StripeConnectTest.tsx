@@ -4,10 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { stripeApi } from '../../api/stripe';
 import { toast } from '../ui/sonner';
 
-/**
- * Test component to verify Stripe API integration
- * This can be removed after testing
- */
+
 export const StripeConnectTest: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<any>(null);

@@ -66,16 +66,16 @@ export default function ChatOfferMessage({
   isCreator = false,
 }: ChatOfferMessageProps) {
   
-  // Check if offer is expired
+  
   const isExpired = offer.status === "expired" || offer.days_until_expiry < 0;
 
-  // Determine the actual status to display
+  
   let displayStatus =
     offer.status === "pending" && offer.days_until_expiry < 0
       ? "expired"
       : offer.status;
 
-  // Safety check for incomplete offer data
+  
   if (!offer || !offer.sender || !offer.id || offer.id <= 0 || isNaN(offer.id)) {
     console.error('Invalid offer data in ChatOfferMessage:', offer);
     return (
@@ -154,14 +154,14 @@ export default function ChatOfferMessage({
     }
   };
 
-  // Format budget properly
+  
   const formatBudget = (budget: string) => {
     if (!budget) return "R$ 0,00";
 
-    // If it's already formatted, return as is
+    
     if (budget.includes("R$")) return budget;
 
-    // Try to parse as number and format
+    
     const numBudget = parseFloat(budget);
     if (isNaN(numBudget)) return budget;
 
@@ -183,7 +183,7 @@ export default function ChatOfferMessage({
         )}
       >
         <CardContent className="p-4">
-          {/* Header */}
+          {}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -206,14 +206,14 @@ export default function ChatOfferMessage({
             </Badge>
           </div>
 
-          {/* Description */}
+          {}
           {offer.description && (
             <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">
               {offer.description}
             </p>
           )}
 
-          {/* Details */}
+          {}
           <div className="grid grid-cols-2 gap-3 mb-4">
             {offer.is_barter ? (
               <div className="flex items-center gap-2 text-sm">
@@ -239,7 +239,7 @@ export default function ChatOfferMessage({
             </div>
           </div>
 
-          {/* Barter Description */}
+          {}
           {offer.is_barter && offer.barter_description && (
             <div className="mb-4 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg">
               <p className="text-sm text-purple-800 dark:text-purple-200">
@@ -248,7 +248,7 @@ export default function ChatOfferMessage({
             </div>
           )}
 
-          {/* New Partnership Info */}
+          {}
           {offer.is_new_partnership && (
             <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
               <div className="flex items-start gap-2">
@@ -265,7 +265,7 @@ export default function ChatOfferMessage({
             </div>
           )}
 
-          {/* Expiry Info */}
+          {}
           {displayStatus === "pending" && (
             <div
               className={cn(
@@ -294,7 +294,7 @@ export default function ChatOfferMessage({
             </div>
           )}
 
-          {/* Action Buttons */}
+          {}
           {displayStatus === "pending" && (
             <div
               className={cn(
@@ -324,7 +324,7 @@ export default function ChatOfferMessage({
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    // Additional validation before calling callback
+                    
                     if (offer.id && offer.id > 0 && !isNaN(offer.id)) {
                       onReject(offer.id);
                     } else {
@@ -343,7 +343,7 @@ export default function ChatOfferMessage({
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    // Additional validation before calling callback
+                    
                     if (offer.id && offer.id > 0 && !isNaN(offer.id)) {
                       onCancel(offer.id);
                     } else {
@@ -359,7 +359,7 @@ export default function ChatOfferMessage({
             </div>
           )}
 
-          {/* Contract Actions - Only brands can complete contracts */}
+          {}
           {displayStatus === "accepted" &&
             offer.contract_id &&
             offer.contract_id > 0 &&
@@ -405,7 +405,7 @@ export default function ChatOfferMessage({
               </div>
             )}
 
-          {/* Creator Instructions - Show delivery material submission info */}
+          {}
           {displayStatus === "accepted" &&
             offer.contract_id &&
             offer.contract_id > 0 &&
@@ -427,7 +427,7 @@ export default function ChatOfferMessage({
               </div>
             )}
 
-          {/* Show message when offer is expired */}
+          {}
           {displayStatus === "expired" && (
             <div className="mt-3 p-2 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-200 dark:border-red-700">
               <div className="flex items-center gap-2 text-xs text-red-800 dark:text-red-300">
@@ -437,7 +437,7 @@ export default function ChatOfferMessage({
             </div>
           )}
 
-          {/* Show warning when offer ID is invalid */}
+          {}
           {(!offer.id || offer.id <= 0 || isNaN(offer.id)) && (
             <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg border border-yellow-200 dark:border-yellow-700">
               <div className="flex items-center gap-2 text-xs text-yellow-800 dark:text-yellow-300">

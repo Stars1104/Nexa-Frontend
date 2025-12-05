@@ -43,7 +43,7 @@ export default function Reviews({
 
       const response = await hiringApi.getReviews(userId, undefined, true);
 
-      // Handle the expected response structure
+      
       const reviewsData = response.data.reviews.data.slice(0, maxReviews);
       const statsData = response.data.stats;
 
@@ -122,7 +122,7 @@ export default function Reviews({
 
   return (
     <div className="space-y-6">
-      {/* Review Stats */}
+      {}
       {showStats && stats && (
         <Card>
           <CardHeader>
@@ -177,7 +177,7 @@ export default function Reviews({
         </Card>
       )}
 
-      {/* Reviews List */}
+      {}
       <Card>
         <CardHeader>
           <CardTitle>Últimas Avaliações</CardTitle>

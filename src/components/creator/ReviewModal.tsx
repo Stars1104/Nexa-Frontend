@@ -82,7 +82,7 @@ export default function ReviewModal({
           description: "Avaliação enviada com sucesso!",
         });
 
-        // Reset form
+        
         setRating(3);
         setComment("");
         setRatingCategories({
@@ -96,7 +96,7 @@ export default function ReviewModal({
         onReviewSubmitted();
         onClose();
 
-        // Redirect to withdrawal page after successful review
+        
         setTimeout(() => {
           navigate('/creator?component=Saldo e Saques');
         }, 500);
@@ -106,7 +106,7 @@ export default function ReviewModal({
     } catch (error: any) {
       console.error("Error submitting review:", error);
 
-      // Handle specific error cases
+      
       let errorMessage = "Erro ao enviar avaliação";
 
       if (error.response?.status === 400) {
@@ -191,7 +191,7 @@ export default function ReviewModal({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Overall Rating */}
+          {}
           <div className="space-y-3">
             <Label className="text-base font-semibold">Avaliação Geral</Label>
             <div className="flex items-center gap-3">
@@ -200,7 +200,7 @@ export default function ReviewModal({
             </div>
           </div>
 
-          {/* Category Ratings */}
+          {}
           <div className="space-y-4">
             <Label className="text-base font-semibold">
               Avaliações por Categoria
@@ -246,7 +246,7 @@ export default function ReviewModal({
             </div>
           </div>
 
-          {/* Comment */}
+          {}
           <div className="space-y-3">
             <Label htmlFor="comment">Comentário (opcional)</Label>
             <Textarea
@@ -262,7 +262,7 @@ export default function ReviewModal({
             </div>
           </div>
 
-          {/* Public Review */}
+          {}
           <div className="flex items-center space-x-2">
             <Checkbox
               id="public-review"

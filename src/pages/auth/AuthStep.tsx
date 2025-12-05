@@ -16,14 +16,14 @@ const AuthStep = () => {
     const location = useLocation();
 
     const handleInfluencer = () => {
-        // Preserve any redirect state (e.g., redirectTo, pendingCheckoutSessionId) when navigating to signup
+        
         navigate("/signup/creator", { 
             state: location.state || {} 
         });
     };
 
     const handleCompany = () => {
-        // Preserve any redirect state when navigating to signup
+        
         navigate("/signup/brand", { 
             state: location.state || {} 
         });
@@ -86,10 +86,7 @@ const AuthStep = () => {
                             </span>
                         </Button>
                     </div>
-                    {/* <div className="text-center w-full mt-2">
-                        <span className="text-muted-foreground">Não tem uma conta? </span>
-                        <a href="#" className="font-semibold text-pink-500 hover:underline">Criar conta</a>
-                    </div> */}
+                    {}
                     <div className="absolute top-4 right-4">
                         <ThemeToggle />
                     </div>

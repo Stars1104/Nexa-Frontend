@@ -30,16 +30,16 @@ export const UserProfileEditor: React.FC<UserProfileEditorProps> = ({
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Fetch user data on component mount
+  
   useEffect(() => {
     if (userId) {
       fetchUser(userId);
     } else {
-      fetchUser(); // Fetch current user
+      fetchUser(); 
     }
   }, [userId, fetchUser]);
 
-  // Update form data when user data is loaded
+  
   useEffect(() => {
     if (user) {
       setFormData({
@@ -86,7 +86,7 @@ export const UserProfileEditor: React.FC<UserProfileEditorProps> = ({
 
   const handleCancel = () => {
     setIsEditing(false);
-    // Reset form data to original user data
+    
     if (user) {
       setFormData({
         name: user.name || '',

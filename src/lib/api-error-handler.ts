@@ -1,6 +1,4 @@
-/**
- * Utility functions for handling API errors consistently across the application
- */
+
 
 export interface ApiError {
   message: string;
@@ -9,13 +7,11 @@ export interface ApiError {
   retry_after?: number;
 }
 
-/**
- * Handle common HTTP errors and return user-friendly error messages
- */
+
 export const handleApiError = (error: any): ApiError => {
   console.error('API Error:', error);
 
-  // Handle axios errors
+  
   if (error.response) {
     const { status, data } = error.response;
     
@@ -49,7 +45,7 @@ export const handleApiError = (error: any): ApiError => {
         };
       
       case 422:
-        // Handle validation errors with specific field messages
+        
         if (data?.errors) {
           const errorMessages = Object.values(data.errors).flat() as string[];
           return {
@@ -65,11 +61,11 @@ export const handleApiError = (error: any): ApiError => {
         };
       
       case 429:
-        // Enhanced rate limiting error handling
+        
         const retryAfter = data?.retry_after || 60;
         let message = 'Muitas requisições. Tente novamente em alguns instantes.';
         
-        // Check if it's an authentication-related rate limit
+        
         if (error.config?.url?.includes('/login') || error.config?.url?.includes('/register')) {
           if (error.config?.url?.includes('/register')) {
             message = `Muitas tentativas de registro. Tente novamente em ${Math.ceil(retryAfter / 60)} minuto(s).`;
@@ -78,12 +74,12 @@ export const handleApiError = (error: any): ApiError => {
           }
         }
         
-        // Check for notification rate limiting
+        
         if (error.config?.url?.includes('/notifications')) {
           message = `Muitas requisições de notificações. Tente novamente em ${Math.ceil(retryAfter / 60)} minuto(s).`;
         }
         
-        // Check for new user flow rate limiting
+        
         if (data?.error_type === 'new_user_flow_rate_limited') {
           message = `Muitas tentativas de criação de conta. Tente novamente em ${Math.ceil(retryAfter / 60)} minuto(s).`;
         }
@@ -111,7 +107,7 @@ export const handleApiError = (error: any): ApiError => {
     }
   }
   
-  // Handle network errors
+  
   if (error.request) {
     return {
       message: 'Erro de conexão. Verifique sua conexão com a internet.',
@@ -119,30 +115,24 @@ export const handleApiError = (error: any): ApiError => {
     };
   }
   
-  // Handle other errors
+  
   return {
     message: error.message || 'Erro inesperado. Tente novamente.',
     code: 'UNKNOWN_ERROR'
   };
 };
 
-/**
- * Check if an error is a specific HTTP status
- */
+
 export const isHttpError = (error: any, status: number): boolean => {
   return error.response?.status === status;
 };
 
-/**
- * Check if an error is a rate limiting error
- */
+
 export const isRateLimitError = (error: any): boolean => {
   return error.response?.status === 429;
 };
 
-/**
- * Get retry after time from rate limit error
- */
+
 export const getRetryAfterTime = (error: any): number => {
   if (isRateLimitError(error)) {
     return error.response?.data?.retry_after || 60;
@@ -150,9 +140,7 @@ export const getRetryAfterTime = (error: any): number => {
   return 0;
 };
 
-/**
- * Check if an error is an authentication error (401 or 403)
- */
+
 export const isAuthError = (error: any): boolean => {
   return isHttpError(error, 401) || isHttpError(error, 403);
 }; 

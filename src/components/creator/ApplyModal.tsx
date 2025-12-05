@@ -42,18 +42,18 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
   
   const loading = externalLoading || isLoading;
 
-  // Form state
+  
   const [proposal, setProposal] = useState("");
   const [portfolioLinks, setPortfolioLinks] = useState<string[]>([""]);
   const [estimatedDeliveryDays, setEstimatedDeliveryDays] = useState<number | undefined>();
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Add portfolio link field
+  
   const addPortfolioLink = () => {
     setPortfolioLinks([...portfolioLinks, ""]);
   };
 
-  // Remove portfolio link field
+  
   const removePortfolioLink = (index: number) => {
     if (portfolioLinks.length > 1) {
       const newLinks = portfolioLinks.filter((_, i) => i !== index);
@@ -61,14 +61,14 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
     }
   };
 
-  // Update portfolio link
+  
   const updatePortfolioLink = (index: number, value: string) => {
     const newLinks = [...portfolioLinks];
     newLinks[index] = value;
     setPortfolioLinks(newLinks);
   };
 
-  // Validate form
+  
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -80,7 +80,7 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
       newErrors.proposal = "A proposta deve ter no máximo 2000 caracteres";
     }
 
-    // Validate portfolio links (if any are filled)
+    
     const filledLinks = portfolioLinks.filter(link => link.trim() !== "");
     filledLinks.forEach((link, index) => {
       try {
@@ -114,7 +114,7 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
     }
 
     try {
-      // Filter out empty portfolio links
+      
       const filteredPortfolioLinks = portfolioLinks.filter(link => link.trim() !== "");
       
       await dispatch(applyToCampaign({
@@ -124,21 +124,21 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
         estimated_delivery_days: estimatedDeliveryDays,
       })).unwrap();
       
-      // Show success message
+      
       toast.success("Aplicação enviada com sucesso! A marca será notificada.");
       
-      // Reset form
+      
       setProposal("");
       setPortfolioLinks([""]);
       setEstimatedDeliveryDays(undefined);
       setErrors({});
       
-      // Call the optional onConfirm callback
+      
       if (onConfirm) {
         onConfirm();
       }
       
-      // Close the modal
+      
       onOpenChange(false);
     } catch (error: any) {
       console.error("Failed to apply to campaign:", error);
@@ -148,7 +148,7 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
   };
 
   const handleClose = () => {
-    // Reset form when closing
+    
     setProposal("");
     setPortfolioLinks([""]);
     setEstimatedDeliveryDays(undefined);
@@ -169,7 +169,7 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
         </DialogHeader>
 
         <div className="space-y-6 mt-6">
-          {/* Proposal */}
+          {}
           <div className="space-y-2">
             <Label htmlFor="proposal" className="text-sm font-medium">
               Proposta * <span className="text-gray-500">(10-2000 caracteres)</span>
@@ -190,7 +190,7 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
             </p>
           </div>
 
-          {/* Portfolio Links */}
+          {}
           <div className="space-y-2">
             <Label className="text-sm font-medium flex items-center gap-2">
               <Link className="w-4 h-4" />
@@ -238,7 +238,7 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
             )}
           </div>
 
-          {/* Estimated Delivery Days */}
+          {}
           <div className="space-y-2">
             <Label htmlFor="delivery-days" className="text-sm font-medium">
               Prazo Estimado de Entrega <span className="text-gray-500">(opcional)</span>

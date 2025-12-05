@@ -202,7 +202,7 @@ export default function BrandTransactions() {
         </Button>
       </div>
 
-      {/* Filters */}
+      {}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-4">
@@ -236,7 +236,7 @@ export default function BrandTransactions() {
         </CardContent>
       </Card>
 
-      {/* Transactions Table */}
+      {}
       <Card>
         <CardHeader>
           <CardTitle>Histórico de Transações</CardTitle>
@@ -335,7 +335,7 @@ export default function BrandTransactions() {
                 </Table>
               </div>
 
-              {/* Pagination */}
+              {}
               {pagination.last_page > 1 && (
                 <div className="flex items-center justify-between mt-4">
                   <div className="text-sm text-muted-foreground">

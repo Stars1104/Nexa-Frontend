@@ -64,7 +64,7 @@ const Setting: React.FC = () => {
         <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white mb-1">Configurações de Regras</h1>
         <p className="text-sm text-gray-500 dark:text-gray-300 mb-6">Configure as regras de acesso e pagamento da plataforma</p>
 
-        {/* Free Access Section */}
+        {}
         <section className="bg-background rounded-xl shadow p-4 sm:p-6 mb-8">
           <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Acesso Gratuito para Alunos</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -91,7 +91,7 @@ const Setting: React.FC = () => {
             </div>
           </div>
 
-          {/* Cohort Table */}
+          {}
           <div className="mb-4">
             <h3 className="font-medium text-gray-800 dark:text-gray-100 mb-2">Tabela de Coortes</h3>
             <div className="overflow-x-auto">
@@ -136,7 +136,7 @@ const Setting: React.FC = () => {
           </div>
         </section>
 
-        {/* Payment Plans Section */}
+        {}
         <section className="bg-background rounded-xl shadow p-4 sm:p-6 mb-8">
           <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Planos de Pagamento</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -179,7 +179,7 @@ const Setting: React.FC = () => {
           </div>
         </section>
 
-        {/* Cohort Modal as Dialog */}
+        {}
         <Dialog open={showCohortModal} onOpenChange={setShowCohortModal}>
           <DialogContent>
             <DialogHeader>

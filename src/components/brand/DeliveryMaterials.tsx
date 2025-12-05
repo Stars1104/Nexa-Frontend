@@ -235,7 +235,7 @@ export default function DeliveryMaterials({ contractId, contractTitle }: Deliver
 
   return (
     <div className="space-y-6">
-      {/* Statistics */}
+      {}
       {statistics && (
         <Card>
           <CardHeader>
@@ -288,7 +288,7 @@ export default function DeliveryMaterials({ contractId, contractTitle }: Deliver
         </Card>
       )}
 
-      {/* Materials List */}
+      {}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -432,7 +432,7 @@ export default function DeliveryMaterials({ contractId, contractTitle }: Deliver
         </CardContent>
       </Card>
 
-      {/* Approval Dialog */}
+      {}
       <Dialog open={showApprovalDialog} onOpenChange={setShowApprovalDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -472,7 +472,7 @@ export default function DeliveryMaterials({ contractId, contractTitle }: Deliver
         </DialogContent>
       </Dialog>
 
-      {/* Rejection Dialog */}
+      {}
       <Dialog open={showRejectionDialog} onOpenChange={setShowRejectionDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -523,7 +523,7 @@ export default function DeliveryMaterials({ contractId, contractTitle }: Deliver
         </DialogContent>
       </Dialog>
 
-      {/* Details Dialog */}
+      {}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>

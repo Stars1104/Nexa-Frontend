@@ -6,10 +6,7 @@ import { CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
 import { useStripeConnect } from '../../hooks/useStripeConnect'
 import { useNavigate } from 'react-router-dom';
 
-/**
- * Example component showing how to integrate Stripe Connect status
- * into existing creator dashboard components
- */
+
 export const StripeConnectExample: React.FC = () => {
   const navigate = useNavigate();
   const { 

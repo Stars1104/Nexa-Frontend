@@ -66,7 +66,7 @@ export const useUser = (): UseUserReturn => {
       
       const response = await getUser();
       if (response.success) {
-        // Update the Redux store with fresh data
+        
         await dispatch(fetchUserForEditing(undefined)).unwrap();
       }
     } catch (error: any) {

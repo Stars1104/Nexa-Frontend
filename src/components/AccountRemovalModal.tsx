@@ -65,13 +65,13 @@ export const AccountRemovalModal: React.FC<AccountRemovalModalProps> = ({
           description: response.message,
         });
 
-        // Logout the user
+        
         await dispatch(logoutUser());
         
-        // Close modal
+        
         onClose();
         
-        // Redirect to login page
+        
         window.location.href = '/auth/login';
       } else {
         toast({

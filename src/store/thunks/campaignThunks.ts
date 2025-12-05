@@ -38,7 +38,7 @@ import {
 import { handleApiError } from '../../lib/api-error-handler';
 import { Campaign, CampaignFormData } from '../slices/campaignSlice';
 
-// API Response types
+
 interface ApiResponse<T> {
   data: T;
   message?: string;
@@ -73,7 +73,7 @@ interface Application {
   appliedAt: string;
 }
 
-// Create new campaign
+
 export const createCampaign = createAsyncThunk<
   Campaign,
   CampaignFormData,
@@ -88,13 +88,13 @@ export const createCampaign = createAsyncThunk<
       throw new Error('Usuário não autenticado');
     }
 
-    // Create FormData for file upload
+    
     const formData = new FormData();
     formData.append('title', campaignData.title);
     formData.append('description', campaignData.description);
     const requirements = (campaignData.briefing || campaignData.creatorRequirements || '').trim();
     formData.append('requirements', requirements);
-    // Ensure budget is a valid number
+    
     if (campaignData.remunerationType === 'paga') {
       const budgetValue = parseFloat(campaignData.budget);
       if (isNaN(budgetValue) || budgetValue <= 0) {
@@ -102,7 +102,7 @@ export const createCampaign = createAsyncThunk<
       }
       formData.append('budget', budgetValue.toString());
     } else {
-      // For permuta campaigns, budget is optional
+      
       if (campaignData.budget.trim()) {
         const budgetValue = parseFloat(campaignData.budget);
         if (!isNaN(budgetValue) && budgetValue >= 0) {
@@ -115,33 +115,33 @@ export const createCampaign = createAsyncThunk<
       }
     }
     
-    // Add remuneration type
+    
     formData.append('remuneration_type', campaignData.remunerationType);
     
 
-    // Add status if provided
+    
     if (campaignData.status) {
       formData.append('status', campaignData.status);
     }
     
-    // Ensure deadline is a valid date
+    
     if (!campaignData.deadline || isNaN(campaignData.deadline.getTime())) {
       throw new Error('Prazo deve ser uma data válida');
     }
-    formData.append('deadline', campaignData.deadline.toISOString().split('T')[0]); // Send only the date part
+    formData.append('deadline', campaignData.deadline.toISOString().split('T')[0]); 
     
-    // Handle target_states - send as array
+    
     if (campaignData.target_states && campaignData.target_states.length > 0) {
       campaignData.target_states.forEach((state: string) => {
         formData.append('target_states[]', state);
       });
     }
     
-    // Always send campaign_type and category, even if empty
+    
     formData.append('campaign_type', campaignData.type?.trim() || '');
     formData.append('category', campaignData.type?.trim() || '');
     
-    // Add creator filter fields
+    
     if (campaignData.minAge) {
       formData.append('min_age', campaignData.minAge.toString());
     }
@@ -149,14 +149,14 @@ export const createCampaign = createAsyncThunk<
       formData.append('max_age', campaignData.maxAge.toString());
     }
     
-    // Handle target_genders - send as array
+    
     if (campaignData.targetGenders && campaignData.targetGenders.length > 0) {
       campaignData.targetGenders.forEach((gender: string) => {
         formData.append('target_genders[]', gender);
       });
     }
     
-    // Handle target_creator_types - send as array (required)
+    
     if (campaignData.targetCreatorTypes && campaignData.targetCreatorTypes.length > 0) {
       campaignData.targetCreatorTypes.forEach((creatorType: string) => {
         formData.append('target_creator_types[]', creatorType);
@@ -167,7 +167,7 @@ export const createCampaign = createAsyncThunk<
       formData.append('logo', campaignData.logo);
     }
     
-    // Handle multiple attachments - send all of them
+    
     if (campaignData.attachments && campaignData.attachments.length > 0) {
       campaignData.attachments.forEach((attachment) => {
         formData.append('attach_file[]', attachment);
@@ -182,7 +182,7 @@ export const createCampaign = createAsyncThunk<
   }
 });
 
-// Fetch all campaigns
+
 export const fetchCampaigns = createAsyncThunk<
   Campaign[],
   void,
@@ -204,7 +204,7 @@ export const fetchCampaigns = createAsyncThunk<
   }
 });
 
-// Fetch pending campaigns (admin only)
+
 export const fetchPendingCampaigns = createAsyncThunk<
   Campaign[],
   void,
@@ -231,7 +231,7 @@ export const fetchPendingCampaigns = createAsyncThunk<
   }
 });
 
-// Fetch user campaigns (for brands)
+
 export const fetchUserCampaigns = createAsyncThunk<
   Campaign[],
   void,
@@ -254,7 +254,7 @@ export const fetchUserCampaigns = createAsyncThunk<
   }
 });
 
-// Fetch available campaigns (for creators)
+
 export const fetchAvailableCampaigns = createAsyncThunk<
   Campaign[],
   {
@@ -282,7 +282,7 @@ export const fetchAvailableCampaigns = createAsyncThunk<
   }
 });
 
-// Fetch campaign statistics
+
 export const fetchCampaignStats = createAsyncThunk<
   CampaignStats,
   void,
@@ -304,7 +304,7 @@ export const fetchCampaignStats = createAsyncThunk<
   }
 });
 
-// Fetch campaign by ID
+
 export const fetchCampaignById = createAsyncThunk<
   Campaign,
   number,
@@ -319,7 +319,7 @@ export const fetchCampaignById = createAsyncThunk<
     }
     
     const response = await GetCampaignById(campaignId, token);
-    // Handle API response structure - extract data if wrapped
+    
     const campaignData = (response as any).data || response;
     return campaignData;
   } catch (error: unknown) {
@@ -328,7 +328,7 @@ export const fetchCampaignById = createAsyncThunk<
   }
 });
 
-// Update campaign
+
 export const updateCampaign = createAsyncThunk<
   Campaign,
   { campaignId: number; data: CampaignFormData },
@@ -344,12 +344,12 @@ export const updateCampaign = createAsyncThunk<
       throw new Error('Usuário não autenticado');
     }
 
-    // Validate data parameter exists
+    
     if (!data) {
       throw new Error('Dados da campanha não fornecidos');
     }
 
-    // Validate required fields
+    
     if (!data.title || !data.title.trim()) {
       throw new Error('Título é obrigatório');
     }
@@ -360,10 +360,10 @@ export const updateCampaign = createAsyncThunk<
       throw new Error('Prazo deve ser uma data válida');
     }
     
-    // Create FormData for file upload
+    
     const formData = new FormData();
     
-    // Only append defined, non-empty values
+    
     if (data.title && data.title.trim()) {
       formData.append('title', data.title.trim());
     }
@@ -372,13 +372,13 @@ export const updateCampaign = createAsyncThunk<
       formData.append('description', data.description.trim());
     }
     
-    // Backend expects 'requirements' not 'briefing'
+    
     const requirements = data.briefing || data.creatorRequirements || '';
     if (requirements) {
       formData.append('requirements', requirements);
     }
     
-    // Validate and append budget
+    
     if (data.budget !== undefined && data.budget !== null && data.budget !== '') {
       const budgetValue = typeof data.budget === 'string' ? parseFloat(data.budget) : data.budget;
       if (!isNaN(budgetValue) && budgetValue >= 0) {
@@ -386,8 +386,8 @@ export const updateCampaign = createAsyncThunk<
       }
     }
     
-    // Validate and append deadline
-    // Format date locally to avoid timezone issues (toISOString() converts to UTC which can cause 1-day difference)
+    
+    
     if (data.deadline instanceof Date && !isNaN(data.deadline.getTime())) {
       const year = data.deadline.getFullYear();
       const month = String(data.deadline.getMonth() + 1).padStart(2, '0');
@@ -397,7 +397,7 @@ export const updateCampaign = createAsyncThunk<
       throw new Error('Prazo inválido');
     }
     
-    // Handle target_states - send as array (backend expects array)
+    
     if (data.target_states && Array.isArray(data.target_states)) {
       const filteredStates = data.target_states.filter(Boolean);
       filteredStates.forEach((state: string) => {
@@ -407,18 +407,18 @@ export const updateCampaign = createAsyncThunk<
       });
     }
     
-    // Handle remuneration_type if available
+    
     if (data.remunerationType && (data.remunerationType === 'paga' || data.remunerationType === 'permuta')) {
       formData.append('remuneration_type', data.remunerationType);
     }
     
-    // Send type/category - backend expects 'category' or 'campaign_type'
+    
     if (data.type && data.type.trim()) {
       formData.append('category', data.type.trim());
       formData.append('campaign_type', data.type.trim());
     }
     
-    // Handle optional fields
+    
     if (data.minAge !== undefined && data.minAge !== null) {
       formData.append('min_age', data.minAge.toString());
     }
@@ -427,7 +427,7 @@ export const updateCampaign = createAsyncThunk<
       formData.append('max_age', data.maxAge.toString());
     }
     
-    // Handle target_genders if provided
+    
     if (data.targetGenders && Array.isArray(data.targetGenders)) {
       const filteredGenders = data.targetGenders.filter(Boolean);
       filteredGenders.forEach((gender: string) => {
@@ -437,7 +437,7 @@ export const updateCampaign = createAsyncThunk<
       });
     }
     
-    // Handle target_creator_types if provided
+    
     if (data.targetCreatorTypes && Array.isArray(data.targetCreatorTypes)) {
       const filteredTypes = data.targetCreatorTypes.filter(Boolean);
       filteredTypes.forEach((type: string) => {
@@ -447,17 +447,17 @@ export const updateCampaign = createAsyncThunk<
       });
     }
     
-    // Handle file uploads
+    
     if (data.logo && data.logo instanceof File) {
       formData.append('logo', data.logo);
     }
     
-    // Handle attachments - backend accepts single file or array
+    
     if (data.attachments && Array.isArray(data.attachments) && data.attachments.length > 0) {
-      // Filter valid files
+      
       const validFiles = data.attachments.filter((file: File) => file instanceof File);
       if (validFiles.length > 0) {
-        // Send as array if multiple files, single if one file
+        
         if (validFiles.length === 1) {
           formData.append('attach_file', validFiles[0]);
         } else {
@@ -468,7 +468,7 @@ export const updateCampaign = createAsyncThunk<
       }
     }
 
-    // Debug: Log FormData contents
+    
     if (import.meta.env.DEV) {
       console.log('FormData contents:');
       for (let pair of formData.entries()) {
@@ -484,7 +484,7 @@ export const updateCampaign = createAsyncThunk<
   }
 });
 
-// Delete campaign
+
 export const deleteCampaign = createAsyncThunk<
   { campaignId: number },
   number,
@@ -508,7 +508,7 @@ export const deleteCampaign = createAsyncThunk<
   }
 });
 
-// Apply to campaign (for creators)
+
 export const applyToCampaign = createAsyncThunk<
   Application,
   {
@@ -535,13 +535,13 @@ export const applyToCampaign = createAsyncThunk<
     let errorMessage = 'Falha ao se candidatar à campanha';
     
     if (error instanceof Error) {
-      // Check if it's an axios error with response data
+      
       if ('response' in error && error.response && typeof error.response === 'object' && 'data' in error.response) {
         const responseData = error.response.data as any;
         if (responseData.message) {
           errorMessage = responseData.message;
         } else if (responseData.errors) {
-          // Handle validation errors
+          
           const errors = Object.values(responseData.errors).flat();
           errorMessage = errors.join(', ');
         }
@@ -554,7 +554,7 @@ export const applyToCampaign = createAsyncThunk<
   }
 });
 
-// Fetch campaign applications (for brands)
+
 export const fetchCampaignApplications = createAsyncThunk<
   Application[],
   number,
@@ -576,7 +576,7 @@ export const fetchCampaignApplications = createAsyncThunk<
   }
 });
 
-// Fetch creator applications (for creators)
+
 export const fetchCreatorApplications = createAsyncThunk<
   Application[],
   void,
@@ -598,7 +598,7 @@ export const fetchCreatorApplications = createAsyncThunk<
   }
 });
 
-// Approve application (for brands)
+
 export const approveApplication = createAsyncThunk<
   { campaignId: number; applicationId: number },
   { campaignId: number; applicationId: number },
@@ -615,7 +615,7 @@ export const approveApplication = createAsyncThunk<
     await ApproveApplication(applicationId, token);
     return { campaignId, applicationId };
   } catch (error: any) {
-    // Check if this is a funding requirement error (payment method or contract funding)
+    
     if (error.requiresFunding && error.redirectUrl) {
       return rejectWithValue({
         message: error.message || 'Método de pagamento necessário',
@@ -632,7 +632,7 @@ export const approveApplication = createAsyncThunk<
   }
 });
 
-// Reject application (for brands)
+
 export const rejectApplication = createAsyncThunk<
   { campaignId: number; applicationId: number },
   { campaignId: number; applicationId: number; reason?: string },
@@ -654,7 +654,7 @@ export const rejectApplication = createAsyncThunk<
   }
 });
 
-// Withdraw application (for creators)
+
 export const withdrawApplication = createAsyncThunk<
   number,
   number,
@@ -676,7 +676,7 @@ export const withdrawApplication = createAsyncThunk<
   }
 });
 
-// Get all applications (role-based)
+
 export const fetchAllApplications = createAsyncThunk<
   Application[],
   { status?: string; campaign_id?: number },
@@ -698,7 +698,7 @@ export const fetchAllApplications = createAsyncThunk<
   }
 });
 
-// Get specific application
+
 export const fetchApplication = createAsyncThunk<
   Application,
   number,
@@ -720,7 +720,7 @@ export const fetchApplication = createAsyncThunk<
   }
 });
 
-// Get application statistics
+
 export const fetchApplicationStatistics = createAsyncThunk<
   { total: number; pending: number; approved: number; rejected: number },
   void,
@@ -742,7 +742,7 @@ export const fetchApplicationStatistics = createAsyncThunk<
   }
 });
 
-// Search campaigns
+
 export const searchCampaigns = createAsyncThunk<
   Campaign[],
   {
@@ -779,7 +779,7 @@ export const searchCampaigns = createAsyncThunk<
   }
 });
 
-// Fetch campaign categories
+
 export const fetchCampaignCategories = createAsyncThunk<
   string[],
   void,
@@ -801,7 +801,7 @@ export const fetchCampaignCategories = createAsyncThunk<
   }
 });
 
-// Fetch campaign types
+
 export const fetchCampaignTypes = createAsyncThunk<
   string[],
   void,
@@ -823,7 +823,7 @@ export const fetchCampaignTypes = createAsyncThunk<
   }
 });
 
-// Duplicate campaign
+
 export const duplicateCampaign = createAsyncThunk<
   Campaign,
   number,
@@ -845,7 +845,7 @@ export const duplicateCampaign = createAsyncThunk<
   }
 });
 
-// Extend campaign deadline
+
 export const extendCampaignDeadline = createAsyncThunk<
   Campaign,
   { campaignId: number; newDeadline: string },
@@ -867,7 +867,7 @@ export const extendCampaignDeadline = createAsyncThunk<
   }
 });
 
-// Update campaign budget
+
 export const updateCampaignBudget = createAsyncThunk<
   Campaign,
   { campaignId: number; newBudget: number },
@@ -889,7 +889,7 @@ export const updateCampaignBudget = createAsyncThunk<
   }
 });
 
-// Fetch campaign analytics
+
 export const fetchCampaignAnalytics = createAsyncThunk<
   CampaignAnalytics,
   number,
@@ -911,7 +911,7 @@ export const fetchCampaignAnalytics = createAsyncThunk<
   }
 });
 
-// Export campaigns
+
 export const exportCampaigns = createAsyncThunk<
   Blob,
   {
@@ -944,7 +944,7 @@ export const exportCampaigns = createAsyncThunk<
   }
 });
 
-// Approve campaign (admin only)
+
 export const approveCampaign = createAsyncThunk<
   Campaign,
   number,
@@ -971,7 +971,7 @@ export const approveCampaign = createAsyncThunk<
   }
 });
 
-// Reject campaign (admin only)
+
 export const rejectCampaign = createAsyncThunk<
   Campaign,
   { campaignId: number; reason?: string },
@@ -998,7 +998,7 @@ export const rejectCampaign = createAsyncThunk<
   }
 });
 
-// Fetch approved campaigns (for creators)
+
 export const fetchApprovedCampaigns = createAsyncThunk<
   Campaign[],
   void,
@@ -1014,12 +1014,12 @@ export const fetchApprovedCampaigns = createAsyncThunk<
     
     const response = await GetCampaignsByStatus('approved', token);
     
-    // Handle paginated response structure
+    
     if (response && typeof response === 'object' && 'data' in response) {
       return response.data;
     }
     
-    // Handle direct array response
+    
     if (Array.isArray(response)) {
       return response;
     }
@@ -1031,7 +1031,7 @@ export const fetchApprovedCampaigns = createAsyncThunk<
   }
 });
 
-// Toggle featured status (admin only)
+
 export const toggleFeaturedCampaign = createAsyncThunk<
   Campaign,
   number,
@@ -1058,7 +1058,7 @@ export const toggleFeaturedCampaign = createAsyncThunk<
   }
 });
 
-// Toggle favorite status (for creators)
+
 export const toggleFavoriteCampaign = createAsyncThunk<
   { campaign_id: number; is_favorited: boolean },
   number,
@@ -1081,7 +1081,7 @@ export const toggleFavoriteCampaign = createAsyncThunk<
   }
 });
 
-// Fetch favorite campaigns (for creators)
+
 export const fetchFavoriteCampaigns = createAsyncThunk<
   Campaign[],
   void,

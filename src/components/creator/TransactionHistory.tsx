@@ -68,17 +68,17 @@ export default function TransactionHistory() {
 
   useEffect(() => {
 
-    // Only load transactions if user is authenticated and we haven't attempted to load yet
+    
     if (isAuthenticated && token && user && !hasAttemptedLoad) {
       setHasAttemptedLoad(true);
       loadTransactions();
     } else if (!isAuthenticated && !token && hasAttemptedLoad) {
-      // If not authenticated and we've already attempted to load, stop loading
+      
       setLoading(false);
     }
   }, [isAuthenticated, token, user, hasAttemptedLoad]);
 
-  // Show loading while authentication is being checked
+  
   if (isAuthenticated === undefined || token === undefined || user === undefined) {
     return (
       <div className="space-y-6 p-6 dark:bg-[#171717] min-h-[calc(100vh-90px)]">
@@ -93,40 +93,40 @@ export default function TransactionHistory() {
   }
 
   const loadTransactions = async () => {
-    // Double-check authentication before making the API call
+    
     if (!isAuthenticated || !token || !user) {
       console.warn('User not authenticated, skipping transaction load');
       setLoading(false);
       return;
     }
 
-    // Clean token if needed (remove Bearer prefix if present)
+    
     let cleanToken = token;
     if (token.startsWith('Bearer ')) {
-      cleanToken = token.substring(7); // Remove 'Bearer ' prefix if present
+      cleanToken = token.substring(7); 
     }
 
     try {
       setLoading(true);
       
-      // First, test if the token is valid by calling the /user endpoint
+      
       const testClient = createAuthenticatedClient(cleanToken);
       try {
         const testResponse = await testClient.get('/user');
       } catch (testError: any) {
         console.error('TransactionHistory: Token validation failed:', testError.response?.status, testError.response?.data);
         if (testError.response?.status === 401) {
-          // Try with the original token to see if there's a format issue
+          
           try {
             const originalTestClient = createAuthenticatedClient(token);
             const originalTestResponse = await originalTestClient.get('/user');
 
-            // Use the original token for the main request
+            
             cleanToken = token;
           } catch (originalTestError: any) {
             console.error('TransactionHistory: Original token format also failed:', originalTestError.response?.status);
             
-            // Try with regular axios to see if the issue is with our custom client
+            
             try {
               const baseURL = import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br';
               
@@ -137,7 +137,7 @@ export default function TransactionHistory() {
                   'Accept': 'application/json'
                 }
               });
-              // Use regular axios for the main request
+              
               const transactionsResponse = await axios.get(`${baseURL}/api/payment/transactions`, {
                 headers: {
                   'Authorization': `Bearer ${cleanToken}`,
@@ -152,7 +152,7 @@ export default function TransactionHistory() {
             } catch (axiosError: any) {
               console.error('TransactionHistory: Regular axios also failed:', axiosError.response?.status, axiosError.response?.data);
               
-              // Try with localhost as fallback
+              
               const baseURL = import.meta.env.VITE_BACKEND_URL || 'https://nexacreators.com.br';
               if (baseURL !== 'http://localhost:8000') {
                 try {
@@ -193,7 +193,7 @@ export default function TransactionHistory() {
         }
       }
       
-      // Now load transactions
+      
       const authenticatedClient = createAuthenticatedClient(cleanToken);
       const response = await authenticatedClient.get<TransactionHistoryResponse>('/payment/transactions');
       
@@ -205,14 +205,14 @@ export default function TransactionHistory() {
       console.error('TransactionHistory: Error status:', error.response?.status);
       console.error('TransactionHistory: Error data:', error.response?.data);
       
-      // Handle authentication errors specifically
+      
       if (error.response?.status === 401) {
         toast({
           title: "Erro de Autenticação",
           description: "Sua sessão expirou. Por favor, faça login novamente.",
           variant: "destructive",
         });
-        // Reset the attempt flag so we can try again if auth is restored
+        
         setHasAttemptedLoad(false);
       } else {
         toast({
@@ -239,7 +239,7 @@ export default function TransactionHistory() {
   };
 
   const formatCurrency = (amount: string) => {
-    const value = parseFloat(amount) / 100; // Convert from cents to reais
+    const value = parseFloat(amount) / 100; 
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
@@ -304,7 +304,7 @@ export default function TransactionHistory() {
   };
 
   const downloadReceipt = (transaction: Transaction) => {
-    // Create a simple receipt text
+    
     const receipt = `
 NEXA UGC - Recibo de Pagamento
 ==============================
@@ -347,11 +347,11 @@ Obrigado pela sua assinatura!
     );
   }
 
-  // Show message if user is not authenticated
+  
   if (!isAuthenticated || !token || !user) {
     return (
       <div className="space-y-6 p-6 dark:bg-[#171717] min-h-[calc(100vh-90px)]">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Histórico de Transações</h1>
@@ -381,7 +381,7 @@ Obrigado pela sua assinatura!
 
   return (
     <div className="space-y-6 p-6 dark:bg-[#171717] min-h-[calc(100vh-90px)]">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Histórico de Transações</h1>
@@ -395,7 +395,7 @@ Obrigado pela sua assinatura!
         </Button>
       </div>
 
-      {/* Summary Card */}
+      {}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -427,7 +427,7 @@ Obrigado pela sua assinatura!
         </CardContent>
       </Card>
 
-      {/* Transactions List */}
+      {}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold text-foreground">Transações Recentes</h2>
         
@@ -520,7 +520,7 @@ Obrigado pela sua assinatura!
         )}
       </div>
 
-      {/* Transaction Details Modal */}
+      {}
       {selectedTransaction && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card className="w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">

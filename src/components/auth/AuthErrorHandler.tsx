@@ -45,7 +45,7 @@ export default function AuthErrorHandler({ error, onRetry, className = '' }: Aut
     );
   }
 
-  // Handle other types of errors
+  
   let title = 'Erro';
   let description = 'Ocorreu um erro inesperado. Tente novamente.';
 

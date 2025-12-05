@@ -89,12 +89,12 @@ export default function PaymentModal({
   };
 
   const formatCurrency = (amount: string) => {
-    // If the amount is already formatted (contains "R$"), return it as is
+    
     if (amount && amount.includes('R$')) {
       return amount;
     }
     
-    // Otherwise, format it as currency
+    
     const numericAmount = parseFloat(amount);
     if (isNaN(numericAmount)) {
       return 'R$ 0,00';
@@ -120,7 +120,7 @@ export default function PaymentModal({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Contract Info */}
+          {}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -139,7 +139,7 @@ export default function PaymentModal({
             </CardContent>
           </Card>
 
-          {/* Payment Breakdown */}
+          {}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -178,7 +178,7 @@ export default function PaymentModal({
             </CardContent>
           </Card>
 
-          {/* Payment Method Info */}
+          {}
           <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
@@ -196,7 +196,7 @@ export default function PaymentModal({
             </CardContent>
           </Card>
 
-          {/* Warning */}
+          {}
           <div className="flex items-start gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
             <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
             <div className="space-y-1">

@@ -23,16 +23,14 @@ const StripeConnectPage: React.FC = () => {
     toast.error(`Erro na configuração: ${error}`);
   };
 
-  /**
-   * Handle payment method button click - redirect to Stripe checkout
-   */
+  
   const handleConnectPaymentMethod = async () => {
     setIsLoading(true);
     try {
       const response = await apiClient.post('/freelancer/stripe-payment-method-checkout');
       
       if (response.data.success && response.data.url) {
-        // Redirect to Stripe checkout page
+        
         window.location.href = response.data.url;
       } else {
         throw new Error(response.data.message || 'Erro ao criar sessão de checkout');
@@ -74,7 +72,7 @@ const StripeConnectPage: React.FC = () => {
       </Helmet>
 
       <div className="min-h-screen bg-background">
-        {/* Header */}
+        {}
         <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center gap-4">
@@ -97,10 +95,10 @@ const StripeConnectPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Content */}
+        {}
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto space-y-8">
-            {/* Info Card */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -131,10 +129,10 @@ const StripeConnectPage: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Test Component - Remove after testing */}
+            {}
             <StripeConnectTest />
 
-            {/* Payment Method Button Card */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -166,13 +164,13 @@ const StripeConnectPage: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Stripe Connect Onboarding */}
+            {}
             <StripeConnectOnboarding
               onComplete={handleComplete}
               onError={handleError}
             />
 
-            {/* Additional Info */}
+            {}
             <Alert>
               <Shield className="h-4 w-4" />
               <AlertDescription>
@@ -182,7 +180,7 @@ const StripeConnectPage: React.FC = () => {
               </AlertDescription>
             </Alert>
 
-            {/* Help Section */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Precisa de ajuda?</CardTitle>

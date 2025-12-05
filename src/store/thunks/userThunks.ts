@@ -13,23 +13,23 @@ import { handleApiError } from '../../lib/api-error-handler';
 import { RootState } from '../index';
 import { getCreatorProfile } from '../../api/user';
 
-// Async thunk for fetching user profile
-// Simple in-memory dedupe/TTL for profile fetches
+
+
 let inFlightProfileFetch: Promise<any> | null = null;
 let lastProfileFetchAt = 0;
-const PROFILE_TTL_MS = 30000; // 30s TTL
+const PROFILE_TTL_MS = 30000; 
 
 export const fetchUserProfile = createAsyncThunk(
   'user/fetchProfile',
   async (_, { dispatch, rejectWithValue }) => {
     try {
-      // Dedupe concurrent calls
+      
       if (inFlightProfileFetch) {
         const result = await inFlightProfileFetch;
         return result.profile;
       }
 
-      // TTL-based cache: if profile was fetched recently, skip network
+      
       const now = Date.now();
       if (now - lastProfileFetchAt < PROFILE_TTL_MS) {
         return (undefined as any);
@@ -48,7 +48,7 @@ export const fetchUserProfile = createAsyncThunk(
       }
 
       dispatch(fetchProfileSuccess(response.profile));
-      // Propagar avatar/nome para auth.user (header e demais componentes usam auth)
+      
       dispatch(updateUser({
         name: response.profile?.name,
         email: response.profile?.email,
@@ -65,7 +65,7 @@ export const fetchUserProfile = createAsyncThunk(
   }
 );
 
-// Async thunk for fetching comprehensive user data for editing
+
 export const fetchUserForEditing = createAsyncThunk(
   'user/fetchUserForEditing',
   async (userId: string | undefined = undefined, { dispatch, rejectWithValue }) => {
@@ -78,7 +78,7 @@ export const fetchUserForEditing = createAsyncThunk(
         throw new Error(response.message || 'Falha ao buscar dados do usuário');
       }
 
-      // Use the same success action since we're storing user data
+      
       dispatch(fetchProfileSuccess(response.user));
       return response.user;
     } catch (error: unknown) {
@@ -89,7 +89,7 @@ export const fetchUserForEditing = createAsyncThunk(
   }
 );
 
-// Async thunk for updating user profile
+
 export const updateUserProfile = createAsyncThunk<
   any,
   any,
@@ -103,7 +103,7 @@ export const updateUserProfile = createAsyncThunk<
       throw new Error('Usuário não autenticado');
     }
     
-    // Se houver arquivo (avatar), usar FormData; caso contrário, enviar JSON puro
+    
     const hasFile = profileData?.avatar instanceof File;
 
     let response;
@@ -127,25 +127,25 @@ export const updateUserProfile = createAsyncThunk<
       });
       response = await profileUpdate(formData as any);
     } else {
-      // Enviar JSON simples quando não há arquivo evita multipart PUT e parsing manual no backend
+      
       const jsonPayload: any = {};
       Object.keys(profileData).forEach(key => {
-        if (key === 'avatar') return; // não enviar avatar se não for arquivo
+        if (key === 'avatar') return; 
         if (key === 'languages' && Array.isArray(profileData[key])) {
-          // Backend espera string JSON para languages
+          
           jsonPayload.languages = JSON.stringify(profileData[key]);
         } else if (key === 'categories' && Array.isArray(profileData[key])) {
-          // Por consistência, enviar como string JSON também
+          
           jsonPayload.categories = JSON.stringify(profileData[key]);
         } else if (profileData[key] !== undefined && profileData[key] !== null && !(Array.isArray(profileData[key]) && profileData[key].length === 0)) {
           jsonPayload[key] = profileData[key];
         }
       });
 
-      // Normalizar birth_date para Y-m-d se vier em ISO
+      
       if (jsonPayload.birth_date && typeof jsonPayload.birth_date === 'string') {
         try {
-          // aceita formatos 'YYYY-MM-DD' ou ISO; se ISO, recorta
+          
           if (jsonPayload.birth_date.includes('T')) {
             jsonPayload.birth_date = jsonPayload.birth_date.slice(0, 10);
           }
@@ -158,7 +158,7 @@ export const updateUserProfile = createAsyncThunk<
       throw new Error(response.message || 'Falha ao atualizar perfil');
     }
 
-    // Sincroniza auth.user para refletir avatar/nome imediatamente (header/portfolio)
+    
     try {
       const updated = response.profile;
       dispatch(updateUser({
@@ -175,7 +175,7 @@ export const updateUserProfile = createAsyncThunk<
   }
 }); 
 
-// Fetch creator profile for brands
+
 export const fetchCreatorProfile = createAsyncThunk<
   any,
   string,

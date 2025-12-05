@@ -35,9 +35,9 @@ export const useBrandChatNavigation = (): UseBrandChatNavigationReturn => {
     const navigateToChatWithRoom = useCallback(async (campaignId: number, creatorId: number, setComponent: (component: string | { name: string; campaign?: any; creatorId?: string }) => void) => {
         try {
             const roomId = await createChatRoom(campaignId, creatorId);
-            // Store the room ID in localStorage so ChatPage can automatically select it
+            
             localStorage.setItem("selectedChatRoom", roomId);
-            // Use setComponent to navigate to Chat component with room ID
+            
             setComponent({
                 name: "Chat",
                 campaign: { id: campaignId },

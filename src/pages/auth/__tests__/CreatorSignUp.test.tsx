@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import CreatorSignUp from '../CreatorSignUp'
 
-// Mock the logo imports
+
 vi.mock('@/assets/light-logo.png', () => ({
   default: 'light-logo.png'
 }))
@@ -14,12 +14,12 @@ vi.mock('@/assets/dark-logo.png', () => ({
   default: 'dark-logo.png'
 }))
 
-// Mock the hooks
+
 vi.mock('@/hooks/use-system-theme', () => ({
   useSystemTheme: () => false
 }))
 
-// Mock react-router-dom
+
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
@@ -30,7 +30,7 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
-// Wrapper component for testing
+
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
   <BrowserRouter>
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
@@ -39,7 +39,7 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
   </BrowserRouter>
 )
 
-// Helper function to find the signin toggle button
+
 const findSignInToggleButton = () => {
   const toggleButtons = screen.getAllByRole('button')
   return toggleButtons.find(button => 
@@ -49,7 +49,7 @@ const findSignInToggleButton = () => {
   )
 }
 
-// Helper function to find the signup toggle button
+
 const findSignUpToggleButton = () => {
   const toggleButtons = screen.getAllByRole('button')
   return toggleButtons.find(button => 
@@ -61,7 +61,7 @@ const findSignUpToggleButton = () => {
 
 describe('CreatorSignUp', () => {
   beforeEach(() => {
-    // Clear all mocks before each test
+    
     vi.clearAllMocks()
   })
 
@@ -172,7 +172,7 @@ describe('CreatorSignUp', () => {
       )
 
       const nameInput = screen.getByLabelText('Nome')
-      // Type something and then clear it to trigger validation
+      
       await user.type(nameInput, 'a')
       await user.clear(nameInput)
       await user.tab()
@@ -281,7 +281,7 @@ describe('CreatorSignUp', () => {
         </TestWrapper>
       )
 
-      // Fill out the form with valid data
+      
       await user.type(screen.getByLabelText('Nome'), 'João Silva')
       await user.type(screen.getByLabelText('E-mail'), 'joao@example.com')
       await user.type(screen.getByLabelText('WhatsApp'), '(11) 99999-9999')
@@ -289,7 +289,7 @@ describe('CreatorSignUp', () => {
       await user.type(screen.getByLabelText('Confirmar Senha'), 'Password123!')
       await user.click(screen.getByRole('checkbox'))
 
-      // Submit the form
+      
       const form = screen.getByLabelText('Nome').closest('form')
       const submitButton = form?.querySelector('button[type="submit"]')
       expect(submitButton).toBeInTheDocument()
@@ -309,14 +309,14 @@ describe('CreatorSignUp', () => {
         </TestWrapper>
       )
 
-      // Fill out the form without checking student checkbox
+      
       await user.type(screen.getByLabelText('Nome'), 'Maria Silva')
       await user.type(screen.getByLabelText('E-mail'), 'maria@example.com')
       await user.type(screen.getByLabelText('WhatsApp'), '(11) 88888-8888')
       await user.type(screen.getByLabelText('Senha'), 'Password456!')
       await user.type(screen.getByLabelText('Confirmar Senha'), 'Password456!')
 
-      // Submit the form
+      
       const form = screen.getByLabelText('Nome').closest('form')
       const submitButton = form?.querySelector('button[type="submit"]')
       expect(submitButton).toBeInTheDocument()
@@ -337,19 +337,19 @@ describe('CreatorSignUp', () => {
         </TestWrapper>
       )
 
-      // Initially shows signup form
+      
       expect(screen.getByText('Registrar')).toBeInTheDocument()
       expect(screen.getByText('Crie sua conta para começar')).toBeInTheDocument()
 
-      // Click signin button (the toggle button, not the link)
+      
       const signInToggleButton = findSignInToggleButton()
       expect(signInToggleButton).toBeInTheDocument()
       await user.click(signInToggleButton!)
 
-      // Should now show signin form
+      
       expect(screen.getByRole('heading', { name: 'Entrar' })).toBeInTheDocument()
       expect(screen.getByText('Entre na sua conta')).toBeInTheDocument()
-      // Check for the submit button specifically
+      
       const emailInput = screen.getByLabelText('E-mail')
       const form = emailInput.closest('form')
       const submitButton = form?.querySelector('button[type="submit"]')
@@ -365,13 +365,13 @@ describe('CreatorSignUp', () => {
         </TestWrapper>
       )
 
-      // Switch to signin first
+      
       const signInToggleButton = findSignInToggleButton()
       expect(signInToggleButton).toBeInTheDocument()
       await user.click(signInToggleButton!)
       expect(screen.getByText('Entre na sua conta')).toBeInTheDocument()
 
-      // Switch back to signup
+      
       const signUpToggleButton = findSignUpToggleButton()
       expect(signUpToggleButton).toBeInTheDocument()
       await user.click(signUpToggleButton!)
@@ -388,7 +388,7 @@ describe('CreatorSignUp', () => {
         </TestWrapper>
       )
 
-      // Switch to signin
+      
       const signInToggleButton = findSignInToggleButton()
       expect(signInToggleButton).toBeInTheDocument()
       await user.click(signInToggleButton!)
@@ -408,26 +408,26 @@ describe('CreatorSignUp', () => {
         </TestWrapper>
       )
 
-      // Switch to signin
+      
       const signInToggleButton = findSignInToggleButton()
       expect(signInToggleButton).toBeInTheDocument()
       await user.click(signInToggleButton!)
 
-      // Fill out signin form
+      
       await user.type(screen.getByLabelText('E-mail'), 'test@example.com')
       await user.type(screen.getByLabelText('Senha'), 'password123')
 
-      // Submit the form by finding the submit button within the form
+      
       const form = screen.getByDisplayValue('test@example.com').closest('form')
       expect(form).toBeInTheDocument()
       const submitButton = form?.querySelector('button[type="submit"]')
       expect(submitButton).toBeInTheDocument()
       expect(submitButton).toHaveTextContent('Entrar')
       
-      // Click the submit button
+      
       await user.click(submitButton!)
 
-      // Wait for navigation to be called
+      
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith('/creator/dashboard')
       }, { timeout: 3000 })
@@ -441,12 +441,12 @@ describe('CreatorSignUp', () => {
         </TestWrapper>
       )
 
-      // Switch to signin
+      
       const signInToggleButton = findSignInToggleButton()
       expect(signInToggleButton).toBeInTheDocument()
       await user.click(signInToggleButton!)
 
-      // Click forgot password link
+      
       await user.click(screen.getByText('Esqueceu a senha?'))
 
       expect(mockNavigate).toHaveBeenCalledWith('/forgot-password')
@@ -462,7 +462,7 @@ describe('CreatorSignUp', () => {
         </TestWrapper>
       )
 
-      // Find the specific "Entrar" link in the signup form by looking for the container with "Já tem uma conta?"
+      
       const container = screen.getByText('Já tem uma conta?').closest('div')
       const signInLink = container?.querySelector('div[class*="font-semibold text-pink-500"]')
       expect(signInLink).toBeInTheDocument()
@@ -480,12 +480,12 @@ describe('CreatorSignUp', () => {
         </TestWrapper>
       )
 
-      // Switch to signin first
+      
       const signInToggleButton = findSignInToggleButton()
       expect(signInToggleButton).toBeInTheDocument()
       await user.click(signInToggleButton!)
 
-      // Find the specific "Criar conta" link in the signin form
+      
       const container = screen.getByText('Não tem uma conta?').closest('div')
       const createAccountLink = container?.querySelector('div[class*="font-semibold text-pink-500"]')
       expect(createAccountLink).toBeInTheDocument()
@@ -529,7 +529,7 @@ describe('CreatorSignUp', () => {
         </TestWrapper>
       )
 
-      // Switch to signin
+      
       const signInToggleButton = findSignInToggleButton()
       expect(signInToggleButton).toBeInTheDocument()
       await user.click(signInToggleButton!)
@@ -560,7 +560,7 @@ describe('CreatorSignUp', () => {
         </TestWrapper>
       )
 
-      // Check for the submit button specifically
+      
       const form = screen.getByLabelText('Nome').closest('form')
       const submitButton = form?.querySelector('button[type="submit"]')
       expect(submitButton).toBeInTheDocument()
@@ -575,7 +575,7 @@ describe('CreatorSignUp', () => {
         </TestWrapper>
       )
 
-      // Check for form element by finding an input and getting its parent form
+      
       const nameInput = screen.getByLabelText('Nome')
       const form = nameInput.closest('form')
       expect(form).toBeInTheDocument()
@@ -591,7 +591,7 @@ describe('CreatorSignUp', () => {
         </TestWrapper>
       )
 
-      // Verify the theme toggle is present and functional
+      
       const themeToggle = screen.getByRole('button', { name: /toggle theme/i })
       expect(themeToggle).toBeInTheDocument()
       expect(themeToggle).toBeEnabled()
@@ -602,7 +602,7 @@ describe('CreatorSignUp', () => {
     it('handles form submission errors gracefully', async () => {
       const user = userEvent.setup()
       
-      // Mock console.error to prevent test noise
+      
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       
       render(
@@ -611,10 +611,10 @@ describe('CreatorSignUp', () => {
         </TestWrapper>
       )
 
-      // Try to submit form with invalid data
+      
       await user.click(screen.getByRole('button', { name: 'Criar conta' }))
 
-      // Should show validation errors instead of crashing
+      
       await waitFor(() => {
         expect(screen.getByText('Nome é obrigatório')).toBeInTheDocument()
       })

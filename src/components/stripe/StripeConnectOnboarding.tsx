@@ -26,7 +26,7 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
 
-  // Load account status on component mount
+  
   useEffect(() => {
     loadAccountStatus();
   }, []);
@@ -54,13 +54,13 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
       const accountLink = await stripeApi.createAccountLink();
       console.log(accountLink)
       
-      // Detect browser language and add locale parameter to URL
-      // Stripe detects language from browser, but we can help by adding it to the URL
+      
+      
       const browserLang = navigator.language || navigator.languages?.[0] || 'pt-BR';
       const isPortuguese = browserLang.startsWith('pt') || document.documentElement.lang === 'pt-BR';
       const locale = isPortuguese ? 'pt-BR' : browserLang;
       
-      // Add locale parameter to the URL if not already present
+      
       let stripeUrl = accountLink.url;
       try {
         const url = new URL(stripeUrl);
@@ -69,13 +69,13 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
           stripeUrl = url.toString();
         }
       } catch (e) {
-        // If URL parsing fails, try simple string append
+        
         stripeUrl = stripeUrl.includes('?') 
           ? `${stripeUrl}&locale=${locale}`
           : `${stripeUrl}?locale=${locale}`;
       }
       
-      // Open Stripe onboarding in a new window
+      
       const newWindow = window.open(
         stripeUrl,
         'stripe-onboarding',
@@ -86,11 +86,11 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
         throw new Error('Não foi possível abrir a janela de onboarding. Verifique se o bloqueador de pop-ups está desabilitado.');
       }
 
-      // Monitor the popup window
+      
       const checkClosed = setInterval(() => {
         if (newWindow.closed) {
           clearInterval(checkClosed);
-          // Reload account status after popup closes
+          
           setTimeout(() => {
             loadAccountStatus();
             onComplete?.();
@@ -98,7 +98,7 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
         }
       }, 1000);
 
-      // Auto-close after 10 minutes if still open
+      
       setTimeout(() => {
         if (!newWindow.closed) {
           newWindow.close();
@@ -151,18 +151,18 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
     }
   };
 
-  // Mapeamento de campos técnicos do Stripe para mensagens amigáveis em português
+  
   const translateRequirementField = (field: string): string => {
     const translations: { [key: string]: string } = {
-      // Informações do negócio
+      
       'business_profile.mcc': 'Código de categoria do negócio',
       'business_profile.product_description': 'Descrição dos produtos/serviços',
       'business_type': 'Tipo de negócio',
       
-      // Conta bancária
+      
       'external_account': 'Conta bancária',
       
-      // Representante legal
+      
       'representative.address.city': 'Cidade do representante',
       'representative.address.line1': 'Endereço do representante',
       'representative.address.postal_code': 'CEP do representante',
@@ -179,11 +179,11 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
       'representative.verification.additional_document': 'Documento adicional do representante',
       'representative.verification.document': 'Documento de verificação do representante',
       
-      // Aceite de termos
+      
       'tos_acceptance.date': 'Data de aceite dos termos',
       'tos_acceptance.ip': 'IP de aceite dos termos',
       
-      // Outros campos comuns
+      
       'individual.address.city': 'Cidade',
       'individual.address.line1': 'Endereço',
       'individual.address.postal_code': 'CEP',

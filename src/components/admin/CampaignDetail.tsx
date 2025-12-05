@@ -41,7 +41,7 @@ const CampaignDetail = ({
   onApprove,
   onReject,
 }: CampaignDetailProps) => {
-  // Helper function to get file type icon
+  
   const getFileIcon = (fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase();
     if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension || '')) {
@@ -53,7 +53,7 @@ const CampaignDetail = ({
     }
   };
 
-  // Helper function to get file type name
+  
   const getFileTypeName = (fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase();
     if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension || '')) {
@@ -67,7 +67,7 @@ const CampaignDetail = ({
     }
   };
 
-  // Helper function to format file size
+  
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -76,19 +76,19 @@ const CampaignDetail = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  // Use real campaign data with fallbacks only when needed
+  
   const displayData = {
     ...campaign,
-    // Only provide fallbacks if the real data is missing
+    
     submissionDate: campaign.created_at || new Date().toLocaleDateString("pt-BR"),
     briefing: campaign.description || "Briefing não disponível",
     requirements: campaign.requirements || ["Requisitos não especificados"],
-    audience: "Público-alvo não especificado", // This might not be in the campaign data
-    deliverables: "Entregáveis não especificados", // This might not be in the campaign data
+    audience: "Público-alvo não especificado", 
+    deliverables: "Entregáveis não especificados", 
             states: Array.isArray(campaign.target_states) ? campaign.target_states : ["Estados não especificados"],
   };
 
-  // Get attachments from campaign data - handle both array (new) and string (backward compatibility)
+  
   const attachments = campaign.attachments || (campaign.attach_file ? (Array.isArray(campaign.attach_file) ? campaign.attach_file : [campaign.attach_file]) : []);
   const hasAttachments = Array.isArray(attachments) ? attachments.length > 0 : !!attachments;
 
@@ -106,7 +106,7 @@ const CampaignDetail = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          {/* Header */}
+          {}
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 border-b border-gray-200 dark:border-neutral-700 pb-4 mb-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg overflow-hidden border">
               {(() => {
@@ -118,7 +118,7 @@ const CampaignDetail = ({
                       alt={`${displayData.brand?.name || 'Campaign'} logo`}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        // Hide image and show initials on error
+                        
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
                         const parent = target.parentElement;
@@ -147,7 +147,7 @@ const CampaignDetail = ({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Info Grid */}
+          {}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 border-b border-gray-200 dark:border-neutral-700 pb-4">
             <div>
               <div className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">Valor</div>
@@ -165,7 +165,7 @@ const CampaignDetail = ({
               <div className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">Prazo Final</div>
               <div className="text-base font-semibold text-gray-800 dark:text-gray-100">
                 {displayData.deadline ? (() => {
-                    // Handle YYYY-MM-DD format by creating Date in local timezone
+                    
                     if (/^\d{4}-\d{2}-\d{2}$/.test(displayData.deadline)) {
                         const [year, month, day] = displayData.deadline.split('-').map(Number);
                         return new Date(year, month - 1, day).toLocaleDateString("pt-BR");
@@ -182,13 +182,13 @@ const CampaignDetail = ({
             </div>
           </div>
 
-          {/* Briefing */}
+          {}
           <section>
             <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Briefing</h3>
             <p className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed">{displayData.briefing}</p>
           </section>
 
-          {/* States */}
+          {}
           <section>
             <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Estados</h3>
             <div className="flex flex-wrap gap-2">
@@ -203,13 +203,13 @@ const CampaignDetail = ({
             </div>
           </section>
 
-          {/* Attachments */}
+          {}
           {hasAttachments && (
             <section>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Anexos</h3>
 
               {Array.isArray(attachments) && attachments.length > 3 ? (
-                // Carousel for multiple files (more than 3)
+                
                 <div className="relative overflow-x-hidden">
                   <Carousel className="w-full">
                     <CarouselContent>
@@ -271,7 +271,7 @@ const CampaignDetail = ({
                   </div>
                 </div>
               ) : (
-                // Simple list for 3 or fewer files
+                
                 <div className="space-y-2">
                   {Array.isArray(attachments) ? (
                     attachments.map((attachment: any, index: number) => (
@@ -320,7 +320,7 @@ const CampaignDetail = ({
                       </div>
                     ))
                   ) : (
-                    // Single attachment (string)
+                    
                     <div className="flex items-center justify-between p-3 border border-gray-200 dark:border-neutral-700 rounded-lg bg-gray-50 dark:bg-neutral-800">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-white dark:bg-neutral-700 rounded-lg flex items-center justify-center border border-gray-200 dark:border-neutral-600">
@@ -370,7 +370,7 @@ const CampaignDetail = ({
           )}
         </div>
 
-        {/* Footer Actions */}
+        {}
         <DialogFooter className={`flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200 dark:border-neutral-700 ${path === "pending" ? "flex" : "hidden"}`}>
           <Button
             variant="outline"

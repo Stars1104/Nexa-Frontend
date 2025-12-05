@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import intlTelInput from "intl-tel-input";
 import "intl-tel-input/build/css/intlTelInput.css";
-// Vite asset URL para utils.js (necessário para formatação on-the-fly)
+
 import itiUtils from "intl-tel-input/build/js/utils.js?url";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
@@ -40,7 +40,7 @@ interface SignInFormData {
   password: string;
 }
 
-// Validação simples E.164 como fallback
+
 const E164_REGEX = /^\+?[1-9]\d{1,14}$/;
 
 const CreatorSignUp = () => {
@@ -58,7 +58,7 @@ const CreatorSignUp = () => {
   const { loginType } = useParams<{ loginType: string }>();
   const { navigateToRoleDashboard, navigateToStudentVerification, navigateToSubscription } = useRoleNavigation();
   
-  // Ref to track if component is mounted
+  
   const isMountedRef = useRef(true);
   
   const { isSigningUp, isLoading, error, isAuthenticated, user } = useSelector((state: RootState) => state.auth);
@@ -75,7 +75,7 @@ const CreatorSignUp = () => {
     mode: "onChange",
   });
 
-  // intl-tel-input: ref para o input e instância para formatação/validação
+  
   const whatsappInputRef = useRef<HTMLInputElement | null>(null);
   const itiRef = useRef<any>(null);
   const [isPhoneValid, setIsPhoneValid] = useState(true);
@@ -83,7 +83,7 @@ const CreatorSignUp = () => {
   const [dialCode, setDialCode] = useState("+55");
 
   const formatBRProgressive = (digits: string): string => {
-    // (DD) 9XXXX-XXXX ou (DD) XXXX-XXXX
+    
     const d = digits.replace(/\D/g, "");
     if (d.length <= 2) return `(${d}`;
     if (d.length <= 6) return `(${d.slice(0,2)}) ${d.slice(2)}`;
@@ -92,7 +92,7 @@ const CreatorSignUp = () => {
   };
 
   useLayoutEffect(() => {
-    // Ativa apenas no fluxo de cadastro; ao alternar para "entrar", não faz nada (cleanup anterior já removeu listeners)
+    
     if (authType !== "signup") return;
 
     const onCountryChange = () => {
@@ -112,7 +112,7 @@ const CreatorSignUp = () => {
       const inputEl = whatsappInputRef.current;
       const raw = inputEl?.value || "";
 
-      // Formata conforme digita (quando utils disponível)
+      
       const utils = (window as any)?.intlTelInputUtils;
       if (utils && itiRef.current?.getNumber) {
         try {
@@ -127,7 +127,7 @@ const CreatorSignUp = () => {
           }
         } catch {}
       } else {
-        // Fallback para BR quando utils ainda não carregou
+        
         try {
           const iso2 = itiRef.current?.getSelectedCountryData?.()?.iso2;
           if (iso2 === 'br' && inputEl) {
@@ -148,7 +148,7 @@ const CreatorSignUp = () => {
       const currentVal = inputEl?.value || raw;
       form.setValue("whatsapp", currentVal, { shouldValidate: false, shouldDirty: true });
 
-      // Validação: usa utils quando disponível; caso contrário, aceita enquanto <10 dígitos como pendente
+      
       const digits = currentVal.replace(/\D/g, "");
       const valid = digits.length === 0
         ? true
@@ -164,7 +164,7 @@ const CreatorSignUp = () => {
     const ensureItiAndListeners = () => {
       const el = whatsappInputRef.current;
       if (!el) return;
-      // Inicializa o plugin se ainda não foi aplicado
+      
       if (!el.parentElement?.classList.contains("iti")) {
         itiRef.current = intlTelInput(el, {
           initialCountry: "br",
@@ -181,7 +181,7 @@ const CreatorSignUp = () => {
           if (data?.dialCode) setDialCode(`+${data.dialCode}`);
         } catch {}
       }
-      // Anexa listeners apenas uma vez
+      
       if (!(el as any).dataset?.itiListenersAttached) {
         el.addEventListener("countrychange", onCountryChange);
         el.addEventListener("input", onInput);
@@ -190,7 +190,7 @@ const CreatorSignUp = () => {
       }
     };
 
-    // Tentativas rápidas para lidar com HMR e montagem tardia do input
+    
     ensureItiAndListeners();
     const t1 = setTimeout(ensureItiAndListeners, 0);
     const t2 = setTimeout(ensureItiAndListeners, 150);
@@ -219,59 +219,59 @@ const CreatorSignUp = () => {
     if (loginType === "login") setAuthType("signin");
   }, [loginType])
 
-  // Set authType to signup when coming from /signup/creator route
+  
   useEffect(() => {
     if (role === "creator" && location.pathname === "/signup/creator") {
       setAuthType("signup");
     }
   }, [role, location.pathname])
 
-  // Cleanup effect
+  
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
-      // Clear any pending states when component unmounts
+      
       dispatch(clearError());
     };
   }, [dispatch]);
 
-  // Reset loading states when component mounts
+  
   useEffect(() => {
-    // Always reset loading states when component mounts to prevent stuck states
+    
     dispatch(resetLoadingStates());
   }, [dispatch]);
 
 
-  // Effect to handle successful authentication
+  
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Prevent multiple navigation calls
+      
       const timeoutId = setTimeout(() => {
-        // Handle student verification flow
+        
         if (user.isStudent && user.role === 'creator') {
           navigateToStudentVerification();
         } else if (isNewRegistration && user.role === 'creator') {
-          // Check if there's a specific redirect location (e.g., from pricing page)
+          
           const redirectTo = location.state?.redirectTo;
           if (redirectTo) {
-            // Preserve any pending checkout session_id when redirecting
+            
             const pendingCheckoutSessionId = location.state?.pendingCheckoutSessionId || 
                                            localStorage.getItem('pending_checkout_session_id');
             if (pendingCheckoutSessionId) {
-              // Ensure the session_id is preserved in localStorage for Subscription component
+              
               localStorage.setItem('pending_checkout_session_id', pendingCheckoutSessionId);
               localStorage.setItem('pending_checkout_success', 'true');
             }
             navigate(redirectTo, { replace: true });
           } else {
-            // Redirect new Creator registrations to subscription page
+            
             navigateToSubscription();
           }
         } else {
-          // Check if there's a redirect location from ProtectedRoute
+          
           const from = location.state?.from?.pathname;
           if (from) {
-            // Preserve any pending checkout session_id when redirecting
+            
             const pendingCheckoutSessionId = location.state?.pendingCheckoutSessionId || 
                                            localStorage.getItem('pending_checkout_session_id');
             if (pendingCheckoutSessionId) {
@@ -283,28 +283,28 @@ const CreatorSignUp = () => {
             navigateToRoleDashboard(user.role);
           }
         }
-      }, 100); // Small delay to prevent race conditions
+      }, 100); 
 
       return () => clearTimeout(timeoutId);
     }
   }, [isAuthenticated, user, role, navigateToRoleDashboard, navigateToStudentVerification, navigateToSubscription, location, isNewRegistration, navigate]);
 
-  // Clear error when switching auth types
+  
   useEffect(() => {
     if (error) {
       dispatch(clearError());
     }
   }, [authType, dispatch]);
 
-  // Reset form when switching auth types
+  
   const handleAuthTypeChange = (newAuthType: string) => {
-    // Always allow switching - reset any stuck states first
+    
     if (isSigningUp || isLoading) {
       dispatch(resetLoadingStates());
     }
     
     setAuthType(newAuthType);
-    setIsNewRegistration(false); // Reset new registration flag
+    setIsNewRegistration(false); 
     form.reset({
       name: "",
       email: "",
@@ -314,19 +314,19 @@ const CreatorSignUp = () => {
       isStudent: false,
     });
     
-    // Clear any errors and reset states
+    
     dispatch(clearError());
   };
 
-  // Sign up Function
+  
   const onSignUp = async (data: SignUpFormData) => {
     try {
-      // Prevent multiple submissions
+      
       if (isSigningUp) {
         return;
       }
 
-      // Obtém valor E.164 do intl-tel-input se disponível (preferir E164 quando utils disponível)
+      
       const utils = (window as any)?.intlTelInputUtils;
       let e164 = itiRef.current?.getNumber
         ? (utils ? itiRef.current.getNumber(utils.numberFormat.E164) : itiRef.current.getNumber())
@@ -335,7 +335,7 @@ const CreatorSignUp = () => {
         e164 = `+${String(e164).replace(/[^\d]/g, '')}`;
       }
       let digitsE164 = String(e164 || '').replace(/\D/g, '');
-      // Fallback de normalização para quando utils não carregou ou getNumber() retorna vazio
+      
       if (!e164 || !E164_REGEX.test(String(e164))) {
         try {
           const selected = itiRef.current?.getSelectedCountryData?.();
@@ -366,9 +366,9 @@ const CreatorSignUp = () => {
       };
       
 
-      // Add timeout to prevent hanging requests
+      
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timeout - please try again')), 30000); // 30 second timeout
+        setTimeout(() => reject(new Error('Request timeout - please try again')), 30000); 
       });
 
       const response = await Promise.race([
@@ -376,52 +376,52 @@ const CreatorSignUp = () => {
         timeoutPromise
       ]) as any;
       
-      // Check if component is still mounted before updating state
+      
       if (!isMountedRef.current) return;
       
       if (response.user !== null) {
         toast.success("Conta criada com sucesso! Você foi automaticamente logado.");
         toast.message("Verify Email");
-        setIsNewRegistration(true); // Set flag for new registration
+        setIsNewRegistration(true); 
         
-        // For new users, automatically log them in after successful registration
-        // This prevents the need for a separate login call
+        
+        
         if (response.token) {
-          // Dispatch login success directly
+          
           dispatch(loginSuccess({
             user: response.user,
             token: response.token
           }));
         }
       }
-      // Navigation will be handled by useEffect after successful signup
+      
     } catch (error: any) {
-      // Check if component is still mounted before updating state
+      
       if (!isMountedRef.current) return;
       
-      // Reset signing up state on error
+      
       dispatch(clearError());
       
-      // Handle timeout errors
+      
       if (error.message === 'Request timeout - please try again') {
         toast.error("A solicitação demorou muito para responder. Tente novamente.");
       }
-      // Handle rate limiting errors specifically
+      
       else if (error.response?.status === 429) {
         const retryAfter = error.response?.data?.retry_after || 60;
         const minutes = Math.ceil(retryAfter / 60);
         const errorMessage = `Muitas tentativas de registro. Tente novamente em ${minutes} minuto(s).`;
         toast.error(errorMessage);
       } 
-      // Handle network errors
+      
       else if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
         toast.error("Erro de conexão. Verifique sua internet e tente novamente.");
       }
-      // Handle server errors
+      
       else if (error.response?.status >= 500) {
         toast.error("Erro interno do servidor. Tente novamente em alguns minutos.");
       }
-      // Handle validation errors (422) com detalhes por campo
+      
       else if (error.response?.status === 422) {
         const errors = error.response?.data?.errors;
         if (errors && typeof errors === 'object') {
@@ -430,7 +430,7 @@ const CreatorSignUp = () => {
             const msgs = errors[key];
             if (Array.isArray(msgs) && msgs.length > 0) {
               parts.push(`${key}: ${msgs[0]}`);
-              // Mapear erros do backend para o formulário
+              
               try {
                 if (key === 'email' || key === 'name' || key === 'password' || key === 'password_confirmation' || key === 'whatsapp') {
                   form.setError(key as any, { type: 'server', message: msgs[0] });
@@ -449,13 +449,13 @@ const CreatorSignUp = () => {
           toast.error(errorMessage);
         }
       }
-      // Handle account restoration case
+      
       else if (error?.type === 'account_removed_restorable') {
         setRestorationData(error);
         setShowRestorationModal(true);
         return;
       }
-      // Handle other errors
+      
       else {
         const errorMessage = error.response?.data?.message || error.message || "Erro ao criar conta. Tente novamente.";
         toast.error(errorMessage);
@@ -464,7 +464,7 @@ const CreatorSignUp = () => {
     }
   };
 
-  // Sign in Function
+  
   const onSignIn = async (data: SignInFormData) => {
     try {
       const loginData = {
@@ -472,9 +472,9 @@ const CreatorSignUp = () => {
         password: data.password,
       };
 
-      // Add timeout to prevent hanging requests
+      
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timeout - please try again')), 30000); // 30 second timeout
+        setTimeout(() => reject(new Error('Request timeout - please try again')), 30000); 
       });
 
       const response = await Promise.race([
@@ -482,12 +482,12 @@ const CreatorSignUp = () => {
         timeoutPromise
       ]) as any;
       
-      // Check if component is still mounted before updating state
+      
       if (!isMountedRef.current) return;
       
       if (response.user !== null) {
         toast.success("Você fez login com sucesso.");
-        // Navigation will be handled by useEffect after successful login
+        
       }
     } catch (error: any) {
       if (error === 'account_removed_restorable' || error?.type === 'account_removed_restorable') {
@@ -495,42 +495,42 @@ const CreatorSignUp = () => {
         setShowRestorationModal(true);
         return;
       }
-      // Check if component is still mounted before updating state
+      
       if (!isMountedRef.current) return;
       
-      // Handle timeout errors
+      
       if (error.message === 'Request timeout - please try again') {
         toast.error("A solicitação demorou muito para responder. Tente novamente.");
       }
-      // Handle rate limiting errors specifically
+      
       else if (error.response?.status === 429) {
         const retryAfter = error.response?.data?.retry_after || 60;
         const minutes = Math.ceil(retryAfter / 60);
         const errorMessage = `Muitas tentativas de login. Tente novamente em ${minutes} minuto(s).`;
         toast.error(errorMessage);
       } 
-      // Handle network errors
+      
       else if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
         toast.error("Erro de conexão. Verifique sua internet e tente novamente.");
       }
-      // Handle server errors
+      
       else if (error.response?.status >= 500) {
         toast.error("Erro interno do servidor. Tente novamente em alguns minutos.");
       }
-      // Handle validation errors (including blocked account)
+      
       else if (error.response?.status === 422) {
-        // Check for validation errors in errors object (Laravel format)
+        
         let errorMessage = error.response?.data?.message;
         
         if (!errorMessage && error.response?.data?.errors) {
-          // Extract first error message from validation errors
+          
           const errors = error.response.data.errors;
           if (errors.email && Array.isArray(errors.email)) {
             errorMessage = errors.email[0];
           } else if (errors.email) {
             errorMessage = errors.email;
           } else {
-            // Get first error from any field
+            
             const firstErrorKey = Object.keys(errors)[0];
             if (firstErrorKey) {
               const firstError = errors[firstErrorKey];
@@ -539,23 +539,23 @@ const CreatorSignUp = () => {
           }
         }
         
-        // Check if this is a blocked account message
+        
         if (errorMessage && errorMessage.includes('bloqueada')) {
           toast.error(errorMessage);
         } else {
           toast.error(errorMessage || "Dados inválidos. Verifique os campos e tente novamente.");
         }
       }
-      // Handle other errors (including when error is already a string message from thunk)
+      
       else {
         let errorMessage = error.response?.data?.message || error.message;
         
-        // If error is a string (from thunk rejectWithValue), use it directly
+        
         if (typeof error === 'string') {
           errorMessage = error;
         }
         
-        // Check if this is a blocked account message
+        
         if (errorMessage && errorMessage.includes('bloqueada')) {
           toast.error(errorMessage);
         } else {
@@ -599,7 +599,7 @@ const CreatorSignUp = () => {
             {authType === "signup" ? "Crie sua conta para começar" : "Entre na sua conta"}
           </p>
 
-          {/* Error Alert */}
+          {}
           {error && (
             <Alert className="w-full border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
               <AlertDescription className="text-red-600 dark:text-red-400">
@@ -608,7 +608,7 @@ const CreatorSignUp = () => {
             </Alert>
           )}
 
-          {/* Account type toggle */}
+          {}
           <div className="flex w-full mb-2 border border-[#E2E2E2] p-1 rounded-full">
             <button
               className={`flex-1 py-2 rounded-full text-base font-semibold transition-colors ${authType === "signin" ? "bg-[#E91E63] text-white" : "bg-background text-foreground"} ${(isSigningUp || isLoading) ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -796,10 +796,10 @@ const CreatorSignUp = () => {
                             placeholder="(00) 00000-0000"
                             type="tel"
                             {...field}
-                            // mantém UI e classes originais; conecta ref para intl-tel-input
+                            
                             ref={(el) => {
                               whatsappInputRef.current = el;
-                              // react-hook-form ref forwarding
+                              
                               if (typeof field.ref === 'function') field.ref(el);
                               else (field as any).ref = el;
                             }}
@@ -913,7 +913,7 @@ const CreatorSignUp = () => {
           )}
         </div>
       </div>
-      {/* Account Restoration Modal */}
+      {}
       <AccountRestorationModal
         isOpen={showRestorationModal}
         onClose={() => {

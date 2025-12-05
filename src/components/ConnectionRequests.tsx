@@ -65,7 +65,7 @@ export default function ConnectionRequests({ onRequestAccepted, className }: Con
         try {
             if (action === 'accept') {
                 await chatService.acceptConnectionRequest(requestId);
-                // Find the request and call callback
+                
                 const request = requests.received.find(r => r.id === requestId);
                 if (request && onRequestAccepted) {
                     onRequestAccepted(request);
@@ -76,7 +76,7 @@ export default function ConnectionRequests({ onRequestAccepted, className }: Con
                 await chatService.cancelConnectionRequest(requestId);
             }
 
-            // Reload requests
+            
             await loadRequests();
         } catch (error) {
             console.error(`Error ${action}ing connection request:`, error);

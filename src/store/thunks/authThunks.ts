@@ -33,14 +33,14 @@ interface AuthResponse {
     role: 'creator' | 'brand' | 'student';
     whatsapp?: string;
     isStudent?: boolean;
-    isPremium?: boolean; // Legacy field
+    isPremium?: boolean; 
     has_premium?: boolean;
     premium_expires_at?: string;
   };
   token: string;
 }
 
-// Async thunk for signup
+
 export const signupUser = createAsyncThunk( 
   'auth/signup',
   async (credentials: SignupCredentials, { dispatch, rejectWithValue }: any) => {
@@ -62,7 +62,7 @@ export const signupUser = createAsyncThunk(
     } catch (error: unknown) {
       const apiError = handleApiError(error);
       
-      // Check if this is an account restoration case
+      
       if (apiError.response?.data?.can_restore) {
         const restorationData = apiError.response.data;
         dispatch(signupFailure('account_removed_restorable'));
@@ -81,7 +81,7 @@ export const signupUser = createAsyncThunk(
   }
 );
 
-// Async thunk for login
+
 export const loginUser = createAsyncThunk(
   'auth/login',
   async (credentials: LoginCredentials, { dispatch, rejectWithValue }: any) => {
@@ -104,7 +104,7 @@ export const loginUser = createAsyncThunk(
     } catch (error: unknown) {
       const apiError = handleApiError(error);
       
-      // Check if this is an account restoration case
+      
       if (apiError.response?.data?.errors?.email === 'account_removed_restorable') {
         const restorationData = apiError.response.data.errors;
         dispatch(loginFailure('account_removed_restorable'));
@@ -122,28 +122,28 @@ export const loginUser = createAsyncThunk(
   }
 );
 
-// Async thunk for logout
+
 export const logoutUser = createAsyncThunk(
   'auth/logout',
   async (_, { dispatch }: any) => {
     try {
-      // Call logout API to invalidate token on server
+      
       await logoutAPI();
     } catch (error) {
-      // Log the error but don't throw - we still want to clear local state
-      // If it's a 401, the token was already invalid, so clearing state is correct
-      // If it's another error, we still want to log the user out locally
+      
+      
+      
     } finally {
-      // Always clear state regardless of API call success
-      // Reset notification state
+      
+      
       dispatch(resetNotifications());
-      // redux-persist will handle localStorage cleanup
+      
       dispatch(logout());
     }
   }
 );
 
-// Async thunk for updating password
+
 export const updateUserPassword = createAsyncThunk(
   'auth/updatePassword',
   async (credentials: UpdatePasswordCredentials, { rejectWithValue }: any) => {
@@ -162,12 +162,12 @@ export const updateUserPassword = createAsyncThunk(
   }
 );
 
-// Async thunk for Google OAuth initiation
+
 export const initiateGoogleOAuthFlow = createAsyncThunk(
   'auth/googleOAuthInit',
   async (params: { role?: 'creator' | 'brand'; isStudent?: boolean } | 'creator' | 'brand' | undefined, { rejectWithValue }: any) => {
     try {
-      // Handle both old and new parameter formats for backward compatibility
+      
       let role: 'creator' | 'brand' | undefined;
       let isStudent = false;
       
@@ -187,7 +187,7 @@ export const initiateGoogleOAuthFlow = createAsyncThunk(
   }
 );
 
-// Async thunk for Google OAuth callback
+
 export const handleGoogleOAuthCallback = createAsyncThunk(
   'auth/googleOAuthCallback',
   async (_, { dispatch, rejectWithValue }: any) => {

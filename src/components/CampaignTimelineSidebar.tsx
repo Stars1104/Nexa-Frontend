@@ -61,7 +61,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load timeline when component mounts or contractId changes
+  
   useEffect(() => {
     if (isOpen && contractId) {
       loadTimeline();
@@ -256,7 +256,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
 
   return (
     <>
-      {/* Backdrop */}
+      {}
       {isOpen && (
         <div 
           className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
@@ -264,12 +264,12 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
         />
       )}
 
-      {/* Sidebar */}
+      {}
       <div className={cn(
         "fixed right-0 top-0 h-full w-96 bg-background border-l border-border shadow-2xl transform transition-transform duration-300 ease-in-out z-50",
         isOpen ? "translate-x-0" : "translate-x-full"
       )}>
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between p-4 border-b border-border bg-card">
           <div className="flex items-center gap-2">
             <Clock className="w-5 h-5 text-primary" />
@@ -287,7 +287,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
           </Button>
         </div>
 
-        {/* Warning for overdue/delayed milestones */}
+        {}
         {(hasOverdueMilestones || hasDelayedMilestones) && (
           <Alert className="mx-4 mt-4 border-destructive/20 bg-destructive/10">
             <AlertTriangle className="h-4 w-4 text-destructive" />
@@ -302,7 +302,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
           </Alert>
         )}
 
-        {/* Content */}
+        {}
         <ScrollArea className="h-[calc(100vh-80px)]">
           <div className="p-4 space-y-4">
             {isLoading ? (
@@ -324,7 +324,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
               </div>
             ) : (
               <>
-                {/* Milestones */}
+                {}
                 <div className="space-y-4">
                   {milestones.map((milestone, index) => {
                     const isExpanded = expandedMilestones.has(milestone.id);
@@ -353,12 +353,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              {/* <Badge className={cn(
-                                "text-xs border",
-                                getStatusColor(milestone.status, isOverdue)
-                              )}>
-                                {getStatusIcon(milestone.status, isOverdue)}
-                              </Badge> */}
+                              {}
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -385,7 +380,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
 
                         {isExpanded && (
                           <CardContent className="pt-0 space-y-3">
-                            {/* Deadline */}
+                            {}
                             <div className="flex items-center justify-between text-sm">
                               <span className="text-muted-foreground">Prazo:</span>
                               <span className={cn(
@@ -401,7 +396,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                               </span>
                             </div>
 
-                            {/* File Upload Section */}
+                            {}
                             {canUpload && (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
@@ -446,7 +441,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                               </div>
                             )}
 
-                            {/* Approval Section */}
+                            {}
                             {canApprove && (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
@@ -481,7 +476,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                               </div>
                             )}
 
-                            {/* Delay Justification */}
+                            {}
                             {canJustify && isOverdue && (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
@@ -505,7 +500,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                               </div>
                             )}
 
-                            {/* Timeline Extension */}
+                            {}
                             {canExtend && (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
@@ -527,7 +522,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
                               </div>
                             )}
 
-                            {/* Materials */}
+                            {}
                             {milestone.deliveryMaterials && milestone.deliveryMaterials.length > 0 && (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
@@ -570,7 +565,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
         </ScrollArea>
       </div>
 
-      {/* Upload Dialog */}
+      {}
       {showUploadDialog && selectedMilestone && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-card rounded-lg p-6 max-w-md w-full border border-border">
@@ -647,7 +642,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
         </div>
       )}
 
-      {/* Approval Dialog */}
+      {}
       {showApprovalDialog && selectedMilestone && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-card rounded-lg p-6 max-w-md w-full border border-border">
@@ -692,7 +687,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
         </div>
       )}
 
-      {/* Justification Dialog */}
+      {}
       {showJustificationDialog && selectedMilestone && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-card rounded-lg p-6 max-w-md w-full border border-border">
@@ -738,7 +733,7 @@ export default function CampaignTimelineSidebar({ contractId, isOpen, onClose }:
         </div>
       )}
 
-      {/* Extension Dialog */}
+      {}
       {showExtensionDialog && selectedMilestone && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-card rounded-lg p-6 max-w-md w-full border border-border">

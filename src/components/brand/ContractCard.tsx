@@ -163,12 +163,12 @@ export default function ContractCard({
   };
 
   const formatCurrency = (amount: string) => {
-    // If the amount is already formatted (contains "R$"), return it as is
+    
     if (amount && amount.includes('R$')) {
       return amount;
     }
     
-    // Otherwise, format it as currency
+    
     const numericAmount = parseFloat(amount);
     if (isNaN(numericAmount)) {
       return 'R$ 0,00';
@@ -387,7 +387,7 @@ export default function ContractCard({
         </CardContent>
       </Card>
 
-      {/* Cancel Dialog */}
+      {}
       <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -426,7 +426,7 @@ export default function ContractCard({
         </DialogContent>
       </Dialog>
 
-      {/* Terminate Dialog */}
+      {}
       <Dialog open={showTerminateDialog} onOpenChange={setShowTerminateDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

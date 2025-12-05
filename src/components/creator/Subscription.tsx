@@ -37,70 +37,70 @@ export default function Subscription() {
     const [studentLoading, setStudentLoading] = useState(false);
     const checkoutProcessedRef = useRef(false);
 
-    // CRITICAL: Check for checkout success params FIRST, before authentication check
-    // This ensures we preserve session_id even if user needs to authenticate
+    
+    
     useEffect(() => {
-        // Check if user returned from Stripe checkout
+        
         const urlParams = new URLSearchParams(location.search);
         const success = urlParams.get('success');
         const sessionId = urlParams.get('session_id');
         
-        // If we have checkout success params, store them immediately
+        
         if (success === 'true' && sessionId) {
-            // Store session_id in localStorage to preserve it through auth redirects
+            
             localStorage.setItem('pending_checkout_session_id', sessionId);
-            // Also store a flag to indicate we need to process checkout after auth
+            
             localStorage.setItem('pending_checkout_success', 'true');
             console.log('Stored checkout session_id for later processing:', sessionId);
         }
-    }, [location.search]); // Run immediately on mount and when URL changes
+    }, [location.search]); 
 
-    // Check authentication status on mount and when auth state changes
+    
     useEffect(() => {
-        // Check if user is NOT logged in
+        
         const hasToken = token || localStorage.getItem('token');
         if (!isAuthenticated || !hasToken || !user?.id) {
-            // Check if we have pending checkout - preserve it in redirect state
+            
             const pendingSessionId = localStorage.getItem('pending_checkout_session_id');
             const subscriptionPath = '/creator?component=subscription';
             
-            // Store the current location to redirect back after login
-            // Use the query parameter format to ensure proper component navigation
+            
+            
             navigate('/auth', { 
                 state: { 
                     from: { pathname: subscriptionPath },
                     redirectTo: subscriptionPath,
-                    // Preserve checkout session_id in state as backup
+                    
                     pendingCheckoutSessionId: pendingSessionId
                 }, 
                 replace: true 
             });
             return;
         }
-        // User IS logged in - subscription check will happen in separate useEffect
+        
     }, [isAuthenticated, token, user?.id, navigate]);
 
-    // Check subscription status and redirect if subscribed
+    
     useEffect(() => {
-        // Only check if user is authenticated and subscription status has been loaded
+        
         if (!isAuthenticated || !user?.id || loading || !subscriptionStatus) {
             return;
         }
 
-        // Check if user has active premium subscription
+        
         const hasActiveSubscription = subscriptionStatus.is_premium_active || false;
         
         if (hasActiveSubscription) {
-            // User is logged in and subscribed - redirect to dashboard
+            
             navigate('/creator', { replace: true });
         }
-        // If not subscribed, the subscription page will be shown (no redirect)
+        
     }, [subscriptionStatus, isAuthenticated, user, loading, navigate]);
 
     useEffect(() => {
-        // Load subscription plans first (public endpoint)
+        
         loadSubscriptionPlans();
-        // Load subscription status only if user is authenticated
+        
         const token = localStorage.getItem('token');
         if (token && isAuthenticated && user?.id) {
              if (user?.role ==="student") {
@@ -108,32 +108,32 @@ export default function Subscription() {
                 
             }
             loadSubscriptionStatus();
-            // Load student status if user is a student
+            
         }
     }, [user?.role, isAuthenticated, user?.id]);
     
-    // Handle checkout success - check both URL params and localStorage
+    
     useEffect(() => {
-        // Skip if already processed or currently processing
+        
         if (checkoutProcessedRef.current || paymentProcessing) {
             return;
         }
         
-        // Only process if user is authenticated
+        
         if (!isAuthenticated || !user?.id) {
             return;
         }
         
-        // Check URL params first
+        
         const urlParams = new URLSearchParams(location.search);
         const success = urlParams.get('success');
         const sessionId = urlParams.get('session_id');
         
-        // Also check localStorage for stored session_id (in case URL params were lost)
+        
         const storedSessionId = localStorage.getItem('pending_checkout_session_id');
         const storedSuccess = localStorage.getItem('pending_checkout_success');
         
-        // Determine which session_id to use
+        
         let finalSessionId: string | null = null;
         if (success === 'true' && sessionId) {
             finalSessionId = sessionId;
@@ -141,26 +141,26 @@ export default function Subscription() {
             finalSessionId = storedSessionId;
         }
         
-        // Process checkout if we have a session_id
+        
         if (finalSessionId && !checkoutProcessedRef.current) {
             checkoutProcessedRef.current = true;
-            // Clear stored values
+            
             localStorage.removeItem('pending_checkout_session_id');
             localStorage.removeItem('pending_checkout_success');
             handleCheckoutSuccess(finalSessionId);
         }
-    }, [location.search, isAuthenticated, user?.id]); // Watch location.search AND auth state
+    }, [location.search, isAuthenticated, user?.id]); 
     
     const handleCheckoutSuccess = async (sessionId: string) => {
         try {
             setPaymentProcessing(true);
             
-            // Try authenticated endpoint first
+            
             let result;
             try {
                 result = await paymentApi.createSubscriptionFromCheckout(sessionId);
             } catch (error: any) {
-                // If 401 (unauthorized), try public endpoint as fallback
+                
                 if (error.response?.status === 401) {
                     console.log('User not authenticated, trying public endpoint...');
                     result = await paymentApi.createSubscriptionFromCheckoutPublic(sessionId);
@@ -169,26 +169,26 @@ export default function Subscription() {
                 }
             }
             
-            // Reload subscription status first
+            
             await loadSubscriptionStatus();
             
-            // Immediately dispatch premium status update to refresh PremiumContext
+            
             dispatchPremiumStatusUpdate();
             
-            // Give a small delay to ensure context is updated, then refresh again
+            
             setTimeout(() => {
                 dispatchPremiumStatusUpdate();
             }, 500);
             
-            // Remove query params from URL but keep the subscription component active
-            // Use replace: true to avoid adding to history, but keep the component in URL
+            
+            
             const currentPath = location.pathname;
             if (currentPath === '/creator/subscription') {
-                // If we're on the subscription route, update to use component query param instead
-                // This allows proper navigation after purchase
+                
+                
                 navigate('/creator?component=subscription', { replace: true });
             } else {
-                // Otherwise just clean the query params
+                
                 navigate(currentPath, { replace: true });
             }
             
@@ -203,17 +203,17 @@ export default function Subscription() {
                 description: error.response?.data?.message || "Não foi possível criar a assinatura. Tente novamente.",
                 variant: "destructive",
             });
-            // Reset the ref so user can retry
+            
             checkoutProcessedRef.current = false;
         } finally {
             setPaymentProcessing(false);
         }
     };
 
-    // Refresh subscription status when modal closes
+    
     useEffect(() => {
         if (!open) {
-            // Small delay to ensure backend has processed the payment
+            
             const timer = setTimeout(() => {
                 loadSubscriptionStatus();
             }, 1000);
@@ -223,7 +223,7 @@ export default function Subscription() {
     }, [open]);
 
     const loadSubscriptionStatus = async () => {
-        // Check if user is authenticated before making API call
+        
         const token = localStorage.getItem('token');
         if (!token) {
             setSubscriptionStatus(null);
@@ -235,13 +235,13 @@ export default function Subscription() {
             setLoading(true);
             const status = await paymentApi.getSubscriptionStatus();
             
-            // Check if subscription just became active
+            
             const wasActive = subscriptionStatus?.is_premium_active;
             const isNowActive = status.is_premium_active;
             
             setSubscriptionStatus(status);
     
-            // Show success message if subscription just became active
+            
             if (!wasActive && isNowActive) {
                 toast({
                     title: "🎉 Premium Ativado!",
@@ -249,7 +249,7 @@ export default function Subscription() {
                 });
             }
         } catch (error: any) {
-            // Handle 401 errors specifically - user is not authenticated
+            
             if (error.response?.status === 401) {
                 setSubscriptionStatus(null);
             } else {
@@ -288,9 +288,9 @@ export default function Subscription() {
             setPlansLoading(true);
             const plans = await paymentApi.getSubscriptionPlans();
             
-            // Ensure plans is an array and has the expected structure
+            
             if (Array.isArray(plans) && plans.length > 0) {
-                // Validate and sanitize plan data
+                
                 const validatedPlans = plans.map(plan => ({
                     id: plan.id || 0,
                     name: plan.name || 'Plano',
@@ -305,7 +305,7 @@ export default function Subscription() {
                 
                 setSubscriptionPlans(validatedPlans);
                 
-                // Set default selected plan to monthly plan
+                
                 setSelectedPlan(validatedPlans[0]);
             } else {
                 setSubscriptionPlans([]);
@@ -340,7 +340,7 @@ export default function Subscription() {
 
     const getStatusBadge = () => {
         if (!subscriptionStatus) return null;
-        // Check if user is a student with active trial
+        
         if (user?.role === "student" && (subscriptionStatus.is_on_trial || studentStatus?.is_on_trial)) {
             const daysRemaining = (studentStatus?.student_expires_at 
                     ? calculateTrialDaysRemaining(studentStatus.student_expires_at)
@@ -382,7 +382,7 @@ export default function Subscription() {
     return (
         <div className="min-h-screen w-full bg-[#f6f6f6] dark:bg-[#18181b] flex flex-col items-center py-6 px-2 sm:px-6">
             <div className="w-full flex flex-col gap-8">
-                {/* Header */}
+                {}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex flex-col gap-1">
                         <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Assinatura Nexa UGC</h1>
@@ -406,7 +406,7 @@ export default function Subscription() {
                     </Button>
                 </div>
 
-                {/* Testimonial/Info */}
+                {}
                 <div className="rounded-xl border border-[#f3eaff] dark:border-[#3a2a4d] bg-[#faf6ff] dark:bg-[#23182e] px-6 py-4 flex items-center gap-3 shadow-sm">
                     <div className="rounded-full bg-[#f3eaff] dark:bg-[#3a2a4d] p-2 flex items-center justify-center">
                         <Lightbulb className="w-5 h-5 text-purple-400 dark:text-purple-200" />
@@ -417,7 +417,7 @@ export default function Subscription() {
                     </div>
                 </div>
 
-                {/* Current Plan */}
+                {}
                 <div className="rounded-xl border bg-background shadow-sm flex flex-col px-6 py-5 gap-2">
                     {loading ? (
                         <div className="flex items-center justify-center py-8">
@@ -481,7 +481,7 @@ export default function Subscription() {
                     )}
                 </div>
 
-                {/* Available Plans */}
+                {}
                 <div className="flex flex-col gap-4">
                     <div className="font-bold text-lg text-foreground">Planos Disponíveis</div>
                     
@@ -498,7 +498,7 @@ export default function Subscription() {
                         </div>
                     ) : (
                         <div className="rounded-xl border bg-background shadow-sm p-6">
-                            {/* Plan Selection Bar */}
+                            {}
                             <div className="flex flex-col sm:flex-row gap-3 mb-6">
                                 {subscriptionPlans.map((plan) => (
                                     <div
@@ -534,7 +534,7 @@ export default function Subscription() {
                                 ))}
                             </div>
 
-                            {/* Selected Plan Details */}
+                            {}
                             {selectedPlan && (
                                 <div className="border-t pt-6">
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
@@ -559,7 +559,7 @@ export default function Subscription() {
                                         </div>
                                     </div>
 
-                                    {/* Features */}
+                                    {}
                                     <div className="mb-6">
                                         <div className="font-semibold text-sm mb-3 text-foreground">
                                             Benefícios incluídos:
@@ -580,7 +580,7 @@ export default function Subscription() {
                                         </div>
                                     </div>
 
-                                    {/* Subscribe Button */}
+                                    {}
                 <div className="flex justify-center">
                     <Button
                         onClick={async () => {
@@ -623,7 +623,7 @@ export default function Subscription() {
                                 </div>
                             )}
 
-                            {/* Plan Selection Instructions */}
+                            {}
                             {!selectedPlan && (
                                 <div className="text-center py-8 text-muted-foreground">
                                     <Calendar className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
@@ -634,7 +634,7 @@ export default function Subscription() {
                         </div>
                     )}
 
-                    {/* Coupon Section */}
+                    {}
                     {!plansLoading && (
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
                             <div className="flex items-center">
@@ -658,7 +658,7 @@ export default function Subscription() {
                     )}
                 </div>
             </div>
-        {/* Stripe desativado: modal removido */}
+        {}
         </div>
     );
 }

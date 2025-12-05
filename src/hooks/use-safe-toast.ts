@@ -31,7 +31,7 @@ export const useSafeToast = (): UseSafeToastReturn => {
       }
     } catch (err) {
       console.error('Toast error:', err);
-      // Fallback to console or alert if toast fails
+      
       switch (type) {
         case 'error':
           console.error(message);

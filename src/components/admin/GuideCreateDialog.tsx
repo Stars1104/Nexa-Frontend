@@ -33,12 +33,10 @@ import {
 import { GuideCreate } from "@/api/admin/guide";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 
-/**
- * Validation schemas
- */
 
-const MAX_VIDEO_BYTES = 80 * 1024 * 1024; // 80MB
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
+
+const MAX_VIDEO_BYTES = 80 * 1024 * 1024; 
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024; 
 
 const stepSchema = z.object({
   title: z.string().min(2, "O título deve ter pelo menos 2 caracteres").max(255, "O título não pode ter mais de 255 caracteres"),
@@ -126,7 +124,7 @@ const GuideCreateDialog: React.FC<GuideProps> = ({ isOpen, onClose, onSuccess })
   };
 
   const validateSteps = (): boolean => {
-    // Validate steps manually
+    
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
       if (!step.title || step.title.length < 2) {
@@ -151,7 +149,7 @@ const GuideCreateDialog: React.FC<GuideProps> = ({ isOpen, onClose, onSuccess })
 
   const onSubmit = async (values: GuideFormValues) => {
     try {
-      // Check authentication
+      
       const token = localStorage.getItem('token');
       if (!token) {
         toast({
@@ -162,12 +160,12 @@ const GuideCreateDialog: React.FC<GuideProps> = ({ isOpen, onClose, onSuccess })
         return;
       }
       
-      // Validate steps before submission
+      
       if (!validateSteps()) {
         return;
       }
 
-      // Build FormData because your backend expects multipart/form-data with file
+      
       const fd = new FormData();
       fd.append("title", values.title);
       fd.append("audience", values.audience);
@@ -181,23 +179,23 @@ const GuideCreateDialog: React.FC<GuideProps> = ({ isOpen, onClose, onSuccess })
         }
       });
 
-      // Debug: Log steps array that will be sent
+      
 
-      // Call the API function with FormData
+      
       const result = await GuideCreate(fd);
 
-      // Only show success toast if we get a successful response
+      
       if (result) {
         toast({
           title: "Guia criado com sucesso!",
           description: "O guia foi salvo no sistema.",
         });
 
-        form.reset(); // resets to defaults
+        form.reset(); 
         setSteps([defaultStep]);
         onClose(false);
         
-        // Call onSuccess callback if provided
+        
         if (onSuccess) {
           onSuccess();
         }
@@ -243,7 +241,7 @@ const GuideCreateDialog: React.FC<GuideProps> = ({ isOpen, onClose, onSuccess })
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* ---- Guia Details ---- */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="text-xl">Detalhes do guia</CardTitle>
@@ -305,7 +303,7 @@ const GuideCreateDialog: React.FC<GuideProps> = ({ isOpen, onClose, onSuccess })
               </CardContent>
             </Card>
 
-            {/* ---- Steps Management ---- */}
+            {}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">

@@ -114,20 +114,20 @@ export const AccountRestorationModal: React.FC<AccountRestorationModalProps> = (
           description: response.message,
         });
         console.log(response)
-       //Login the user
+       
        dispatch(loginSuccess({
               user: response.user,
               token: response.token,
           }));
 
         console.log(response)
-        // Close modal
+        
         onClose();
         
-        // Call success callback
+        
         onSuccess?.();
         
-        // Redirect to dashboard
+        
       } else {
         toast({
           title: "Erro ao restaurar conta",

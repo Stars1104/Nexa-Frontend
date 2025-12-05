@@ -55,7 +55,7 @@ export interface ReorderRequest {
   }>;
 }
 
-// Get user's portfolio
+
 export const getPortfolio = async (token: string): Promise<PortfolioResponse> => {
   const response = await apiClient.get('/portfolio', {
     headers: { Authorization: `Bearer ${token}` }
@@ -64,7 +64,7 @@ export const getPortfolio = async (token: string): Promise<PortfolioResponse> =>
   return response.data.data;
 };
 
-// Update portfolio profile
+
 export const updatePortfolioProfile = async (
   token: string, 
   data: FormData
@@ -74,14 +74,14 @@ export const updatePortfolioProfile = async (
   const response = await uploadClient.post('/portfolio/profile', data, {
     headers: {
       Authorization: `Bearer ${token}`,
-      // Don't set Content-Type for FormData - let the browser set it with boundary
+      
     }
   });
   
   return response.data.data;
 };
 
-// Test update endpoint
+
 export const testUpdate = async (
   token: string, 
   data: FormData
@@ -90,13 +90,13 @@ export const testUpdate = async (
   const response = await apiClient.post('/portfolio/test-update', data, {
     headers: { 
       Authorization: `Bearer ${token}`,
-      // Don't set Content-Type for FormData - let the browser set it with boundary
+      
     }
   });
   return response.data;
 };
 
-// Test upload endpoint
+
 export const testUpload = async (
   token: string, 
   files: File[]
@@ -116,13 +116,13 @@ export const testUpload = async (
   const response = await uploadClient.post('/portfolio/test-upload', formData, {
     headers: { 
       Authorization: `Bearer ${token}`,
-      // Don't set Content-Type for FormData - let the browser set it with boundary
+      
     }
   });
   return response.data;
 };
 
-// Upload portfolio media
+
 export const uploadPortfolioMedia = async (
   token: string, 
   files: File[],
@@ -141,11 +141,11 @@ export const uploadPortfolioMedia = async (
   for (let [key, value] of formData.entries()) {
   }
 
-  // Use uploadClient which has extended timeout (5 minutes) for large file uploads
+  
   const response = await uploadClient.post('/portfolio/media', formData, {
     headers: { 
       Authorization: `Bearer ${token}`,
-      // Don't set Content-Type for FormData - let the browser set it with boundary
+      
     },
     onUploadProgress: (progressEvent) => {
       if (progressEvent.total && onUploadProgress) {
@@ -157,7 +157,7 @@ export const uploadPortfolioMedia = async (
   return response.data.data;
 };
 
-// Update portfolio item
+
 export const updatePortfolioItem = async (
   token: string,
   itemId: number,
@@ -174,7 +174,7 @@ export const updatePortfolioItem = async (
   return response.data.data;
 };
 
-// Delete portfolio item
+
 export const deletePortfolioItem = async (
   token: string,
   itemId: number
@@ -185,7 +185,7 @@ export const deletePortfolioItem = async (
   return response.data;
 };
 
-// Reorder portfolio items
+
 export const reorderPortfolioItems = async (
   token: string,
   data: ReorderRequest
@@ -195,7 +195,7 @@ export const reorderPortfolioItems = async (
   });
 };
 
-// Get portfolio statistics
+
 export const getPortfolioStats = async (token: string): Promise<PortfolioStats> => {
   const response = await apiClient.get('/portfolio/statistics', {
     headers: { Authorization: `Bearer ${token}` }

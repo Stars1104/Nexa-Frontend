@@ -62,14 +62,14 @@ export default function ContractList() {
   const filterContracts = () => {
     let filtered = [...contracts];
 
-    // Filter by status
+    
     if (statusFilter !== "all") {
       filtered = filtered.filter(
         (contract) => contract.status === statusFilter
       );
     }
 
-    // Filter by search term
+    
     if (searchTerm) {
       filtered = filtered.filter(
         (contract) =>

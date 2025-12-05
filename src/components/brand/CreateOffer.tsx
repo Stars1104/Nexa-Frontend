@@ -14,8 +14,8 @@ interface CreateOfferProps {
   chatRoomId: string;
   onOfferCreated?: () => void;
   onCancel?: () => void;
-  onExistingOffer?: (offerId: number) => void; // Callback for existing offer
-  onReloadMessages?: () => void; // Callback to reload messages
+  onExistingOffer?: (offerId: number) => void; 
+  onReloadMessages?: () => void; 
 }
 
 interface OfferFormData {
@@ -42,7 +42,7 @@ export default function CreateOffer({
   const [isCheckingFunding, setIsCheckingFunding] = useState(true);
   const { toast } = useToast();
 
-  // Check funding status function
+  
   const checkFundingStatus = async () => {
     try {
       setIsCheckingFunding(true);
@@ -61,11 +61,11 @@ export default function CreateOffer({
     }
   };
 
-  // Check funding status on component mount and when window regains focus
+  
   useEffect(() => {
     checkFundingStatus();
 
-    // Also check when window regains focus (e.g., after returning from Stripe)
+    
     const handleFocus = () => {
       checkFundingStatus();
     };
@@ -117,7 +117,7 @@ export default function CreateOffer({
     try {
       const payload = {
         creator_id: creatorId,
-        chat_room_id: chatRoomId, // Send the room_id string as expected by backend
+        chat_room_id: chatRoomId, 
         budget: parseBudgetToNumber(formData.budget),
         estimated_days: parseInt(formData.estimated_days),
       };
@@ -132,20 +132,20 @@ export default function CreateOffer({
         });
 
         onOfferCreated?.();
-        onReloadMessages?.(); // Reload messages to show the offer in chat
+        onReloadMessages?.(); 
       } else {
         throw new Error(response.data.message || "Erro ao enviar oferta");
       }
     } catch (error: any) {
       console.error("Error creating offer:", error);
 
-      // Check if this is a funding requirement error (402 Payment Required)
-      // This happens when brand doesn't have Stripe account or payment method configured
+      
+      
       if (error.response?.status === 402 && error.response?.data?.requires_funding) {
         const redirectUrl = error.response?.data?.redirect_url;
         const message = error.response?.data?.message || "Você precisa configurar um método de pagamento antes de enviar ofertas.";
         
-        // Store offer data in sessionStorage to restore after payment setup
+        
         sessionStorage.setItem('pending_offer', JSON.stringify({
           creator_id: creatorId,
           creator_name: creatorName,
@@ -160,11 +160,11 @@ export default function CreateOffer({
           variant: "default",
         });
         
-        // Redirect to Stripe checkout or payment page
+        
         if (redirectUrl) {
           window.location.href = redirectUrl;
         } else {
-          // Fallback: redirect to payment methods page
+          
           window.location.href = '/brand?component=Pagamentos&requires_funding=true&action=send_offer';
         }
         setIsSubmitting(false);
@@ -174,7 +174,7 @@ export default function CreateOffer({
       const errorMessage =
         error.response?.data?.message || "Erro ao enviar oferta";
 
-      // Check if it's an existing offer error
+      
       if (
         error.response?.data?.message?.includes("already have a pending offer") ||
         error.response?.data?.message?.includes("pending offer for this creator")
@@ -182,9 +182,9 @@ export default function CreateOffer({
         const existingOfferId = error.response?.data?.existing_offer_id;
         if (existingOfferId && onExistingOffer) {
           onExistingOffer(existingOfferId);
-          return; // Don't show toast, let the parent handle it
+          return; 
         } else {
-          // Fallback: show toast if callback is not provided
+          
           toast({
             title: "Oferta Pendente",
             description: "Você já tem uma oferta pendente para este criador. Aguarde a resposta ou cancele a oferta existente.",
@@ -194,7 +194,7 @@ export default function CreateOffer({
         }
       }
 
-      // Check if it's a payment method error - TEMPORARILY DISABLED due to Pagar.me API issues
+      
       if (error.response?.data?.error_code === 'NO_PAYMENT_METHOD') {
         toast({
           title: "Método de Pagamento Necessário",
@@ -204,7 +204,7 @@ export default function CreateOffer({
         return;
       }
 
-      // Show generic error for other cases
+      
       toast({
         title: "Erro",
         description: errorMessage,
@@ -216,12 +216,12 @@ export default function CreateOffer({
   };
 
   const formatCurrency = (value: string) => {
-    // Remove non-numeric characters
+    
     const numericValue = value.replace(/\D/g, "");
 
     if (numericValue === "") return "";
 
-    // Convert to number and format as currency
+    
     const number = parseFloat(numericValue) / 100;
     return number.toLocaleString("pt-BR", {
       minimumFractionDigits: 2,
@@ -238,19 +238,19 @@ export default function CreateOffer({
   };
 
   const parseBudgetToNumber = (budgetString: string): number => {
-    // Remove all non-numeric characters except comma and dot
+    
     const cleanValue = budgetString.replace(/[^\d,.-]/g, "");
 
-    // Handle Brazilian currency format (1.500,50 -> 1500.50)
-    // If there's a comma, treat it as Brazilian format
+    
+    
     if (cleanValue.includes(",")) {
-      // Remove all dots (thousands separators)
+      
       const withoutThousands = cleanValue.replace(/\./g, "");
-      // Then replace comma with dot (decimal separator)
+      
       const numericValue = withoutThousands.replace(",", ".");
       return parseFloat(numericValue) || 0;
     } else {
-      // No comma, treat as standard decimal format
+      
       return parseFloat(cleanValue) || 0;
     }
   };
@@ -265,7 +265,7 @@ export default function CreateOffer({
     try {
       const budget = parseBudgetToNumber(formData.budget);
       
-      // Create funding checkout session
+      
       const response = await apiClient.post("/brand-payment/create-funding-checkout", {
         amount: budget,
         creator_id: creatorId,
@@ -273,7 +273,7 @@ export default function CreateOffer({
       });
 
       if (response.data.success && response.data.url) {
-        // Store offer data in sessionStorage to restore after payment
+        
         sessionStorage.setItem('pending_offer', JSON.stringify({
           creator_id: creatorId,
           creator_name: creatorName,
@@ -288,7 +288,7 @@ export default function CreateOffer({
           variant: "default",
         });
         
-        // Redirect to Stripe checkout
+        
         window.location.href = response.data.url;
       } else {
         throw new Error(response.data.error || "Erro ao criar sessão de checkout");

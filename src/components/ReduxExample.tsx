@@ -53,7 +53,7 @@ const ReduxExample: React.FC = () => {
           <CardTitle>Exemplo de Gerenciamento de Estado Redux</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Authentication Status */}
+          {}
           <div className="flex items-center gap-2">
             <span className="font-medium">Status:</span>
             <Badge variant={isAuthenticated ? 'default' : 'secondary'}>
@@ -61,7 +61,7 @@ const ReduxExample: React.FC = () => {
             </Badge>
           </div>
 
-          {/* Login Form */}
+          {}
           {!isAuthenticated && (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
@@ -89,7 +89,7 @@ const ReduxExample: React.FC = () => {
             </form>
           )}
 
-          {/* User Info */}
+          {}
           {isAuthenticated && user && (
             <div className="space-y-4">
               <div>
@@ -128,7 +128,7 @@ const ReduxExample: React.FC = () => {
             </div>
           )}
 
-          {/* User Preferences */}
+          {}
           <div>
             <h3 className="font-medium mb-2">Preferências do Usuário:</h3>
             <div className="flex items-center gap-2">
@@ -141,7 +141,7 @@ const ReduxExample: React.FC = () => {
             <p>Atualizações por Email: {preferences.emailUpdates ? 'Ativado' : 'Desativado'}</p>
           </div>
 
-          {/* Profile Info */}
+          {}
           {profile && (
             <div>
               <h3 className="font-medium mb-2">Informações do Perfil:</h3>

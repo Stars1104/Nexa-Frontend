@@ -2,7 +2,7 @@ import axios from "axios";
 
 const BackendURL = import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br";
 
-// Google OAuth API
+
 const GoogleAuthAPI = axios.create({
     baseURL: `${BackendURL}`,
     headers: {
@@ -11,7 +11,7 @@ const GoogleAuthAPI = axios.create({
     withCredentials: false,
 });
 
-// Get Google OAuth URL
+
 export const getGoogleOAuthURL = async () => {
     try {
         const response = await GoogleAuthAPI.get("/api/google/redirect");
@@ -21,7 +21,7 @@ export const getGoogleOAuthURL = async () => {
     }
 };
 
-// Handle Google OAuth callback
+
 export const handleGoogleCallback = async (code: string, role?: 'creator' | 'brand', isStudent?: boolean) => {
     try {
         const params = new URLSearchParams({ code });
@@ -38,7 +38,7 @@ export const handleGoogleCallback = async (code: string, role?: 'creator' | 'bra
     }
 };
 
-// Handle Google OAuth with role selection
+
 export const handleGoogleAuthWithRole = async (role: 'creator' | 'brand') => {
     try {
         const response = await GoogleAuthAPI.post("/api/google/auth", { role });
@@ -48,13 +48,13 @@ export const handleGoogleAuthWithRole = async (role: 'creator' | 'brand') => {
     }
 };
 
-// Google OAuth flow helper
+
 export const initiateGoogleOAuth = async (role?: 'creator' | 'brand', isStudent?: boolean) => {
     try {
-        // Get the OAuth URL
+        
         const { redirect_url } = await getGoogleOAuthURL();
 
-        // Store the role and student status in sessionStorage for later use
+        
         if (role) {
             sessionStorage.setItem('google_oauth_role', role);
         }
@@ -65,14 +65,14 @@ export const initiateGoogleOAuth = async (role?: 'creator' | 'brand', isStudent?
             sessionStorage.removeItem('google_oauth_is_student');
         }
 
-        // Redirect to Google OAuth
+        
         window.location.href = redirect_url;
     } catch (error) {
         throw error;
     }
 };
 
-// Handle OAuth callback from URL
+
 export const handleOAuthCallback = async () => {
     try {
         const urlParams = new URLSearchParams(window.location.search);
@@ -87,18 +87,18 @@ export const handleOAuthCallback = async () => {
             throw new Error('Nenhum código de autorização recebido');
         }
 
-        // Get the stored role and student status
+        
         const role = sessionStorage.getItem('google_oauth_role') as 'creator' | 'brand' | null;
         const isStudent = sessionStorage.getItem('google_oauth_is_student') === 'true';
 
         let authData;
         if (role) {
-            // Pass the role and student status as query parameters to the callback
+            
             authData = await handleGoogleCallback(code, role, isStudent);
             sessionStorage.removeItem('google_oauth_role');
             sessionStorage.removeItem('google_oauth_is_student');
         } else {
-            // Use default callback (defaults to creator)
+            
             authData = await handleGoogleCallback(code, undefined, isStudent);
             sessionStorage.removeItem('google_oauth_is_student');
         }

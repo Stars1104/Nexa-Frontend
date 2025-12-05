@@ -36,7 +36,7 @@ const NotificationBell = () => {
     const componentId = useRef(Math.random().toString(36).substr(2, 9));
     const renderCount = useRef(0);
 
-    // Track renders
+    
     renderCount.current += 1;
 
     useEffect(() => {
@@ -46,38 +46,38 @@ const NotificationBell = () => {
         }
     }, []);
 
-    // Cleanup on unmount
+    
     useEffect(() => {
         return () => {
             isMounted.current = false;
         };
     }, []);
 
-    // Fetch unread count and recent notifications on mount (only once)
+    
     useEffect(() => {
         const now = Date.now();
         const timeSinceLastFetch = now - lastFetchTime.current;
         
         if (token && !hasInitialFetch.current && !hasInitialData && !isLoading && timeSinceLastFetch > 1000 && isMounted.current) {
             const timeoutId = setTimeout(() => {
-                if (!isMounted.current || !token || isLoading) return; // Don't make API calls if unmounting, no token, or already loading
+                if (!isMounted.current || !token || isLoading) return; 
                 
                 hasInitialFetch.current = true;
                 lastFetchTime.current = Date.now();
                 dispatch(fetchUnreadCount(token));
-                // Fetch recent notifications (last 10)
+                
                 dispatch(fetchNotifications({ token, params: { per_page: 10 } }));
-            }, 100); // 100ms delay
+            }, 100); 
 
             return () => clearTimeout(timeoutId);
         }
     }, [dispatch, token, hasInitialData, isLoading]);
     
-    // Get recent notifications (last 5 for display)
+    
     const recentNotifications = notifications.slice(0, 5);
 
     const handleDeleteNotification = async (notificationId: number, event: React.MouseEvent) => {
-        event.stopPropagation(); // Prevent notification click
+        event.stopPropagation(); 
         if (!token) return;
         
         try {
@@ -89,7 +89,7 @@ const NotificationBell = () => {
     };
 
     const handleMarkAsRead = async (notificationId: number, event: React.MouseEvent) => {
-        event.stopPropagation(); // Prevent notification click
+        event.stopPropagation(); 
         if (!token) return;
         
         try {

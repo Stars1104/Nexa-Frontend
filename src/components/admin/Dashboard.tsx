@@ -15,7 +15,7 @@ export default function Dashboard() {
     const [loadingCampaigns, setLoadingCampaigns] = useState<number[]>([]);
     const { toast } = useToast();
 
-    // Fetch dashboard data on component mount
+    
     useEffect(() => {
         console.log("I am in loading")
         fetchDashboardData();
@@ -25,7 +25,7 @@ export default function Dashboard() {
         try {
             setLoading(true);
             
-            // Fetch all data in parallel
+            
             const [metricsRes, campaignsRes, usersRes] = await Promise.all([
                 adminApi.getDashboardMetrics(),
                 adminApi.getPendingCampaigns(),
@@ -65,11 +65,11 @@ export default function Dashboard() {
                 });
             }
 
-            // Refresh pending campaigns
+            
             const campaignsRes = await adminApi.getPendingCampaigns();
             setPendingCampaigns(campaignsRes.data);
 
-            // Refresh metrics
+            
             const metricsRes = await adminApi.getDashboardMetrics();
             setMetrics(metricsRes.data);
         } catch (error) {
@@ -133,13 +133,13 @@ export default function Dashboard() {
             <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
         </Helmet>
         <div className="flex flex-col gap-6 px-2 sm:px-4 py-4 max-w-full mx-auto dark:bg-[#171717] min-h-[92vh]">
-            {/* Header */}
+            {}
             <div className="mb-2">
                 <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Painel do Administrador</h1>
                 <p className="text-muted-foreground text-sm mt-1">Gerencie campanhas, usuários e regras da plataforma</p>
             </div>
             
-            {/* Stats */}
+            {}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6">
                 {stats.map((stat, i) => (
                     <Card key={stat.label} className="flex items-center justify-center gap-4 py-6 px-2 bg-background">
@@ -154,9 +154,9 @@ export default function Dashboard() {
                 ))}
             </div>
             
-            {/* Main content */}
+            {}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left: Recent Campaigns */}
+                {}
                 <Card className="bg-background">
                     <CardContent className="p-6">
                         <h2 className="text-lg font-semibold mb-4">Campanhas Pendentes Recentes</h2>
@@ -213,7 +213,7 @@ export default function Dashboard() {
                     </CardContent>
                 </Card>
                 
-                {/* Right: Recent Users */}
+                {}
                 <Card className="bg-background">
                     <CardContent className="p-6">
                         <h2 className="text-lg font-semibold mb-4">Usuários Recentes</h2>

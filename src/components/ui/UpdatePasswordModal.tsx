@@ -55,19 +55,18 @@ export const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
     } else if (formData.newPassword.length < 8) {
       newErrors.newPassword = "New password must be at least 8 characters";
     } else {
-      // Check for at least 1 number
+      
       if (!/\d/.test(formData.newPassword)) {
         newErrors.newPassword = "A senha deve conter pelo menos 1 número";
       }
-      // Check for at least 1 uppercase letter
+      
       else if (!/[A-Z]/.test(formData.newPassword)) {
         newErrors.newPassword = "A senha deve conter pelo menos 1 letra maiúscula";
       }
-      // Check for at least 1 special character
+      
       else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.newPassword)) {
         newErrors.newPassword = "A senha deve conter pelo menos 1 caractere especial";
       }
-      // Check for at least 1 lowercase letter
       else if (!/[a-z]/.test(formData.newPassword)) {
         newErrors.newPassword = "A senha deve conter pelo menos 1 letra minúscula";
       }
@@ -99,7 +98,6 @@ export const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }

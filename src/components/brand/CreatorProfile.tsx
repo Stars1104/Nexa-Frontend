@@ -27,7 +27,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "../ui/sonner";
 
-// Language mapping from codes to display names
+
 const LANGUAGE_CODE_TO_NAME: { [key: string]: string } = {
   "pt": "Português",
   "en": "Inglês",
@@ -63,12 +63,12 @@ const LANGUAGE_CODE_TO_NAME: { [key: string]: string } = {
 function getAvatarUrl(avatarPath?: string | null): string | null {
   if (!avatarPath || avatarPath === 'null' || avatarPath.trim() === '') return null;
   
-  // If already a full URL, return as-is
+  
   if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://')) {
     return avatarPath;
   }
   
-  // Construct full URL from relative path
+  
   const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
   return `${baseUrl}${avatarPath}`;
 }
@@ -91,7 +91,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
 
   useEffect(() => {
     if (creatorProfileId) {
-      // Validate creator ID
+      
       if (!creatorProfileId || creatorProfileId === 'undefined' || creatorProfileId === 'null') {
         console.error('Invalid creator ID:', creatorProfileId);
         toast.error("ID do criador inválido");
@@ -181,7 +181,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
 
   const { creator, portfolio, portfolio_items, reviews } = creatorData || {};
 
-  // Additional safety check for creator object
+  
   if (!creator) {
     return (
       <div className="min-h-screen bg-background p-4 sm:p-6">
@@ -203,7 +203,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
   return (
     <div className="min-h-screen bg-background w-full">
       <div className="w-full p-4 sm:p-6">
-        {/* Header */}
+        {}
         <div className="mb-6">
           <Button
             variant="ghost"
@@ -226,9 +226,9 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
           </div>
         </div>
 
-        {/* Main Content */}
+        {}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Profile Info */}
+          {}
           <div className="lg:col-span-1">
             <Card className="sticky top-6">
               <CardHeader className="text-center pb-4">
@@ -242,7 +242,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                           alt={creator.name || 'Criador'}
                           onError={(e) => {
                             console.warn('Avatar image failed to load:', avatarUrl);
-                            // Hide the image and show fallback
+                            
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
                           }}
@@ -263,7 +263,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                   </p>
                 )}
                 
-                {/* Creator Type and Industry */}
+                {}
                 {(creator.creator_type || creator.industry) && (
                   <div className="mt-2 space-y-1">
                     {creator.creator_type && (
@@ -294,7 +294,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
               </CardHeader>
               
               <CardContent className="space-y-4">
-                {/* Public Info */}
+                {}
                 <div className="space-y-3">
                   {creator.state && (
                     <div className="flex items-center gap-3">
@@ -313,7 +313,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
 
                 <Separator />
 
-                {/* Stats */}
+                {}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-foreground">{creator.total_campaigns || 0}</div>
@@ -327,7 +327,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
 
                 <Separator />
 
-                {/* Portfolio Stats */}
+                {}
                 {portfolio && (
                   <>
                     <div>
@@ -354,9 +354,9 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
             </Card>
           </div>
 
-          {/* Right Column - Content */}
+          {}
           <div className="lg:col-span-2">
-            {/* Tabs */}
+            {}
             <div className="flex border-b mb-6">
               <button
                 onClick={() => setActiveTab('profile')}
@@ -390,14 +390,14 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
               </button>
             </div>
 
-            {/* Tab Content */}
+            {}
             {activeTab === 'profile' && (
               <Card>
                 <CardHeader>
                   <CardTitle>Sobre {creator.name}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Bio Section */}
+                  {}
                   <div>
                     <h4 className="font-semibold text-foreground mb-2">Biografia</h4>
                     <p className="text-muted-foreground leading-relaxed">
@@ -405,7 +405,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                     </p>
                   </div>
 
-                  {/* Personal Information */}
+                  {}
                   {(creator.birth_date || creator.gender || creator.creator_type) && (
                     <div>
                       <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
@@ -453,7 +453,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                     </div>
                   )}
 
-                  {/* Area of Expertise */}
+                  {}
                   {creator.niche && (
                     <div>
                       <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
@@ -467,7 +467,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                     </div>
                   )}
 
-                  {/* Languages */}
+                  {}
                   {creator.languages && creator.languages.length > 0 && (
                     <div>
                       <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
@@ -484,7 +484,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                     </div>
                   )}
 
-                  {/* Social Media */}
+                  {}
                   {(creator.instagram_handle || creator.tiktok_handle || creator.youtube_channel || 
                     creator.facebook_page || creator.twitter_handle) && (
                     <div>
@@ -542,7 +542,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                     </div>
                   )}
 
-                  {/* Project Links */}
+                  {}
                   {portfolio?.project_links && portfolio.project_links.length > 0 && (
                     <div>
                       <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
@@ -580,7 +580,7 @@ const CreatorProfile: React.FC<CreatorProfileProps> = ({ creatorId, onBack, setC
                                     {linkData.title}
                                   </div>
                                   <div className="text-xs text-muted-foreground truncate">
-                                    {linkData.url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                                    {linkData.url.replace(/^https?:\/\
                                   </div>
                                 </div>
                                 <svg className="w-4 h-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">

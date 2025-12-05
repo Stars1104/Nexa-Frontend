@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import StripeConnectOnboarding from '../StripeConnectOnboarding';
 
-// Mock the API
+
 jest.mock('../../../api/stripe', () => ({
   stripeApi: {
     getAccountStatus: jest.fn(),
@@ -11,7 +11,7 @@ jest.mock('../../../api/stripe', () => ({
   },
 }));
 
-// Mock the toast
+
 jest.mock('../../ui/sonner', () => ({
   toast: {
     success: jest.fn(),
@@ -42,7 +42,7 @@ describe('StripeConnectOnboarding', () => {
 
   it('renders loading state initially', () => {
     const { stripeApi } = require('../../../api/stripe');
-    stripeApi.getAccountStatus.mockImplementation(() => new Promise(() => {})); // Never resolves
+    stripeApi.getAccountStatus.mockImplementation(() => new Promise(() => {})); 
 
     render(
       <TestWrapper>
@@ -102,7 +102,7 @@ describe('StripeConnectOnboarding', () => {
       expires_at: Date.now() + 3600000,
     });
 
-    // Mock window.open
+    
     const mockOpen = jest.fn();
     Object.defineProperty(window, 'open', {
       value: mockOpen,

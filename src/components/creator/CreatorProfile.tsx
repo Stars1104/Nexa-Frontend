@@ -39,7 +39,7 @@ const getInitials = (name: string) => {
     .toUpperCase();
 };
 
-// Language mapping for proper display
+
 const LANGUAGE_MAP: { [key: string]: string } = {
   'pt': 'Português',
   'en': 'Inglês',
@@ -78,7 +78,7 @@ const LANGUAGE_MAP: { [key: string]: string } = {
   'mr': 'Marathi',
   'gu': 'Gujarati',
   'pa': 'Punjabi',
-  // Also handle full names in case they're already stored correctly
+  
   'Português': 'Português',
   'Inglês': 'Inglês',
   'Espanhol': 'Espanhol',
@@ -123,7 +123,7 @@ const getLanguageDisplayName = (language: string): string => {
   return LANGUAGE_MAP[language] || language;
 };
 
-// Fallback profile data if no user data is available
+
 const defaultProfile = {
   name: "Usuário",
   email: "usuario@exemplo.com",
@@ -158,11 +158,11 @@ export const CreatorProfile = () => {
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [showAccountRemovalModal, setShowAccountRemovalModal] = useState(false);
 
-  // Get profile data from Redux store
+  
   const { profile, isLoading, error } = useAppSelector((state) => state.user);
   const { user } = useAppSelector((state) => state.auth);
 
-  // Load balance data
+  
   const loadBalance = async () => {
     try {
       setBalanceLoading(true);
@@ -180,11 +180,11 @@ export const CreatorProfile = () => {
     }
   };
 
-  // Guards to evitar múltiplas chamadas simultâneas
+  
   const hasFetchedRef = useRef(false);
   const isFetchingRef = useRef(false);
 
-  // Fetch profile data on component mount (evita flicker/throttle)
+  
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -194,7 +194,7 @@ export const CreatorProfile = () => {
         hasFetchedRef.current = true;
       } catch (error: any) {
         console.error("Error fetching profile:", error);
-        // Don't show error toast for authentication errors as they're handled by the interceptor
+        
         if (
           !error?.message?.includes("401") &&
           !error?.message?.includes("Unauthorized")
@@ -204,14 +204,14 @@ export const CreatorProfile = () => {
       } finally { isFetchingRef.current = false; }
     };
 
-    // Only fetch if user is authenticated
+    
     if (user?.id) {
       fetchProfile();
       loadBalance();
     }
   }, [dispatch, user?.id]);
 
-  // Merge user data with profile data and fallback to defaults
+  
   const displayProfile = {
     name: profile?.name || user?.name || defaultProfile.name,
     email: profile?.email || user?.email || defaultProfile.email,
@@ -240,11 +240,11 @@ export const CreatorProfile = () => {
       setIsUpdating(true);
 
       try {
-        // Map form data to API format, matching backend expectations
+        
         const profileData: any = {
           name: updatedProfile.name,
           email: updatedProfile.email,
-          state: updatedProfile.state, // Send state directly instead of mapping to location
+          state: updatedProfile.state, 
           gender: updatedProfile.gender,
           birth_date: updatedProfile.birth_date,
           creator_type: updatedProfile.creator_type,
@@ -254,40 +254,40 @@ export const CreatorProfile = () => {
           facebook_page: updatedProfile.facebook_page,
           twitter_handle: updatedProfile.twitter_handle,
           niche: updatedProfile.niche,
-          // Persistir profissão em campo próprio no backend
+          
           profession: (updatedProfile as any).profession,
           languages: updatedProfile.languages,
         };
 
-        // Avatar: se for trocar a foto, remove a anterior antes de enviar a nova
+        
         if (updatedProfile.image instanceof File) {
           try {
             await deleteAvatar();
           } catch (e) {
-            // segue mesmo que a remoção falhe em dev/local
+            
           }
           profileData.avatar = updatedProfile.image;
         }
 
 
-        // Update text fields first (sem arquivo)
+        
         const { avatar, ...textOnly } = profileData;
         await dispatch(updateUserProfile(textOnly)).unwrap();
 
-        // Then upload avatar only (se houver arquivo)
+        
         if (avatar instanceof File) {
           try {
             const uploadRes = await uploadAvatarOnly(avatar);
             const newAvatar = uploadRes?.profile?.avatar || uploadRes?.profile?.avatar_url;
             if (newAvatar) {
               try {
-                // cache-busting para refletir imediatamente no header/nav
+                
                 const bust = `${newAvatar}${newAvatar.includes('?') ? '&' : '?'}t=${Date.now()}`;
                 dispatch(updateAuthUser({ avatar: bust, avatar_url: bust }));
               } catch {}
             }
           } catch (err) {
-            // Fallback: converter para base64 e enviar
+            
             try {
               const base64 = await fileToBase64(avatar);
               const res2 = await uploadAvatarBase64(base64);
@@ -304,10 +304,10 @@ export const CreatorProfile = () => {
           }
         }
 
-        // Exit edit mode first, then show success message
+        
         setEditMode(false);
 
-        // Use safe toast; em seguida, recarregar a página para refletir avatar no app inteiro
+        
         safeToast.success("Perfil atualizado com sucesso!", 300);
         setTimeout(() => {
           try { window.location.reload(); } catch {}
@@ -348,7 +348,7 @@ export const CreatorProfile = () => {
         await dispatch(updateUserPassword(passwordUpdateData)).unwrap();
         setShowPasswordModal(false);
 
-        // Use safe toast with longer delay to ensure the modal has finished closing
+        
         safeToast.success("Senha atualizada com sucesso!", 300);
       } catch (error: any) {
         console.error("Password update failed:", error);
@@ -377,7 +377,7 @@ const handleRefreshProfile = useCallback(async () => {
     loadBalance();
   };
 
-  // Handle edit mode toggle
+  
   const handleEditModeToggle = useCallback(() => {
     if (isUpdating) {
       return;
@@ -385,7 +385,7 @@ const handleRefreshProfile = useCallback(async () => {
     setEditMode(!editMode);
   }, [editMode, isUpdating]);
 
-  // Handle password modal toggle
+  
   const handlePasswordModalToggle = useCallback(() => {
     if (isUpdating) {
       return;
@@ -422,7 +422,7 @@ const handleRefreshProfile = useCallback(async () => {
     );
   }
 
-  // Don't render if user is not authenticated
+  
   if (!user?.id) {
     return (
       <div className="min-h-[92vh] bg-gray-50 dark:bg-[#171717] flex items-center justify-center">
@@ -502,7 +502,7 @@ const handleRefreshProfile = useCallback(async () => {
           </div>
 
           <div className="flex flex-col gap-8 items-start">
-            {/* Avatar and name */}
+            {}
             <div className="flex gap-4 items-center min-w-[120px]">
               <div className="relative">
                 <div className="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-400 flex items-center justify-center text-2xl font-bold text-purple-600 dark:text-white mb-2 overflow-hidden">
@@ -512,7 +512,7 @@ const handleRefreshProfile = useCallback(async () => {
                       alt="Profile"
                       className="w-16 h-16 rounded-full object-cover"
                       onError={(e) => {
-                        // Fallback to initials if image fails to load
+                        
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
                         const parent = target.parentElement;
@@ -525,7 +525,7 @@ const handleRefreshProfile = useCallback(async () => {
                     getInitials(displayProfile.name)
                   )}
                 </div>
-                {/* Premium Icon */}
+                {}
                 {displayProfile.has_premium && (
                   <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-gray-800">
                     <Crown className="w-3 h-3 text-white" />
@@ -549,7 +549,7 @@ const handleRefreshProfile = useCallback(async () => {
               </div>
             </div>
 
-            {/* Profile Information Grid */}
+            {}
             <div className="w-full">
               <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                 Detalhes Pessoais
@@ -628,8 +628,8 @@ const handleRefreshProfile = useCallback(async () => {
               </div>
             </div>
             
-            {/* Social Media Information - Always show for all creators */}
-            {/* Redes Sociais Section */}
+            {}
+            {}
 <div className="w-full border-t border-gray-200 dark:border-neutral-700 pt-6">
   <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">
     Redes Sociais
@@ -642,7 +642,7 @@ const handleRefreshProfile = useCallback(async () => {
   </p>
 
   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-    {/* Instagram */}
+    {}
     <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 hover:shadow-sm transition">
       <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-tr from-pink-500 to-yellow-500 rounded-full flex items-center justify-center text-white">
         <Instagram size={20} />
@@ -657,7 +657,7 @@ const handleRefreshProfile = useCallback(async () => {
       </div>
     </div>
 
-    {/* TikTok */}
+    {}
     <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 hover:shadow-sm transition">
       <div className="flex-shrink-0 w-10 h-10 bg-black rounded-full flex items-center justify-center text-white">
         <Music4 size={20} />
@@ -672,7 +672,7 @@ const handleRefreshProfile = useCallback(async () => {
       </div>
     </div>
 
-    {/* YouTube */}
+    {}
     <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 hover:shadow-sm transition">
       <div className="flex-shrink-0 w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white">
         <Youtube size={20} />
@@ -687,7 +687,7 @@ const handleRefreshProfile = useCallback(async () => {
       </div>
     </div>
 
-    {/* Facebook */}
+    {}
     <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 hover:shadow-sm transition">
       <div className="flex-shrink-0 w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white">
         <Facebook size={20} />
@@ -702,7 +702,7 @@ const handleRefreshProfile = useCallback(async () => {
       </div>
     </div>
 
-    {/* Twitter */}
+    {}
     <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 hover:shadow-sm transition">
       <div className="flex-shrink-0 w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center text-white">
         <Twitter size={20} />
@@ -722,7 +722,7 @@ const handleRefreshProfile = useCallback(async () => {
         </div>
       </div>
 
-      {/* Reviews Section */}
+      {}
       {user?.id && (
         <div className="mt-8">
           <Reviews
@@ -734,7 +734,7 @@ const handleRefreshProfile = useCallback(async () => {
         </div>
       )}
 
-      {/* Balance and Withdrawal Section */}
+      {}
       {user?.id && (
         <div className="mt-8">
           <div className="bg-background rounded-xl shadow-sm border border-gray-200 dark:border-neutral-700 p-6">
@@ -817,7 +817,7 @@ const handleRefreshProfile = useCallback(async () => {
         </div>
       )}
 
-      {/* Update Password Modal */}
+      {}
       <UpdatePasswordModal
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
@@ -825,7 +825,7 @@ const handleRefreshProfile = useCallback(async () => {
         isLoading={isPasswordLoading}
       />
 
-      {/* Withdrawal Modal */}
+      {}
       {balance && (
         <WithdrawalModal
           isOpen={showWithdrawalModal}
@@ -836,7 +836,7 @@ const handleRefreshProfile = useCallback(async () => {
         />
       )}
 
-      {/* Account Removal Modal */}
+      {}
       <AccountRemovalModal
         isOpen={showAccountRemovalModal}
         onClose={() => setShowAccountRemovalModal(false)}

@@ -54,7 +54,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
     const [currentPage, setCurrentPage] = useState(1);
     const campaignsPerPage = 9;
 
-    // Fetch user campaigns on component mount
+    
     useEffect(() => {
         const fetchCampaigns = async () => {
             try {
@@ -68,7 +68,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
         fetchCampaigns();
     }, [dispatch]);
 
-    // Clear error on component unmount
+    
     useEffect(() => {
         return () => {
             if (error) {
@@ -77,7 +77,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
         };
     }, [dispatch, error]);
 
-    // Calculate pagination
+    
     const campaigns = Array.isArray(userCampaigns) ? userCampaigns : [];
     const totalCampaigns = campaigns.length;
     const totalPages = Math.ceil(totalCampaigns / campaignsPerPage);
@@ -85,21 +85,21 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
     const endIndex = startIndex + campaignsPerPage;
     const currentCampaigns = campaigns.slice(startIndex, endIndex);
 
-    // Format date for display
-    // Handle YYYY-MM-DD format by creating Date in local timezone to avoid UTC conversion issues
+    
+    
     const formatDate = (dateString: string) => {
-        // Check if date is in YYYY-MM-DD format (from backend)
+        
         if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
             const [year, month, day] = dateString.split('-').map(Number);
             const date = new Date(year, month - 1, day);
             return date.toLocaleDateString('pt-BR');
         }
-        // For other formats, use standard parsing
+        
         const date = new Date(dateString);
         return date.toLocaleDateString('pt-BR');
     };
 
-    // Format budget for display
+    
     const formatBudget = (budget: number) => {
         return new Intl.NumberFormat('pt-BR', {
             style: 'currency',
@@ -107,19 +107,19 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
         }).format(budget);
     };
 
-    // Handle page change
+    
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // Generate pagination items
+    
     const generatePaginationItems = () => {
         const items = [];
         const maxVisiblePages = 5;
 
         if (totalPages <= maxVisiblePages) {
-            // Show all pages if total is small
+            
             for (let i = 1; i <= totalPages; i++) {
                 items.push(
                     <PaginationItem key={i}>
@@ -134,7 +134,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                 );
             }
         } else {
-            // Show first page
+            
             items.push(
                 <PaginationItem key={1}>
                     <PaginationLink
@@ -147,7 +147,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                 </PaginationItem>
             );
 
-            // Show ellipsis if needed
+            
             if (currentPage > 3) {
                 items.push(
                     <PaginationItem key="ellipsis1">
@@ -156,7 +156,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                 );
             }
 
-            // Show current page and neighbors
+            
             const start = Math.max(2, currentPage - 1);
             const end = Math.min(totalPages - 1, currentPage + 1);
 
@@ -174,7 +174,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                 );
             }
 
-            // Show ellipsis if needed
+            
             if (currentPage < totalPages - 2) {
                 items.push(
                     <PaginationItem key="ellipsis2">
@@ -183,7 +183,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                 );
             }
 
-            // Show last page
+            
             if (totalPages > 1) {
                 items.push(
                     <PaginationItem key={totalPages}>
@@ -241,7 +241,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
     }
 
     if (error) {
-        // Safely convert error to string (handle both string and object cases)
+        
         const errorMessage = typeof error === 'string' ? error : (error?.message || 'Erro desconhecido');
         return (
             <div className="p-6 md:p-10 dark:bg-[#171717] min-h-[92vh]">
@@ -308,7 +308,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                                                         alt={campaign.title || "campaign"}
                                                         className="w-full h-full object-cover"
                                                         onError={(e) => {
-                                                            // Hide image and show initials on error
+                                                            
                                                             const target = e.target as HTMLImageElement;
                                                             target.style.display = 'none';
                                                             const parent = target.parentElement;
@@ -352,7 +352,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                                         </svg>
                                         Prazo: {formatDate(campaign.deadline)}
                                     </span>
-                                                                    {/* Budget or Barter Display */}
+                                                                    {}
                                 {campaign.remunerationType === 'permuta' ? (
                                     <div className="flex items-center gap-1">
                                         <RefreshCw className="h-4 w-4 text-blue-600" />
@@ -365,7 +365,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                                     </div>
                                 )}
 
-                                    {/* Remuneration Type */}
+                                    {}
                                     {campaign.remunerationType && (
                                         <span className="flex items-center gap-1">
                                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -379,7 +379,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                                     )}
                                 </div>
                                 
-                                {/* Google Drive Link */}
+                                {}
 
                                 <div className="flex gap-3 mt-2 md:flex-row flex-col">
                                     <button
@@ -404,7 +404,7 @@ const AllowedCampaigns: React.FC<AllowedCampaignsProps> = ({ setComponent }) => 
                         ))}
                     </div>
 
-                    {/* Pagination */}
+                    {}
                     {totalCampaigns > campaignsPerPage && (
                         <div className="flex justify-center mt-8">
                             <Pagination>

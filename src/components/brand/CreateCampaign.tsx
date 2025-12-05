@@ -14,10 +14,10 @@ import { createCampaign } from "../../store/thunks/campaignThunks";
 import { clearError, CampaignFormData } from "../../store/slices/campaignSlice";
 import NICHES from "../../lib/niches";
 
-// Tipos/Nichos de campanha unificados
+
 const CAMPAIGN_TYPES = NICHES;
 
-// Brazilian states
+
 const BRAZILIAN_STATES = [
   "Acre",
   "Alagoas",
@@ -52,7 +52,7 @@ export default function CreateCampaign() {
   const dispatch = useDispatch<AppDispatch>();
   const { isCreating, error } = useSelector((state: RootState) => state.campaign);
   
-  // Form reset function - memoized to prevent unnecessary re-renders
+  
   const resetForm = useCallback(() => {
     setTitle("");
     setDescription("");
@@ -67,21 +67,21 @@ export default function CreateCampaign() {
     setCampaignType("");
     setAttachments([]);
     
-    // Reset creator filters
+    
     setMinAge(undefined);
     setMaxAge(undefined);
     setTargetGenders([]);
     setTargetCreatorTypes([]);
   }, []);
 
-  // Cleanup timeouts on unmount
+  
   useEffect(() => {
     return () => {
-      // Clear any pending timeouts when component unmounts
+      
     };
   }, []);
   
-  // Form state
+  
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [budget, setBudget] = useState("");
@@ -97,7 +97,7 @@ export default function CreateCampaign() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   
-  // Creator filter state
+  
   const [minAge, setMinAge] = useState<number | undefined>();
   const [maxAge, setMaxAge] = useState<number | undefined>();
   const [targetGenders, setTargetGenders] = useState<string[]>([]);
@@ -106,7 +106,7 @@ export default function CreateCampaign() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const attachmentInputRef = useRef<HTMLInputElement>(null);
 
-  // Safe toast function with error handling
+  
   const safeToast = useCallback((type: 'error' | 'success', message: string) => {
     try {
       if (type === 'error') {
@@ -119,7 +119,7 @@ export default function CreateCampaign() {
     }
   }, []);
 
-  // File upload handlers
+  
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) {
@@ -164,12 +164,12 @@ export default function CreateCampaign() {
     setDragActive(false);
   };
 
-  // State multi-select
+  
   const removeState = (state: string) => {
     setSelectedStates((prev) => prev.filter((s) => s.toLowerCase() !== state.toLowerCase()));
   };
 
-  // Handle state selection
+  
   const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedState = e.target.value;
     if (selectedState && !selectedStates.includes(selectedState)) {
@@ -177,7 +177,7 @@ export default function CreateCampaign() {
     }
   };
 
-  // Handle select all states checkbox
+  
   const handleSelectAllStatesCheckbox = (checked: boolean) => {
     if (checked) {
       setSelectedStates([...BRAZILIAN_STATES]);
@@ -186,7 +186,7 @@ export default function CreateCampaign() {
     }
   };
 
-  // Determine checkbox state: checked if all selected, indeterminate if some selected, unchecked if none selected
+  
   const getSelectAllCheckboxState = () => {
     if (selectedStates.length === 0) {
       return { checked: false, indeterminate: false };
@@ -197,7 +197,7 @@ export default function CreateCampaign() {
     }
   };
 
-  // Attachment handlers
+  
   const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
@@ -213,7 +213,7 @@ export default function CreateCampaign() {
     attachmentInputRef.current?.click();
   };
 
-  // Form validation
+  
   const validateForm = (): boolean => {
     if (!title.trim()) {
       safeToast('error', "Título da campanha é obrigatório.");
@@ -240,7 +240,7 @@ export default function CreateCampaign() {
       return false;
     }
     
-    // Validate creator filters
+    
     if (targetCreatorTypes.length === 0) {
       safeToast('error', "Selecione pelo menos um tipo de criador.");
       return false;
@@ -264,7 +264,7 @@ export default function CreateCampaign() {
     return true;
   };
 
-  // Form submit - memoized to prevent unnecessary re-renders
+  
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -284,7 +284,7 @@ export default function CreateCampaign() {
         budget: budget.trim(),
         remunerationType: remunerationType,
 
-        status: 'pending', // Assuming a default status for now, as it's not in the form
+        status: 'pending', 
         deadline: deadline!,
         target_states: selectedStates,
         creatorRequirements: creatorReq.trim(),
@@ -300,16 +300,16 @@ export default function CreateCampaign() {
       const result = await dispatch(createCampaign(campaignData));
       
       if (createCampaign.fulfilled.match(result)) {
-        // Use a more stable approach to prevent DOM manipulation issues
+        
         setIsSubmitted(true);
         safeToast('success', "Campanha criada com sucesso! Aguarde a aprovação do administrador.");
         
-        // Reset form with a slight delay to prevent rapid state changes
+        
         setTimeout(() => {
           resetForm();
         }, 100);
         
-        // Reset success state after 5 seconds
+        
         setTimeout(() => setIsSubmitted(false), 5000);
       } else {
         safeToast('error', result.payload || "Erro ao criar campanha.");
@@ -319,7 +319,7 @@ export default function CreateCampaign() {
     }
   }, [title, description, budget, deadline, selectedStates, creatorReq, campaignType, minAge, maxAge, targetGenders, targetCreatorTypes, file, attachments, error, dispatch, validateForm, safeToast, resetForm]);
 
-  // Show success message if submitted
+  
   if (isSubmitted) {
     return (
       <div key="success-message" className="min-h-[92vh] dark:bg-[#171717] flex flex-col items-center justify-center py-4 px-2 sm:px-10">
@@ -356,7 +356,7 @@ export default function CreateCampaign() {
                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-background shadow-sm p-4 md:p-8 w-full">
            <h2 className="font-bold text-lg md:text-xl mb-6">Criar Nova Campanha</h2>
 
-           {/* Título */}
+           {}
            <div className="mb-5">
              <label htmlFor="title" className="block text-xs font-medium text-zinc-500 mb-1">Título da Campanha *</label>
              <Input
@@ -369,7 +369,7 @@ export default function CreateCampaign() {
              />
            </div>
 
-           {/* Descrição */}
+           {}
            <div className="mb-5">
              <label htmlFor="description" className="block text-xs font-medium text-zinc-500 mb-1">Descrição da Campanha *</label>
              <Textarea
@@ -382,7 +382,7 @@ export default function CreateCampaign() {
              />
            </div>
 
-           {/* Tipo de Remuneração */}
+           {}
            <div className="mb-5">
              <label htmlFor="remunerationType" className="block text-xs font-medium text-zinc-500 mb-1">Tipo de Remuneração *</label>
              <select
@@ -399,7 +399,7 @@ export default function CreateCampaign() {
 
 
 
-            {/* Orçamento */}
+            {}
            <div className="mb-5">
              <label htmlFor="budget" className="block text-xs font-medium text-zinc-500 mb-1">
                {remunerationType === 'permuta' ? 'Valor Estimado (R$) - Opcional' : 'Orçamento (R$) *'}
@@ -430,7 +430,7 @@ export default function CreateCampaign() {
              )}
            </div>
 
-           {/* Tipo de Campanha */}
+           {}
            <div className="mb-5">
              <label htmlFor="type" className="block text-xs font-medium text-zinc-500 mb-1">Tipo de Campanha *</label>
              <select
@@ -447,12 +447,12 @@ export default function CreateCampaign() {
              </select>
            </div>
 
-           {/* Filtros de Criadores */}
+           {}
            <div className="mb-5">
              <label className="block text-xs font-medium text-zinc-500 mb-1">Filtros de Criadores *</label>
              <span className="block text-xs text-zinc-400 mb-3">Configure quais criadores podem se candidatar à sua campanha</span>
              
-             {/* Tipo de Criador */}
+             {}
              <div className="mb-4">
                <label className="block text-xs font-medium text-zinc-500 mb-2">Tipo de Criador *</label>
                <div className="space-y-2">
@@ -480,7 +480,7 @@ export default function CreateCampaign() {
                </div>
              </div>
 
-             {/* Faixa de Idade */}
+             {}
              <div className="mb-4">
                <label className="block text-xs font-medium text-zinc-500 mb-2">Faixa de Idade (opcional)</label>
                <div className="grid grid-cols-2 gap-3">
@@ -512,7 +512,7 @@ export default function CreateCampaign() {
                <span className="block text-xs text-zinc-400 mt-1">Deixe em branco para não aplicar filtro de idade</span>
              </div>
 
-             {/* Gênero */}
+             {}
              <div className="mb-4">
                <label className="block text-xs font-medium text-zinc-500 mb-2">Gênero (opcional)</label>
                <span className="block text-xs text-zinc-400 mb-2">Deixe em branco para não aplicar filtro de gênero</span>
@@ -542,7 +542,7 @@ export default function CreateCampaign() {
              </div>
            </div>
 
-          {/* Prazo Final */}
+          {}
            <div className="mb-5">
              <label className="block text-xs font-medium text-zinc-500 mb-1">Prazo Final *</label>
             <Popover>
@@ -570,7 +570,7 @@ export default function CreateCampaign() {
             </Popover>
           </div>
 
-          {/* Estados */}
+          {}
           <div className="mb-5">
              <label className="block text-xs font-medium text-zinc-500 mb-1">Em quais estados a campanha será divulgada? *</label>
              <span className="block text-xs text-zinc-400 mb-2">Selecione um ou mais estados. Apenas criadores desses estados verão esta campanha.</span>
@@ -630,7 +630,7 @@ export default function CreateCampaign() {
             </div>
           </div>
 
-          {/* Referência visual (upload) */}
+          {}
           <div className="mb-5">
             <label className="block text-xs font-medium text-zinc-500 mb-1">Logo da Campanha (upload imagem)</label>
             <div
@@ -679,7 +679,7 @@ export default function CreateCampaign() {
             )}
           </div>
 
-           {/* Anexos */}
+           {}
            <div className="mb-5">
              <label className="block text-xs font-medium text-zinc-500 mb-1">Anexos (opcional)</label>
              <div
@@ -757,7 +757,7 @@ export default function CreateCampaign() {
            </Button>
            </div>
         </div>
-        {/* Fixed submit button bottom right */}
+        {}
       </form>
     </div>
   );

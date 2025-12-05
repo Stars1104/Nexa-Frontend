@@ -36,7 +36,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
 
-  // Parse the value prop
+  
   useEffect(() => {
     if (value) {
       const date = new Date(value);
@@ -50,18 +50,18 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     }
   }, [value]);
 
-  // Calculate position when opening
+  
   const calculatePosition = () => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
       
-      // Use actual picker height if available, otherwise use approximate height
+      
       const pickerHeight = pickerRef.current?.offsetHeight || 400;
       const spaceBelow = viewportHeight - rect.bottom;
       const spaceAbove = rect.top;
       
-      // If there's not enough space below but enough above, position above
+      
       if (spaceBelow < pickerHeight && spaceAbove > pickerHeight) {
         setPosition('above');
       } else {
@@ -72,7 +72,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      // Small delay to ensure the picker is rendered before measuring
+      
       const timer = setTimeout(() => {
         calculatePosition();
       }, 10);
@@ -81,7 +81,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     }
   }, [isOpen]);
 
-  // Recalculate position on window resize and scroll
+  
   useEffect(() => {
     if (isOpen) {
       const handleResize = () => calculatePosition();
@@ -110,12 +110,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     const firstDay = getFirstDayOfMonth(currentMonth, currentYear);
     const days = [];
 
-    // Add empty cells for days before the first day of the month
+    
     for (let i = 0; i < firstDay; i++) {
       days.push(null);
     }
 
-    // Add days of the month
+    
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(day);
     }
@@ -224,7 +224,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               : "top-full mt-1 slide-in-from-top-2"
           )}
         >
-          {/* Header */}
+          {}
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
             <button
               type="button"
@@ -269,7 +269,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             </button>
           </div>
 
-          {/* Days of week header */}
+          {}
           <div className="grid grid-cols-7 gap-1 mb-2">
             {DAYS_OF_WEEK.map((day) => (
               <div
@@ -281,7 +281,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             ))}
           </div>
 
-          {/* Calendar grid */}
+          {}
           <div className="grid grid-cols-7 gap-1">
             {calendarDays.map((day, index) => {
               if (day === null) {
@@ -316,7 +316,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             })}
           </div>
 
-          {/* Footer */}
+          {}
           <div className="flex justify-end mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
             <button
               type="button"
@@ -333,7 +333,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         </div>
       )}
 
-      {/* Backdrop */}
+      {}
       {isOpen && (
         <div
           className="fixed inset-0 z-40"

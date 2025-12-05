@@ -33,12 +33,7 @@ export const Navbar = () => {
                     <SheetDescription>Navigation options for mobile users</SheetDescription>
                 </VisuallyHidden>
                 <div className="flex flex-col gap-6 mt-8">
-                    {/* <Button variant="ghost" className="justify-start" onClick={() => navigate("/docs")}>
-                        Documentação
-                    </Button>
-                    <Button variant="ghost" className="justify-start" onClick={() => navigate("/auth/login")}>
-                        Entrar
-                    </Button> */}
+                    {}
                     <Button className="bg-pink-500 hover:bg-pink-600 text-white" onClick={() => navigate("/auth")}>
                         Acessar a plataforma
                     </Button>
@@ -60,21 +55,16 @@ export const Navbar = () => {
                     }
                 </div>
 
-                {/* Desktop Navigation */}
+                {}
                 <div className="hidden md:flex items-center gap-4">
-                    {/* <Button variant="ghost" className="justify-start" onClick={() => navigate("/docs")}>
-                        Documentação
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => navigate("/auth/login")}>
-                        Entrar
-                    </Button> */}
+                    {}
                     <Button size="sm" className="bg-pink-500 hover:bg-pink-600 text-white" onClick={() => navigate("/auth")}>
                         Acessar a plataforma
                     </Button>
                     <ThemeToggle />
                 </div>
 
-                {/* Mobile Navigation */}
+                {}
                 <div className="flex md:hidden items-center gap-3">
                     <ThemeToggle />
                     <MobileMenu />

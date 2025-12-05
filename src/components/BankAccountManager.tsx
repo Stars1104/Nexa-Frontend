@@ -35,14 +35,14 @@ const BankAccountManager: React.FC = () => {
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch bank account information
+  
   const fetchBankInfo = async () => {
     try {
       setIsLoading(true);
       const result = await creatorPaymentApi.getBankInfo();
       
       if (result.success && result.data) {
-        // Check if we have bank info in the response
+        
         const bankData = result.data.bank_info || result.data;
         
         if (bankData && (bankData.bank_code || bankData.agencia || bankData.conta)) {
@@ -73,7 +73,7 @@ const BankAccountManager: React.FC = () => {
     }
   };
 
-  // Delete bank account
+  
   const handleDeleteBankAccount = async () => {
     if (!confirm('Tem certeza que deseja excluir suas informações bancárias?')) {
       return;
@@ -109,10 +109,10 @@ const BankAccountManager: React.FC = () => {
     }
   };
 
-  // Handle successful registration
+  
   const handleRegistrationSuccess = () => {
     setShowRegistrationForm(false);
-    fetchBankInfo(); // Refresh the bank info
+    fetchBankInfo(); 
   };
 
   useEffect(() => {
@@ -134,7 +134,7 @@ const BankAccountManager: React.FC = () => {
     );
   }
 
-  // Show registration form if user wants to register
+  
   if (showRegistrationForm) {
     return (
       <div className="min-h-[90vh] bg-background p-4">
@@ -154,7 +154,7 @@ const BankAccountManager: React.FC = () => {
     );
   }
 
-  // Show existing bank account information
+  
   if (hasBankAccount && bankInfo) {
     return (
       <div className="min-h-[90vh] bg-background flex items-center justify-center p-4">
@@ -172,7 +172,7 @@ const BankAccountManager: React.FC = () => {
           </CardHeader>
           
           <CardContent className="space-y-6">
-            {/* Bank Information */}
+            {}
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <Building2 className="w-4 h-4" />
@@ -198,7 +198,7 @@ const BankAccountManager: React.FC = () => {
               </div>
             </div>
 
-            {/* Account Information */}
+            {}
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <CreditCard className="w-4 h-4" />
@@ -217,7 +217,7 @@ const BankAccountManager: React.FC = () => {
               </div>
             </div>
 
-            {/* Personal Information */}
+            {}
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <User className="w-4 h-4" />
@@ -241,7 +241,7 @@ const BankAccountManager: React.FC = () => {
               </div>
             </div>
 
-            {/* Security Notice */}
+            {}
             <div className="bg-muted/50 rounded-lg p-4 border border-border">
               <div className="flex items-start gap-3">
                 <Shield className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
@@ -255,7 +255,7 @@ const BankAccountManager: React.FC = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {}
             <div className="flex gap-3">
               <Button
                 variant="outline"
@@ -290,7 +290,7 @@ const BankAccountManager: React.FC = () => {
     );
   }
 
-  // Show registration prompt if no bank account
+  
   return (
     <div className="min-h-[90vh] bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl shadow-lg border-border">
@@ -307,7 +307,7 @@ const BankAccountManager: React.FC = () => {
         </CardHeader>
         
         <CardContent className="space-y-6">
-          {/* Benefits */}
+          {}
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <CheckCircle className="w-5 h-5 text-green-600" />
@@ -323,7 +323,7 @@ const BankAccountManager: React.FC = () => {
             </div>
           </div>
 
-          {/* Security Notice */}
+          {}
           <div className="bg-muted/50 rounded-lg p-4 border border-border">
             <div className="flex items-start gap-3">
               <Shield className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
@@ -337,7 +337,7 @@ const BankAccountManager: React.FC = () => {
             </div>
           </div>
 
-          {/* Register Button */}
+          {}
           <Button
             onClick={() => setShowRegistrationForm(true)}
             className="w-full bg-primary text-primary-foreground font-medium py-3 bg-[#e91e63] text-white hover:bg-[#e91e63]/90"

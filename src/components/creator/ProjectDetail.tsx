@@ -35,20 +35,20 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const { user } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
 
-  // Ensure creatorApplications is always an array
+  
   const safeCreatorApplications = Array.isArray(creatorApplications)
     ? creatorApplications
     : [];
   
-  // Ensure approvedCampaigns is always an array
+  
   const safeApprovedCampaigns = Array.isArray(approvedCampaigns) ? approvedCampaigns : [];
   
-  // Find the campaign by projectId
+  
   let campaign = safeApprovedCampaigns.find(
     (c: any) => String(c.id) === String(projectId)
   );
   
-  // Fallback to selectedCampaign if not found in approved campaigns
+  
   if (!campaign && selectedCampaign && String(selectedCampaign.id) === String(projectId)) {
     campaign = selectedCampaign;
   }
@@ -59,27 +59,27 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string>("");
 
-  // Fetch data sequentially to prevent rate limiting
+  
   useEffect(() => {
     if (user?.role === "creator") {
       const fetchDataSequentially = async () => {
         try {
-          // First, fetch creator applications
+          
           await dispatch(fetchCreatorApplications()).unwrap();
           
-          // Then, fetch approved campaigns if needed
+          
           if (!safeApprovedCampaigns.length || !project) {
             await dispatch(fetchApprovedCampaigns()).unwrap();
           }
           
-          // If we have approved campaigns but the specific project is not found, try to fetch it by ID
+          
           if (safeApprovedCampaigns.length > 0 && !project && projectId) {
             await dispatch(fetchCampaignById(projectId)).unwrap();
           }
         } catch (error) {
           console.error('Error fetching project detail data:', error);
           
-          // Fallback: try to fetch the specific campaign by ID if other calls failed
+          
           if (projectId) {
             try {
               await dispatch(fetchCampaignById(projectId)).unwrap();
@@ -94,7 +94,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
     }
   }, [dispatch, user?.id, user?.role, safeApprovedCampaigns.length, project, projectId]);
 
-  // Check if user is eligible to apply
+  
   const isCreator = user?.role === "creator";
   const isStudent = user?.role === "student";
   const canApplyToCampaigns = isCreator || isStudent;
@@ -136,7 +136,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   return (
     <div className="dark:bg-[#171717] min-h-full">
       <div className="w-full mx-auto py-8 px-2 md:px-8">
-        {/* Back button */}
+        {}
         <div className="mb-4">
           <button
             className="flex items-center text-muted-foreground text-sm font-normal hover:underline mb-2"
@@ -159,7 +159,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
           </button>
         </div>
         <div className="w-full mx-auto bg-background dark:bg-background rounded-2xl border border-border shadow-sm p-6 md:p-10 flex flex-col md:flex-row gap-10">
-          {/* Left: Details */}
+          {}
           <div className="flex-1 min-w-0">
             <div className="flex justify-end mb-2">
               <span className="text-xs text-primary bg-primary/10 dark:bg-primary/20 rounded px-3 py-1 font-medium">
@@ -167,7 +167,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               </span>
             </div>
             <div className="flex items-center gap-4 mb-8">
-              {/* Campaign Logo */}
+              {}
               <div className="flex-shrink-0">
                 {(() => {
                   const logoPath = project.logo || (project as any).logo_url;
@@ -219,7 +219,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               </p>
             </div>
 
-            {/* Google Drive Link */}
+            {}
 
             <div className="flex flex-wrap gap-2 mb-2">
               {Array.isArray(project.target_states) && project.target_states.length > 0 &&
@@ -235,11 +235,11 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             </div>
           </div>
 
-          {/* Right: Info card, image, button */}
+          {}
           <div className="w-full md:w-[340px] flex flex-col gap-6 flex-shrink-0">
             <div className="bg-muted dark:bg-[#232326] rounded-xl p-5 flex flex-col gap-4 border border-border">
               <div className="flex items-center gap-3">
-                {/* <DollarSign className="text-[#E91E63]" /> */}
+                {}
                 <span className="text-[#E91E63] text-ellipsis text-2xl">R$</span>
                 <div>
                   <div className="text-xs text-muted-foreground">Pagamento</div>
@@ -248,7 +248,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                   </div>
                 </div>
               </div>
-              {/* Remuneration Type */}
+              {}
               {project.remunerationType && (
                 <div className="flex items-center gap-3">
                   <span className="text-[#E91E63] text-ellipsis text-2xl">
@@ -270,7 +270,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                   </div>
                   <div className="font-bold text-base text-foreground">
                     {(() => {
-                        // Handle YYYY-MM-DD format by creating Date in local timezone
+                        
                         if (project.deadline && /^\d{4}-\d{2}-\d{2}$/.test(project.deadline)) {
                             const [year, month, day] = project.deadline.split('-').map(Number);
                             return formatDate(new Date(year, month - 1, day), "dd/MM/yyyy");
@@ -305,8 +305,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               </div>
               <div className="rounded-xl flex items-center justify-center bg-background overflow-auto min-h-[200px]">
                 {(() => {
-                  // Handle both array format (new) and string format (backward compatibility)
-                  // Also check for attachments field (alternative name)
+                  
+                  
                   const attachData = project.attach_file || (project as any).attachments;
                   const attachments = attachData ? (Array.isArray(attachData) ? attachData : [attachData]) : [];
                   
@@ -318,7 +318,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                     );
                   }
                   
-                  // Show first attachment if single, or gallery if multiple
+                  
                   if (attachments.length === 1) {
                     const file = attachments[0];
                     const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|mp4|mov|avi|wmv|flv|mkv|webm)$/i.test(file);
@@ -359,7 +359,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                       </a>
                     );
                   } else {
-                    // Multiple attachments - show grid
+                    
                     return (
                       <div className="grid grid-cols-2 gap-2 p-4 w-full">
                         {attachments.map((file: string, index: number) => {
@@ -421,7 +421,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
           </div>
         </div>
       </div>
-      {/* Only the new ApplyModal with the proposal form */}
+      {}
       <ApplyModal
         open={open}
         onOpenChange={setOpen}
@@ -434,7 +434,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
         campaignId={project.id}
       />
 
-      {/* Image Modal */}
+      {}
       <Dialog open={imageModalOpen} onOpenChange={setImageModalOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto h-auto p-0 bg-black/90 border-none">
           <div className="relative w-full h-full flex items-center justify-center">

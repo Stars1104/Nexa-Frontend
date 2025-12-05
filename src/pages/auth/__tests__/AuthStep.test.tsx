@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import AuthStep from '../AuthStep'
 
-// Mock the logo imports
+
 vi.mock('@/assets/light-logo.png', () => ({
   default: 'light-logo.png'
 }))
@@ -14,26 +14,26 @@ vi.mock('@/assets/dark-logo.png', () => ({
   default: 'dark-logo.png'
 }))
 
-// Mock the hooks
+
 vi.mock('@/hooks/use-system-theme', () => ({
   useSystemTheme: () => false
 }))
 
-// Mock ResizeObserver for Radix UI components
+
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }))
 
-// Mock IntersectionObserver for Radix UI components
+
 global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }))
 
-// Mock react-router-dom
+
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal() as any
@@ -43,7 +43,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
   }
 })
 
-// Wrapper component for testing
+
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
   <BrowserRouter>
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
@@ -54,7 +54,7 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe('AuthStep', () => {
   beforeEach(() => {
-    // Clear all mocks before each test
+    
     vi.clearAllMocks()
   })
 
@@ -157,7 +157,7 @@ describe('AuthStep', () => {
         </TestWrapper>
       )
 
-      // Check for arrow icons (they should be present in the buttons)
+      
       const companyButton = screen.getByRole('button', { name: /sou uma empresa/i })
       const influencerButton = screen.getByRole('button', { name: /sou um influenciador/i })
       
@@ -261,7 +261,7 @@ describe('AuthStep', () => {
       const googleButton = screen.getByRole('button', { name: /continuar com o google/i })
       await user.click(googleButton)
 
-      // Google button should be clickable (no navigation expected)
+      
       expect(googleButton).toBeInTheDocument()
     })
 
@@ -276,7 +276,7 @@ describe('AuthStep', () => {
       const createAccountLink = screen.getByText('Criar conta')
       await user.click(createAccountLink)
 
-      // Link should be clickable (no navigation expected as it's a placeholder)
+      
       expect(createAccountLink).toBeInTheDocument()
     })
   })
@@ -290,7 +290,7 @@ describe('AuthStep', () => {
       )
 
       const logo = screen.getByAltText('Nexa logo')
-      expect(logo).toHaveAttribute('src', 'dark-logo.png') // Light theme shows dark logo
+      expect(logo).toHaveAttribute('src', 'dark-logo.png') 
     })
 
     it('displays light logo in dark theme', () => {
@@ -303,7 +303,7 @@ describe('AuthStep', () => {
       )
 
       const logo = screen.getByAltText('Nexa logo')
-      expect(logo).toHaveAttribute('src', 'light-logo.png') // Dark theme shows light logo
+      expect(logo).toHaveAttribute('src', 'light-logo.png') 
     })
 
     it('allows toggling theme', async () => {
@@ -316,12 +316,12 @@ describe('AuthStep', () => {
 
       const themeToggle = screen.getByRole('button', { name: /toggle theme/i })
       
-      // Wrap the click in act() to handle async behavior
+      
       await act(async () => {
         await user.click(themeToggle)
       })
 
-      // Wait for any async operations to complete
+      
       await waitFor(() => {
         expect(themeToggle).toBeInTheDocument()
       })
@@ -337,7 +337,7 @@ describe('AuthStep', () => {
       const themeToggle = screen.getByRole('button', { name: /toggle theme/i })
       expect(themeToggle).toBeInTheDocument()
       
-      // Check for screen reader text
+      
       expect(screen.getByText('Toggle theme')).toBeInTheDocument()
     })
 
@@ -351,12 +351,12 @@ describe('AuthStep', () => {
 
       const themeToggle = screen.getByRole('button', { name: /toggle theme/i })
       
-      // Open the dropdown
+      
       await act(async () => {
         await user.click(themeToggle)
       })
 
-      // Wait for dropdown to appear and check for theme options
+      
       await waitFor(() => {
         expect(screen.getByText('Light')).toBeInTheDocument()
         expect(screen.getByText('Dark')).toBeInTheDocument()
@@ -420,7 +420,7 @@ describe('AuthStep', () => {
         </TestWrapper>
       )
 
-      // Target the outermost container that has the main layout classes
+      
       const mainContainer = screen.getByText('Como você quer entrar?').closest('div[class*="min-h-screen"]')
       expect(mainContainer).toHaveClass('min-h-screen', 'flex', 'items-center', 'justify-center', 'bg-muted', 'dark:bg-[#171717]', 'transition-colors', 'duration-300')
     })
@@ -432,7 +432,7 @@ describe('AuthStep', () => {
         </TestWrapper>
       )
 
-      // Target the card container that has the background and styling classes
+      
       const cardContainer = screen.getByText('Como você quer entrar?').closest('div[class*="bg-background"]')
       expect(cardContainer).toHaveClass('bg-background', 'rounded-2xl', 'shadow-lg', 'p-8', 'md:p-10', 'w-full', 'max-w-lg', 'flex', 'flex-col', 'items-center', 'gap-6', 'border', 'border-border')
     })
@@ -526,7 +526,7 @@ describe('AuthStep', () => {
         </TestWrapper>
       )
 
-      // The theme toggle should be positioned absolutely
+      
       const themeToggleContainer = screen.getByRole('button', { name: /toggle theme/i }).closest('div[class*="absolute"]')
       expect(themeToggleContainer).toHaveClass('absolute', 'top-4', 'right-4')
     })
@@ -561,7 +561,7 @@ describe('AuthStep', () => {
       const user = userEvent.setup()
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       
-      // Mock navigate to return undefined
+      
       mockNavigate.mockImplementation(() => undefined)
 
       render(
@@ -572,13 +572,13 @@ describe('AuthStep', () => {
 
       const companyButton = screen.getByRole('button', { name: /sou uma empresa/i })
       
-      // Should not crash when clicking the button
+      
       await user.click(companyButton)
       
-      // Verify that the navigation was attempted
+      
       expect(mockNavigate).toHaveBeenCalledWith('/signup/brand')
       
-      // Clean up
+      
       consoleSpy.mockRestore()
       mockNavigate.mockRestore()
     })
@@ -587,7 +587,7 @@ describe('AuthStep', () => {
       const user = userEvent.setup()
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       
-      // Mock navigate to return null
+      
       mockNavigate.mockImplementation(() => null)
 
       render(
@@ -598,13 +598,13 @@ describe('AuthStep', () => {
 
       const companyButton = screen.getByRole('button', { name: /sou uma empresa/i })
       
-      // Should not crash when clicking the button
+      
       await user.click(companyButton)
       
-      // Verify that the navigation was attempted
+      
       expect(mockNavigate).toHaveBeenCalledWith('/signup/brand')
       
-      // Clean up
+      
       consoleSpy.mockRestore()
       mockNavigate.mockRestore()
     })
@@ -613,7 +613,7 @@ describe('AuthStep', () => {
       const user = userEvent.setup()
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       
-      // Mock navigate to be a no-op function
+      
       mockNavigate.mockImplementation(() => {})
 
       render(
@@ -624,13 +624,13 @@ describe('AuthStep', () => {
 
       const companyButton = screen.getByRole('button', { name: /sou uma empresa/i })
       
-      // Should not crash when clicking the button
+      
       await user.click(companyButton)
       
-      // Verify that the navigation was attempted
+      
       expect(mockNavigate).toHaveBeenCalledWith('/signup/brand')
       
-      // Clean up
+      
       consoleSpy.mockRestore()
       mockNavigate.mockRestore()
     })
@@ -644,7 +644,7 @@ describe('AuthStep', () => {
         </TestWrapper>
       )
 
-      // Component should render without errors
+      
       await waitFor(() => {
         expect(screen.getByText('Como você quer entrar?')).toBeInTheDocument()
       })
@@ -661,7 +661,7 @@ describe('AuthStep', () => {
         </TestWrapper>
       )
 
-      // Component should render without errors
+      
       expect(screen.getByText('Como você quer entrar?')).toBeInTheDocument()
     })
 
@@ -672,7 +672,7 @@ describe('AuthStep', () => {
         </TestWrapper>
       )
 
-      // Component should render without errors when system theme is used
+      
       expect(screen.getByText('Como você quer entrar?')).toBeInTheDocument()
     })
   })
@@ -688,7 +688,7 @@ describe('AuthStep', () => {
       const companyButton = screen.getByRole('button', { name: /sou uma empresa/i })
       const influencerButton = screen.getByRole('button', { name: /sou um influenciador/i })
 
-      // Check that buttons contain both text and icons
+      
       expect(companyButton).toHaveTextContent('Sou uma empresa')
       expect(influencerButton).toHaveTextContent('Sou um influenciador')
     })

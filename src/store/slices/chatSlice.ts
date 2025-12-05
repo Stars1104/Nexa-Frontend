@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { chatService, ChatRoom, Message } from '../../services/chatService';
 
-// Async thunks
+
 export const fetchChatRooms = createAsyncThunk(
   'chat/fetchChatRooms',
   async (_, { rejectWithValue }) => {
@@ -32,7 +32,7 @@ export const sendMessage = createAsyncThunk(
     try {
       let response;
       if (messageType === 'file') {
-        // Handle file message - you'll need to implement this
+        
         throw new Error('File messages not yet implemented in Redux');
       } else {
         response = await chatService.sendTextMessage(roomId, message);
@@ -56,16 +56,16 @@ export const markMessagesAsRead = createAsyncThunk(
   }
 );
 
-// Types
+
 interface ChatState {
   rooms: ChatRoom[];
-  messages: Record<string, Message[]>; // roomId -> messages
+  messages: Record<string, Message[]>; 
   selectedRoomId: string | null;
   isLoading: boolean;
   error: string | null;
-  typingUsers: Record<string, string[]>; // roomId -> Array of typing user IDs
-  unreadCounts: Record<string, number>; // roomId -> unread count
-  lastMessageTimestamps: Record<string, string>; // roomId -> last message timestamp
+  typingUsers: Record<string, string[]>; 
+  unreadCounts: Record<string, number>; 
+  lastMessageTimestamps: Record<string, string>; 
 }
 
 const initialState: ChatState = {
@@ -79,7 +79,7 @@ const initialState: ChatState = {
   lastMessageTimestamps: {},
 };
 
-// Helper function to sort messages by timestamp
+
 const sortMessagesByTimestamp = (messages: Message[]): Message[] => {
   return [...messages].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 };
@@ -99,18 +99,18 @@ const chatSlice = createSlice({
         state.messages[roomId] = [];
       }
       
-      // Check if message already exists to avoid duplicates
+      
       const messageExists = state.messages[roomId].some(msg => msg.id === message.id);
       if (!messageExists) {
         state.messages[roomId].push(message);
         
-        // Sort messages by timestamp to maintain proper order
+        
         state.messages[roomId] = sortMessagesByTimestamp(state.messages[roomId]);
         
-        // Update last message timestamp
+        
         state.lastMessageTimestamps[roomId] = message.created_at;
         
-        // Update unread count if message is from other user
+        
         if (!message.is_sender) {
           state.unreadCounts[roomId] = (state.unreadCounts[roomId] || 0) + 1;
         }
@@ -124,21 +124,21 @@ const chatSlice = createSlice({
         state.messages[roomId] = [];
       }
       
-      // Check if message already exists to avoid duplicates
+      
       const messageExists = state.messages[roomId].some(msg => msg.id === message.id);
       if (!messageExists) {
-        // Insert at the beginning of the array
+        
         state.messages[roomId].unshift(message);
         
-        // Sort messages by timestamp to maintain proper order
+        
         state.messages[roomId] = sortMessagesByTimestamp(state.messages[roomId]);
         
-        // Update last message timestamp if this is the only message
+        
         if (state.messages[roomId].length === 1) {
           state.lastMessageTimestamps[roomId] = message.created_at;
         }
         
-        // Update unread count if message is from other user
+        
         if (!message.is_sender) {
           state.unreadCounts[roomId] = (state.unreadCounts[roomId] || 0) + 1;
         }
@@ -148,27 +148,27 @@ const chatSlice = createSlice({
     setMessagesForRoom: (state, action: PayloadAction<{ roomId: string; messages: Message[] }>) => {
       const { roomId, messages } = action.payload;
       
-      // Initialize messages array if it doesn't exist
+      
       if (!state.messages[roomId]) {
         state.messages[roomId] = [];
       }
       
-      // Merge new messages with existing ones, avoiding duplicates
+      
       const existingMessageIds = new Set(state.messages[roomId].map(msg => msg.id));
       const newMessages = messages.filter(message => !existingMessageIds.has(message.id));
       
-      // Add new messages to the existing array
+      
       state.messages[roomId].push(...newMessages);
       
-      // Sort messages by creation time to maintain order
+      
       state.messages[roomId] = sortMessagesByTimestamp(state.messages[roomId]);
       
-      // Update last message timestamp if messages exist
+      
       if (state.messages[roomId].length > 0) {
         state.lastMessageTimestamps[roomId] = state.messages[roomId][state.messages[roomId].length - 1].created_at;
       }
       
-      // Update unread count
+      
       const unreadCount = state.messages[roomId].filter(msg => !msg.is_sender && !msg.is_read).length;
       state.unreadCounts[roomId] = unreadCount;
     },
@@ -247,12 +247,12 @@ const chatSlice = createSlice({
       const existingRoomIndex = state.rooms.findIndex(r => r.room_id === room.room_id);
       
       if (existingRoomIndex !== -1) {
-        // Update existing room
+        
         state.rooms[existingRoomIndex] = room;
       } else {
-        // Add new room
+        
         state.rooms.push(room);
-        // Initialize typingUsers for the new room
+        
         if (!state.typingUsers[room.room_id]) {
           state.typingUsers[room.room_id] = [];
         }
@@ -272,13 +272,13 @@ const chatSlice = createSlice({
       const roomId = action.payload;
       state.rooms = state.rooms.filter(room => room.room_id !== roomId);
       
-      // Clean up related data
+      
       delete state.messages[roomId];
       delete state.typingUsers[roomId];
       delete state.unreadCounts[roomId];
       delete state.lastMessageTimestamps[roomId];
       
-      // If this was the selected room, clear selection
+      
       if (state.selectedRoomId === roomId) {
         state.selectedRoomId = null;
       }
@@ -294,7 +294,7 @@ const chatSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch chat rooms
+      
       .addCase(fetchChatRooms.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -304,7 +304,7 @@ const chatSlice = createSlice({
         state.rooms = action.payload;
         state.error = null;
         
-        // Initialize typingUsers for all rooms to ensure they are Sets
+        
         action.payload.forEach(room => {
           if (!state.typingUsers[room.room_id]) {
             state.typingUsers[room.room_id] = [];
@@ -316,7 +316,7 @@ const chatSlice = createSlice({
         state.error = action.payload as string;
       })
       
-      // Fetch messages - FIXED: Now merges instead of replacing
+      
       .addCase(fetchMessages.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -325,28 +325,28 @@ const chatSlice = createSlice({
         const { roomId, messages } = action.payload;
         state.isLoading = false;
         
-        // Initialize messages array if it doesn't exist
+        
         if (!state.messages[roomId]) {
           state.messages[roomId] = [];
         }
         
-        // Merge new messages with existing ones, avoiding duplicates
+        
         const existingMessageIds = new Set(state.messages[roomId].map(msg => msg.id));
         const newMessages = messages.filter(message => !existingMessageIds.has(message.id));
         
-        // Add new messages to the existing array
+        
         state.messages[roomId].push(...newMessages);
         
-        // Sort messages by creation time to maintain order
+        
         state.messages[roomId] = sortMessagesByTimestamp(state.messages[roomId]);
         
         state.error = null;
         
-        // Update unread count
+        
         const unreadCount = state.messages[roomId].filter(msg => !msg.is_sender && !msg.is_read).length;
         state.unreadCounts[roomId] = unreadCount;
         
-        // Update last message timestamp
+        
         if (state.messages[roomId].length > 0) {
           state.lastMessageTimestamps[roomId] = state.messages[roomId][state.messages[roomId].length - 1].created_at;
         }
@@ -356,7 +356,7 @@ const chatSlice = createSlice({
         state.error = action.payload as string;
       })
       
-      // Send message
+      
       .addCase(sendMessage.fulfilled, (state, action) => {
         const { roomId, message } = action.payload;
         
@@ -364,19 +364,19 @@ const chatSlice = createSlice({
           state.messages[roomId] = [];
         }
         
-        // Check if message already exists to avoid duplicates
+        
         const messageExists = state.messages[roomId].some(msg => msg.id === message.id);
         if (!messageExists) {
-          // Add the new message
+          
           state.messages[roomId].push(message);
           
-          // Sort messages by timestamp to maintain proper order
+          
           state.messages[roomId] = sortMessagesByTimestamp(state.messages[roomId]);
           
-          // Update last message timestamp
+          
           state.lastMessageTimestamps[roomId] = message.created_at;
           
-          // Update room's last message
+          
           const roomIndex = state.rooms.findIndex(room => room.room_id === roomId);
           if (roomIndex !== -1) {
             state.rooms[roomIndex].last_message = {
@@ -392,7 +392,7 @@ const chatSlice = createSlice({
         }
       })
       
-      // Mark messages as read
+      
       .addCase(markMessagesAsRead.fulfilled, (state, action) => {
         const { roomId, messageIds } = action.payload;
         
@@ -405,7 +405,7 @@ const chatSlice = createSlice({
           });
         }
         
-        // Recalculate unread count
+        
         if (state.messages[roomId]) {
           const unreadCount = state.messages[roomId].filter(msg => !msg.is_sender && !msg.is_read).length;
           state.unreadCounts[roomId] = unreadCount;

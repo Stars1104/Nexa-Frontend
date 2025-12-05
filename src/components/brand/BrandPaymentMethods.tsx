@@ -43,7 +43,7 @@ export default function BrandPaymentMethods() {
   }, []);
 
   useEffect(() => {
-    // Handle Stripe Checkout success callback
+    
     const success = searchParams.get('success');
     const sessionId = searchParams.get('session_id');
     const canceled = searchParams.get('canceled');
@@ -51,7 +51,7 @@ export default function BrandPaymentMethods() {
     const fundingCanceled = searchParams.get('funding_canceled');
     const contractId = searchParams.get('contract_id');
     
-    // Debug logging
+    
     if (success === 'true' || fundingSuccess === 'true') {
       console.log('Checkout success detected', {
         success,
@@ -61,7 +61,7 @@ export default function BrandPaymentMethods() {
       });
     }
     
-    // Check if returning from offer checkout
+    
     const action = searchParams.get('action');
     const creatorId = searchParams.get('creator_id');
     const chatRoomId = searchParams.get('chat_room_id');
@@ -69,7 +69,7 @@ export default function BrandPaymentMethods() {
     if (success === 'true' && sessionId) {
       handleStripeCheckoutSuccess(sessionId);
       
-      // If returning from offer checkout, show message and redirect to chat
+      
       if (action === 'send_offer' && chatRoomId) {
         toast({
           title: 'Método de Pagamento Configurado',
@@ -77,7 +77,7 @@ export default function BrandPaymentMethods() {
           variant: 'default',
         });
         
-        // Clear URL params
+        
         searchParams.delete('success');
         searchParams.delete('session_id');
         searchParams.delete('action');
@@ -85,7 +85,7 @@ export default function BrandPaymentMethods() {
         searchParams.delete('chat_room_id');
         setSearchParams(searchParams, { replace: true });
         
-        // Redirect to chat page after a short delay
+        
         setTimeout(() => {
           window.location.href = `/brand/chat?room_id=${chatRoomId}`;
         }, 1500);
@@ -96,7 +96,7 @@ export default function BrandPaymentMethods() {
     } else if (searchParams.get('offer_funding_success') === 'true' && sessionId) {
       handleOfferFundingSuccess(sessionId);
     } else if (canceled === 'true') {
-      // Check if canceling from offer checkout
+      
       if (action === 'send_offer') {
         toast({
           title: 'Operação Cancelada',
@@ -127,7 +127,7 @@ export default function BrandPaymentMethods() {
       if (contractId) searchParams.delete('contract_id');
       setSearchParams(searchParams, { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [searchParams]);
 
   const loadPaymentMethods = async () => {
@@ -159,24 +159,24 @@ export default function BrandPaymentMethods() {
     try {
       setLoadingContracts(true);
       
-      // Fetch contracts with status 'pending' and workflow_status 'payment_pending'
-      // This will be more efficient as backend filters by workflow_status
+      
+      
       const response = await hiringApi.getContracts('pending', 'payment_pending');
       
-      // Handle paginated response structure
+      
       const contractsData = response.data?.data || response.data || [];
       const allContracts = Array.isArray(contractsData) ? contractsData : (contractsData.data || []);
       
-      // Additional filter on frontend to ensure we only get contracts that need payment
-      // This handles edge cases where payment might have been completed but status not updated
+      
+      
       const contractsNeedingPayment = allContracts.filter((contract: Contract) => {
-        // Must be pending status
+        
         if (contract.status !== 'pending') return false;
         
-        // Must have payment_pending workflow status
+        
         if (contract.workflow_status !== 'payment_pending') return false;
         
-        // Either no payment exists, or payment status is not completed
+        
         if (contract.payment && contract.payment.status === 'completed') return false;
         
         return true;
@@ -190,7 +190,7 @@ export default function BrandPaymentMethods() {
         description: 'Não foi possível carregar os contratos que precisam de pagamento. Por favor, recarregue a página.',
         variant: 'destructive',
       });
-      // Set empty array on error to prevent UI issues
+      
       setContractsNeedingPayment([]);
     } finally {
       setLoadingContracts(false);
@@ -200,12 +200,12 @@ export default function BrandPaymentMethods() {
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     
-    // Format CNPJ input
+    
     let formattedValue = value;
     if (name === 'cnpj') {
-      // Remove all non-digit characters
+      
       const digits = value.replace(/\D/g, '');
-      // Apply CNPJ mask: XX.XXX.XXX/XXXX-XX
+      
       if (digits.length <= 2) {
         formattedValue = digits;
       } else if (digits.length <= 5) {
@@ -226,7 +226,7 @@ export default function BrandPaymentMethods() {
   };
 
   const generateCardHash = async (cardData: any) => {
-    // Create a simple hash for testing - in production, use Pagar.me's encryption
+    
     const cardString = `${cardData.card_number}${cardData.card_holder_name}${cardData.card_expiration_date}${cardData.card_cvv}`;
     const encoder = new TextEncoder();
     const data = encoder.encode(cardString);
@@ -239,7 +239,7 @@ export default function BrandPaymentMethods() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check if all required fields are filled
+    
     const requiredFields = ['card_number', 'card_holder_name', 'card_expiration_date', 'card_cvv', 'cnpj'];
     const missingFields = requiredFields.filter(field => !formData[field as keyof typeof formData]);
 
@@ -264,7 +264,7 @@ export default function BrandPaymentMethods() {
     setIsSubmitting(true);
 
     try {
-      // Validate card number format (13-19 digits)
+      
       if (!formData.card_number.match(/^[0-9]{13,19}$/)) {
         toast({
           title: 'Número do Cartão Inválido',
@@ -274,7 +274,7 @@ export default function BrandPaymentMethods() {
         return;
       }
 
-      // Validate expiration date format
+      
       if (!formData.card_expiration_date.match(/^(0[1-9]|1[0-2])([0-9]{2})$/)) {
         toast({
           title: 'Data de Validade Inválida',
@@ -284,7 +284,7 @@ export default function BrandPaymentMethods() {
         return;
       }
 
-      // Validate CVV format
+      
       if (!formData.card_cvv.match(/^[0-9]{3,4}$/)) {
         toast({
           title: 'CVV Inválido',
@@ -294,7 +294,7 @@ export default function BrandPaymentMethods() {
         return;
       }
 
-      // Validate CNPJ format
+      
       if (!formData.cnpj.match(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/)) {
         toast({
           title: 'CNPJ Inválido',
@@ -304,7 +304,7 @@ export default function BrandPaymentMethods() {
         return;
       }
 
-      // Generate card hash for testing
+      
       const cardHash = await generateCardHash({
           card_number: formData.card_number,
           card_holder_name: formData.card_holder_name,
@@ -398,10 +398,10 @@ export default function BrandPaymentMethods() {
         setDeleteDialogOpen(false);
         setMethodToDelete(null);
       } else {
-        // Extract error message from response - check all possible locations
+        
         const errorMessage = response.error || response.message || '';
         
-        // Check if this is the "only payment method" error
+        
         const isOnlyPaymentMethodError = errorMessage.toLowerCase().includes('only payment method') || 
                                          errorMessage.toLowerCase().includes('cannot delete the only') ||
                                          errorMessage.toLowerCase().includes('único método');
@@ -413,7 +413,7 @@ export default function BrandPaymentMethods() {
             variant: 'destructive',
           });
         } else {
-          // Show error toast with the message from backend
+          
           const defaultErrorMessage = 'Este método de pagamento não pode ser removido no momento. Ele pode estar sendo usado em um contrato ativo ou pendente. Verifique seus contratos e tente novamente.';
           toast({
             title: 'Não Foi Possível Remover o Método de Pagamento',
@@ -425,13 +425,13 @@ export default function BrandPaymentMethods() {
         setMethodToDelete(null);
       }
     } catch (error: any) {
-      // Extract error message from all possible error response structures
+      
       const errorMessage = error?.response?.data?.message || 
                           error?.response?.data?.error || 
                           error?.message || 
                           '';
       
-      // Check if this is the "only payment method" error in catch block
+      
       const isOnlyPaymentMethodError = errorMessage.toLowerCase().includes('only payment method') || 
                                        errorMessage.toLowerCase().includes('cannot delete the only') ||
                                        errorMessage.toLowerCase().includes('único método');
@@ -461,7 +461,7 @@ export default function BrandPaymentMethods() {
       const response = await brandPaymentApi.createCheckoutSession();
       
       if (response.success && response.url) {
-        // Redirect to Stripe Checkout
+        
         window.location.href = response.url;
       } else {
         toast({
@@ -485,7 +485,7 @@ export default function BrandPaymentMethods() {
     try {
       setIsLoadingStripe(true);
       
-      // Validate sessionId before making the request
+      
       if (!sessionId || sessionId.trim() === '') {
         toast({
           title: 'Sessão Inválida',
@@ -504,7 +504,7 @@ export default function BrandPaymentMethods() {
           description: 'Seu método de pagamento foi adicionado e já está disponível para uso nos seus contratos.',
         });
         
-        // Clean up URL parameters
+        
         searchParams.delete('success');
         searchParams.delete('session_id');
         const applicationId = searchParams.get('application_id');
@@ -513,13 +513,13 @@ export default function BrandPaymentMethods() {
         if (campaignId) searchParams.delete('campaign_id');
         setSearchParams(searchParams, { replace: true });
         
-        // Reload payment methods
+        
         await loadPaymentMethods();
         
-        // Reload contracts to check if any need funding
+        
         await loadContractsNeedingPayment();
         
-        // Get the updated contracts list after reload
+        
         const response = await hiringApi.getContracts('pending');
         const allContracts = response.data.data || [];
         const contractsNeedingPayment = allContracts.filter((contract: Contract) => 
@@ -528,11 +528,11 @@ export default function BrandPaymentMethods() {
           (!contract.payment || contract.payment?.status !== 'completed')
         );
         
-        // If there are contracts needing payment, redirect to fund the first one
+        
         if (contractsNeedingPayment.length > 0) {
           const firstContract = contractsNeedingPayment[0];
           if (firstContract) {
-            // Redirect to Stripe checkout for contract funding
+            
             handleFundContract(firstContract.id);
           }
         }
@@ -558,7 +558,7 @@ export default function BrandPaymentMethods() {
     try {
       setIsLoadingStripe(true);
       
-      // Check payment status
+      
       const paymentStatus = await brandPaymentApi.getContractPaymentStatus(contractId.toString());
       
       if (paymentStatus.success && paymentStatus.data?.payment?.status === 'completed') {
@@ -567,13 +567,13 @@ export default function BrandPaymentMethods() {
           description: 'Pagamento realizado com sucesso! O valor foi depositado em garantia e o contrato está pronto para iniciar.',
         });
         
-        // Clean up URL parameters
+        
         searchParams.delete('funding_success');
         searchParams.delete('session_id');
         searchParams.delete('contract_id');
         setSearchParams(searchParams, { replace: true });
         
-        // Reload contracts
+        
         await loadContractsNeedingPayment();
       } else {
         toast({
@@ -604,7 +604,7 @@ export default function BrandPaymentMethods() {
           description: `Seu pagamento foi processado com sucesso. Os fundos foram adicionados à sua conta.`,
         });
         
-        // Clean up URL parameters
+        
         searchParams.delete('offer_funding_success');
         searchParams.delete('session_id');
         const creatorId = searchParams.get('creator_id');
@@ -639,7 +639,7 @@ export default function BrandPaymentMethods() {
       const response = await brandPaymentApi.createContractCheckoutSession(contractId);
       
       if (response.success && response.url) {
-        // Redirect to Stripe Checkout
+        
         window.location.href = response.url;
       } else {
         toast({
@@ -693,7 +693,7 @@ export default function BrandPaymentMethods() {
   return (
     <TooltipProvider>
       <div className="space-y-6 max-w-6xl mx-auto">
-        {/* Info Alert */}
+        {}
         <Alert>
           <Info className="h-4 w-4" />
           <AlertTitle>Métodos de Pagamento Seguros</AlertTitle>
@@ -702,7 +702,7 @@ export default function BrandPaymentMethods() {
           </AlertDescription>
         </Alert>
 
-        {/* Stripe Connect Account Section */}
+        {}
         <StripeConnectOnboarding 
           onComplete={() => {
             toast({
@@ -719,7 +719,7 @@ export default function BrandPaymentMethods() {
           }}
         />
 
-        {/* Contracts Needing Payment Section */}
+        {}
         {contractsNeedingPayment.length > 0 && (
           <Card className="shadow-sm border-primary/20">
             <CardHeader className="pb-4">
@@ -807,314 +807,8 @@ export default function BrandPaymentMethods() {
           </Card>
         )}
 
-        {/* Payment Methods Section
-        <Card className="shadow-sm">
-          <CardHeader className="pb-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="space-y-1">
-                <CardTitle className="text-2xl flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Métodos de Pagamento
-                </CardTitle>
-                <CardDescription className="text-base">
-                  Gerencie seus cartões para pagamentos de contratos com criadores
-                </CardDescription>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="default">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Adicionar Manualmente
-                    </Button>
-                  </DialogTrigger>
-            <DialogContent className="sm:max-w-[550px]">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" />
-                  Adicionar Método de Pagamento
-                </DialogTitle>
-                <DialogDescription className="text-base pt-2">
-                  Adicione um novo cartão para pagar contratos. Nenhum valor será cobrado até que um contrato seja iniciado.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit}>
-                <div className="grid gap-5 py-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="card_number" className="text-sm font-medium">
-                        Número do Cartão
-                      </Label>
-                      <Input
-                        id="card_number"
-                        name="card_number"
-                        value={formData.card_number}
-                        onChange={handleFormChange}
-                        placeholder="1234 5678 9012 3456"
-                        maxLength={19}
-                        className="h-11"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="card_holder_name" className="text-sm font-medium">
-                        Nome no Cartão
-                      </Label>
-                      <Input
-                        id="card_holder_name"
-                        name="card_holder_name"
-                        value={formData.card_holder_name}
-                        onChange={handleFormChange}
-                        placeholder="João Silva"
-                        className="h-11"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="card_expiration_date" className="text-sm font-medium">
-                        Validade (MM/AA)
-                      </Label>
-                      <Input
-                        id="card_expiration_date"
-                        name="card_expiration_date"
-                        value={formData.card_expiration_date}
-                        onChange={handleFormChange}
-                        placeholder="MMAA"
-                        maxLength={4}
-                        className="h-11"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="card_cvv" className="text-sm font-medium">
-                        CVV
-                      </Label>
-                      <Input
-                        id="card_cvv"
-                        name="card_cvv"
-                        value={formData.card_cvv}
-                        onChange={handleFormChange}
-                        placeholder="123"
-                        maxLength={4}
-                        type="password"
-                        className="h-11"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cnpj" className="text-sm font-medium">
-                        CNPJ
-                      </Label>
-                      <Input
-                        id="cnpj"
-                        name="cnpj"
-                        value={formData.cnpj}
-                        onChange={handleFormChange}
-                        placeholder="12.345.678/0001-90"
-                        maxLength={18}
-                        className="h-11"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2 pt-2">
-                    <input
-                      type="checkbox"
-                      id="is_default"
-                      name="is_default"
-                      checked={formData.is_default}
-                      onChange={handleFormChange}
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                    <Label htmlFor="is_default" className="text-sm font-normal cursor-pointer">
-                      Definir como método padrão
-                    </Label>
-                  </div>
-                </div>
-                <DialogFooter className="gap-2 sm:gap-0">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setIsAddDialogOpen(false)}
-                    disabled={isSubmitting}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting} 
-                    className='bg-[#e91e63] text-white hover:bg-[#e91e63]/90'
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Salvando...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Salvar Cartão
-                      </>
-                    )}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-            </div>
-          </div>
-        </CardHeader>
-      <CardContent className="pt-6">
-        {paymentMethods.length === 0 ? (
-          <div className="text-center py-12 px-4">
-            <div className="mx-auto w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-6">
-              <CreditCard className="h-12 w-12 text-muted-foreground" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Nenhum método de pagamento</h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Adicione um método de pagamento para poder realizar pagamentos de contratos com criadores de forma segura.
-            </p>
-            <Button 
-              onClick={handleAddStripePaymentMethod}
-              disabled={isLoadingStripe}
-              className="bg-[#635bff] text-white hover:bg-[#635bff]/90"
-              size="lg"
-            >
-              {isLoadingStripe ? (
-                <>
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  Redirecionando...
-                </>
-              ) : (
-                <>
-                  <Wallet className="h-5 w-5 mr-2" />
-                  Adicionar Primeiro Método de Pagamento
-                </>
-              )}
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {paymentMethods.map((method) => (
-              <div
-                key={method.id}
-                className={`flex items-center justify-between p-5 border rounded-xl transition-all hover:shadow-md ${
-                  method.is_default ? 'border-primary bg-primary/5' : 'border-border bg-card'
-                }`}
-              >
-                <div className="flex items-center space-x-4 flex-1 min-w-0">
-                  <div className={`p-3 rounded-lg ${
-                    method.is_default ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                  }`}>
-                    <CreditCard className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-base">{method.card_info}</span>
-                      {method.is_default && (
-                        <Badge variant="default" className="bg-primary">
-                          <Star className="h-3 w-3 mr-1" />
-                          Padrão
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <span className="font-medium">{method.card_holder_name}</span>
-                      </span>
-                      <span className="hidden sm:inline">•</span>
-                      <span>Adicionado em {new Date(method.created_at).toLocaleDateString('pt-BR', { 
-                        day: '2-digit', 
-                        month: 'long', 
-                        year: 'numeric' 
-                      })}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2 ml-4">
-                  {!method.is_default && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSetDefault(method.id)}
-                          className="h-9 w-9 p-0"
-                        >
-                          <Star className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Definir como padrão</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                  {method.is_default && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled
-                          className="h-9 w-9 p-0"
-                        >
-                          <CheckCircle2 className="h-4 w-4 text-primary" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Método padrão</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteClick(method.id)}
-                        className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Remover método</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </div>
-              
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-
-    {/* Delete Confirmation Dialog */}
-    {/* <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2">
-            <Trash2 className="h-5 w-5 text-destructive" />
-            Confirmar Remoção
-          </AlertDialogTitle>
-          <AlertDialogDescription className="text-base pt-2">
-            Tem certeza que deseja remover este método de pagamento? Esta ação não pode ser desfeita.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleDeleteConfirm}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            Remover
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog> */}
+        {}
+    {}
     </div>
     </TooltipProvider>
   );

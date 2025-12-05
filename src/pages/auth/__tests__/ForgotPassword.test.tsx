@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import ForgotPassword from '../ForgotPassword'
 
-// Mock the logo imports
+
 vi.mock('@/assets/light-logo.png', () => ({
   default: 'light-logo.png'
 }))
@@ -14,12 +14,12 @@ vi.mock('@/assets/dark-logo.png', () => ({
   default: 'dark-logo.png'
 }))
 
-// Mock the hooks
+
 vi.mock('@/hooks/use-system-theme', () => ({
   useSystemTheme: () => false
 }))
 
-// Mock react-router-dom
+
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal() as any
@@ -29,7 +29,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
   }
 })
 
-// Wrapper component for testing
+
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
   <BrowserRouter>
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
@@ -40,7 +40,7 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe('ForgotPassword', () => {
   beforeEach(() => {
-    // Clear all mocks before each test
+    
     vi.clearAllMocks()
   })
 
@@ -148,7 +148,7 @@ describe('ForgotPassword', () => {
       await user.type(emailInput, 'test@example.com')
       await user.click(submitButton)
 
-      // Check that the success message appears
+      
       expect(screen.getByText(/Um email foi enviado para você com um link para redefinir sua senha/)).toBeInTheDocument()
       expect(screen.getByText(/Verifique sua caixa de entrada \(e pasta de spam\)/)).toBeInTheDocument()
     })
@@ -167,11 +167,11 @@ describe('ForgotPassword', () => {
       await user.type(emailInput, 'test@example.com')
       await user.click(submitButton)
 
-      // Verify success state
+      
       expect(screen.getByText(/Um email foi enviado para você com um link para redefinir sua senha/)).toBeInTheDocument()
       expect(screen.getByText('Para voltar')).toBeInTheDocument()
       
-      // Verify that form elements are no longer visible
+      
       expect(screen.queryByText('Esqueceu sua senha?')).not.toBeInTheDocument()
       expect(screen.queryByLabelText('Email')).not.toBeInTheDocument()
       expect(screen.queryByRole('button', { name: 'Enviar' })).not.toBeInTheDocument()
@@ -188,7 +188,7 @@ describe('ForgotPassword', () => {
       const submitButton = screen.getByRole('button', { name: 'Enviar' })
       await user.click(submitButton)
 
-      // Form should not submit without email (HTML5 validation)
+      
       expect(screen.queryByText(/Um email foi enviado para você/)).not.toBeInTheDocument()
     })
   })
@@ -216,13 +216,13 @@ describe('ForgotPassword', () => {
         </TestWrapper>
       )
 
-      // Submit the form first
+      
       const emailInput = screen.getByLabelText('Email')
       const submitButton = screen.getByRole('button', { name: 'Enviar' })
       await user.type(emailInput, 'test@example.com')
       await user.click(submitButton)
 
-      // Click "Para voltar"
+      
       const goBackLink = screen.getByText('Para voltar')
       await user.click(goBackLink)
 
@@ -240,7 +240,7 @@ describe('ForgotPassword', () => {
       const loginLink = screen.getByText('Entrar')
       await user.click(loginLink)
 
-      // Since we're using Link component, we need to check if it has the correct href
+      
       expect(loginLink).toHaveAttribute('href', '/auth')
     })
   })
@@ -291,7 +291,7 @@ describe('ForgotPassword', () => {
         </TestWrapper>
       )
 
-      // Check that dark logo is shown (for light theme)
+      
       const logo = screen.getByAltText('Nexa Logo')
       expect(logo).toHaveAttribute('src', 'dark-logo.png')
     })
@@ -324,7 +324,7 @@ describe('ForgotPassword', () => {
       await user.type(emailInput, 'invalid-email')
       await user.click(submitButton)
 
-      // Should still show the form (HTML5 validation will prevent submission)
+      
       expect(screen.getByText('Esqueceu sua senha?')).toBeInTheDocument()
     })
   })
@@ -361,7 +361,7 @@ describe('ForgotPassword', () => {
       await user.type(emailInput, 'test@example.com')
       await user.click(submitButton)
 
-      // Form should be replaced with success message
+      
       expect(screen.queryByLabelText('Email')).not.toBeInTheDocument()
       expect(screen.getByText(/Um email foi enviado para você/)).toBeInTheDocument()
     })

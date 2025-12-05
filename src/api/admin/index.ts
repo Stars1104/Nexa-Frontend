@@ -171,49 +171,37 @@ export interface CampaignActionResponse {
 }
 
 export const adminApi = {
-  /**
-   * Get dashboard metrics
-   */
+  
   getDashboardMetrics: async (): Promise<DashboardMetricsResponse> => {
     const response = await apiClient.get('/admin/dashboard-metrics');
     return response.data;
   },
 
-  /**
-   * Get pending campaigns for dashboard
-   */
+  
   getPendingCampaigns: async (): Promise<PendingCampaignsResponse> => {
     const response = await apiClient.get('/admin/pending-campaigns');
     return response.data;
   },
 
-  /**
-   * Get recent users for dashboard
-   */
+  
   getRecentUsers: async (): Promise<RecentUsersResponse> => {
     const response = await apiClient.get('/admin/recent-users');
     return response.data;
   },
 
-  /**
-   * Approve a campaign
-   */
+  
   approveCampaign: async (campaignId: number): Promise<CampaignActionResponse> => {
     const response = await apiClient.patch(`/campaigns/${campaignId}/approve`);
     return response.data;
   },
 
-  /**
-   * Reject a campaign
-   */
+  
   rejectCampaign: async (campaignId: number): Promise<CampaignActionResponse> => {
     const response = await apiClient.patch(`/campaigns/${campaignId}/reject`);
     return response.data;
   },
 
-  /**
-   * Get all users with filtering and pagination
-   */
+  
   getUsers: async (params?: {
     role?: 'creator' | 'brand';
     status?: 'active' | 'blocked' | 'removed' | 'pending';
@@ -225,9 +213,7 @@ export const adminApi = {
     return response.data;
   },
 
-  /**
-   * Get creators with enhanced data
-   */
+  
   getCreators: async (params?: {
     status?: 'active' | 'blocked' | 'removed' | 'pending';
     search?: string;
@@ -238,9 +224,7 @@ export const adminApi = {
     return response.data;
   },
 
-  /**
-   * Get brands with enhanced data
-   */
+  
   getBrands: async (params?: {
     status?: 'active' | 'blocked' | 'removed' | 'pending';
     search?: string;
@@ -251,17 +235,13 @@ export const adminApi = {
     return response.data;
   },
 
-  /**
-   * Get user statistics
-   */
+  
   getUserStatistics: async (): Promise<StatisticsResponse> => {
     const response = await apiClient.get('/admin/users/statistics');
     return response.data;
   },
 
-  /**
-   * Update user status (activate, block, remove)
-   */
+  
   updateUserStatus: async (
     userId: number,
     action: 'activate' | 'block' | 'remove'
@@ -272,25 +252,19 @@ export const adminApi = {
     return response.data;
   },
 
-  /**
-   * Get brand rankings by different metrics
-   */
+  
   getBrandRankings: async (): Promise<BrandRankingsResponse> => {
     const response = await apiClient.get('/admin/brand-rankings');
     return response.data;
   },
 
-  /**
-   * Get comprehensive brand rankings with all metrics
-   */
+  
   getComprehensiveRankings: async (): Promise<ComprehensiveRankingsResponse> => {
     const response = await apiClient.get('/admin/brand-rankings/comprehensive');
     return response.data;
   },
 
-  /**
-   * Get all verified students with filtering and pagination
-   */
+  
   getStudents: async (params?: {
     status?: 'active' | 'expired' | 'premium';
     search?: string;
@@ -301,9 +275,7 @@ export const adminApi = {
     return response.data;
   },
 
-  /**
-   * Update student trial period
-   */
+  
   updateStudentTrial: async (
     studentId: number,
     period: '1month' | '6months' | '1year'
@@ -314,9 +286,7 @@ export const adminApi = {
     return response.data;
   },
 
-  /**
-   * Update student status (activate, block, remove)
-   */
+  
   updateStudentStatus: async (
     studentId: number,
     action: 'activate' | 'block' | 'remove'
@@ -327,9 +297,7 @@ export const adminApi = {
     return response.data;
   },
 
-  /**
-   * Get student verification requests
-   */
+  
   getStudentVerificationRequests: async (params?: {
     status?: 'pending' | 'approved' | 'rejected';
     per_page?: number;
@@ -348,9 +316,7 @@ export const adminApi = {
     return response.data;
   },
 
-  /**
-   * Approve student verification request
-   */
+  
   approveStudentVerification: async (
     requestId: number,
     data?: {
@@ -362,9 +328,7 @@ export const adminApi = {
     return response.data;
   },
 
-  /**
-   * Reject student verification request
-   */
+  
   rejectStudentVerification: async (
     requestId: number,
     data?: {

@@ -61,26 +61,26 @@ export default function Chat() {
   const [searchQuery, setSearchQuery] = useState("");
   const [dragActive, setDragActive] = useState(false);
 
-  // Contract-related state
+  
   const [contracts, setContracts] = useState<any[]>([]);
   const [isLoadingContracts, setIsLoadingContracts] = useState(false);
 
-  // Review-related state
+  
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [contractToReview, setContractToReview] = useState<any>(null);
 
-  // Brand review modal state
+  
   const [showBrandReviewModal, setShowBrandReviewModal] = useState(false);
   const [brandContractToReview, setBrandContractToReview] = useState<any>(null);
 
-  // Campaign finalization modal state
+  
   const [showCampaignFinalizationModal, setShowCampaignFinalizationModal] = useState(false);
   const [contractToFinalize, setContractToFinalize] = useState<any>(null);
 
-  // Timeline-related state
+  
   const [showTimelineSidebar, setShowTimelineSidebar] = useState(false);
 
-  // Image viewer state
+  
   const [imageViewer, setImageViewer] = useState<{
     isOpen: boolean;
     imageUrl: string;
@@ -103,7 +103,7 @@ export default function Chat() {
   const imageViewerRef = useRef<HTMLDivElement>(null);
   const [viewportOffset, setViewportOffset] = useState(0);
 
-  // Socket.IO hook
+  
   const {
     socket,
     isConnected,
@@ -118,21 +118,21 @@ export default function Chat() {
     onMessagesRead,
     sendOfferAcceptanceMessage,
   } = useSocket({ enableNotifications: false, enableChat: true });
-  //In Mobile case, small screen
+  
   useEffect(() => {
-  // prevent body scroll when mobile sidebar is open
+  
     const original = document.body.style.overflow;
     document.body.style.overflow = sidebarOpen ? "hidden" : original;
     return () => {
       document.body.style.overflow = original;
     };
 }, [sidebarOpen]);
-  // Component mount/unmount tracking
+  
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      // Clear any pending timeouts
+      
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = null;
@@ -140,13 +140,13 @@ export default function Chat() {
     };
   }, []);
 
-  // Load chat rooms on component mount
+  
   useEffect(() => {
     if (isMountedRef.current) {
       loadChatRooms();
     }
 
-    // Cleanup function to stop typing indicators when component unmounts
+    
     return () => {
       if (selectedRoom && isCurrentUserTyping) {
         if (typingTimeoutRef.current) {
@@ -159,18 +159,18 @@ export default function Chat() {
     };
   }, [selectedRoom]);
 
-  // Auto-join room when selectedRoom changes
+  
   useEffect(() => {
     if (selectedRoom && isConnected) {
       joinRoom(selectedRoom.room_id);
     }
   }, [selectedRoom, isConnected, joinRoom]);
 
-  // Auto-scroll to bottom when new messages arrive
+  
   useEffect(() => {
     if (!isMountedRef.current) return;
 
-    // Use requestAnimationFrame to ensure DOM is ready
+    
     const scrollToBottom = () => {
       if (messagesEndRef.current && isMountedRef.current) {
         try {
@@ -184,16 +184,16 @@ export default function Chat() {
     requestAnimationFrame(scrollToBottom);
   }, [messages]);
 
-  // Visual viewport handling to keep input visible above mobile keyboard
+  
   useEffect(() => {
     const vv = (window as any).visualViewport as VisualViewport | undefined;
     if (!vv) return;
 
     const handleResize = () => {
-      // Calculate how much of the viewport is occluded by the on-screen keyboard
+      
       const bottomInset = Math.max(0, window.innerHeight - (vv.height + Math.round(vv.offsetTop)));
       setViewportOffset(bottomInset);
-      // Ensure the input stays in view
+      
       if (inputRef.current) {
         inputRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
@@ -208,16 +208,16 @@ export default function Chat() {
     };
   }, []);
 
-  // Socket event listeners
+  
   useEffect(() => {
     if (!socket || !isMountedRef.current) return;
 
-    // Listen for new messages from other users
+    
     const handleNewMessage = (data: any) => {
       if (!isMountedRef.current) return;
 
       if (data.roomId === selectedRoom?.room_id) {
-        // Add message from any user (including current user for synchronization)
+        
         const messageId = data.messageId || Date.now() + Math.floor(Math.random() * 1000);
         const isFromCurrentUser = data.senderId === user?.id;
         
@@ -228,20 +228,20 @@ export default function Chat() {
           sender_id: data.senderId,
           sender_name: data.senderName,
           sender_avatar: data.senderAvatar,
-          is_sender: isFromCurrentUser, // Set based on whether it's from current user
+          is_sender: isFromCurrentUser, 
           file_path: data.fileData?.file_path,
           file_name: data.fileData?.file_name,
           file_size: data.fileData?.file_size,
           file_type: data.fileData?.file_type,
           file_url: data.fileData?.file_url,
-          // Only mark as read via read-receipt events, never on echo of own message
+          
           is_read: false,
           created_at: data.timestamp || new Date().toISOString(),
-          offer_data: data.offerData, // Map socket offerData to offer_data
+          offer_data: data.offerData, 
         };
 
         setMessages((prev) => {
-          // If this is echo of our own message, try to replace optimistic one
+          
           if (isFromCurrentUser) {
             const idx = prev.findIndex(
               (m) => m.is_sender && m.message === newMessage.message && (m as any).pending
@@ -253,12 +253,12 @@ export default function Chat() {
             }
           }
 
-          // Prevent duplicates by id
+          
           if (prev.some((msg) => msg.id === newMessage.id)) {
             return prev;
           }
 
-          // Also avoid adding if we just marked last sent id
+          
           if (isFromCurrentUser && (window as any).lastSentMessageId === newMessage.id) {
             return prev;
           }
@@ -266,7 +266,7 @@ export default function Chat() {
           return [...prev, newMessage];
         });
 
-        // Mark as read immediately if it's not from current user
+        
         if (!isFromCurrentUser) {
           markMessagesAsRead(data.roomId, [messageId]).catch((error) => {
             console.warn("Error marking message as read:", error);
@@ -274,11 +274,11 @@ export default function Chat() {
         }
       }
 
-      // Update conversation list
+      
       loadChatRooms();
     };
 
-    // Listen for typing indicators
+    
     const handleUserTyping = (data: any) => {
       if (!isMountedRef.current) return;
 
@@ -295,7 +295,7 @@ export default function Chat() {
       }
     };
 
-    // Listen for read receipts from other users
+    
     const handleMessagesRead = (data: any) => {
       if (!isMountedRef.current) return;
 
@@ -310,14 +310,14 @@ export default function Chat() {
       }
     };
 
-    // Listen for offer acceptance confirmation messages
+    
     const handleOfferAcceptanceMessage = (data: any) => {
       if (!isMountedRef.current) return;
 
       if (data.roomId === selectedRoom?.room_id) {
-        // Add the acceptance confirmation message to the chat
+        
         const confirmationMessage: Message = {
-          id: Date.now(), // Temporary ID
+          id: Date.now(), 
           message: `✅ Oferta aceita com sucesso! Contrato criado.`,
           message_type: 'text',
           sender_id: data.senderId,
@@ -330,7 +330,7 @@ export default function Chat() {
 
         setMessages((prev) => [...prev, confirmationMessage]);
 
-        // Scroll to bottom to show new message
+        
         setTimeout(() => {
           if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -356,7 +356,7 @@ export default function Chat() {
     };
   }, [socket, selectedRoom, user, markMessagesAsRead]);
 
-  // Listen for read receipt updates from other users using the new hook function
+  
   useEffect(() => {
     if (!isMountedRef.current) return;
 
@@ -375,12 +375,12 @@ export default function Chat() {
     return cleanup;
   }, [onMessagesRead, selectedRoom]);
 
-  // Auto-clear typing users after 3 seconds to prevent them from persisting
+  
   useEffect(() => {
     if (typingUsers.size > 0) {
       const timeoutId = setTimeout(() => {
         setTypingUsers(new Set());
-      }, 3000); // Clear after 3 seconds
+      }, 3000); 
 
       return () => {
         clearTimeout(timeoutId);
@@ -388,12 +388,12 @@ export default function Chat() {
     }
   }, [typingUsers]);
 
-  // Clear typing users when room changes
+  
   useEffect(() => {
     setTypingUsers(new Set());
   }, [selectedRoom?.room_id]);
 
-  // Load chat rooms from API
+  
   const loadChatRooms = async () => {
     if (!isMountedRef.current) return;
 
@@ -403,7 +403,7 @@ export default function Chat() {
         const roomsData = response || [];
         setChatRooms(roomsData);
 
-        // Auto-select first room if none selected and rooms exist
+        
         if (!selectedRoom && roomsData.length > 0) {
           handleConversationSelect(roomsData[0]);
         }
@@ -417,7 +417,7 @@ export default function Chat() {
     }
   };
 
-  // Create guide messages for a specific room (returns array, doesn't modify state)
+  
   const createGuideMessages = (room: ChatRoom): Message[] => {
     try {
       const isBrand = user?.role === 'brand';
@@ -463,11 +463,11 @@ export default function Chat() {
         "**Status:** 🟢 Conectado\n\n" +
         "Você está agora conectado e pode começar a conversar. **Use o chat para todas as comunicações** e siga as diretrizes da plataforma para uma parceria de sucesso.";
       
-      // Create guide message with unique IDs using room-specific approach
+      
       const roomSpecificId = parseInt(room.room_id.replace(/\D/g, '')) || 0;
       const uniqueTimestamp = Date.now();
       const guideMsg: Message = {
-        id: -(1000000000 + roomSpecificId * 1000 + 1), // Negative ID to avoid conflicts with real messages
+        id: -(1000000000 + roomSpecificId * 1000 + 1), 
         message: guideMessage,
         message_type: 'system',
         sender_id: user?.id || 0,
@@ -478,9 +478,9 @@ export default function Chat() {
         created_at: new Date().toISOString(),
       };
       
-      // Create quote message
+      
       const quoteMsg: Message = {
-        id: -(1000000000 + roomSpecificId * 1000 + 2), // Negative ID to avoid conflicts with real messages
+        id: -(1000000000 + roomSpecificId * 1000 + 2), 
         message: quoteMessage,
         message_type: 'system',
         sender_id: user?.id || 0,
@@ -498,7 +498,7 @@ export default function Chat() {
     }
   };
 
-    // Load messages for a specific room
+    
   const loadMessages = async (room: ChatRoom) => {
     if (!isMountedRef.current) return;
 
@@ -507,18 +507,18 @@ export default function Chat() {
       const response = await chatService.getMessages(room.room_id);
       if (isMountedRef.current) {
 
-        // Deduplicate messages by ID to prevent duplicate key warnings
+        
         const messageIds = new Set();
         const deduplicatedMessages = response.messages.filter((message) => {
           if (messageIds.has(message.id)) {
             console.warn('Duplicate message ID detected in API response:', message.id, message);
-            return false; // Skip duplicate message IDs
+            return false; 
           }
           messageIds.add(message.id);
           return true;
         });
 
-        // Check if guide messages need to be added after API response
+        
         const existingGuideMessages = deduplicatedMessages.filter(msg => 
           msg.message_type === 'system' && 
           (msg.message.includes('Parabéns') || msg.message.includes('parceria'))
@@ -527,13 +527,13 @@ export default function Chat() {
         const guideMessagesKey = `guide_messages_${room.room_id}`;
         const hasGuideMessagesInStorage = localStorage.getItem(guideMessagesKey);
         
-        // Add guide messages if they don't exist in API response and haven't been added before
-        if (existingGuideMessages.length === 0) { // && !hasGuideMessagesInStorage) {
-          // Add guide messages directly to the deduplicated messages before setting state
+        
+        if (existingGuideMessages.length === 0) { 
+          
           const guideMessages = createGuideMessages(room);
           const messagesWithGuides = [...guideMessages, ...deduplicatedMessages];
           
-          // Final deduplication check for the combined array
+          
           const allMessageIds = new Set();
           const finalMessages = messagesWithGuides.filter((message) => {
             if (allMessageIds.has(message.id)) {
@@ -545,21 +545,21 @@ export default function Chat() {
           });
           
           setMessages(finalMessages);
-          // Mark that this room has received guide messages
+          
           localStorage.setItem(guideMessagesKey, 'true');
         } else {
-          // Set messages normally
+          
           setMessages(deduplicatedMessages);
           if (existingGuideMessages.length > 0) {
-            // Mark that guide messages exist in this room
+            
             localStorage.setItem(guideMessagesKey, 'true');
           }
         }
 
-        // Join the room for real-time updates
+        
         joinRoom(room.room_id);
 
-        // Mark all unread messages from other users as read
+        
         const unreadMessages = deduplicatedMessages.filter(
           (msg) => !msg.is_sender && !msg.is_read
         );
@@ -572,7 +572,7 @@ export default function Chat() {
             );
           } catch (error) {
             console.warn('Failed to mark messages as read:', error);
-            // Don't show toast for this error as it's not critical
+            
           }
       
         }
@@ -590,7 +590,7 @@ export default function Chat() {
     }
   };
 
-  // Load contracts for the selected room
+  
   const loadContracts = async (roomId: string) => {
     if (!isMountedRef.current) return;
 
@@ -600,7 +600,7 @@ export default function Chat() {
       const contractsData = response.data;
 
       if (isMountedRef.current) {
-        // Fetch review status for each contract
+        
         const contractsWithReviewStatus = await Promise.all(
           contractsData.map(async (contract: any) => {
             try {
@@ -611,7 +611,7 @@ export default function Chat() {
                 ...reviewStatusResponse.data,
               };
             } catch (error) {
-              // Handle error silently for individual contract review status
+              
               return contract;
             }
           })
@@ -632,11 +632,11 @@ export default function Chat() {
     }
   };
 
-  // Handle conversation selection
+  
   const handleConversationSelect = async (room: ChatRoom) => {
     if (!isMountedRef.current) return;
 
-    // Stop typing indicator for previous room
+    
     if (selectedRoom && isCurrentUserTyping) {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
@@ -646,27 +646,27 @@ export default function Chat() {
       stopTyping(selectedRoom.room_id);
     }
 
-    // Clear typing users for previous room
+    
     setTypingUsers(new Set());
 
-    // Leave previous room
+    
     if (selectedRoom) {
       leaveRoom(selectedRoom.room_id);
     }
 
     setSelectedRoom(room);
     
-    // Auto-close sidebar on mobile for WhatsApp-like behavior
+    
     if (window.innerWidth < 768) {
       setSidebarOpen(false);
     }
 
-    // Load messages for the selected room
+    
     await loadMessages(room);
 
-    // Load contracts for the selected room
+    
     await loadContracts(room.room_id);
-    // Focus input
+    
     setTimeout(() => {
       if (inputRef.current && isMountedRef.current) {
         inputRef.current.focus();
@@ -674,7 +674,7 @@ export default function Chat() {
     }, 100);
   };
 
-  // Handle sending message with upload progress
+  
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRoom || (!input.trim() && !selectedFile) || isUploading) return;
@@ -686,7 +686,7 @@ export default function Chat() {
         setIsUploading(true);
         setUploadProgress(0);
         
-        // Simulate progress for better UX
+        
         const progressInterval = setInterval(() => {
           setUploadProgress(prev => {
             if (prev >= 90) {
@@ -699,7 +699,7 @@ export default function Chat() {
 
         newMessage = await sendMessage(
           selectedRoom.room_id,
-          input.trim(), // Send the actual text message, not filename
+          input.trim(), 
           selectedFile
         );
         console.log(newMessage)
@@ -710,7 +710,7 @@ export default function Chat() {
           setFilePreview(null);
         }
       } else {
-        // Optimistic UI: show a pending message bubble immediately
+        
         const tempId = Date.now();
         const optimisticMessage: Message = {
           id: tempId,
@@ -720,7 +720,7 @@ export default function Chat() {
           sender_name: user?.name || '',
           sender_avatar: user?.avatar_url,
           is_sender: true,
-          // Optimistic: show as enviada (1 check) até receber recibo de leitura
+          
           is_read: false,
           sent: true,
           pending: true,
@@ -729,24 +729,24 @@ export default function Chat() {
 
         setMessages((prev) => [...prev, optimisticMessage]);
 
-        // Send to server
+        
         newMessage = await sendMessage(selectedRoom.room_id, input.trim());
 
-        // Replace optimistic with real message and mark as sent
+        
         setMessages((prev) => prev.map(m =>
           m.id === tempId ? { ...newMessage, is_sender: true, sent: true, pending: false } as any : m
         ));
       }
 
       if (isMountedRef.current) {
-        // Mark the message as sent via socket to prevent duplicate handling
+        
         if (newMessage.id) {
           (window as any).lastSentMessageId = newMessage.id;
         }
         
         setInput("");
 
-        // Stop typing indicator immediately when message is sent
+        
         if (typingTimeoutRef.current) {
           clearTimeout(typingTimeoutRef.current);
           typingTimeoutRef.current = null;
@@ -754,7 +754,7 @@ export default function Chat() {
         setIsCurrentUserTyping(false);
         stopTyping(selectedRoom.room_id);
 
-        // Focus input after sending
+        
         setTimeout(() => {
           if (inputRef.current && isMountedRef.current) {
             inputRef.current.focus();
@@ -776,14 +776,14 @@ export default function Chat() {
     }
   };
 
-  // Handle file selection with validation
+  
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!isMountedRef.current) return;
 
     const file = event.target.files?.[0];
     if (file) {
-      // Validate file size (10MB max)
-      const maxSize = 10 * 1024 * 1024; // 10MB
+      
+      const maxSize = 10 * 1024 * 1024; 
       if (file.size > maxSize) {
         toast({
           title: "Arquivo muito grande",
@@ -793,7 +793,7 @@ export default function Chat() {
         return;
       }
 
-      // Validate file type
+      
       const allowedTypes = [
         'image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp',
         'application/pdf',
@@ -818,7 +818,7 @@ export default function Chat() {
       
       setSelectedFile(file);
 
-      // Create preview for images
+      
       if (file.type.startsWith("image/")) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -831,7 +831,7 @@ export default function Chat() {
     }
   };
 
-  // Handle drag and drop
+  
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setDragActive(true);
@@ -849,7 +849,7 @@ export default function Chat() {
    const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
-      // Create a synthetic event for handleFileSelect
+      
       const syntheticEvent = {
         target: { files: [file] }
       } as React.ChangeEvent<HTMLInputElement>;
@@ -857,43 +857,43 @@ export default function Chat() {
     }
   };
 
-  // Handle input change with typing indicators
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!isMountedRef.current) return;
     setInput(e.target.value);
-    // Auto-resize textarea height
+    
     const el = e.currentTarget;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 200)}px`; // cap ~200px
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`; 
 
-    // Handle typing indicators
+    
     if (selectedRoom) {
-      // Clear any existing timeout
+      
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
 
-      // Start typing indicator immediately when user types
+      
       if (!isCurrentUserTyping) {
         setIsCurrentUserTyping(true);
         startTyping(selectedRoom.room_id);
       }
 
-      // Set timeout to stop typing indicator 1 second after user stops typing
+      
       typingTimeoutRef.current = setTimeout(() => {
         if (isMountedRef.current) {
           stopTyping(selectedRoom.room_id);
           setIsCurrentUserTyping(false);
         }
-      }, 1000); // 1 second delay after stopping
+      }, 1000); 
     }
   };
 
-  // Handle when user stops typing (keyup event)
+  
   const handleKeyUp = () => {
     if (!isMountedRef.current || !selectedRoom) return;
 
-    // Set a shorter timeout for immediate response when user stops pressing keys
+    
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
@@ -903,14 +903,14 @@ export default function Chat() {
         stopTyping(selectedRoom.room_id);
         setIsCurrentUserTyping(false);
       }
-    }, 500); // Shorter timeout for keyup events
+    }, 500); 
   };
 
-  // Handle when input loses focus
+  
   const handleInputBlur = () => {
     if (!isMountedRef.current || !selectedRoom) return;
 
-    // Stop typing indicator immediately when input loses focus
+    
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = null;
@@ -922,7 +922,7 @@ export default function Chat() {
     }
   };
 
-  // Close sidebar when clicking outside
+  
   useEffect(() => {
     if (!sidebarOpen) return;
 
@@ -959,7 +959,7 @@ export default function Chat() {
     };
   }, [sidebarOpen]);
 
-  // Cleanup typing indicators when component unmounts or user navigates away
+  
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (selectedRoom && isCurrentUserTyping) {
@@ -985,7 +985,7 @@ export default function Chat() {
       window.removeEventListener("beforeunload", handleBeforeUnload);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
 
-      // Cleanup typing indicators on unmount
+      
       if (selectedRoom && isCurrentUserTyping) {
         if (typingTimeoutRef.current) {
           clearTimeout(typingTimeoutRef.current);
@@ -997,7 +997,7 @@ export default function Chat() {
     };
   }, [selectedRoom, isCurrentUserTyping, stopTyping]);
 
-  // Image Viewer Component
+  
   const ImageViewer = () => {
     const handleClose = () => {
       setImageViewer({
@@ -1037,7 +1037,7 @@ export default function Chat() {
           variant: "destructive",
         });
 
-        // Try fallback method
+        
         try {
           const downloadUrl = imageViewer.imageUrl.replace(
             "/storage/",
@@ -1061,7 +1061,7 @@ export default function Chat() {
       }
     };
 
-    // Close on escape key
+    
     useEffect(() => {
       const handleEscape = (e: KeyboardEvent) => {
         if (e.key === "Escape") {
@@ -1119,7 +1119,7 @@ export default function Chat() {
         className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center"
         onClick={handleClose}
       >
-        {/* Image Container */}
+        {}
         <div
           className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center"
           onClick={(e) => e.stopPropagation()}
@@ -1136,7 +1136,7 @@ export default function Chat() {
           />
         </div>
 
-        {/* Controls */}
+        {}
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-black/50 backdrop-blur-sm rounded-xl p-2 border border-white/20">
           <button
             onClick={handleZoomOut}
@@ -1182,7 +1182,7 @@ export default function Chat() {
           </button>
         </div>
 
-        {/* Image Info */}
+        {}
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 backdrop-blur-sm rounded-xl p-3 border border-white/20">
           <div className="text-white text-center">
             <div className="font-medium">{imageViewer.imageName}</div>
@@ -1205,22 +1205,22 @@ export default function Chat() {
     );
   };
 
-  // Enhanced image download function with CORS handling
+  
   const downloadImageToLocal = async (
     imageUrl: string,
     fileName: string
   ): Promise<void> => {
     return new Promise((resolve, reject) => {
-      // Convert storage URL to API download URL
+      
       const downloadUrl = imageUrl.replace("/storage/", "/api/download/");
 
-      // Method 1: Try fetch first (handles CORS better)
+      
       fetch(downloadUrl, {
         method: "GET",
         mode: "cors",
-        credentials: "include", // Include cookies if needed
+        credentials: "include", 
         headers: {
-          Accept: "image/*,*/*;q=0.8",
+          Accept: "image*;q=0.8",
         },
       })
         .then((response) => {
@@ -1243,7 +1243,7 @@ export default function Chat() {
             `${mimeType}:${fileName}:${url}`
           );
 
-          // Ensure the link is properly configured for download
+          
           link.target = "_blank";
           link.rel = "noopener noreferrer";
 
@@ -1263,7 +1263,7 @@ export default function Chat() {
             fetchError
           );
 
-          // Method 2: Canvas method as fallback
+          
           try {
             const img = new Image();
             img.crossOrigin = "anonymous";
@@ -1299,7 +1299,7 @@ export default function Chat() {
                         `${mimeType}:${fileName}:${url}`
                       );
 
-                      // Ensure the link is properly configured for download
+                      
                       link.target = "_blank";
                       link.rel = "noopener noreferrer";
 
@@ -1327,7 +1327,7 @@ export default function Chat() {
             img.onerror = () => {
               console.warn("Canvas method also failed, trying direct link");
 
-              // Method 3: Direct link as last resort
+              
               try {
                 const link = document.createElement("a");
                 link.href = downloadUrl;
@@ -1401,7 +1401,7 @@ export default function Chat() {
     }
 
     if (message.message_type === "offer") {
-      // Check if this is a contract termination message
+      
       if (message.offer_data?.termination_type === 'brand_terminated') {
         return (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl p-4">
@@ -1440,7 +1440,7 @@ export default function Chat() {
         );
       }
 
-      // Safety check for regular offer messages
+      
       if (!message.offer_data?.offer_id) {
         return (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl p-3">
@@ -1451,7 +1451,7 @@ export default function Chat() {
         );
       }
 
-      // Convert message to ChatOffer format
+      
       const chatOffer: ChatOffer = {
         id: message.offer_data.offer_id,
         title: message.offer_data.title || "Oferta de Projeto",
@@ -1490,13 +1490,13 @@ export default function Chat() {
           onReject={handleRejectOffer}
           onCancel={handleCancelOffer}
           onEndContract={handleEndContract}
-          onTerminateContract={undefined} // Not implemented in general Chat component
+          onTerminateContract={undefined} 
           isCreator={user?.role === "creator" || user?.role === "student"}
         />
       );
     }
 
-    // Handle contract completion messages
+    
     if (message.message_type === "contract_completion") {
       return (
         <ContractCompletionMessage
@@ -1509,7 +1509,7 @@ export default function Chat() {
 
                 const contractToReview = freshContracts.find((c: any) => 
                   c.status === "completed" && 
-                  !c.has_creator_review // Creator hasn't reviewed yet
+                  !c.has_creator_review 
                 );
                 
                 if (contractToReview) {
@@ -1546,23 +1546,23 @@ export default function Chat() {
       );
     }
 
-        // Handle system messages (like contract completion messages)
+        
     if (message.message_type === "system") {
-      // Check if this is a contract completion message
+      
       const isContractCompletionMessage = message.message?.includes("O contrato foi finalizado com sucesso") ||
                                         message.message?.includes("O criador pode avaliar a marca") ||
                                         message.message?.includes("Contrato finalizado com sucesso") ||
                                         message.message?.includes("finalizado com sucesso") ||
                                         message.message?.includes("aguardando avaliação");
       
-      // Check if user can review completed contracts
+      
       const canReviewContract = contracts.some(
         (contract) =>
           contract.status === "completed" && 
-          !contract.has_creator_review // Creator hasn't reviewed yet
+          !contract.has_creator_review 
       );
 
-      // Handle contract completion messages with prominent review button for creators
+      
       if (isContractCompletionMessage && canReviewContract) {
         return (
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-700 rounded-2xl p-6 shadow-lg">
@@ -1577,7 +1577,7 @@ export default function Chat() {
                 <div className="flex justify-center">
                   <Button
                     onClick={() => {
-                      // Find contract with waiting_review status
+                      
                       let contractToReview = contracts.find(
                         (c) =>
                           c.status === "completed" &&
@@ -1585,7 +1585,7 @@ export default function Chat() {
                       );
 
                       if (contractToReview) {
-                        // Check if user can review this contract
+                        
                         if (contractToReview.has_creator_review) {
                           toast({
                             title: "Avaliação já realizada",
@@ -1618,7 +1618,7 @@ export default function Chat() {
         );
       }
 
-      // Check if this is a contract completion message and user can review (fallback for general system messages)
+      
       const isContractRelatedMessage = message.message?.includes("finalizado") || 
                                       message.message?.includes("completed") ||
                                       message.message?.includes("aguardando avaliação");
@@ -1628,21 +1628,21 @@ export default function Chat() {
           contract.status === "completed" && !contract.has_creator_review
       );
 
-      // Format the message with better typography
+      
       const formatSystemMessage = (text: string) => {
         return text
           .split('\n')
           .map((line, index) => {
             if (line.trim() === '') return <br key={index} />;
             
-            // Handle bold text
+            
             if (line.includes('**')) {
               const parts = line.split(/(\*\*.*?\*\*)/g);
               return (
                 <div key={index} className="mb-3">
                   {parts.map((part, partIndex) => {
                     if (part.startsWith('**') && part.endsWith('**')) {
-                      // Check if this is a section header (contains emojis like 📋 or ⚠️)
+                      
                       if (part.includes('📋') || part.includes('⚠️') || part.includes('💼')) {
                         return (
                           <div key={partIndex} className="text-lg font-bold text-blue-800 dark:text-blue-200 bg-white/60 dark:bg-slate-800/40 px-3 py-2 rounded-lg border-l-4 border-blue-400">
@@ -1662,7 +1662,7 @@ export default function Chat() {
               );
             }
             
-            // Handle bullet points
+            
             if (line.trim().startsWith('•')) {
               return (
                 <div key={index} className="flex items-start gap-3 mb-2">
@@ -1672,7 +1672,7 @@ export default function Chat() {
               );
             }
             
-            // Handle checkmarks and other symbols
+            
             if (line.includes('✅') || line.includes('❌') || line.includes('⚠️') || line.includes('🚫')) {
               return (
                 <div key={index} className="flex items-start gap-3 mb-3 p-2 bg-white/50 dark:bg-slate-800/30 rounded-lg">
@@ -1697,7 +1697,7 @@ export default function Chat() {
                 {formatSystemMessage(message.message)}
               </div>
 
-              {/* Review button for completed contracts */}
+              {}
               {canReview && (
                 <div className="mt-3 flex justify-center">
                   <Button
@@ -1708,7 +1708,7 @@ export default function Chat() {
                           !contract.has_creator_review
                       );
                       if (contractToReview) {
-                        // Check if user can review this contract
+                        
                         if (contractToReview.can_review === false) {
                           toast({
                             title: "Avaliação já realizada",
@@ -1749,7 +1749,7 @@ export default function Chat() {
     );
   };
 
-  // Find active contract for timeline
+  
   const activeContract = contracts.find(contract => 
     contract.status === 'active' || contract.status === 'completed'
   );
@@ -1765,9 +1765,9 @@ export default function Chat() {
     }
   };
 
-  // Handle offer actions from chat
+  
   const handleAcceptOffer = async (offerId: number) => {
-    // Additional validation
+    
     if (!offerId || offerId <= 0 || isNaN(offerId)) {
       console.error('Invalid offerId in handleAcceptOffer:', offerId);
       toast({
@@ -1786,12 +1786,12 @@ export default function Chat() {
           description: "Oferta aceita com sucesso! Contrato criado.",
         });
 
-        // Send acceptance confirmation message via socket
+        
         if (selectedRoom && response.data?.offer && response.data?.contract && user) {
           
-          // Ensure we're in the room before sending the message
+          
           if (isConnected) {
-            // Add a small delay to ensure everything is ready
+            
             setTimeout(() => {
               sendOfferAcceptanceMessage(
                 selectedRoom.room_id,
@@ -1805,7 +1805,7 @@ export default function Chat() {
           }
         }
 
-        // Refresh contracts
+        
         if (selectedRoom) {
           loadContracts(selectedRoom.room_id);
         }
@@ -1823,7 +1823,7 @@ export default function Chat() {
   };
 
   const handleRejectOffer = async (offerId: number) => {
-    // Additional validation
+    
     if (!offerId || offerId <= 0 || isNaN(offerId)) {
       console.error('Invalid offerId in handleRejectOffer:', offerId);
       toast({
@@ -1841,7 +1841,7 @@ export default function Chat() {
           title: "Sucesso",
           description: "Oferta rejeitada com sucesso",
         });
-        // Refresh contracts
+        
         if (selectedRoom) {
           loadContracts(selectedRoom.room_id);
         }
@@ -1859,7 +1859,7 @@ export default function Chat() {
   };
 
   const handleCancelOffer = async (offerId: number) => {
-    // Additional validation
+    
     if (!offerId || offerId <= 0 || isNaN(offerId)) {
       console.error('Invalid offerId in handleCancelOffer:', offerId);
       toast({
@@ -1877,7 +1877,7 @@ export default function Chat() {
           title: "Sucesso",
           description: "Oferta cancelada com sucesso",
         });
-        // Refresh contracts
+        
         if (selectedRoom) {
           loadContracts(selectedRoom.room_id);
         }
@@ -1894,7 +1894,7 @@ export default function Chat() {
     }
   };
 
-  // Handle contract completion - show confirmation modal first
+  
   const handleEndContract = (contractId: number) => {
     const contractToEnd = contracts.find((c) => c.id === contractId);
     if (contractToEnd) {
@@ -1903,9 +1903,9 @@ export default function Chat() {
     }
   };
 
-  // Handle campaign finalization after confirmation
+  
   const handleCampaignFinalized = () => {
-    // Reload messages and contracts to show updated status
+    
     if (selectedRoom) {
       loadMessages(selectedRoom);
       loadContracts(selectedRoom.room_id);
@@ -1913,7 +1913,7 @@ export default function Chat() {
   };
 
   const handleReviewSubmitted = () => {
-    // Reload contracts to show updated review status
+    
     if (selectedRoom) {
       loadContracts(selectedRoom.room_id);
     }
@@ -1925,13 +1925,13 @@ export default function Chat() {
   };
 
   const handleBrandReviewSubmitted = () => {
-    // Reload contracts to show updated review status
+    
     if (selectedRoom) {
       loadContracts(selectedRoom.room_id);
     }
   };
 
-  // Utility function to format file sizes
+  
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
 
@@ -1942,16 +1942,16 @@ export default function Chat() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  // Utility function to get file extension from filename
+  
   const getFileExtension = (filename: string): string => {
     return filename.split(".").pop()?.toLowerCase() || "";
   };
 
-  // Utility function to get appropriate MIME type based on file extension
+  
   const getMimeType = (filename: string): string => {
     const extension = getFileExtension(filename);
     const mimeTypes: { [key: string]: string } = {
-      // Images
+      
       jpg: "image/jpeg",
       jpeg: "image/jpeg",
       png: "image/png",
@@ -1961,7 +1961,7 @@ export default function Chat() {
       bmp: "image/bmp",
       ico: "image/x-icon",
 
-      // Documents
+      
       pdf: "application/pdf",
       doc: "application/msword",
       docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -1973,21 +1973,21 @@ export default function Chat() {
       rtf: "application/rtf",
       csv: "text/csv",
 
-      // Archives
+      
       zip: "application/zip",
       rar: "application/x-rar-compressed",
       "7z": "application/x-7z-compressed",
       tar: "application/x-tar",
       gz: "application/gzip",
 
-      // Audio
+      
       mp3: "audio/mpeg",
       wav: "audio/wav",
       ogg: "audio/ogg",
       aac: "audio/aac",
       flac: "audio/flac",
 
-      // Video
+      
       mp4: "video/mp4",
       avi: "video/x-msvideo",
       mov: "video/quicktime",
@@ -1996,7 +1996,7 @@ export default function Chat() {
       webm: "video/webm",
       mkv: "video/x-matroska",
 
-      // Code
+      
       js: "application/javascript",
       ts: "application/typescript",
       json: "application/json",
@@ -2009,7 +2009,7 @@ export default function Chat() {
       cpp: "text/x-c++src",
       c: "text/x-csrc",
 
-      // Other
+      
       exe: "application/x-msdownload",
       msi: "application/x-msdownload",
       apk: "application/vnd.android.package-archive",
@@ -2042,7 +2042,7 @@ export default function Chat() {
           opacity: 0.8;
         }
       }
-      /* Prevent horizontal scroll on mobile */
+      
       @media (max-width: 768px) {
         body {
           overflow-x: hidden;
@@ -2051,11 +2051,11 @@ export default function Chat() {
     `}</style>
 
     <div className="flex flex-1 overflow-hidden">
-      {/* Sidebar */}
+      {}
       <div
         data-sidebar
         className={cn(
-          // Use full width on mobile, constrained (max-w-sm) on md+
+          
           "flex flex-col w-full max-w-full md:max-w-sm border-r bg-background transition-all duration-300 ease-in-out",
           "md:relative md:translate-x-0 md:shadow-none",
           sidebarOpen
@@ -2063,7 +2063,7 @@ export default function Chat() {
             : "fixed inset-0 z-50 -translate-x-full md:relative md:translate-x-0 scale-100 opacity-100 md:opacity-100"
         )}
       >
-        {/* Sidebar Header */}
+        {}
         <div className="flex items-center justify-between gap-2 px-6 py-5 border-b bg-background">
           <div className="flex flex-col">
             <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
@@ -2095,7 +2095,7 @@ export default function Chat() {
           </button>
         </div>
 
-        {/* Search */}
+        {}
         <div className="p-4 pb-3 bg-background">
           <div className="relative">
             <Input
@@ -2108,7 +2108,7 @@ export default function Chat() {
           </div>
         </div>
 
-        {/* Conversation List */}
+        {}
         <ScrollArea className="flex-1 bg-background overflow-auto">
           <div className="p-2 w-full">
             {isLoading ? (
@@ -2126,7 +2126,7 @@ export default function Chat() {
                   key={room.id}
                   onClick={() => handleConversationSelect(room)}
                   className={cn(
-                    // Make each item responsive (full width of sidebar)
+                    
                     "w-full flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 mb-2",
                     selectedRoom?.id === room.id
                       ? "bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800"
@@ -2172,14 +2172,14 @@ export default function Chat() {
         </ScrollArea>
       </div>
 
-      {/* Chat Area */}
+      {}
       <div className="flex-1 flex flex-col min-w-0">
         {selectedRoom ? (
           <>
-            {/* Chat Header */}
+            {}
             <div className="flex items-center justify-between p-4 border-b bg-background">
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                {/* Mobile Back Button */}
+                {}
                 <button
                   className="md:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 flex-shrink-0"
                   onClick={() => setSidebarOpen(true)}
@@ -2215,7 +2215,7 @@ export default function Chat() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {/* Mobile Hamburger Button */}
+                {}
                 <button
                   data-hamburger
                   className={cn(
@@ -2241,7 +2241,7 @@ export default function Chat() {
                   </svg>
                 </button>
 
-                {/* Timeline Button */}
+                {}
                 {activeContract && (
                   <Button
                     onClick={() => setShowTimelineSidebar(true)}
@@ -2253,7 +2253,7 @@ export default function Chat() {
                   </Button>
                 )}
 
-                {/* Review Buttons */}
+                {}
                 {(user?.role === "creator" || user?.role === "student") &&
                   contracts.some(
                     (contract) =>
@@ -2325,11 +2325,11 @@ export default function Chat() {
               </div>
             </div>
 
-            {/* Messages */}
+            {}
             <ScrollArea className="flex-1 p-4 overflow-y-auto">
               <div className="space-y-4">
                 {messages.map((message, index) => {
-                  // Debug logging for duplicate detection
+                  
                   if (messages.filter((m) => m.id === message.id).length > 1) {
                     console.warn("Rendering duplicate message ID:", message.id, "at index:", index);
                   }
@@ -2393,7 +2393,7 @@ export default function Chat() {
               </div>
             </ScrollArea>
 
-            {/* Message Input */}
+            {}
             <form
               className={`flex items-end gap-3 px-3 sm:px-4 py-3 sm:py-4 border-t bg-background transition-colors ${
                 dragActive ? 'bg-pink-50 dark:bg-pink-900/10' : ''
@@ -2407,7 +2407,7 @@ export default function Chat() {
               onDrop={handleDrop}
               style={{ paddingBottom: viewportOffset ? viewportOffset + 8 : undefined }}
             >
-              {/* File attachment button */}
+              {}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -2425,7 +2425,7 @@ export default function Chat() {
                 accept="image/*,.pdf,.doc,.docx,.txt,.zip,.rar,.mp3,.mp4,.wav,.flac,.avi,.mov,.wmv,.js,.ts,.jsx,.tsx,.html,.css,.json"
               />
 
-              {/* File preview with upload progress */}
+              {}
               {selectedFile && (
                 <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-xl border border-pink-200 dark:border-pink-800 shadow-sm max-w-full">
                   {filePreview ? (
@@ -2486,7 +2486,7 @@ export default function Chat() {
                   autoComplete="off"
                   aria-label="Digite uma mensagem"
                   onFocus={() => {
-                    // Ensure caret is visible above keyboard on mobile
+                    
                     setTimeout(() => {
                       inputRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
                     }, 50);
@@ -2501,7 +2501,7 @@ export default function Chat() {
                   onBlur={handleInputBlur}
                 />
 
-                {/* Typing Indicator */}
+                {}
                 {typingUsers.size > 0 && (
                   <div className="absolute -top-8 left-0 right-0 flex items-center gap-2 px-4 py-2">
                     <div className="flex items-center gap-2">
@@ -2557,7 +2557,7 @@ export default function Chat() {
       </div>
     </div>
 
-    {/* Mobile Overlay */}
+    {}
     {sidebarOpen && (
       <div
         className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
@@ -2565,10 +2565,10 @@ export default function Chat() {
       />
     )}
 
-    {/* Image Viewer */}
+    {}
     <ImageViewer />
 
-    {/* Review Modal */}
+    {}
     {showReviewModal && contractToReview && (
       <div className="w-full h-screen flex justify-center items-center bg-black/60 backdrop-blur-sm">
         <ReviewModal
@@ -2580,7 +2580,7 @@ export default function Chat() {
       </div>
     )}
 
-    {/* Campaign Finalization Modal */}
+    {}
     {showCampaignFinalizationModal && contractToFinalize && (
       <CampaignFinalizationModal
         isOpen={showCampaignFinalizationModal}
@@ -2593,7 +2593,7 @@ export default function Chat() {
       />
     )}
 
-    {/* Campaign Timeline Sidebar */}
+    {}
     {showTimelineSidebar && activeContract && (
       <CampaignTimelineSidebar
         contractId={activeContract.id}
@@ -2602,7 +2602,7 @@ export default function Chat() {
       />
     )}
 
-    {/* Brand Review Modal */}
+    {}
     {showBrandReviewModal && brandContractToReview && (
       <BrandReviewModal
         isOpen={showBrandReviewModal}

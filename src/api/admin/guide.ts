@@ -11,15 +11,15 @@ const BackendAPI = axios.create({
     withCredentials: false,
 });
 
-// Guide Create Function
+
 export const GuideCreate = async (formData: FormData) => {
     try {
         const token = localStorage.getItem('token');
-        // Use admin endpoint
+        
         const res = await BackendAPI.post("/api/admin/guides", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
-                "Authorization": `Bearer ${token}`, // Explicitly include token for FormData requests
+                "Authorization": `Bearer ${token}`, 
             },
         });
         
@@ -29,20 +29,20 @@ export const GuideCreate = async (formData: FormData) => {
     }
 };
 
-// Guide Update Function
+
 export const UpdateGuide = async (id: number, data: any) => {
     try {
         const formData = new FormData();
 
-        // Laravel method spoofing
+        
         formData.append("_method", "PUT");
 
-        // Main guide fields
+        
         formData.append("title", data.title);
         formData.append("audience", data.audience);
         formData.append("description", data.description);
 
-        // Steps
+        
         data.steps.forEach((step: any, i: number) => {
             formData.append(`steps[${i}][title]`, step.title);
             formData.append(`steps[${i}][description]`, step.description);
@@ -51,12 +51,12 @@ export const UpdateGuide = async (id: number, data: any) => {
             }
         });
 
-        // Send request
+        
         const token = localStorage.getItem('token');
         const res = await BackendAPI.post(`/api/admin/guides/${id}`, formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
-                "Authorization": `Bearer ${token}`, // Explicitly include token for FormData requests
+                "Authorization": `Bearer ${token}`, 
             },
         });
 
@@ -70,7 +70,7 @@ export const UpdateGuide = async (id: number, data: any) => {
     }
 };
 
-// Guide Remove Function
+
 export const RemoveGuide = async (id: number) => {
     try {
         const res = await BackendAPI.delete(`/api/admin/guides/${id}`);
@@ -83,11 +83,11 @@ export const RemoveGuide = async (id: number) => {
     }
 };
 
-// Guide Get Function (public)
+
 export const GetGuide = async () => {
     try {
         const res = await BackendAPI.get("/api/guides");
-        return res.data; // returns array of guides with their steps
+        return res.data; 
     } catch (error: any) {
         if (error.response) {
             throw new Error(error.response.data.message || "Erro ao obter guias");
@@ -96,11 +96,11 @@ export const GetGuide = async () => {
     }
 };
 
-// Guide Get Admin Function
+
 export const GetAdminGuides = async () => {
     try {
         const res = await BackendAPI.get("/api/admin/guides");
-        return res.data; // returns array of guides with their steps
+        return res.data; 
     } catch (error: any) {
         if (error.response) {
             throw new Error(error.response.data.message || "Erro ao obter guias");

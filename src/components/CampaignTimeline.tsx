@@ -66,7 +66,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Handle material approval/rejection
+  
   const handleMaterialApproval = async (materialId: number, comment?: string) => {
     try {
       await deliveryMaterialsApi.approveDeliveryMaterial(materialId, { comment });
@@ -74,7 +74,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
         title: "Sucesso",
         description: "Material aprovado com sucesso!",
       });
-      loadTimeline(); // Reload to get updated data
+      loadTimeline(); 
     } catch (error: any) {
       console.error('Error approving material:', error);
       toast({
@@ -92,7 +92,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
         title: "Sucesso",
         description: "Material rejeitado com sucesso!",
       });
-      loadTimeline(); // Reload to get updated data
+      loadTimeline(); 
     } catch (error: any) {
       console.error('Error rejecting material:', error);
       toast({
@@ -103,13 +103,13 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
     }
   };
 
-  // Helper function to get materials for a specific milestone
+  
   const getMilestoneMaterials = (milestoneId: number) => {
     const milestone = milestones.find(m => m.id === milestoneId);
     return milestone?.deliveryMaterials || [];
   };
 
-  // Handle delivery material upload
+  
   const handleDeliveryMaterialUpload = async () => {
     if (!selectedFile || !selectedMilestone) return;
 
@@ -133,7 +133,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
       setComment('');
       setMaterialDescription('');
       setSelectedMilestone(null);
-      loadTimeline(); // Reload to show new material
+      loadTimeline(); 
     } catch (error: any) {
       console.error('Error uploading delivery material:', error);
       toast({
@@ -146,7 +146,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
     }
   };
 
-  // Load timeline data
+  
   useEffect(() => {
     
     if (isOpen && contractId && user) {
@@ -162,7 +162,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
     try {
       setIsLoading(true);
       
-      // Check if user has access to this contract
+      
       if (!user) {
         throw new Error('Usuário não autenticado');
       }
@@ -178,7 +178,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
       
       setMilestones(timelineData);
       setStatistics(statsData);
-      // Materials are now loaded with the timeline, so we don't need to load them separately
+      
     } catch (error: any) {
       console.error('Error loading timeline:', error);
       console.error('Error details:', {
@@ -217,11 +217,11 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
       
       let errorMessage = "Erro ao criar milestones";
       
-      // Handle specific error cases
+      
       if (error.response?.status === 400) {
         if (error.response?.data?.error === 'Timeline already exists for this contract') {
           errorMessage = "Timeline já existe para este contrato. Recarregando...";
-          // Reload the timeline since it already exists
+          
           loadTimeline();
         } else {
           errorMessage = error.response?.data?.message || errorMessage;
@@ -249,7 +249,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
       setIsUploading(true);
       const response = await campaignTimelineApi.uploadFile(selectedMilestone.id, selectedFile);
       
-      // Update the milestone in the list
+      
       setMilestones(prev => prev.map(m => 
         m.id === selectedMilestone.id ? response.data : m
       ));
@@ -283,7 +283,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
         comment
       );
       
-      // Update the milestone in the list
+      
       setMilestones(prev => prev.map(m => 
         m.id === selectedMilestone.id ? updatedMilestone : m
       ));
@@ -315,7 +315,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
         justification
       );
       
-      // Update the milestone in the list
+      
       setMilestones(prev => prev.map(m => 
         m.id === selectedMilestone.id ? updatedMilestone : m
       ));
@@ -348,7 +348,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
         extensionReason
       );
       
-      // Update the milestone in the list
+      
       setMilestones(prev => prev.map(m => 
         m.id === selectedMilestone.id ? updatedMilestone : m
       ));
@@ -376,7 +376,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
     try {
       const response = await campaignTimelineApi.downloadFile(milestone.id);
       
-      // Create download link
+      
       const link = document.createElement('a');
       link.href = response.data.download_url;
       link.download = response.data.file_name;
@@ -443,7 +443,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
 
   return (
     <>
-      {/* Backdrop */}
+      {}
       {isOpen && (
         <div 
           className="fixed inset-0 background-color backdrop-blur-sm z-40 transition-opacity duration-300"
@@ -451,15 +451,15 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
         />
       )}
 
-      {/* Sliding Sidebar */}
+      {}
       <div className={cn(
         "fixed top-0 right-0 h-full background-color border-l border-slate-200 dark:border-slate-700 shadow-2xl z-50 transition-all duration-300 ease-in-out",
-        // Responsive width
+        
         "w-full sm:w-96 md:w-[420px] lg:w-[480px]",
-        // Animation
+        
         isOpen ? "translate-x-0" : "translate-x-full"
       )}>
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-[#171717]">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-blue-600" />
@@ -475,9 +475,9 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
           </Button>
         </div>
 
-        {/* Content */}
+        {}
         <div className="flex flex-col h-full bg-white dark:bg-[#171717]">
-          {/* Warning Banner for Overdue Milestones */}
+          {}
           {hasOverdueMilestones && (
             <Alert className="mx-4 mt-4 border-red-200 bg-red-50 dark:bg-red-900/20">
               <AlertTriangle className="h-4 w-4 text-red-600" />
@@ -489,7 +489,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
             </Alert>
           )}
 
-          {/* Statistics */}
+          {}
           {statistics && (
             <Card className="mx-4 mt-4">
               <CardContent className="p-4">
@@ -522,7 +522,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
             </Card>
           )}
 
-          {/* Delivery Materials Summary */}
+          {}
           {user?.role === 'brand' && (() => {
             const allMaterials = milestones.flatMap(m => m.deliveryMaterials || []);
             if (allMaterials.length === 0) return null;
@@ -557,7 +557,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
             );
           })()}
 
-          {/* Create Milestones Button */}
+          {}
           {milestones.length === 0 && user?.role === 'brand' && !isLoading && (
             <div className="mx-4 mt-4">
               <Button onClick={createMilestones} disabled={isLoading} className="w-full">
@@ -567,7 +567,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
             </div>
           )}
 
-          {/* Show message if timeline already exists */}
+          {}
           {milestones.length > 0 && user?.role === 'brand' && (
             <div className="mx-4 mt-4">
               <Alert>
@@ -579,7 +579,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
             </div>
           )}
 
-          {/* Timeline */}
+          {}
           <ScrollArea className="flex-1 px-4 py-4">
             <div className="space-y-4">
               {isLoading ? (
@@ -602,7 +602,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3 flex-1">
-                          {/* Timeline connector */}
+                          {}
                           <div className="flex flex-col items-center">
                             <div className="w-8 h-8 rounded-full border-2 border-muted flex items-center justify-center bg-background">
                               {getStatusIcon(milestone)}
@@ -612,7 +612,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                             )}
                           </div>
 
-                          {/* Milestone content */}
+                          {}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">
@@ -650,12 +650,12 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                               )}
                             </div>
 
-                            {/* Expanded content */}
+                            {}
                             {expandedMilestones.has(milestone.id) && (
                               <div className="mt-4 space-y-3">
                                 <Separator />
                                 
-                                {/* File section */}
+                                {}
                                 {milestone.file_path && (
                                   <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                                     <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -679,7 +679,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                                   </div>
                                 )}
 
-                                {/* Comment section */}
+                                {}
                                 {milestone.comment && (
                                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                                     <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
@@ -691,7 +691,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                                   </div>
                                 )}
 
-                                {/* Justification section */}
+                                {}
                                 {milestone.justification && (
                                   <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
                                     <p className="text-sm font-medium text-orange-900 dark:text-orange-100 mb-1">
@@ -703,13 +703,13 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                                   </div>
                                 )}
 
-                                {/* Delivery Materials Section */}
+                                {}
                                 <div className="mt-4">
                                   <h5 className="font-medium text-sm mb-2 flex items-center gap-2">
                                     📦 Materiais de Entrega
                                   </h5>
                                   
-                                  {/* Creator Submission Section */}
+                                  {}
                                   {user?.role === 'creator' && milestone.can_upload_file && (
                                     <div className="mb-4 p-3 border-2 border-dashed border-muted rounded-lg">
                                       <div className="text-center">
@@ -733,7 +733,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                                     </div>
                                   )}
                                   
-                                  {/* Display Submitted Materials */}
+                                  {}
                                   {(() => {
                                     const milestoneMaterials = getMilestoneMaterials(milestone.id);
                                     
@@ -797,7 +797,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => {
-                                                  // Download functionality
+                                                  
                                                   const link = document.createElement('a');
                                                   link.href = material.file_url || '';
                                                   link.download = material.file_name;
@@ -841,9 +841,9 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                                   })()}
                                 </div>
 
-                                {/* Action buttons */}
+                                {}
                                 <div className="flex flex-wrap gap-2">
-                                  {/* Upload File Button */}
+                                  {}
                                   {milestone.can_upload_file && user?.role === 'creator' && (
                                     <Button
                                       variant="outline"
@@ -858,7 +858,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                                     </Button>
                                   )}
 
-                                  {/* Request Approval Button */}
+                                  {}
                                   {milestone.can_request_approval && user?.role === 'creator' && (
                                     <Button
                                       variant="outline"
@@ -873,7 +873,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                                     </Button>
                                   )}
 
-                                  {/* Approve Button */}
+                                  {}
                                   {milestone.can_be_approved && user?.role === 'brand' && (
                                     <Button
                                       size="sm"
@@ -887,7 +887,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                                     </Button>
                                   )}
 
-                                  {/* Justify Delay Button */}
+                                  {}
                                   {milestone.can_justify_delay && user?.role === 'brand' && (
                                     <Button
                                       variant="outline"
@@ -902,7 +902,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                                     </Button>
                                   )}
 
-                                  {/* Extend Timeline Button */}
+                                  {}
                                   {milestone.can_be_extended && user?.role === 'brand' && (
                                     <Button
                                       variant="outline"
@@ -931,7 +931,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
         </div>
       </div>
 
-      {/* Upload File Dialog */}
+      {}
       {showUploadDialog && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
           <div className="bg-background rounded-lg p-6 max-w-md w-full">
@@ -949,7 +949,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
                 />
               </div>
               
-              {/* Additional fields for delivery materials */}
+              {}
               {selectedMilestone?.can_upload_file && (
                 <>
                   <div>
@@ -992,7 +992,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
         </div>
       )}
 
-      {/* Approval Dialog */}
+      {}
       {showApprovalDialog && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
           <div className="bg-background rounded-lg p-6 max-w-md w-full">
@@ -1025,7 +1025,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
         </div>
       )}
 
-      {/* Justification Dialog */}
+      {}
       {showJustificationDialog && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
           <div className="bg-background rounded-lg p-6 max-w-md w-full">
@@ -1059,7 +1059,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
         </div>
       )}
 
-      {/* Extension Dialog */}
+      {}
       {showExtensionDialog && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
           <div className="bg-background rounded-lg p-6 max-w-md w-full">
@@ -1104,7 +1104,7 @@ export default function CampaignTimeline({ contractId, isOpen, onClose }: Campai
         </div>
       )}
 
-      {/* Material Rejection Dialog */}
+      {}
       {showMaterialDetails !== null && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
           <div className="bg-background rounded-lg p-6 max-w-md w-full">

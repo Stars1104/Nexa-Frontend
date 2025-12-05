@@ -13,7 +13,7 @@ const setAuthToken = (token: string) => {
     UserAPI.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 };
 
-// Get creator profile for brands
+
 export const getCreatorProfile = async (creatorId: string, token: string) => {
     try {
         setAuthToken(token);

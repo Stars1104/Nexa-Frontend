@@ -36,9 +36,9 @@ export interface SubscriptionPaymentRequest {
 export interface LegacySubscriptionPaymentRequest {
   card_number: string;
   card_holder_name: string;
-  card_expiration_date: string; // MMYY format
+  card_expiration_date: string; 
   card_cvv: string;
-  cpf: string; // Brazilian CPF in format XXX.XXX.XXX-XX
+  cpf: string; 
   subscription_plan_id: number;
 }
 
@@ -90,7 +90,7 @@ export interface PaymentHistoryResponse {
   };
 }
 
-// Account payment request interface
+
 export interface AccountPaymentRequest {
   amount: number;
   description: string;
@@ -99,30 +99,30 @@ export interface AccountPaymentRequest {
 }
 
 export const paymentApi = {
-  // Get user's payment methods
+  
   getPaymentMethods: async (): Promise<PaymentMethod[]> => {
     const response = await apiClient.get('/payment/methods');
     return response.data.data || [];
   },
 
-  // Create a new payment method
+  
   createPaymentMethod: async (data: CreatePaymentMethodRequest): Promise<PaymentMethod> => {
     const response = await apiClient.post('/payment/methods', data);
     return response.data.data;
   },
 
-  // Delete a payment method
+  
   deletePaymentMethod: async (cardId: string): Promise<void> => {
     await apiClient.delete(`/payment/methods/${cardId}`);
   },
 
-  // Process a payment
+  
   processPayment: async (data: ProcessPaymentRequest): Promise<any> => {
     const response = await paymentClient.post('/payment/process', data);
     return response.data;
   },
 
-  // Get payment history
+  
   getPaymentHistory: async (page: number = 1, perPage: number = 10): Promise<PaymentHistoryResponse> => {
     const response = await apiClient.get('/payment/history', {
       params: { page, per_page: perPage }
@@ -130,33 +130,33 @@ export const paymentApi = {
     return response.data;
   },
 
-  // Process subscription payment for creators
+  
   processSubscription: async (data: SubscriptionPaymentRequest): Promise<any> => {
     const response = await paymentClient.post('/payment/subscription', data);
     return response.data;
   },
 
-  // Get available subscription plans
+  
   getSubscriptionPlans: async (): Promise<SubscriptionPlan[]> => {
     const response = await apiClient.get('/subscription/plans');
     return response.data.data || [];
   },
 
-  // Get subscription history
+  
   getSubscriptionHistory: async (): Promise<any> => {
     const response = await apiClient.get('/subscription/history');
     return response.data.data || [];
   },
 
-  // Cancel subscription
+  
   cancelSubscription: async (): Promise<any> => {
     const response = await apiClient.post('/subscription/cancel');
     return response.data;
   },
 
-  // Process payment using Pagar.me account_id
+  
   processAccountPayment: async (data: AccountPaymentRequest): Promise<any> => {
-    // Create a special axios instance for account_id authentication
+    
     const accountPaymentClient = axios.create({
       baseURL: import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br",
       headers: {
@@ -176,7 +176,7 @@ export const paymentApi = {
     return response.data;
   },
 
-  // Get transaction history
+  
   getTransactionHistory: async (page: number = 1, perPage: number = 10): Promise<PaymentHistoryResponse> => {
     const response = await apiClient.get('/payment/transactions', {
       params: { page, per_page: perPage }
@@ -184,13 +184,13 @@ export const paymentApi = {
     return response.data;
   },
 
-  // Get subscription status
+  
   getSubscriptionStatus: async (): Promise<SubscriptionStatus> => {
     const response = await apiClient.get('/payment/subscription-status');
     return response.data;
   },
 
-  // Get Stripe checkout URL
+  
   getCheckoutUrl: async (planId: number): Promise<string> => {
     const response = await apiClient.get('/payment/checkout-url', {
       params: { plan_id: planId }
@@ -198,7 +198,7 @@ export const paymentApi = {
     return response.data.url;
   },
 
-  // Create subscription from checkout session (without webhook)
+  
   createSubscriptionFromCheckout: async (sessionId: string): Promise<any> => {
     const response = await apiClient.post('/payment/create-subscription-from-checkout', {
       session_id: sessionId
@@ -207,8 +207,8 @@ export const paymentApi = {
     return response.data;
   },
 
-  // Create subscription from checkout session (PUBLIC - no auth required)
-  // Used as fallback when user is logged out after Stripe redirect
+  
+  
   createSubscriptionFromCheckoutPublic: async (sessionId: string): Promise<any> => {
     const BackendURL = import.meta.env.VITE_BACKEND_URL || "https://nexacreators.com.br";
     const response = await axios.post(`${BackendURL}/api/payment/create-subscription-from-checkout-public`, {
@@ -218,5 +218,5 @@ export const paymentApi = {
   },
 };
 
-// Export creator payment API
+
 export { creatorPaymentApi } from './creatorPayment';

@@ -57,7 +57,7 @@ export default function CampaignFinalizationModal({
     } catch (error: any) {
       console.error("Error finalizing campaign:", error);
       
-      // Handle different types of errors
+      
       let errorMessage = "Erro ao finalizar campanha";
       let isNetworkError = false;
       
@@ -80,7 +80,7 @@ export default function CampaignFinalizationModal({
       
       setError(errorMessage);
       
-      // Show toast with appropriate styling
+      
       toast({
         title: isNetworkError ? "Erro de Conexão" : "Erro",
         description: errorMessage,
@@ -113,7 +113,7 @@ export default function CampaignFinalizationModal({
           </DialogTitle>
           
           <div className="space-y-4 mt-4">
-            {/* Error Display */}
+            {}
             {error && (
               <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-700 rounded-lg p-4">
                 <div className="flex items-start gap-3">

@@ -22,7 +22,7 @@ const GoogleOAuthCallback: React.FC = () => {
 
   useEffect(() => {
     const handleCallback = async () => {
-      // Prevent multiple executions
+      
       if (isProcessing) {
         return;
       }
@@ -31,7 +31,7 @@ const GoogleOAuthCallback: React.FC = () => {
         setIsProcessing(true);
         setStatus('loading');
         
-        // Check if we have OAuth parameters
+        
         const urlParams = new URLSearchParams(location.search);
         const code = urlParams.get('code');
         const oauthError = urlParams.get('error');
@@ -41,19 +41,19 @@ const GoogleOAuthCallback: React.FC = () => {
         }
         
         if (!code) {
-          // No OAuth parameters, redirect to auth page
+          
           navigate('/auth');
           return;
         }
         
-        // Handle the OAuth callback
+        
         const result = await dispatch(handleGoogleOAuthCallback()).unwrap();
         
         if (result && result.user) {
           setStatus('success');
           
-          // Check if this is a new registration by checking if the user has premium access
-          // New users typically don't have premium access
+          
+          
           const isNewUser = !result.user.has_premium && result.user.role === 'creator';
           setIsNewRegistration(isNewUser);
           
@@ -63,19 +63,19 @@ const GoogleOAuthCallback: React.FC = () => {
             toast.success(isNewUser ? 'Conta criada com sucesso!' : 'Login realizado com sucesso com Google!');
           }
           
-          // Clean up URL parameters
+          
           window.history.replaceState({}, document.title, window.location.pathname);
           
-          // Navigate to appropriate page
+          
           setTimeout(() => {
             if (result.user.role === 'student') {
-              // Redirect students to student verification page
+              
               navigateToStudentVerification();
             } else if (isNewUser) {
-              // Redirect new Creator registrations to subscription page
+              
               navigateToSubscription();
             } else {
-              // Navigate to appropriate dashboard for existing users or non-creators
+              
               navigateToRoleDashboard(result.user.role);
             }
           }, 1000);
@@ -85,16 +85,16 @@ const GoogleOAuthCallback: React.FC = () => {
       } catch (error: any) {
         setStatus('error');
         
-        // Extract error message (could be from thunk as string or from axios response)
+        
         let errorMessage = error.message;
         
-        // Check if error is a string (from thunk rejectWithValue)
+        
         if (typeof error === 'string') {
           errorMessage = error;
         } else if (error.response?.data?.message) {
           errorMessage = error.response.data.message;
         } else if (error.response?.data?.errors) {
-          // Handle validation errors
+          
           const errors = error.response.data.errors;
           if (errors.email && Array.isArray(errors.email)) {
             errorMessage = errors.email[0];
@@ -105,10 +105,10 @@ const GoogleOAuthCallback: React.FC = () => {
         
         setError(errorMessage || 'Falha na autenticação');
         
-        // Show toast with error message (will show blocked account message if applicable)
+        
         toast.error(errorMessage || 'Falha ao fazer login com Google');
         
-        // Redirect to auth page after error
+        
         setTimeout(() => {
           navigate('/auth');
         }, 3000);
@@ -118,7 +118,7 @@ const GoogleOAuthCallback: React.FC = () => {
     };
 
     handleCallback();
-  }, []); // Remove dependencies to prevent multiple executions
+  }, []); 
 
   const handleRetry = () => {
     navigate('/auth');

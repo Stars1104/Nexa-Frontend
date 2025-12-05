@@ -9,7 +9,7 @@ const CampaignAPI = axios.create({
     },
 });
 
-// Response interceptor to handle common HTTP errors
+
 CampaignAPI.interceptors.response.use(
     (response) => response,
     (error) => {
@@ -26,7 +26,7 @@ CampaignAPI.interceptors.response.use(
     }
 );
 
-// Add token to requests
+
 const setAuthToken = (token: string) => {
     if (token) {
         CampaignAPI.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -35,15 +35,15 @@ const setAuthToken = (token: string) => {
     }
 };
 
-// Create new campaign
+
 export const CreateNewCampaign = async (data: FormData, token: string) => {
     setAuthToken(token);
 
-    // Create a new axios instance for form data
+    
     const FormDataAPI = axios.create({
         baseURL: `${BackendURL}`,
         headers: {
-            // Don't set Content-Type for FormData - let browser set it with boundary
+            
             "Authorization": `Bearer ${token}`
         },
     });
@@ -56,18 +56,18 @@ export const CreateNewCampaign = async (data: FormData, token: string) => {
     }
 };
 
-// Get all campaigns
+
 export const GetAllCampaigns = async (token: string) => {
     setAuthToken(token);
     const response = await CampaignAPI.get("/api/campaigns/get-all-campaigns", {
         params: {
-            _t: Date.now() // Cache busting
+            _t: Date.now() 
         }
     });
     return response.data;
 };
 
-// Get pending campaigns (for admin)
+
 export const GetPendingCampaigns = async (token: string) => {
     setAuthToken(token);
     try {
@@ -78,27 +78,27 @@ export const GetPendingCampaigns = async (token: string) => {
     }
 };
 
-// Get user campaigns (for brands)
+
 export const GetUserCampaigns = async (userId: string, token: string) => {
     setAuthToken(token);
-    // Convert string userId to number for backend compatibility
+    
     const numericUserId = parseInt(userId, 10);
     const response = await CampaignAPI.get(`/api/campaigns/user/${numericUserId}`);
     return response.data;
 };
 
-// Get campaigns by status
+
 export const GetCampaignsByStatus = async (status: string, token: string) => {
     setAuthToken(token);
     const response = await CampaignAPI.get(`/api/campaigns/status/${status}`, {
         params: {
-            _t: Date.now() // Cache busting
+            _t: Date.now() 
         }
     });
     return response.data;
 };
 
-// Get available campaigns for creators
+
 export const GetAvailableCampaigns = async (token: string, filters?: {
     category?: string;
     minBudget?: number;
@@ -119,18 +119,18 @@ export const GetAvailableCampaigns = async (token: string, filters?: {
     return response.data;
 };
 
-// Get campaign statistics
+
 export const GetCampaignStats = async (token: string) => {
     setAuthToken(token);
     const response = await CampaignAPI.get("/api/campaigns/stats");
     return response.data;
 };
 
-// Approve campaign (admin only)
+
 export const ApproveCampaign = async (campaignId: number, token: string) => {
     setAuthToken(token);
     try {
-        // Send an empty object as request body to satisfy backend validation
+        
         const response = await CampaignAPI.patch(`/api/campaigns/${campaignId}/approve`, {});
         return response.data;
     } catch (error: any) {
@@ -138,7 +138,7 @@ export const ApproveCampaign = async (campaignId: number, token: string) => {
     }
 };
 
-// Reject campaign (admin only)
+
 export const RejectCampaign = async (campaignId: number, token: string, reason?: string) => {
     setAuthToken(token);
     try {
@@ -150,14 +150,14 @@ export const RejectCampaign = async (campaignId: number, token: string, reason?:
     }
 };
 
-// Archive campaign (admin only)
+
 export const ArchiveCampaign = async (campaignId: number, token: string) => {
     setAuthToken(token);
     const response = await CampaignAPI.patch(`/api/campaigns/${campaignId}/archive`);
     return response.data;
 };
 
-// Toggle featured status (admin only)
+
 export const ToggleFeaturedCampaign = async (campaignId: number, token: string) => {
     setAuthToken(token);
     try {
@@ -168,7 +168,7 @@ export const ToggleFeaturedCampaign = async (campaignId: number, token: string) 
     }
 };
 
-// Toggle favorite status (creator only)
+
 export const ToggleFavoriteCampaign = async (campaignId: number, token: string) => {
     setAuthToken(token);
     try {
@@ -179,7 +179,7 @@ export const ToggleFavoriteCampaign = async (campaignId: number, token: string) 
     }
 };
 
-// Get favorite campaigns (creator only)
+
 export const GetFavoriteCampaigns = async (token: string) => {
     setAuthToken(token);
     try {
@@ -190,33 +190,33 @@ export const GetFavoriteCampaigns = async (token: string) => {
     }
 };
 
-// Get campaign by ID
+
 export const GetCampaignById = async (campaignId: number, token: string) => {
     setAuthToken(token);
     const response = await CampaignAPI.get(`/api/campaigns/${campaignId}`);
     return response.data;
 };
 
-// Update campaign
+
 export const UpdateCampaign = async (campaignId: number, data: FormData, token: string, isAdmin: boolean = false) => {
     setAuthToken(token);
 
-    // Create a new axios instance for form data
+    
     const FormDataAPI = axios.create({
         baseURL: `${BackendURL}`,
         headers: {
-            // Don't set Content-Type for FormData - let browser set it with boundary
+            
             "Authorization": `Bearer ${token}`
         },
     });
 
-    // Use PATCH method for update
+    
     const endpoint = isAdmin 
         ? `/api/admin/campaigns/${campaignId}` 
         : `/api/campaigns/${campaignId}`;
     
     try {
-        // Log FormData in development
+        
         if (import.meta.env.DEV) {
             console.log('Sending FormData to:', endpoint);
             console.log('FormData size:', data.toString().length, 'bytes');
@@ -225,7 +225,7 @@ export const UpdateCampaign = async (campaignId: number, data: FormData, token: 
         const response = await FormDataAPI.patch(endpoint, data, {
             headers: {
                 'Authorization': `Bearer ${token}`,
-                // Explicitly don't set Content-Type - browser will set it with boundary
+                
             },
         });
 
@@ -246,11 +246,11 @@ export const UpdateCampaign = async (campaignId: number, data: FormData, token: 
     }
 };
 
-// Delete campaign
+
 export const DeleteCampaign = async (campaignId: number, token: string, isAdmin: boolean = false) => {
     setAuthToken(token);
     
-    // Use admin route if admin, otherwise use brand route
+    
     const endpoint = isAdmin 
         ? `/api/admin/campaigns/${campaignId}` 
         : `/api/campaigns/${campaignId}`;
@@ -259,7 +259,7 @@ export const DeleteCampaign = async (campaignId: number, token: string, isAdmin:
     return response.data;
 };
 
-// Apply to campaign (for creators) - Updated to match backend API
+
 export const ApplyToCampaign = async (campaignId: number, applicationData: {
     proposal: string;
     portfolio_links?: string[];
@@ -272,7 +272,7 @@ export const ApplyToCampaign = async (campaignId: number, applicationData: {
     return response.data;
 };
 
-// Get all applications (role-based)
+
 export const GetAllApplications = async (token: string, filters?: {
     status?: string;
     campaign_id?: number;
@@ -287,34 +287,34 @@ export const GetAllApplications = async (token: string, filters?: {
     return response.data;
 };
 
-// Get specific application
+
 export const GetApplication = async (applicationId: number, token: string) => {
     setAuthToken(token);
     const response = await CampaignAPI.get(`/api/applications/${applicationId}`);
     return response.data;
 };
 
-// Get campaign applications (for brands)
+
 export const GetCampaignApplications = async (campaignId: number, token: string) => {
     setAuthToken(token);
     const response = await CampaignAPI.get(`/api/campaigns/${campaignId}/applications`);
     return response.data;
 };
 
-// Approve application (for brands)
+
 export const ApproveApplication = async (applicationId: number, token: string) => {
     setAuthToken(token);
     try {
         const response = await CampaignAPI.post(`/api/applications/${applicationId}/approve`);
         return response.data;
     } catch (error: any) {
-        // Handle 402 Payment Required - requires funding or Stripe account
+        
         if (error.response?.status === 402) {
             const errorData = error.response?.data || {};
             
-            // Check for funding requirement (payment method or contract funding)
+            
             if (errorData.requires_funding || errorData.requires_stripe_account) {
-            // Return the error data so it can be handled by the caller
+            
             throw {
                 ...error,
                 requiresFunding: true,
@@ -330,7 +330,7 @@ export const ApproveApplication = async (applicationId: number, token: string) =
     }
 };
 
-// Reject application (for brands)
+
 export const RejectApplication = async (applicationId: number, token: string, rejectionReason?: string) => {
     setAuthToken(token);
     const data = rejectionReason ? { rejection_reason: rejectionReason } : {};
@@ -338,28 +338,28 @@ export const RejectApplication = async (applicationId: number, token: string, re
     return response.data;
 };
 
-// Withdraw application (for creators)
+
 export const WithdrawApplication = async (applicationId: number, token: string) => {
     setAuthToken(token);
     const response = await CampaignAPI.delete(`/api/applications/${applicationId}/withdraw`);
     return response.data;
 };
 
-// Get application statistics
+
 export const GetApplicationStatistics = async (token: string) => {
     setAuthToken(token);
     const response = await CampaignAPI.get(`/api/applications/statistics`);
     return response.data;
 };
 
-// Get creator applications (for creators) - Updated to use new endpoint
+
 export const GetCreatorApplications = async (token: string) => {
     setAuthToken(token);
     const response = await CampaignAPI.get(`/api/applications`);
     return response.data;
 };
 
-// Search campaigns
+
 export const SearchCampaigns = async (query: string, token: string, filters?: {
     category?: string;
     minBudget?: number;
@@ -383,28 +383,28 @@ export const SearchCampaigns = async (query: string, token: string, filters?: {
     return response.data;
 };
 
-// Get campaign categories
+
 export const GetCampaignCategories = async (token: string) => {
     setAuthToken(token);
     const response = await CampaignAPI.get("/api/campaigns/categories");
     return response.data;
 };
 
-// Get campaign types
+
 export const GetCampaignTypes = async (token: string) => {
     setAuthToken(token);
     const response = await CampaignAPI.get("/api/campaigns/types");
     return response.data;
 };
 
-// Duplicate campaign
+
 export const DuplicateCampaign = async (campaignId: number, token: string) => {
     setAuthToken(token);
     const response = await CampaignAPI.post(`/api/campaigns/${campaignId}/duplicate`);
     return response.data;
 };
 
-// Extend campaign deadline
+
 export const ExtendCampaignDeadline = async (campaignId: number, newDeadline: string, token: string) => {
     setAuthToken(token);
     const response = await CampaignAPI.patch(`/api/campaigns/${campaignId}/extend-deadline`, {
@@ -413,7 +413,7 @@ export const ExtendCampaignDeadline = async (campaignId: number, newDeadline: st
     return response.data;
 };
 
-// Update campaign budget
+
 export const UpdateCampaignBudget = async (campaignId: number, newBudget: number, token: string) => {
     setAuthToken(token);
     const response = await CampaignAPI.patch(`/api/campaigns/${campaignId}/update-budget`, {
@@ -422,14 +422,14 @@ export const UpdateCampaignBudget = async (campaignId: number, newBudget: number
     return response.data;
 };
 
-// Get campaign analytics
+
 export const GetCampaignAnalytics = async (campaignId: number, token: string) => {
     setAuthToken(token);
     const response = await CampaignAPI.get(`/api/campaigns/${campaignId}/analytics`);
     return response.data;
 };
 
-// Export campaigns data
+
 export const ExportCampaigns = async (token: string, format: 'csv' | 'excel' | 'pdf', filters?: {
     status?: string;
     dateFrom?: string;

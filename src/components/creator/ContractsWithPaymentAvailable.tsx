@@ -51,7 +51,7 @@ export const ContractsWithPaymentAvailable: React.FC<
   };
 
   const handleWithdrawClick = (contract: Contract) => {
-    // Navigate to withdrawal form or open withdrawal modal
+    
     if (onWithdrawalRequested) {
       onWithdrawalRequested();
     }

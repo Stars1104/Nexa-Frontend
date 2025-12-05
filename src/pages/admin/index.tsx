@@ -33,13 +33,13 @@ const AdminIndex = () => {
         defaultComponent: "Painel"
     });
 
-    // Handle post-login navigation to ensure proper browser history
+    
     usePostLoginNavigation({
         dashboardPath: "/admin",
         defaultComponent: "Painel"
     });
 
-    // Check if user has admin role
+    
     useEffect(() => {
         if (user && user.role !== 'admin') {
             setAccessDenied(true);
@@ -80,7 +80,7 @@ const AdminIndex = () => {
         }
     }, [component]);
 
-    // Show access denied message if user doesn't have admin role
+    
     if (accessDenied || (user && user.role !== 'admin')) {
         return (
             <ThemeProvider>

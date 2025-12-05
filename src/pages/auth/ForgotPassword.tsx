@@ -104,7 +104,7 @@ const ForgotPassword: React.FC = () => {
           </>
         )}
 
-        {/* Login link */}
+        {}
         <div className="text-center mt-2 text-sm flex flex-col gap-2">
           <div className="flex justify-center gap-2">
             <span className="text-gray-700 dark:text-gray-200">

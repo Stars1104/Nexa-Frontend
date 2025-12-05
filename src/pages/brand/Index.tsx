@@ -33,7 +33,7 @@ function Index() {
         defaultComponent: "Minhas campanhas"
     });
 
-    // Handle post-login navigation to ensure proper browser history
+    
     usePostLoginNavigation({
         dashboardPath: "/brand",
         defaultComponent: "Minhas campanhas"

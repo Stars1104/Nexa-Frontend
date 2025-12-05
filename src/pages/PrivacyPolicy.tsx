@@ -12,7 +12,7 @@ function usePageSEO() {
     
     document.title = title;
     
-    // Update meta description
+    
     let metaDescription = document.querySelector('meta[name="description"]');
     if (!metaDescription) {
       metaDescription = document.createElement('meta');
@@ -21,7 +21,7 @@ function usePageSEO() {
     }
     metaDescription.setAttribute('content', description);
     
-    // Add structured data for SEO
+    
     const structuredData = {
       "@context": "https://schema.org",
       "@type": "WebPage",
@@ -35,13 +35,13 @@ function usePageSEO() {
       }
     };
     
-    // Remove existing structured data
+    
     const existingScript = document.querySelector('script[type="application/ld+json"]');
     if (existingScript) {
       existingScript.remove();
     }
     
-    // Add new structured data
+    
     const script = document.createElement('script');
     script.type = 'application/ld+json';
     script.textContent = JSON.stringify(structuredData);
@@ -80,7 +80,7 @@ export default function PrivacyPolicy() {
       
       <main className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto px-4 py-8 pb-16">
-          {/* Header */}
+          {}
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-3 mb-4">
               <Shield className="h-8 w-8 text-primary" />
@@ -97,7 +97,7 @@ export default function PrivacyPolicy() {
 
           <Separator className="mb-8" />
 
-          {/* Introduction */}
+          {}
           <PrivacySection icon={FileText} title="1. Introdução">
             <p className="text-muted-foreground leading-relaxed">
               A presente Política de Privacidade tem por finalidade informar como a NEXA coleta, 
@@ -110,7 +110,7 @@ export default function PrivacyPolicy() {
             </p>
           </PrivacySection>
 
-          {/* Information We Collect */}
+          {}
           <PrivacySection icon={Database} title="2. Informações que Coletamos">
             <div className="space-y-4">
               <p className="text-muted-foreground leading-relaxed">
@@ -150,7 +150,7 @@ export default function PrivacyPolicy() {
             </div>
           </PrivacySection>
 
-          {/* How We Use Information */}
+          {}
           <PrivacySection icon={Users} title="3. Como Utilizamos suas Informações">
             <div className="space-y-4">
               <p className="text-muted-foreground leading-relaxed">
@@ -181,7 +181,7 @@ export default function PrivacyPolicy() {
             </div>
           </PrivacySection>
 
-          {/* Data Security */}
+          {}
           <PrivacySection icon={Lock} title="4. Segurança das Informações">
             <div className="space-y-4">
               <p className="text-muted-foreground leading-relaxed">
@@ -211,7 +211,7 @@ export default function PrivacyPolicy() {
             </div>
           </PrivacySection>
 
-          {/* Cookies */}
+          {}
           <PrivacySection icon={Eye} title="5. Cookies e Tecnologias Similares">
             <div className="space-y-4">
               <p className="text-muted-foreground leading-relaxed">
@@ -247,7 +247,7 @@ export default function PrivacyPolicy() {
             </div>
           </PrivacySection>
 
-          {/* Third-Party Services */}
+          {}
           <PrivacySection icon={Globe} title="6. Serviços de Terceiros">
             <div className="space-y-4">
               <p className="text-muted-foreground leading-relaxed">
@@ -295,7 +295,7 @@ export default function PrivacyPolicy() {
             </div>
           </PrivacySection>
 
-          {/* User Rights */}
+          {}
           <PrivacySection icon={Shield} title="7. Seus Direitos">
             <div className="space-y-4">
               <p className="text-muted-foreground leading-relaxed">
@@ -333,7 +333,7 @@ export default function PrivacyPolicy() {
             </div>
           </PrivacySection>
 
-          {/* Data Retention */}
+          {}
           <PrivacySection icon={Database} title="8. Retenção dos Dados">
             <div className="space-y-4">
               <p className="text-muted-foreground leading-relaxed">
@@ -354,7 +354,7 @@ export default function PrivacyPolicy() {
             </div>
           </PrivacySection>
 
-          {/* Policy Changes */}
+          {}
           <PrivacySection icon={FileText} title="9. Alterações na Política">
             <div className="space-y-4">
               <p className="text-muted-foreground leading-relaxed">
@@ -377,7 +377,7 @@ export default function PrivacyPolicy() {
             </div>
           </PrivacySection>
 
-          {/* Contact */}
+          {}
           <PrivacySection icon={Mail} title="10. Dúvidas e Contato">
             <div className="space-y-4">
               <p className="text-muted-foreground leading-relaxed">
@@ -416,7 +416,7 @@ export default function PrivacyPolicy() {
             </div>
           </PrivacySection>
 
-          {/* Footer Note */}
+          {}
           <div className="mt-12 p-6 bg-muted/30 rounded-lg text-center">
             <p className="text-sm text-muted-foreground">
               Esta Política de Privacidade está em conformidade com a Lei Geral de Proteção de Dados (LGPD) 

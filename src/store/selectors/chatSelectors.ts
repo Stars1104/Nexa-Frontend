@@ -1,7 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../index';
 
-// Base selectors
+
 export const selectChatState = (state: RootState) => state.chat;
 
 export const selectChatRooms = (state: RootState) => state.chat.rooms;
@@ -13,7 +13,7 @@ export const selectTypingUsers = (state: RootState) => state.chat.typingUsers;
 export const selectUnreadCounts = (state: RootState) => state.chat.unreadCounts;
 export const selectLastMessageTimestamps = (state: RootState) => state.chat.lastMessageTimestamps;
 
-// Computed selectors
+
 export const selectSelectedRoom = createSelector(
   [selectChatRooms, selectSelectedRoomId],
   (rooms, selectedRoomId) => {
@@ -73,7 +73,7 @@ export const selectUnreadCountByRoomId = (roomId: string) => createSelector(
   (unreadCounts) => unreadCounts[roomId] || 0
 );
 
-// Room sorting and filtering
+
 export const selectSortedChatRooms = createSelector(
   [selectChatRooms, selectLastMessageTimestamps],
   (rooms, timestamps) => {
@@ -92,7 +92,7 @@ export const selectRoomsWithUnreadMessages = createSelector(
   }
 );
 
-// Message utilities
+
 export const selectMessageById = (roomId: string, messageId: number) => createSelector(
   [selectMessagesByRoomId(roomId)],
   (messages) => messages.find(msg => msg.id === messageId) || null

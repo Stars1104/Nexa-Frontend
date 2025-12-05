@@ -16,9 +16,9 @@ interface UseAdvancedComponentNavigationOptions {
   additionalParams?: Record<string, string>;
 }
 
-// Component mapping: English URL names -> Portuguese display names
+
 const COMPONENT_MAPPING: Record<string, string> = {
-  // Creator components
+  
   'dashboard': 'Painel',
   'profile': 'Minha Conta',
   'project-detail': 'Detalhes do Projeto',
@@ -32,7 +32,7 @@ const COMPONENT_MAPPING: Record<string, string> = {
   'bank-registration': 'Cadastro Bancário',
   'guide': 'Guia da Plataforma',
   
-  // Brand components - Fix the mapping to use the correct URL format
+  
   'Minhas+campanhas': 'Minhas campanhas',
   'brand-profile': 'Meu perfil',
   'Nova+campanha': 'Nova campanha',
@@ -43,7 +43,7 @@ const COMPONENT_MAPPING: Record<string, string> = {
   'brand-guide': 'Guia da Plataforma',
   'Gerenciar+Campanhas': 'Gerenciar Campanhas',
   
-  // Admin components
+  
   'admin-dashboard': 'Painel',
   'pending-campaigns': 'Campanhas Pendentes',
   'all-campaigns': 'Todas as Campanhas',
@@ -53,7 +53,7 @@ const COMPONENT_MAPPING: Record<string, string> = {
   'admin-guide': 'Guia para'
 };
 
-// Reverse mapping: Portuguese display names -> English URL names
+
 const REVERSE_COMPONENT_MAPPING: Record<string, string> = Object.fromEntries(
   Object.entries(COMPONENT_MAPPING).map(([key, value]) => [value, key])
 );
@@ -67,23 +67,23 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
   const isInitializedRef = useRef(false);
   const isNavigatingRef = useRef(false);
 
-  // Convert Portuguese display name to English URL name
+  
   const toUrlName = (displayName: string): string => {
     return REVERSE_COMPONENT_MAPPING[displayName] || displayName;
   };
 
-  // Convert English URL name to Portuguese display name
+  
   const toDisplayName = (urlName: string): string => {
     return COMPONENT_MAPPING[urlName] || urlName;
   };
 
-  // Helper function to parse component from URL
+  
   const parseComponentFromURL = (searchParams: URLSearchParams): ComponentType => {
     const componentParam = searchParams.get(urlParamName);
     
     if (!componentParam) return defaultComponent;
     
-    // Check if this is a complex component that needs additional params
+    
     const campaignId = searchParams.get('campaignId');
     const creatorId = searchParams.get('creatorId');
     
@@ -110,7 +110,7 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
           creatorId: creatorId
         };
       } else {
-        // Convert URL name to display name for string components
+        
         return toDisplayName(componentParam);
       }
     } catch (error) {
@@ -119,9 +119,9 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
     }
   };
 
-  // Sync component state with URL changes
+  
   useEffect(() => {
-    // Skip if we're currently navigating to avoid loops
+    
     if (isNavigatingRef.current) {
       isNavigatingRef.current = false;
       return;
@@ -130,7 +130,7 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
     const searchParams = new URLSearchParams(location.search);
     const parsedComponent = parseComponentFromURL(searchParams);
     
-    // Only update if different to prevent loops
+    
     setComponent((prev) => {
       const prevStr = typeof prev === 'string' ? prev : prev.name;
       const newStr = typeof parsedComponent === 'string' ? parsedComponent : parsedComponent.name;
@@ -140,22 +140,22 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
       return prev;
     });
     
-    // Mark as initialized after first URL sync
+    
     if (!isInitializedRef.current) {
       isInitializedRef.current = true;
     }
   }, [location.search, urlParamName, defaultComponent]);
 
-  // Enhanced setComponent that updates URL
+  
   const handleComponentChange = (newComponent: ComponentType) => {
-    // Update component state
+    
     setComponent(newComponent);
     
-    // Build new URL
+    
     const searchParams = new URLSearchParams();
     
     if (typeof newComponent === "string") {
-      // Convert display name to URL name
+      
       const urlName = toUrlName(newComponent);
       searchParams.set(urlParamName, urlName);
     } else {
@@ -167,7 +167,7 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
         searchParams.set('creatorId', newComponent.creatorId);
       }
       
-      // Add any other custom properties
+      
       Object.entries(newComponent).forEach(([key, value]) => {
         if (key !== 'name' && key !== 'campaign' && key !== 'creatorId' && value !== null && value !== undefined) {
           searchParams.set(key, value.toString());
@@ -175,7 +175,7 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
       });
     }
     
-    // Add any additional parameters
+    
     Object.entries(additionalParams).forEach(([key, value]) => {
       if (value) {
         searchParams.set(key, value);
@@ -184,23 +184,23 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
     
     const newUrl = `?${searchParams.toString()}`;
     
-    // Check if URL is already correct to prevent unnecessary navigation
+    
     const currentUrl = location.search || '';
     if (currentUrl === newUrl || currentUrl === `?${newUrl.substring(1)}`) {
-      return; // Already at this URL, skip navigation
+      return; 
     }
     
-    // Mark that we're navigating to prevent loop
+    
     isNavigatingRef.current = true;
     
-    // Navigate only if URL is different
+    
     navigate(newUrl, { replace: false });
   };
 
-  // Handle browser back/forward navigation
+  
   useEffect(() => {
     const handlePopState = () => {
-      // Don't process if we're navigating programmatically
+      
       if (isNavigatingRef.current) {
         return;
       }
@@ -208,7 +208,7 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
       const searchParams = new URLSearchParams(location.search);
       const parsedComponent = parseComponentFromURL(searchParams);
       
-      // Only update if different to prevent loops
+      
       setComponent((prev) => {
         const prevStr = typeof prev === 'string' ? prev : prev.name;
         const newStr = typeof parsedComponent === 'string' ? parsedComponent : parsedComponent.name;
@@ -219,7 +219,7 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
       });
     };
 
-    // Listen for popstate events (browser back/forward)
+    
     window.addEventListener('popstate', handlePopState);
     
     return () => {
@@ -230,7 +230,7 @@ export const useAdvancedComponentNavigation = (options: UseAdvancedComponentNavi
   return {
     component,
     setComponent: handleComponentChange,
-    // Also provide the original setComponent for cases where you don't want URL updates
+    
     setComponentSilent: setComponent
   };
 };

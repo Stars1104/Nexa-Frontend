@@ -29,12 +29,12 @@ const MyApplication: React.FC<MyApplicationProps> = ({ setComponent }) => {
     (state) => state.campaign
   );
 
-  // Ensure creatorApplications is always an array
+  
   const safeCreatorApplications = Array.isArray(creatorApplications)
     ? creatorApplications
     : [];
 
-  // Fetch creator applications on component mount
+  
   useEffect(() => {
     const fetchApplications = async () => {
       try {
@@ -48,7 +48,7 @@ const MyApplication: React.FC<MyApplicationProps> = ({ setComponent }) => {
     fetchApplications();
   }, [dispatch]);
 
-  // Clear error on component unmount
+  
   useEffect(() => {
     return () => {
       if (error) {
@@ -61,7 +61,7 @@ const MyApplication: React.FC<MyApplicationProps> = ({ setComponent }) => {
     setComponent(component);
   };
 
-  // Format date for display
+  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("pt-BR");
@@ -122,7 +122,7 @@ const MyApplication: React.FC<MyApplicationProps> = ({ setComponent }) => {
         </div>
       ) : (
         <>
-          {/* Desktop Table */}
+          {}
           <div className="hidden md:block">
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800">
               <table className="min-w-full text-sm bg-background">
@@ -193,7 +193,7 @@ const MyApplication: React.FC<MyApplicationProps> = ({ setComponent }) => {
             </div>
           </div>
 
-          {/* Mobile Cards */}
+          {}
           <div className="md:hidden space-y-4">
             {safeCreatorApplications.map((app) => (
               <div
@@ -247,7 +247,7 @@ const MyApplication: React.FC<MyApplicationProps> = ({ setComponent }) => {
                       {statusLabels[app.status]}
                     </span>
                     
-                    {/* Workflow Status - Only show for approved applications */}
+                    {}
                     {app.status === 'approved' && app.workflow_status && (
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${

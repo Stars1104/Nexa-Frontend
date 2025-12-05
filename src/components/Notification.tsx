@@ -45,7 +45,7 @@ interface NotificationItem {
     category: 'campaign' | 'payment' | 'application' | 'system';
 }
 
-// Map notification types to display types
+
 const getNotificationType = (type: string): 'success' | 'warning' | 'info' | 'error' => {
     switch (type) {
         case 'login_detected':
@@ -63,7 +63,7 @@ const getNotificationType = (type: string): 'success' | 'warning' | 'info' | 'er
     }
 };
 
-// Map notification types to categories
+
 const getNotificationCategory = (type: string): 'campaign' | 'payment' | 'application' | 'system' => {
     switch (type) {
         case 'new_project':
@@ -92,14 +92,14 @@ const Notification = () => {
     const [filter, setFilter] = useState<string>('all');
     const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
-    // Fetch notifications on component mount
+    
     useEffect(() => {
         if (token) {
             dispatch(fetchNotifications({ token }));
         }
     }, [dispatch, token]);
 
-    // Handle errors
+    
     useEffect(() => {
         if (error) {
             toast.error(error);
@@ -137,7 +137,7 @@ const Notification = () => {
         );
     };
 
-    // Convert API notifications to display format
+    
     const displayNotifications: NotificationItem[] = notifications.map(notification => ({
         id: notification.id,
         title: notification.title,
@@ -197,7 +197,7 @@ const Notification = () => {
     };
 
     const clearAllRead = () => {
-        // This would need a new API endpoint to clear all read notifications
+        
         toast.info('Funcionalidade em desenvolvimento');
     };
 
@@ -217,7 +217,7 @@ const Notification = () => {
             </Helmet>
             <div className="min-h-[92vh] dark:bg-[#171717] flex flex-col py-4 px-2 sm:px-10">
                 <div className="w-full mx-auto">
-                    {/* Header */}
+                    {}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                         <div>
                             <h1 className="text-2xl font-bold">Notificações</h1>
@@ -249,7 +249,7 @@ const Notification = () => {
                         </div>
                     </div>
 
-                    {/* Filters */}
+                    {}
                     <Card className="mb-6">
                         <CardContent className="p-4">
                             <div className="flex flex-col sm:flex-row gap-4">
@@ -285,7 +285,7 @@ const Notification = () => {
                         </CardContent>
                     </Card>
 
-                    {/* Notifications List */}
+                    {}
                     <div className="space-y-3">
                         {filteredNotifications.length === 0 ? (
                             <Card>

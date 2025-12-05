@@ -41,7 +41,7 @@ export default function CreatorBalance() {
       setBalance(balanceRes.data);
       setWithdrawals(withdrawalsRes.data.data);
       
-      // Deduplicate methods by ID to prevent duplicate keys
+      
       const methods = methodsRes.data || [];
       const uniqueMethods = methods.reduce((acc: WithdrawalMethod[], method: WithdrawalMethod) => {
         const existingIndex = acc.findIndex((m) => m.id === method.id);
@@ -92,7 +92,7 @@ export default function CreatorBalance() {
 
   return (
     <div className="space-y-6">
-      {/* Balance Overview */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -157,7 +157,7 @@ export default function CreatorBalance() {
 
 
 
-      {/* Pending Withdrawals Alert */}
+      {}
       {balance.withdrawals.pending_count > 0 && (
         <Card className="border-yellow-200 bg-yellow-50">
           <CardContent className="p-4">
@@ -176,7 +176,7 @@ export default function CreatorBalance() {
         </Card>
       )}
 
-      {/* Tabs for Details */}
+      {}
       <Tabs defaultValue="transactions" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="transactions">Transações Recentes</TabsTrigger>
@@ -265,7 +265,7 @@ export default function CreatorBalance() {
   );
 }
 
-// Withdrawal Form Component
+
 interface WithdrawalFormProps {
   availableBalance: number;
   withdrawalMethods: WithdrawalMethod[];
@@ -279,7 +279,7 @@ function WithdrawalForm({ availableBalance, withdrawalMethods, onSuccess }: With
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  // Ensure availableBalance is always a number
+  
   const safeAvailableBalance = Number(availableBalance) || 0;
   const selectedMethodData = withdrawalMethods.find(m => m.id === selectedMethod);
 
@@ -345,7 +345,7 @@ function WithdrawalForm({ availableBalance, withdrawalMethods, onSuccess }: With
       const formattedNetAmount = `R$ ${netAmount.toFixed(2).replace('.', ',')}`;
       const formattedFees = `R$ ${totalFees.toFixed(2).replace('.', ',')}`;
 
-      // Show success toast with detailed information
+      
       toast({
         title: "✅ Saque Solicitado com Sucesso!",
         description: `${formattedAmount} via ${selectedMethodData?.name || withdrawalData?.method || 'método selecionado'}\n\n` +
@@ -359,7 +359,7 @@ function WithdrawalForm({ availableBalance, withdrawalMethods, onSuccess }: With
     } catch (error: any) {
       console.error('Error creating withdrawal:', error);
       
-      // Enhanced error toast with helpful guidance
+      
       const errorMessage = error.response?.data?.message || 'Erro ao solicitar saque';
       let helpfulMessage = errorMessage;
       
@@ -386,7 +386,7 @@ function WithdrawalForm({ availableBalance, withdrawalMethods, onSuccess }: With
   const getFormFields = () => {
     if (!selectedMethodData) return [];
 
-    // Use dynamic field configuration if available
+    
     if (selectedMethodData.field_config) {
       return Object.entries(selectedMethodData.field_config).map(([fieldName, config]) => ({
         name: fieldName,
@@ -397,10 +397,10 @@ function WithdrawalForm({ availableBalance, withdrawalMethods, onSuccess }: With
       }));
     }
 
-    // Fallback to hardcoded fields for backward compatibility
+    
     switch (selectedMethod) {
       case 'pagarme_bank_transfer':
-        return []; // No additional fields needed for Pagar.me bank transfer
+        return []; 
       case 'bank_transfer':
         return [
           { name: 'bank', label: 'Banco', required: true },
@@ -537,5 +537,5 @@ function WithdrawalForm({ availableBalance, withdrawalMethods, onSuccess }: With
 }
 
 async function handleCancelWithdrawal(withdrawalId: number) {
-  // Implementation for canceling withdrawal
+  
 } 

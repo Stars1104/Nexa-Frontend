@@ -43,12 +43,12 @@ const tabs = [
 ];
 
 export default function UserList() {
-    // State for API data
+    
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [brands, setBrands] = useState<AdminBrand[]>([]);
     const [students, setStudents] = useState<any[]>([]);
     
-    // Pagination state - using backend metadata
+    
     const [page, setPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [pagination, setPagination] = useState<PaginationData>({
@@ -69,10 +69,10 @@ export default function UserList() {
     const isBrands = activeTab === "brands";
     const isStudents = activeTab === "students";
     
-    // Search state
+    
     const [searchQuery, setSearchQuery] = useState("");
     
-    // Confirmation dialog state
+    
     const [confirmDialog, setConfirmDialog] = useState<{
         open: boolean;
         title: string;
@@ -85,10 +85,10 @@ export default function UserList() {
         action: () => {},
     });
     
-    // Get current data based on active tab (already paginated from backend)
+    
     const data = isCreators ? users : isBrands ? brands : students;
 
-    // Fetch data from API
+    
     const fetchData = async () => {
         setLoading(true);
         setError(null);
@@ -130,7 +130,7 @@ export default function UserList() {
         }
     };
     
-    // Handle user status update
+    
     const handleUserStatusUpdate = async (
         userId: number,
         action: 'activate' | 'block' | 'remove',
@@ -152,7 +152,7 @@ export default function UserList() {
         }
     };
     
-    // Handle student status update
+    
     const handleStudentStatusUpdate = async (
         studentId: number,
         action: 'activate' | 'block' | 'remove',
@@ -174,7 +174,7 @@ export default function UserList() {
         }
     };
     
-    // Open confirmation dialog
+    
     const openConfirmDialog = (
         title: string,
         description: string,
@@ -188,7 +188,7 @@ export default function UserList() {
         });
     };
     
-    // Close confirmation dialog
+    
     const closeConfirmDialog = () => {
         setConfirmDialog({
             open: false,
@@ -198,12 +198,12 @@ export default function UserList() {
         });
     };
 
-    // Reset to page 1 when tab, rowsPerPage, or search changes
+    
     useEffect(() => {
         setPage(1);
     }, [activeTab, rowsPerPage, searchQuery]);
 
-    // Debounce search query
+    
     useEffect(() => {
         const timer = setTimeout(() => {
             if (page === 1) {
@@ -214,13 +214,13 @@ export default function UserList() {
         }, 500);
 
         return () => clearTimeout(timer);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        
     }, [searchQuery]);
 
-    // Load data when component mounts, tab changes, page changes, or rowsPerPage changes
+    
     useEffect(() => {
         fetchData();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        
     }, [activeTab, page, rowsPerPage]);
 
     const canonical = typeof window !== "undefined" ? window.location.href : "";
@@ -246,7 +246,7 @@ export default function UserList() {
                         Gerencie criadores e marcas registrados na plataforma
                     </p>
                     <div className="bg-background p-4 md:p-6 rounded-lg">
-                        {/* Search Bar */}
+                        {}
                         <div className="mb-4">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -259,7 +259,7 @@ export default function UserList() {
                             </div>
                         </div>
                         
-                        {/* Tabs */}
+                        {}
                         <div className="flex border-b border-gray-200 dark:border-neutral-700 mb-4">
                             {tabs.map((tab) => (
                                 <button
@@ -276,14 +276,14 @@ export default function UserList() {
                             ))}
                         </div>
 
-                        {/* Loading State */}
+                        {}
                         {loading && (
                             <div className="flex justify-center items-center py-8">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E91E63]"></div>
                             </div>
                         )}
 
-                        {/* Error State */}
+                        {}
                         {error && !loading && (
                             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
                                 <p className="text-red-600 dark:text-red-400">{error}</p>
@@ -296,7 +296,7 @@ export default function UserList() {
                             </div>
                         )}
 
-                        {/* Responsive Table Container */}
+                        {}
                         {!loading && !error && (
                             <div className="overflow-x-auto">
                                 <div className="min-w-full inline-block align-middle">
@@ -701,7 +701,7 @@ export default function UserList() {
 
 
 
-                        {/* Pagination */}
+                        {}
                         {!loading && !error && (
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-6">
                                 <div className="flex items-center gap-2">
@@ -742,7 +742,7 @@ export default function UserList() {
                 </div>
             </div>
             
-            {/* Confirmation Dialog */}
+            {}
             <AlertDialog open={confirmDialog.open} onOpenChange={(open) => !open && closeConfirmDialog()}>
                 <AlertDialogContent>
                     <AlertDialogHeader>

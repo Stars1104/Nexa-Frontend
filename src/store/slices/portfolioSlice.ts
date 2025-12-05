@@ -3,7 +3,7 @@ import { RootState } from '../index';
 import * as portfolioAPI from '../../api/portfolio';
 import { Portfolio, PortfolioItem, PortfolioStats } from '../../api/portfolio';
 
-// Types
+
 export interface PortfolioState {
   portfolio: Portfolio | null;
   stats: PortfolioStats | null;
@@ -13,7 +13,7 @@ export interface PortfolioState {
   isUploading: boolean;
 }
 
-// Initial state
+
 const initialState: PortfolioState = {
   portfolio: null,
   stats: null,
@@ -23,7 +23,7 @@ const initialState: PortfolioState = {
   isUploading: false,
 };
 
-// Async thunks
+
 export const fetchPortfolio = createAsyncThunk<
   any,
   string,
@@ -116,7 +116,7 @@ export const fetchPortfolioStats = createAsyncThunk<
   }
 });
 
-// Slice
+
 const portfolioSlice = createSlice({
   name: 'portfolio',
   initialState,
@@ -156,7 +156,7 @@ const portfolioSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Fetch portfolio
+    
     builder
       .addCase(fetchPortfolio.pending, (state) => {
         state.isLoading = true;
@@ -179,7 +179,7 @@ const portfolioSlice = createSlice({
         state.error = action.payload || 'Falha ao buscar portfólio';
       });
 
-    // Update profile
+    
     builder
       .addCase(updatePortfolioProfile.pending, (state) => {
         state.isLoading = true;
@@ -187,13 +187,13 @@ const portfolioSlice = createSlice({
       })
       .addCase(updatePortfolioProfile.fulfilled, (state, action) => {
         state.isLoading = false;
-        // Update the portfolio state with the new data
-        // If portfolio exists, merge the new data, otherwise create new portfolio
+        
+        
         if (state.portfolio) {
           state.portfolio = { 
             ...state.portfolio, 
             ...action.payload,
-            // Preserve existing items if new data doesn't have them
+            
             items: action.payload.items || state.portfolio.items || []
           };
         } else {
@@ -203,7 +203,7 @@ const portfolioSlice = createSlice({
           };
         }
         
-        // Update stats - use existing items count if new data doesn't have items
+        
         const items = action.payload.items || state.portfolio?.items || [];
         const imageCount = items.filter((item: any) => item.media_type === 'image').length;
         const videoCount = items.filter((item: any) => item.media_type === 'video').length;
@@ -223,7 +223,7 @@ const portfolioSlice = createSlice({
         state.error = action.payload || 'Falha ao atualizar perfil do portfólio';
       });
 
-    // Upload media
+    
     builder
       .addCase(uploadPortfolioMedia.pending, (state) => {
         state.isUploading = true;
@@ -247,7 +247,7 @@ const portfolioSlice = createSlice({
         state.error = action.payload || 'Falha ao fazer upload de mídia';
       });
 
-    // Update item
+    
     builder
       .addCase(updatePortfolioItem.fulfilled, (state, action) => {
         if (state.portfolio?.items) {
@@ -261,7 +261,7 @@ const portfolioSlice = createSlice({
         state.error = action.payload || 'Falha ao atualizar item do portfólio';
       });
 
-    // Delete item
+    
     builder
       .addCase(deletePortfolioItem.fulfilled, (state, action) => {
         if (state.portfolio?.items) {
@@ -275,7 +275,7 @@ const portfolioSlice = createSlice({
         state.error = action.payload || 'Falha ao excluir item do portfólio';
       });
 
-    // Fetch stats
+    
     builder
       .addCase(fetchPortfolioStats.fulfilled, (state, action) => {
         state.stats = action.payload;
@@ -286,7 +286,7 @@ const portfolioSlice = createSlice({
   },
 });
 
-// Actions
+
 export const {
   clearError,
   setUploadProgress,
@@ -297,7 +297,7 @@ export const {
   reorderPortfolioItemsInState,
 } = portfolioSlice.actions;
 
-// Selectors
+
 export const selectPortfolio = (state: RootState) => state.portfolio.portfolio;
 export const selectPortfolioStats = (state: RootState) => state.portfolio.stats;
 export const selectPortfolioLoading = (state: RootState) => state.portfolio.isLoading;

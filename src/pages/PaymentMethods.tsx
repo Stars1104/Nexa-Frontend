@@ -11,16 +11,14 @@ const PaymentMethods = () => {
   const { toast } = useToast();
   const [isLoadingPaymentMethod, setIsLoadingPaymentMethod] = useState(false);
 
-  /**
-   * Handle payment method button click - redirect to Stripe checkout
-   */
+  
   const handleConnectPaymentMethod = async () => {
     setIsLoadingPaymentMethod(true);
     try {
       const response = await apiClient.post('/freelancer/stripe-payment-method-checkout');
       
       if (response.data.success && response.data.url) {
-        // Redirect to Stripe checkout page
+        
         window.location.href = response.data.url;
       } else {
         throw new Error(response.data.message || 'Erro ao criar sessão de checkout');
@@ -41,7 +39,7 @@ const PaymentMethods = () => {
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-4xl mx-auto px-4 space-y-6">
-        {/* Header */}
+        {}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Configuração de Pagamento</h1>
           <p className="text-muted-foreground">
@@ -49,7 +47,7 @@ const PaymentMethods = () => {
           </p>
         </div>
 
-        {/* Stripe Connect Account Section */}
+        {}
         <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">

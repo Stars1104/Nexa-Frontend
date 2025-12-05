@@ -19,14 +19,14 @@ const CreatorNavbar = ({ title }: CreatorNavbarProps) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  // Get user data from Redux store and dispatch
+  
   const { user } = useAppSelector((state) => state.auth);
   const { profile } = useAppSelector((state) => state.user);
   const dispatch = useAppDispatch();
 
-  // Use profile data if available, otherwise fall back to auth user data
+  
   const userData = profile || user;
-  // Handle logout
+  
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -39,7 +39,7 @@ const CreatorNavbar = ({ title }: CreatorNavbarProps) => {
     }
   };
 
-  // Function to generate initials from name
+  
   const getInitials = (name: string): string => {
     if (!name) return "U";
     const names = name.trim().split(" ");
@@ -49,7 +49,7 @@ const CreatorNavbar = ({ title }: CreatorNavbarProps) => {
     return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
   };
 
-  // Close dropdowns when clicking outside
+  
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
@@ -57,10 +57,10 @@ const CreatorNavbar = ({ title }: CreatorNavbarProps) => {
       }
     };
     if (user?.role === "creator" || user?.role === "student") {
-          // Parallel API calls for better performance
+          
           const fetchDataInParallel = async () => {
             try {
-              // Fetch both in parallel instead of sequentially
+              
               await Promise.all([
                 dispatch(fetchApprovedCampaigns()).unwrap(),
                 dispatch(fetchCreatorApplications()).unwrap()
@@ -82,7 +82,7 @@ const CreatorNavbar = ({ title }: CreatorNavbarProps) => {
     };
   }, [showUserMenu,user?.role]);
 
-  // Cleanup on unmount
+  
   useEffect(() => {
     return () => {
       setShowUserMenu(false);
@@ -93,13 +93,13 @@ const CreatorNavbar = ({ title }: CreatorNavbarProps) => {
 
   return (
     <nav className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      {/* Left: Logo and Title */}
+      {}
       <div className="flex items-center gap-4">
         <span className="text-base sm:text-lg font-semibold md:block hidden">{title}</span>
       </div>
-      {/* Right: Theme toggle and user info */}
+      {}
       <div className="flex items-center gap-2 sm:gap-4">
-        {/* Notification Bell */}
+        {}
         <NotificationBell />
         <ThemeToggle />
         <div className="flex items-center gap-2 relative" ref={userMenuRef}>
@@ -123,7 +123,7 @@ const CreatorNavbar = ({ title }: CreatorNavbarProps) => {
             <ChevronDown className="w-4 h-4 hidden sm:block" />
           </button>
 
-          {/* User Dropdown Menu */}
+          {}
           {showUserMenu && typeof document !== 'undefined' && createPortal(
             <div className="fixed right-4 top-16 w-64 bg-background border rounded-lg shadow-lg z-[2147483647] dark:bg-[#171717]" style={{ pointerEvents: 'auto' }}>
               <Card onClick={(e) => e.stopPropagation()}>

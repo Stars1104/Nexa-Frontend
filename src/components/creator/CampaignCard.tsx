@@ -32,7 +32,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
     onViewDetails,
     onToggleFavorite
 }) => {
-    // Format budget for display
+    
     const formatBudget = (budget: number) => {
         return new Intl.NumberFormat('pt-BR', {
             style: 'currency',
@@ -40,7 +40,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
         }).format(budget);
     };
 
-    // Calculate days until deadline
+    
     const getDaysUntilDeadline = (deadline: string) => {
         const deadlineDate = new Date(deadline);
         const today = new Date();
@@ -49,7 +49,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
         return diffDays;
     };
 
-    // Get deadline status
+    
     const getDeadlineStatus = (deadline: string) => {
         const days = getDaysUntilDeadline(deadline);
         if (days < 0) return { status: 'expired', text: 'Expirado', color: 'text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-200' };
@@ -58,23 +58,23 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
         return { status: 'normal', text: `${days} dias`, color: 'text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-200' };
     };
 
-    // Format date for display
-    // Handle YYYY-MM-DD format by creating Date in local timezone to avoid UTC conversion issues
+    
+    
     const formatDate = (dateString: string) => {
-        // Check if date is in YYYY-MM-DD format (from backend)
+        
         if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
             const [year, month, day] = dateString.split('-').map(Number);
             const date = new Date(year, month - 1, day);
             return date.toLocaleDateString('pt-BR');
         }
-        // For other formats, use standard parsing
+        
         const date = new Date(dateString);
         return date.toLocaleDateString('pt-BR');
     };
 
     const deadlineStatus = getDeadlineStatus(campaign.deadline);
 
-    // Determine badge and button based on application status
+    
     let badge = null;
     let button = null;
 
@@ -135,7 +135,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                                             src={logoUrl} 
                                             alt={campaign.title}
                                             onError={(e) => {
-                                                // Hide the image if it fails to load, fallback will show
+                                                
                                                 e.currentTarget.style.display = 'none';
                                             }}
                                         />
@@ -176,7 +176,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                     {campaign.description.length > 100 ? campaign.description.substring(0, 100) + '...' : campaign.description}
                 </p>
 
-                {/* Category and Deadline */}
+                {}
                 <div className="flex flex-wrap gap-2 mb-3">
                     <Badge variant="outline" className="text-xs">
                         {campaign.category || campaign.type || 'Geral'}
@@ -190,11 +190,11 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                     </Badge>
                 </div>
 
-                {/* States badges */}
+                {}
                 {Array.isArray(campaign.target_states) && campaign.target_states.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-3">
                         {campaign.target_states.length === 27 ? (
-                            // Show "All states" when all 27 Brazilian states are selected
+                            
                             <Badge
                                 variant="secondary"
                                 className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
@@ -203,7 +203,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                                 Todos os estados
                             </Badge>
                         ) : campaign.target_states.length > 5 ? (
-                            // Show first few states + count when more than 5 states
+                            
                             <>
                                 {campaign.target_states.slice(0, 3).map((uf: string, i: number) => (
                                     <Badge
@@ -223,7 +223,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                                 </Badge>
                             </>
                         ) : (
-                            // Show all states when 5 or fewer
+                            
                             campaign.target_states.map((uf: string, i: number) => (
                                 <Badge
                                     key={uf}
@@ -238,7 +238,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                     </div>
                 )}
 
-                {/* Additional campaign info */}
+                {}
                 <div className="space-y-2 text-xs text-muted-foreground">
                     <div className="flex items-center gap-2">
                         <Calendar className="h-3 w-3" />
@@ -273,7 +273,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
             
             <CardFooter className="pt-3">
                 <div className="w-full flex flex-col sm:justify-start sm:items-start gap-3">
-                    {/* Budget or Barter Display */}
+                    {}
                     {campaign.remunerationType === 'permuta' ? (
                         <div className="flex items-center gap-1">
                             <RefreshCw className="h-4 w-4 text-blue-600" />
@@ -286,7 +286,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                         </div>
                     )}
                     
-                    {/* Remuneration Type Badge */}
+                    {}
                     {campaign.remunerationType && (
                         <div className="flex items-center gap-1">
                             <Badge 
@@ -302,7 +302,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                         </div>
                     )}
 
-                    {/* Action button */}
+                    {}
                     <div className="w-full">
                         {button}
                     </div>

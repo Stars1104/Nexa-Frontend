@@ -200,7 +200,7 @@ export default function WithdrawalVerification() {
           </div>
         </div>
 
-        {/* Filters */}
+        {}
         <Card className="border transition-colors">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -334,7 +334,7 @@ export default function WithdrawalVerification() {
               </div>
             </div>
             
-            {/* Quick Date Range Buttons */}
+            {}
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
@@ -408,7 +408,7 @@ export default function WithdrawalVerification() {
               </Button>
             </div>
 
-            {/* Apply Filters Button */}
+            {}
             <div className="flex items-center justify-between pt-4 border-t">
               <div className="text-sm text-muted-foreground">
                 {startDate && endDate && (
@@ -438,7 +438,7 @@ export default function WithdrawalVerification() {
           </CardContent>
         </Card>
 
-        {/* Summary Cards */}
+        {}
         {report && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
@@ -491,7 +491,7 @@ export default function WithdrawalVerification() {
           </div>
         )}
 
-        {/* Withdrawals Table */}
+        {}
         {report && (
           <Card>
             <CardHeader>
@@ -578,7 +578,7 @@ export default function WithdrawalVerification() {
                               </div>
                             ) : selectedWithdrawal ? (
                               <div className="space-y-6">
-                                {/* Withdrawal Details */}
+                                {}
                                 <Card>
                                   <CardHeader>
                                     <CardTitle>Detalhes do Saque</CardTitle>
@@ -622,7 +622,7 @@ export default function WithdrawalVerification() {
                                   </CardContent>
                                 </Card>
 
-                                {/* Creator Information */}
+                                {}
                                 <Card>
                                   <CardHeader>
                                     <CardTitle>Informações do Criador</CardTitle>
@@ -643,7 +643,7 @@ export default function WithdrawalVerification() {
                                   </CardContent>
                                 </Card>
 
-                                {/* Bank Account Verification */}
+                                {}
                                 <Card>
                                   <CardHeader>
                                     <CardTitle>Verificação da Conta Bancária</CardTitle>
@@ -664,7 +664,7 @@ export default function WithdrawalVerification() {
                                       <Separator />
 
                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* Withdrawal Bank Details */}
+                                        {}
                                         <div>
                                           <h4 className="font-medium mb-3">Detalhes do Saque</h4>
                                           {selectedWithdrawal.bank_account_verification.withdrawal_bank_details ? (
@@ -680,7 +680,7 @@ export default function WithdrawalVerification() {
                                           )}
                                         </div>
 
-                                        {/* Current Bank Account */}
+                                        {}
                                         <div>
                                           <h4 className="font-medium mb-3">Conta Atual</h4>
                                           {selectedWithdrawal.bank_account_verification.current_bank_account ? (
@@ -700,7 +700,7 @@ export default function WithdrawalVerification() {
                                   </CardContent>
                                 </Card>
 
-                                {/* Verification Summary */}
+                                {}
                                 <Card>
                                   <CardHeader>
                                     <CardTitle>Resumo da Verificação</CardTitle>

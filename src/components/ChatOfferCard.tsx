@@ -144,7 +144,7 @@ export default function ChatOfferCard({
   });
   const { toast } = useToast();
 
-  // If we have a contract, display contract card
+  
   if (contract) {
     return (
       <ContractCard
@@ -157,7 +157,7 @@ export default function ChatOfferCard({
     );
   }
 
-  // If we have an offer, display offer card
+  
   if (offer) {
     return (
       <OfferCard
@@ -171,7 +171,7 @@ export default function ChatOfferCard({
   return null;
 }
 
-// Offer Card Component
+
 function OfferCard({
   offer,
   userRole,
@@ -186,7 +186,7 @@ function OfferCard({
   const [rejectionReason, setRejectionReason] = useState("");
   const { toast } = useToast();
 
-  // Safety check for incomplete offer data
+  
   if (!offer || !offer.other_user) {
     return (
       <Card className="p-4">
@@ -349,12 +349,12 @@ function OfferCard({
   };
 
   const formatCurrency = (amount: string) => {
-    // If the amount is already formatted (contains "R$"), return it as is
+    
     if (amount && amount.includes('R$')) {
       return amount;
     }
     
-    // Otherwise, format it as currency
+    
     const numericAmount = parseFloat(amount);
     if (isNaN(numericAmount)) {
       return 'R$ 0,00';
@@ -502,7 +502,7 @@ function OfferCard({
         </CardContent>
       </Card>
 
-      {/* Reject Dialog */}
+      {}
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -544,7 +544,7 @@ function OfferCard({
   );
 }
 
-// Contract Card Component
+
 function ContractCard({
   contract,
   userRole,
@@ -563,7 +563,7 @@ function ContractCard({
   const [cancelReason, setCancelReason] = useState("");
   const { toast } = useToast();
 
-  // Safety check for incomplete contract data
+  
   if (!contract || !contract.other_user) {
     return (
       <Card className="p-4">
@@ -632,7 +632,7 @@ function ContractCard({
     setIsProcessing(true);
 
     try {
-      // Call API to activate contract
+      
       const response = await hiringApi.activateContract(contract.id);
 
       if (response.success) {
@@ -708,12 +708,12 @@ function ContractCard({
   };
 
   const formatCurrency = (amount: string) => {
-    // If the amount is already formatted (contains "R$"), return it as is
+    
     if (amount && amount.includes('R$')) {
       return amount;
     }
     
-    // Otherwise, format it as currency
+    
     const numericAmount = parseFloat(amount);
     if (isNaN(numericAmount)) {
       return 'R$ 0,00';
@@ -923,7 +923,7 @@ function ContractCard({
         </CardContent>
       </Card>
 
-      {/* Cancel Dialog */}
+      {}
       <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

@@ -5,7 +5,7 @@ export const useSafeToast = () => {
     const isMountedRef = useRef(true);
     const toastQueueRef = useRef<Array<() => void>>([]);
 
-    // Track component mount state
+    
     useEffect(() => {
         isMountedRef.current = true;
         return () => {
@@ -13,14 +13,14 @@ export const useSafeToast = () => {
         };
     }, []);
 
-    // Process toast queue
+    
     const processQueue = useCallback(() => {
         if (!isMountedRef.current) return;
         
         const queue = toastQueueRef.current;
         if (queue.length === 0) return;
 
-        // Process all queued toasts
+        
         queue.forEach(toastFn => {
             try {
                 toastFn();
@@ -29,7 +29,7 @@ export const useSafeToast = () => {
             }
         });
         
-        // Clear queue
+        
         toastQueueRef.current = [];
     }, []);
 
@@ -61,7 +61,7 @@ export const useSafeToast = () => {
             }
         };
 
-        // Add to queue and process after delay
+        
         toastQueueRef.current.push(toastFn);
         
         setTimeout(() => {

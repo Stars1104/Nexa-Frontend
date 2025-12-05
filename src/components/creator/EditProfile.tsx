@@ -20,7 +20,7 @@ const BRAZILIAN_STATES = [
   "Roraima", "Santa Catarina", "São Paulo", "Sergipe", "Tocantins"
 ];
 
-// NICHES agora vem de src/lib/niches.ts
+
 
 const LANGUAGES = [
   "Português", "Inglês", "Espanhol", "Francês", "Alemão", "Italiano", "Japonês",
@@ -41,7 +41,7 @@ const getLanguageDisplayName = (language: string): string =>
   LANGUAGE_MAP[language] || language;
 
 const MAX_IMAGE_SIZE_MB = 5;
-const SOFT_IMAGE_SIZE_MB = 1.8; // acima disso tentamos comprimir
+const SOFT_IMAGE_SIZE_MB = 1.8; 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const defaultProfile = {
@@ -95,14 +95,14 @@ export const EditProfile: React.FC<{
       return;
     }
 
-    // Criar/atualizar blob URL para fallback
+    
     if (selectedBlobUrl) {
       try { URL.revokeObjectURL(selectedBlobUrl); } catch {}
     }
     const blobUrl = URL.createObjectURL(file);
     setSelectedBlobUrl(blobUrl);
 
-    // Mostrar preview via base64 (preferencial). Tentar: arrayBuffer->base64 -> FileReader -> createImageBitmap -> blob URL
+    
     const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
       let binary = '';
       const bytes = new Uint8Array(buffer);
@@ -125,7 +125,7 @@ export const EditProfile: React.FC<{
 
     let previewSet = false;
     try {
-      // 1) arrayBuffer -> base64 manual
+      
       const buf = await file.arrayBuffer();
       const b64 = arrayBufferToBase64(buf);
       const dataUrl1 = `data:${file.type || 'image/jpeg'};base64,${b64}`;
@@ -200,7 +200,7 @@ export const EditProfile: React.FC<{
     });
   };
 
-  // Mostrar imagem atual do usuário ao abrir o formulário
+  
   useEffect(() => {
     const img = (initialProfile as any)?.image;
     if (img && typeof img === 'string') {
@@ -209,7 +209,7 @@ export const EditProfile: React.FC<{
     }
   }, [initialProfile]);
 
-  // Revogar blob URL apenas quando trocarmos de arquivo ou desmontar
+  
   useEffect(() => {
     return () => {
       if (selectedBlobUrl) {
@@ -268,7 +268,7 @@ export const EditProfile: React.FC<{
           Editar Perfil
         </h2>
 
-        {/* Profile Picture */}
+        {}
         <div className="flex flex-col items-center gap-3 sm:gap-4">
           <div className="relative w-20 h-20 sm:w-24 sm:h-24">
             <div className="w-full h-full rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-800 overflow-hidden">
@@ -282,12 +282,12 @@ export const EditProfile: React.FC<{
                   onLoad={() => console.log('[profile] preview loaded ok')}
                   onError={(e) => {
                     console.warn('[profile] preview onError triggered');
-                    // 1) tenta blob do arquivo selecionado
+                    
                     if (selectedBlobUrl && (e.target as HTMLImageElement).src !== selectedBlobUrl) {
                       (e.target as HTMLImageElement).src = selectedBlobUrl;
                       return;
                     }
-                    // 2) tenta URL do backend da imagem atual (se existir)
+                    
                     const target = e.target as HTMLImageElement;
                     const current = (initialProfile as any)?.image;
                     if (current && typeof current === 'string') {
@@ -297,7 +297,7 @@ export const EditProfile: React.FC<{
                         return;
                       }
                     }
-                    // 3) último recurso: limpa preview
+                    
                     setImagePreview(null);
                   }}
                 />
@@ -347,9 +347,9 @@ export const EditProfile: React.FC<{
           </div>
         </div>
 
-        {/* Form fields */}
+        {}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          {/* Name */}
+          {}
           <div className="flex flex-col">
             <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
               Nome Completo
@@ -366,7 +366,7 @@ export const EditProfile: React.FC<{
             />
           </div>
 
-          {/* Email */}
+          {}
           <div className="flex flex-col">
             <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
               Email
@@ -383,7 +383,7 @@ export const EditProfile: React.FC<{
             />
           </div>
 
-          {/* State */}
+          {}
           <div className="flex flex-col">
             <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
               Estado
@@ -406,7 +406,7 @@ export const EditProfile: React.FC<{
             </Select>
           </div>
 
-          {/* Profissão (campo livre, persiste em `profession`) */}
+          {}
           <div className="flex flex-col">
             <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
               Profissão
@@ -425,7 +425,7 @@ export const EditProfile: React.FC<{
             </span>
           </div>
 
-          {/* Gender */}
+          {}
           <div className="flex flex-col">
             <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
               Gênero <span className="text-red-500">*</span>
@@ -447,7 +447,7 @@ export const EditProfile: React.FC<{
             </Select>
           </div>
 
-          {/* Date of birth */}
+          {}
           <div className="flex flex-col">
             <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
               Data de Nascimento <span className="text-red-500">*</span>
@@ -461,7 +461,7 @@ export const EditProfile: React.FC<{
             />
           </div>
 
-          {/* Creator Type */}
+          {}
           <div className="flex flex-col">
             <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
               Tipo de Criador
@@ -482,7 +482,7 @@ export const EditProfile: React.FC<{
             </Select>
           </div>
 
-          {/* Niche */}
+          {}
           <div className="flex flex-col">
             <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
               Nicho <span className="text-red-500">*</span>
@@ -506,7 +506,7 @@ export const EditProfile: React.FC<{
             </Select>
           </div>
 
-          {/* Languages */}
+          {}
           <div className="flex flex-col col-span-1 sm:col-span-2">
             <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
               Idiomas
@@ -558,7 +558,7 @@ export const EditProfile: React.FC<{
           </div>
         </div>
 
-      {/* Social Media - always visible for editing */}
+      {}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-2">
         <div className="flex flex-col">
           <label className="font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -641,7 +641,7 @@ export const EditProfile: React.FC<{
           <div className="text-red-500 text-sm text-center mt-2">{error}</div>
         )}
 
-        {/* Buttons */}
+        {}
         <div className="flex flex-col sm:flex-row gap-3 justify-center sm:justify-start pt-4">
           <button
             type="submit"

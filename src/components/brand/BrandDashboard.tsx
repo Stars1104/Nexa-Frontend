@@ -71,7 +71,7 @@ const BrandDashboard: React.FC<BrandDashboardProps> = ({ setComponent }) => {
         Gerencie suas campanhas e conecte-se com criadores incríveis!
       </p>
 
-      {/* Tabs for Campaigns, Contracts, and Payment Methods */}
+      {}
       <Tabs defaultValue="campaigns" className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="campaigns" className="flex items-center gap-2">
@@ -89,7 +89,7 @@ const BrandDashboard: React.FC<BrandDashboardProps> = ({ setComponent }) => {
         </TabsList>
 
         <TabsContent value="campaigns" className="space-y-6">
-          {/* Ongoing Campaigns */}
+          {}
           <h2 className="text-lg md:text-xl font-semibold mb-3">
             Campanhas em andamento
           </h2>
@@ -195,7 +195,7 @@ const BrandDashboard: React.FC<BrandDashboardProps> = ({ setComponent }) => {
             ))}
           </div>
 
-          {/* Previous Campaigns */}
+          {}
           <h2 className="text-lg md:text-xl font-semibold mb-3">
             Campanhas anteriores
           </h2>

@@ -35,10 +35,10 @@ const Sidebar = ({ setComponent, component }: SidebarProps) => {
             setIsDarkMode(document.documentElement.classList.contains('dark'));
         };
 
-        // Check initial theme
+        
         checkTheme();
 
-        // Create observer to watch for class changes on document element
+        
         const observer = new MutationObserver(checkTheme);
         observer.observe(document.documentElement, {
             attributes: true,
@@ -48,18 +48,18 @@ const Sidebar = ({ setComponent, component }: SidebarProps) => {
         return () => observer.disconnect();
     }, []);
 
-    // Set default component on mount
+    
     useEffect(() => {
         setSelectedComponent(component || "Minhas campanhas");
     }, [component, setSelectedComponent]);
 
-    // Handle mounting/unmounting for animation
+    
     useEffect(() => {
         if (mobileSidebarOpen) {
             setIsVisible(true);
             if (closeTimeout.current) clearTimeout(closeTimeout.current);
         } else if (isVisible) {
-            closeTimeout.current = setTimeout(() => setIsVisible(false), 300); // match duration-300
+            closeTimeout.current = setTimeout(() => setIsVisible(false), 300); 
         }
         return () => {
             if (closeTimeout.current) clearTimeout(closeTimeout.current);
@@ -72,7 +72,7 @@ const Sidebar = ({ setComponent, component }: SidebarProps) => {
         if (isMobile) setMobileSidebarOpen(false);
     }
 
-    // Hamburger toggle button for mobile
+    
     if (isMobile && !mobileSidebarOpen && !isVisible) {
         return (
             <button
@@ -89,12 +89,12 @@ const Sidebar = ({ setComponent, component }: SidebarProps) => {
     if (isMobile && isVisible) {
         return (
             <div className="fixed inset-0 z-0 pointer-events-auto">
-                {/* Overlay */}
+                {}
                 <div
                     className={`absolute inset-0 bg-black/30 transition-opacity duration-300 ease-in-out ${mobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
                     onClick={() => setMobileSidebarOpen(false)}
                 />
-                {/* Sidebar */}
+                {}
                 <aside
                     className={`fixed top-0 left-0 h-full w-72 max-w-full bg-background flex flex-col shadow-2xl z-0
                         transition-transform duration-500 ease-in-out
@@ -102,7 +102,7 @@ const Sidebar = ({ setComponent, component }: SidebarProps) => {
                         pointer-events-auto`}
                     style={{ willChange: 'transform, opacity' }}
                 >
-                    {/* Header with logo and close button */}
+                    {}
                     <div className="flex items-center justify-between px-4 py-5 border-b">
                         <img src={isDarkMode ? LightLogo : DarkLogo} alt="Logo" width={90} className="w-28" />
                         <button
@@ -113,7 +113,7 @@ const Sidebar = ({ setComponent, component }: SidebarProps) => {
                             ×
                         </button>
                     </div>
-                    {/* Navigation */}
+                    {}
                     <nav className="flex-1 flex flex-col gap-1 mt-2">
                         {navLinks.map(({ label, icon: Icon, key }) => {
                             const isSelected = selectedComponent === key;
@@ -138,10 +138,10 @@ const Sidebar = ({ setComponent, component }: SidebarProps) => {
         );
     }
 
-    // Desktop sidebar
+    
     return (
         <aside className="flex flex-col h-full w-64 border-r bg-background py-6 px-4">
-            {/* Logo */}
+            {}
             <div className="flex items-center gap-2 mb-8 px-2">
                 {
                     isDarkMode ? (
@@ -151,7 +151,7 @@ const Sidebar = ({ setComponent, component }: SidebarProps) => {
                     )
                 }
             </div>
-            {/* Navigation */}
+            {}
             <nav className="flex-1 flex flex-col gap-1">
                 {navLinks.map(({ label, icon: Icon, key }) => {
                     const isSelected = selectedComponent === key;

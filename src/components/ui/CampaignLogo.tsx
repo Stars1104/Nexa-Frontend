@@ -30,7 +30,7 @@ const CampaignLogo: React.FC<CampaignLogoProps> = ({
           alt={`${brandName} logo`}
           className="w-full h-full object-cover"
           onError={(e) => {
-            // Fallback to initials if image fails to load
+            
             const target = e.target as HTMLImageElement;
             target.style.display = 'none';
             const parent = target.parentElement;
@@ -43,7 +43,7 @@ const CampaignLogo: React.FC<CampaignLogoProps> = ({
     );
   }
 
-  // Fallback to brand initials
+  
   return (
     <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold ${className}`}>
       {getCampaignInitials(brandName)}

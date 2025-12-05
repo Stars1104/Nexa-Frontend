@@ -11,7 +11,7 @@ import { fetchUserProfile } from "../../store/thunks/userThunks";
 import { apiClient } from "../../services/apiClient";
 import { getAuthToken, dispatchPremiumStatusUpdate } from "../../utils/browserUtils";
 
-// Stripe
+
 import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
 
 interface SubscriptionModalProps {
@@ -57,7 +57,7 @@ export default function SubscriptionModal({
     setIsLoading(true);
 
     try {
-      // 1️⃣ Create PaymentMethod with Stripe
+      
       const { paymentMethod, error } = await stripe.createPaymentMethod({
         type: "card",
         card: cardElement,
@@ -67,7 +67,7 @@ export default function SubscriptionModal({
         return;
       }
 
-      // 2️⃣ Send PaymentMethod ID to backend
+      
       const token = getAuthToken();
       if (!token) {
         toast({ title: "Login necessário", description: "Faça login para prosseguir", variant: "destructive" });
@@ -122,7 +122,7 @@ export default function SubscriptionModal({
           <CardDescription>{selectedPlan?.description || 'Descrição não disponível'}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Stripe Card Input */}
+          {}
           <div className="space-y-2">
             <Label>Cartão de Crédito</Label>
             <div className="p-2 border rounded">

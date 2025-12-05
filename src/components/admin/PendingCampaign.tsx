@@ -24,10 +24,10 @@ export default function PendingCampaign() {
     const [accessDenied, setAccessDenied] = useState(false);
     const timeoutRefs = useRef<number[]>([]);
     
-    // Ensure pendingCampaigns is always an array
+    
     const campaignsToDisplay = Array.isArray(pendingCampaigns) ? pendingCampaigns : [];
 
-    // Check if user has admin role before making API calls
+    
     useEffect(() => {
         if (user && user.role !== 'admin') {
             setAccessDenied(true);
@@ -52,7 +52,7 @@ export default function PendingCampaign() {
         fetchCampaigns();
     }, [dispatch, user]);
 
-    // Clear error on component unmount
+    
     useEffect(() => {
         return () => {
             if (error) {
@@ -61,10 +61,10 @@ export default function PendingCampaign() {
         };
     }, [dispatch, error]);
 
-    // Cleanup timeouts on unmount
+    
     useEffect(() => {
         return () => {
-            // Clear any pending timeouts to prevent memory leaks
+            
             timeoutRefs.current.forEach(timeoutId => {
                 clearTimeout(timeoutId);
             });
@@ -82,12 +82,12 @@ export default function PendingCampaign() {
         
         try {
             await dispatch(approveCampaign(id)).unwrap();
-            // Add a small delay to prevent toast from interfering with DOM updates
+            
             const timeoutId = setTimeout(() => {
                 toast.success("Campanha aprovada com sucesso!");
             }, 100);
             timeoutRefs.current.push(timeoutId as unknown as number);
-            // Don't refresh the list - let Redux state handle the UI update
+            
         } catch (error: any) {
             console.error('Error approving campaign:', error);
             const errorMessage = typeof error === 'string' ? error : error?.message || "Erro ao aprovar campanha";
@@ -115,12 +115,12 @@ export default function PendingCampaign() {
         
         try {
             await dispatch(rejectCampaign({ campaignId: id, reason: "Rejeitado pelo administrador" })).unwrap();
-            // Add a small delay to prevent toast from interfering with DOM updates
+            
             const timeoutId = setTimeout(() => {
                 toast.success("Campanha rejeitada com sucesso!");
             }, 100);
             timeoutRefs.current.push(timeoutId as unknown as number);
-            // Don't refresh the list - let Redux state handle the UI update
+            
         } catch (error: any) {
             console.error('Error rejecting campaign:', error);
             const errorMessage = typeof error === 'string' ? error : error?.message || "Erro ao rejeitar campanha";
@@ -167,7 +167,7 @@ export default function PendingCampaign() {
         refreshCampaigns();
     }, [user?.role, dispatch]);
 
-    // Show access denied message if user doesn't have admin role
+    
     if (accessDenied || (user && user.role !== 'admin')) {
         return (
             <div className="w-full px-2 sm:px-6 py-6 dark:bg-[#171717] min-h-[92vh] flex items-center justify-center">
@@ -211,7 +211,7 @@ export default function PendingCampaign() {
                     <div>
                         <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Campanhas Pendentes</h1>
                         <p className="text-muted-foreground text-sm mt-1">Aprove ou rejeite campanhas submetidas por marcas</p>
-                        {/* Removed Badge for mock data as it's no longer used */}
+                        {}
                     </div>
                     <Button
                         onClick={handleRefresh}
@@ -223,7 +223,7 @@ export default function PendingCampaign() {
                     </Button>
                 </div>
 
-                {/* Error message */}
+                {}
                 {error && (
                     <Alert className="mb-6 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
                         <AlertTitle className="text-red-800 dark:text-red-200">Erro</AlertTitle>
@@ -286,7 +286,7 @@ export default function PendingCampaign() {
                                                 </span>
                                                 <span>
                                                     <span className="font-medium text-foreground">Estados:</span> {campaign.deadline ? (() => {
-                                                        // Handle YYYY-MM-DD format by creating Date in local timezone
+                                                        
                                                         if (/^\d{4}-\d{2}-\d{2}$/.test(campaign.deadline)) {
                                                             const [year, month, day] = campaign.deadline.split('-').map(Number);
                                                             return new Date(year, month - 1, day).toLocaleDateString("pt-BR");
@@ -348,7 +348,7 @@ export default function PendingCampaign() {
                     </div>
                 </div>
 
-                {/* Campaign Detail Modal */}
+                {}
                 {selectedCampaign && (
                     <CampaignDetail
                         campaign={selectedCampaign}

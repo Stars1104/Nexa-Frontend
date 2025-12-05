@@ -29,7 +29,7 @@ export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
   const lastActivityRef = useRef<number>(Date.now());
   const isWarningShownRef = useRef<boolean>(false);
 
-  // Check if current route should be excluded from session timeout
+  
   const isExcludedRoute = useCallback(() => {
     const currentPath = window.location.pathname;
     return SESSION_CONFIG.EXCLUDED_ROUTES.some(route => 
@@ -37,11 +37,11 @@ export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
     );
   }, []);
 
-  // Reset timers when user is active
+  
   const resetTimers = useCallback(() => {
     if (!isAuthenticated || !user || isExcludedRoute()) return;
 
-    // Clear existing timers
+    
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -51,12 +51,12 @@ export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
       warningTimeoutRef.current = null;
     }
 
-    // Reset activity time and warning state
+    
     lastActivityRef.current = Date.now();
     isWarningShownRef.current = false;
     setShowWarning(false);
 
-    // Set warning timeout
+    
     const warningTime = (timeoutMinutes - warningMinutes) * 60 * 1000;
     warningTimeoutRef.current = setTimeout(() => {
       if (isAuthenticated && user && !isExcludedRoute()) {
@@ -66,7 +66,7 @@ export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
       }
     }, warningTime);
 
-    // Set main timeout
+    
     const timeoutTime = timeoutMinutes * 60 * 1000;
     timeoutRef.current = setTimeout(() => {
       if (isAuthenticated && user && !isExcludedRoute()) {
@@ -76,9 +76,9 @@ export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
     
   }, [isAuthenticated, user, timeoutMinutes, warningMinutes, onTimeout, onWarning, isExcludedRoute]);
 
-  // Handle session timeout
+  
   const handleSessionTimeout = useCallback(() => {
-    // Clear all timers
+    
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -88,42 +88,42 @@ export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
       warningTimeoutRef.current = null;
     }
 
-    // Logout user
+    
     dispatch(logout());
     
-    // Navigate to login page using window.location
+    
     window.location.href = '/auth';
     
-    // Call custom timeout handler
+    
     onTimeout?.();
   }, [dispatch, onTimeout]);
 
-  // Activity detection
+  
   const handleActivity = useCallback(() => {
     if (!isAuthenticated || !user || isExcludedRoute()) return;
     
     const now = Date.now();
     const timeSinceLastActivity = now - lastActivityRef.current;
     
-    // Only reset if there's been significant activity (more than minimum interval)
+    
     if (timeSinceLastActivity > SESSION_CONFIG.MIN_ACTIVITY_INTERVAL) {
       resetTimers();
     }
   }, [isAuthenticated, user, resetTimers, isExcludedRoute]);
 
-  // Set up activity listeners
+  
   useEffect(() => {
     if (!isAuthenticated || !user || isExcludedRoute()) return;
 
-    // Add event listeners for activity detection
+    
     SESSION_CONFIG.ACTIVITY_EVENTS.forEach(event => {
       document.addEventListener(event, handleActivity, true);
     });
 
-    // Initial timer setup
+    
     resetTimers();
 
-    // Cleanup function
+    
     return () => {
       SESSION_CONFIG.ACTIVITY_EVENTS.forEach(event => {
         document.removeEventListener(event, handleActivity, true);
@@ -140,12 +140,12 @@ export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
     };
   }, [isAuthenticated, user, handleActivity, resetTimers, isExcludedRoute]);
 
-  // Reset timers when authentication state changes
+  
   useEffect(() => {
     if (isAuthenticated && user) {
       resetTimers();
     } else {
-      // Clear timers when user is not authenticated
+      
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -157,14 +157,14 @@ export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
     }
   }, [isAuthenticated, user, resetTimers]);
 
-  // Manual session extension (useful for API calls)
+  
   const extendSession = useCallback(() => {
     if (isAuthenticated && user) {
       resetTimers();
     }
   }, [isAuthenticated, user, resetTimers]);
 
-  // Register with session manager for API calls
+  
   useEffect(() => {
     if (isAuthenticated && user) {
       sessionManager.registerExtendSessionCallback(extendSession);
@@ -177,7 +177,7 @@ export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
     };
   }, [isAuthenticated, user, extendSession]);
 
-  // Get remaining time in minutes
+  
   const getRemainingTime = useCallback(() => {
     if (!isAuthenticated || !user) return 0;
     
@@ -188,13 +188,13 @@ export const useSessionTimeout = (options: UseSessionTimeoutOptions = {}) => {
     return Math.max(0, Math.floor(remainingTime / (60 * 1000)));
   }, [isAuthenticated, user, timeoutMinutes]);
 
-  // Handle extending session from warning modal
+  
   const handleExtendSession = useCallback(() => {
     setShowWarning(false);
     extendSession();
   }, [extendSession]);
 
-  // Handle logout from warning modal
+  
   const handleLogout = useCallback(() => {
     setShowWarning(false);
     handleSessionTimeout();

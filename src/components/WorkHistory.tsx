@@ -106,7 +106,7 @@ export const WorkHistory: React.FC<WorkHistoryProps> = ({ userId, type }) => {
 
   return (
     <div className="space-y-6">
-      {/* Statistics */}
+      {}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -138,7 +138,7 @@ export const WorkHistory: React.FC<WorkHistoryProps> = ({ userId, type }) => {
         </CardContent>
       </Card>
 
-      {/* Work History List */}
+      {}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

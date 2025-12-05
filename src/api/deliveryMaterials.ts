@@ -22,7 +22,7 @@ export interface DeliveryMaterial {
   created_at: string;
   updated_at: string;
   
-  // Computed properties
+  
   file_url?: string;
   thumbnail_url?: string;
   formatted_file_size?: string;
@@ -30,7 +30,7 @@ export interface DeliveryMaterial {
   status_icon?: string;
   media_type_icon?: string;
   
-  // Relationships
+  
   creator?: {
     id: number;
     name: string;
@@ -83,9 +83,7 @@ export interface RejectDeliveryMaterialRequest {
 }
 
 class DeliveryMaterialsApi {
-  /**
-   * Get delivery materials for a contract
-   */
+  
   async getDeliveryMaterials(contractId: number): Promise<DeliveryMaterial[]> {
     const response = await apiClient.get('/delivery-materials', {
       params: { contract_id: contractId }
@@ -93,9 +91,7 @@ class DeliveryMaterialsApi {
     return response.data.data;
   }
 
-  /**
-   * Submit a new delivery material
-   */
+  
   async submitDeliveryMaterial(data: SubmitDeliveryMaterialRequest): Promise<DeliveryMaterial> {
     const formData = new FormData();
     formData.append('contract_id', data.contract_id.toString());
@@ -118,25 +114,19 @@ class DeliveryMaterialsApi {
     return response.data.data;
   }
 
-  /**
-   * Approve a delivery material
-   */
+  
   async approveDeliveryMaterial(materialId: number, data: ApproveDeliveryMaterialRequest): Promise<DeliveryMaterial> {
     const response = await apiClient.post(`/delivery-materials/${materialId}/approve`, data);
     return response.data.data;
   }
 
-  /**
-   * Reject a delivery material
-   */
+  
   async rejectDeliveryMaterial(materialId: number, data: RejectDeliveryMaterialRequest): Promise<DeliveryMaterial> {
     const response = await apiClient.post(`/delivery-materials/${materialId}/reject`, data);
     return response.data.data;
   }
 
-  /**
-   * Download a delivery material file
-   */
+  
   async downloadDeliveryMaterial(materialId: number): Promise<Blob> {
     const response = await apiClient.get(`/delivery-materials/${materialId}/download`, {
       responseType: 'blob'
@@ -144,9 +134,7 @@ class DeliveryMaterialsApi {
     return response.data;
   }
 
-  /**
-   * Get delivery material statistics for a contract
-   */
+  
   async getStatistics(contractId: number): Promise<DeliveryMaterialStatistics> {
     const response = await apiClient.get('/delivery-materials/statistics', {
       params: { contract_id: contractId }

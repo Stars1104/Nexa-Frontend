@@ -45,11 +45,11 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
     const maxReconnectAttempts = 5;
     const isMountedRef = useRef(true);
 
-    // Initialize socket connection
+    
     const initializeSocket = useCallback(() => {
         if (!user || !isMountedRef.current) return null;
 
-        // Clear any existing connection
+        
         if (socketRef.current) {
             try {
                 socketRef.current.disconnect();
@@ -64,9 +64,9 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
             autoConnect: true,
             reconnection: true,
             reconnectionAttempts: maxReconnectAttempts,
-            reconnectionDelay: 500, // Reduced from 1000ms
-            reconnectionDelayMax: 3000, // Reduced from 5000ms
-            timeout: 10000, // Reduced from 20000ms
+            reconnectionDelay: 500, 
+            reconnectionDelayMax: 3000, 
+            timeout: 10000, 
             forceNew: false,
             upgrade: true,
             rememberUpgrade: true
@@ -81,7 +81,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
             setConnectionError(null);
             reconnectAttemptsRef.current = 0;
             
-            // Join with user data and auto-join all chat rooms
+            
             try {
                 socket.emit('user_join', {
                     userId: user.id,
@@ -98,7 +98,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
             setIsConnected(false);
             
             if (reason === 'io server disconnect') {
-                // Server disconnected us, try to reconnect
+                
                 try {
                     socket.connect();
                 } catch (error) {
@@ -114,7 +114,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
             setIsConnected(false);
             setConnectionError(`Connection failed: ${error.message}`);
             
-            // Attempt to reconnect with exponential backoff
+            
             if (reconnectAttemptsRef.current < maxReconnectAttempts) {
                 reconnectAttemptsRef.current++;
                 const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 10000);
@@ -153,15 +153,15 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
             setConnectionError('Failed to reconnect. Please refresh the page.');
         });
 
-        // Listen for new notifications (only if enabled)
+        
         if (enableNotifications) {
             const handleNotification = (notificationData: any) => {
                 if (!isMountedRef.current) return;
                 
-                // Add notification to Redux store
+                
                 dispatch(addNotification(notificationData));
                 
-                // Increment unread count if notification is unread
+                
                 if (!notificationData.is_read) {
                     dispatch(incrementUnreadCount());
                 }
@@ -169,7 +169,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
             
             socket.on('new_notification', handleNotification);
             
-            // Store cleanup function
+            
             (socket as any)._cleanupNotification = () => {
                 socket.off('new_notification', handleNotification);
             };
@@ -178,23 +178,23 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         return socket;
     }, [user, enableNotifications]);
 
-    // Component mount/unmount tracking
+    
     useEffect(() => {
         isMountedRef.current = true;
         
         return () => {
             isMountedRef.current = false;
             
-            // Clear any pending timeouts
+            
             if (reconnectTimeoutRef.current) {
                 clearTimeout(reconnectTimeoutRef.current);
                 reconnectTimeoutRef.current = null;
             }
             
-            // Disconnect socket
+            
             if (socketRef.current) {
                 try {
-                    // Clean up notification listener if it exists
+                    
                     if ((socketRef.current as any)._cleanupNotification) {
                         (socketRef.current as any)._cleanupNotification();
                     }
@@ -225,7 +225,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         };
     }, [initializeSocket]);
 
-    // Manual reconnect function
+    
     const reconnect = useCallback(() => {
         if (!isMountedRef.current) return;
         
@@ -237,7 +237,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         initializeSocket();
     }, [initializeSocket]);
 
-    // Join a chat room (only if chat is enabled)
+    
     const joinRoom = useCallback((roomId: string) => {
         if (!isMountedRef.current || !enableChat) return;
         
@@ -252,7 +252,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         }
     }, [isConnected, enableChat]);
 
-    // Leave a chat room (only if chat is enabled)
+    
     const leaveRoom = useCallback((roomId: string) => {
         if (!isMountedRef.current || !enableChat) return;
         
@@ -265,7 +265,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         }
     }, [isConnected, enableChat]);
 
-    // Send a message - This now returns the message for immediate UI update
+    
     const sendMessage = useCallback(async (roomId: string, message: string, file?: File): Promise<Message> => {
         if (!socketRef.current || !isConnected || !user || !isMountedRef.current || !enableChat) {
             throw new Error('Socket not connected or user not authenticated');
@@ -275,11 +275,11 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
             let messageData: Message;
 
             if (file) {
-                // Handle file upload using apiClient
+                
                 const formData = new FormData();
                 formData.append('room_id', roomId);
                 formData.append('file', file);
-                // Include text message if provided
+                
                 if (message && message.trim()) {
                     formData.append('message', message.trim());
                 }
@@ -291,7 +291,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                 });
                 messageData = response.data.data;
             } else {
-                // Send text message using apiClient
+                
                 const response = await apiClient.post('/chat/messages', {
                     room_id: roomId,
                     message,
@@ -300,7 +300,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
                 messageData = response.data.data;
             }
 
-            // Mark as sent on successful API return
+            
             (messageData as any).sent = true;
             (messageData as any).pending = false;
             return messageData;
@@ -310,7 +310,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         }
     }, [isConnected, user, enableChat]);
 
-    // Start typing indicator
+    
     const startTyping = useCallback((roomId: string) => {
         if (!socketRef.current || !isConnected || !user || !isMountedRef.current || !enableChat) return;
 
@@ -325,7 +325,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         }
     }, [isConnected, user, enableChat]);
 
-    // Stop typing indicator
+    
     const stopTyping = useCallback((roomId: string) => {
         if (!socketRef.current || !isConnected || !user || !isMountedRef.current || !enableChat) return;
 
@@ -340,7 +340,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         }
     }, [isConnected, user, enableChat]);
 
-    // Mark messages as read
+    
     const markMessagesAsRead = useCallback(async (roomId: string, messageIds: number[]): Promise<void> => {
         if (!user || !isMountedRef.current || !enableChat) {
             console.warn('Cannot mark messages as read: user not authenticated or chat disabled');
@@ -348,13 +348,13 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         }
 
         try {
-            // Update read status via API
+            
             await apiClient.post('/chat/mark-read', {
                 room_id: roomId,
                 message_ids: messageIds,
             });
 
-            // Emit socket event for real-time updates
+            
             socketRef.current.emit('mark_read', {
                 roomId,
                 messageIds,
@@ -366,7 +366,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         }
     }, [isConnected, user, enableChat]);
 
-    // Set up message read callback
+    
     const onMessagesRead = useCallback((callback: (data: { roomId: string; messageIds: number[]; readBy: number; timestamp: string }) => void) => {
         if (!socketRef.current || !enableChat) return;
 
@@ -377,7 +377,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
 
         socketRef.current.on('messages_read', handleMessagesRead);
 
-        // Return cleanup function
+        
         return () => {
             if (socketRef.current) {
                 socketRef.current.off('messages_read', handleMessagesRead);
@@ -385,7 +385,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         };
     }, [enableChat]);
 
-    // Set up offer created callback
+    
     const onOfferCreated = useCallback((callback: (data: { roomId: string; offerData: any; senderId: number; timestamp: string }) => void) => {
         if (!socketRef.current || !enableChat) return;
 
@@ -403,7 +403,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         };
     }, [enableChat]);
 
-    // Set up offer accepted callback
+    
     const onOfferAccepted = useCallback((callback: (data: { roomId: string; offerData: any; contractData: any; senderId: number; timestamp: string }) => void) => {
         if (!socketRef.current || !enableChat) return;
 
@@ -421,7 +421,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         };
     }, [enableChat]);
 
-    // Set up offer rejected callback
+    
     const onOfferRejected = useCallback((callback: (data: { roomId: string; offerData: any; senderId: number; rejectionReason?: string; timestamp: string }) => void) => {
         if (!socketRef.current || !enableChat) return;
 
@@ -439,7 +439,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         };
     }, [enableChat]);
 
-    // Set up offer cancelled callback
+    
     const onOfferCancelled = useCallback((callback: (data: { roomId: string; offerData: any; senderId: number; timestamp: string }) => void) => {
         if (!socketRef.current || !enableChat) return;
 
@@ -457,7 +457,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         };
     }, [enableChat]);
 
-    // Set up contract completed callback
+    
     const onContractCompleted = useCallback((callback: (data: { roomId: string; contractData: any; senderId: number; timestamp: string }) => void) => {
         if (!socketRef.current || !enableChat) return;
 
@@ -475,7 +475,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         };
     }, [enableChat]);
 
-    // Set up contract terminated callback
+    
     const onContractTerminated = useCallback((callback: (data: { roomId: string; contractData: any; senderId: number; terminationReason?: string; timestamp: string }) => void) => {
         if (!socketRef.current || !enableChat) return;
 
@@ -493,7 +493,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         };
     }, [enableChat]);
 
-    // Set up contract activated callback
+    
     const onContractActivated = useCallback((callback: (data: { roomId: string; contractData: any; senderId: number; timestamp: string }) => void) => {
         if (!socketRef.current || !enableChat) return;
 
@@ -511,7 +511,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         };
     }, [enableChat]);
 
-    // Set up offer acceptance message callback
+    
     const onOfferAcceptanceMessage = useCallback((callback: (data: { roomId: string; offerData: any; contractData: any; senderId: number; senderName: string; senderAvatar?: string; timestamp: string }) => void) => {
         if (!socketRef.current || !enableChat) return;
 
@@ -529,7 +529,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         };
     }, [enableChat]);
 
-    // Set up contract status update callback
+    
     const onContractStatusUpdate = useCallback((callback: (data: { roomId: string; contractData: any; terminationReason?: string; timestamp: string }) => void) => {
         if (!socketRef.current || !enableChat) return;
 
@@ -547,7 +547,7 @@ export const useSocket = (options: UseSocketOptions = {}): UseSocketReturn => {
         };
     }, [enableChat]);
 
-    // Send offer acceptance message
+    
     const sendOfferAcceptanceMessage = useCallback((roomId: string, offerData: any, contractData: any, senderId: number, senderName: string, senderAvatar?: string) => {
         if (!socketRef.current || !isConnected || !isMountedRef.current || !enableChat) {
             return;

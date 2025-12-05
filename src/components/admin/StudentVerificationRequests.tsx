@@ -30,7 +30,7 @@ export default function StudentVerificationRequests() {
                 per_page: data.per_page,
                 total: data.total,
             });
-            // Sync page state with actual current page from API
+            
             if (data.current_page !== page) {
                 setPage(data.current_page);
             }
@@ -43,7 +43,7 @@ export default function StudentVerificationRequests() {
 
     useEffect(() => {
         fetchRequests();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        
     }, [status, page]);
 
     const handleApprove = async (requestId: number) => {

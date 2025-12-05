@@ -45,7 +45,7 @@ interface WithdrawalMethod {
   fee: number;
   required_fields?: string[];
   field_config?: Record<string, any>;
-  // Stripe payment method fields (optional)
+  
   stripe_payment_method_id?: string;
   stripe_customer_id?: string;
   card_brand?: string;
@@ -145,13 +145,13 @@ export default function WithdrawalModal({
         console.log("Withdrawal methods received:", response.data.data);
         console.log("Methods count:", response.data.data.length);
         
-        // Deduplicate methods by ID to prevent duplicate keys
+        
         const uniqueMethods = response.data.data.reduce((acc: WithdrawalMethod[], method: WithdrawalMethod) => {
           const existingIndex = acc.findIndex((m) => m.id === method.id);
           if (existingIndex === -1) {
             acc.push(method);
           } else {
-            // If duplicate found, prefer the one with stripe_payment_method_id (user-specific)
+            
             if (method.stripe_payment_method_id && !acc[existingIndex].stripe_payment_method_id) {
               acc[existingIndex] = method;
             }
@@ -160,7 +160,7 @@ export default function WithdrawalModal({
         }, []);
         
         console.log("Unique methods count:", uniqueMethods.length);
-        // Log each method to see what's included
+        
         uniqueMethods.forEach((method: WithdrawalMethod, index: number) => {
           console.log(`Method ${index}:`, {
             id: method.id,
@@ -251,7 +251,7 @@ export default function WithdrawalModal({
         const totalFees = calculateTotalFees();
         const processingTime = selectedMethodData?.processing_time || "1-3 dias úteis";
         
-        // Show success toast with detailed information
+        
         toast({
           title: "✅ Saque Solicitado com Sucesso!",
           description: `${formatCurrency(amount)} via ${selectedMethodData?.name || withdrawalData.method}\n\n` +
@@ -275,12 +275,12 @@ export default function WithdrawalModal({
       const actionRequired = errorData.action_required;
       const blocked = errorData.blocked;
       
-      // Check if Stripe setup is required
+      
       if (actionRequired === "stripe_setup" && blocked) {
-        // Start countdown
+        
         setCountdown(5);
         
-        // Show error toast with countdown
+        
         toast({
           title: "⚠️ Configuração Stripe Necessária",
           description: errorMessage,
@@ -288,7 +288,7 @@ export default function WithdrawalModal({
           duration: 6000,
         });
       } else {
-        // Enhanced error toast with helpful guidance for other errors
+        
         let helpfulMessage = errorMessage;
         
         if (errorMessage.includes("Saldo insuficiente")) {
@@ -319,22 +319,22 @@ export default function WithdrawalModal({
     setCountdown(null);
   };
 
-  // Cleanup countdown on unmount or modal close
+  
   useEffect(() => {
     if (!isOpen) {
       setCountdown(null);
     }
   }, [isOpen]);
 
-  // Handle countdown and redirect
+  
   useEffect(() => {
     if (countdown !== null && countdown > 0) {
       const countdownInterval = setInterval(() => {
         setCountdown((prev) => {
           if (prev === null || prev <= 1) {
-            // Close modal first
+            
             onClose();
-            // Navigate to Stripe Connect page
+            
             setTimeout(() => {
               if (setComponent) {
                 setComponent("Configuração Stripe");
@@ -384,7 +384,7 @@ export default function WithdrawalModal({
   const renderMethodFields = () => {
     if (!selectedMethodData) return null;
 
-    // For Pagar.me bank transfer, no additional fields are needed
+    
     if (selectedMethodData.id === 'pagarme_bank_transfer') {
       return (
         <div className="space-y-3">
@@ -408,7 +408,7 @@ export default function WithdrawalModal({
       );
     }
 
-    // Use dynamic field configuration if available
+    
     if (selectedMethodData.field_config) {
       return (
         <div className="space-y-3">
@@ -457,7 +457,7 @@ export default function WithdrawalModal({
       );
     }
 
-    // Fallback to hardcoded fields for backward compatibility
+    
     switch (selectedMethodData.id) {
       case "pix":
         return (
@@ -663,18 +663,18 @@ export default function WithdrawalModal({
   const calculateFee = () => {
     if (!selectedMethodData || !amount) return 0;
     
-    // Check if the method has a fixed fee or percentage fee
+    
     if (selectedMethodData.id === 'pix') {
-      // PIX has a fixed fee
+      
       return selectedMethodData.fee;
     } else {
-      // Other methods have percentage fees
+      
       return (parseFloat(amount) * selectedMethodData.fee) / 100;
     }
   };
 
   const calculateFixedFee = () => {
-    return 5.00; // R$5 fixed platform fee
+    return 5.00; 
   };
 
   const calculateTotalFees = () => {
@@ -740,7 +740,7 @@ export default function WithdrawalModal({
           }}
         >
           <form onSubmit={handleSubmit} className="space-y-6 pb-4">
-            {/* Balance Info */}
+            {}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -771,7 +771,7 @@ export default function WithdrawalModal({
             </Card>
 
 
-            {/* Amount Input */}
+            {}
             <div className="space-y-3">
               <Label htmlFor="amount">Valor do Saque</Label>
               <Input
@@ -798,10 +798,10 @@ export default function WithdrawalModal({
               </div>
             </div>
 
-            {/* Method Specific Fields */}
+            {}
             {selectedMethod && renderMethodFields()}
 
-            {/* Fee Calculation */}
+            {}
             {selectedMethodData && amount && (
               <Card>
                 <CardHeader className="pb-3">
@@ -847,7 +847,7 @@ export default function WithdrawalModal({
               </Card>
             )}
 
-            {/* Warning */}
+            {}
             <div className="flex items-start gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
               <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
               <div className="space-y-1">
@@ -865,7 +865,7 @@ export default function WithdrawalModal({
             </div>
           </form>
           
-          {/* Scroll indicator gradient */}
+          {}
           <div className="absolute bottom-0 left-0 right-2 h-4 bg-gradient-to-t from-background to-transparent pointer-events-none" />
         </div>
 

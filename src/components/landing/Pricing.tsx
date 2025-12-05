@@ -10,14 +10,14 @@ export const Pricing = () => {
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
 
   const handleButtonClick = () => {
-    // Check if user is authenticated
+    
     if (!isAuthenticated || !user) {
-      // If not logged in, redirect to register page with state to redirect to subscription after registration
+      
       navigate("/signup/creator", { 
         state: { redirectTo: "/creator/subscription" } 
       });
     } else {
-      // If logged in, redirect to subscription page
+      
       navigate("/creator/subscription");
     }
   };

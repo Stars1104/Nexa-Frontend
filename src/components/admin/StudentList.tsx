@@ -31,7 +31,7 @@ interface StudentsResponse {
     pagination: PaginationData;
 }
 
-// Removido: paginação client-side (vamos usar server-side)
+
 
 export default function StudentList() {
     const [students, setStudents] = useState<AdminStudent[]>([]);
@@ -46,7 +46,7 @@ export default function StudentList() {
     const [actionLoading, setActionLoading] = useState<number | null>(null);
     const { toast } = useToast();
 
-    // Fetch students data
+    
     const fetchStudents = async () => {
         setLoading(true);
         setError(null);
@@ -70,28 +70,28 @@ export default function StudentList() {
         }
     };
 
-    // Load data when component mounts
+    
     useEffect(() => {
         fetchStudents();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        
     }, [page, perPage, statusFilter]);
 
-    // Buscar ao pressionar Enter no search
+    
     useEffect(() => {
         const handler = setTimeout(() => {
             setPage(1);
             fetchStudents();
         }, 400);
         return () => clearTimeout(handler);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        
     }, [searchTerm]);
 
-    // Filter students based on search and status
-    // Sem filtro client-side; usamos os dados paginados do backend
+    
+    
 
-    // Update trial period
+    
     const updateTrialPeriod = async (studentId: number, period: '1month' | '6months' | '1year') => {
-        if (updatingStudent === studentId) return; // Prevent multiple clicks
+        if (updatingStudent === studentId) return; 
         
         setUpdatingStudent(studentId);
         try {
@@ -102,7 +102,7 @@ export default function StudentList() {
                 description: result.message || "Trial period updated successfully",
             });
 
-            // Refresh the data
+            
             await fetchStudents();
         } catch (err: any) {
             console.error('Error updating trial period:', err);
@@ -116,9 +116,9 @@ export default function StudentList() {
         }
     };
 
-    // Update student status (activate, block, remove)
+    
     const updateStudentStatus = async (studentId: number, action: 'activate' | 'block' | 'remove') => {
-        if (actionLoading === studentId) return; // Prevent multiple clicks
+        if (actionLoading === studentId) return; 
         
         setActionLoading(studentId);
         try {
@@ -129,7 +129,7 @@ export default function StudentList() {
                 description: result.message || "Student status updated successfully",
             });
 
-            // Refresh the data
+            
             await fetchStudents();
         } catch (err: any) {
             console.error('Error updating student status:', err);
@@ -218,7 +218,7 @@ export default function StudentList() {
                     </div>
 
                     <div className="bg-background p-4 md:p-6 rounded-lg">
-                        {/* Filters */}
+                        {}
                         <div className="flex flex-col md:flex-row gap-4 mb-6">
                             <div className="flex-1">
                                 <Input
@@ -243,14 +243,14 @@ export default function StudentList() {
                             </div>
                         </div>
 
-                        {/* Loading State */}
+                        {}
                         {loading && (
                             <div className="flex justify-center items-center py-8">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E91E63]"></div>
                             </div>
                         )}
 
-                        {/* Error State */}
+                        {}
                         {error && !loading && (
                             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
                                 <p className="text-red-600 dark:text-red-400">{error}</p>
@@ -263,7 +263,7 @@ export default function StudentList() {
                             </div>
                         )}
 
-                        {/* Students Table */}
+                        {}
                         {!loading && !error && (
                             <div className="overflow-x-auto">
                                 <div className="min-w-full inline-block align-middle">
@@ -366,7 +366,7 @@ export default function StudentList() {
                                                                         </SelectContent>
                                                                     </Select>
                                                                     <div className="flex gap-1">
-                                                                        {/* Activate Button */}
+                                                                        {}
                                                                         {!student.email_verified_at && (
                                                                             <Button
                                                                                 size="sm"
@@ -380,7 +380,7 @@ export default function StudentList() {
                                                                             </Button>
                                                                         )}
                                                                         
-                                                                        {/* Block Button */}
+                                                                        {}
                                                                         {student.email_verified_at && (
                                                                             <Button
                                                                                 size="sm"
@@ -394,7 +394,7 @@ export default function StudentList() {
                                                                             </Button>
                                                                         )}
                                                                         
-                                                                        {/* Remove Button */}
+                                                                        {}
                                                                         <AlertDialog>
                                                                             <AlertDialogTrigger asChild>
                                                                                 <Button
@@ -443,7 +443,7 @@ export default function StudentList() {
                             </div>
                         )}
 
-                        {/* Pagination (server-side) */}
+                        {}
                         {!loading && !error && pagination && (
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-6">
                                 <div className="flex items-center gap-2">

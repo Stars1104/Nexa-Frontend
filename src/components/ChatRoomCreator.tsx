@@ -43,21 +43,21 @@ export default function ChatRoomCreator({ application, onChatCreated, className 
             setIsCreating(true);
             setError(null);
 
-            // Create chat room
+            
             const response = await chatService.createChatRoom(
                 application.campaign.id,
                 application.creator.id
             );
 
-            // Close dialog
+            
             setIsOpen(false);
 
-            // Callback to parent component
+            
             if (onChatCreated) {
                 onChatCreated(response.room_id);
             }
 
-            // Navigate to chat page with the new room
+            
             navigate(`/creator/chat?room=${response.room_id}`);
 
         } catch (error: any) {
@@ -97,7 +97,7 @@ export default function ChatRoomCreator({ application, onChatCreated, className 
                 </DialogHeader>
                 
                 <div className="space-y-4">
-                    {/* Creator Info */}
+                    {}
                     <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
                         <Avatar className="w-12 h-12">
                             <AvatarImage src={application.creator.avatar} />
@@ -116,7 +116,7 @@ export default function ChatRoomCreator({ application, onChatCreated, className 
                         </Badge>
                     </div>
 
-                    {/* Campaign Info */}
+                    {}
                     <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                         <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
                             Campaign Details
@@ -131,7 +131,7 @@ export default function ChatRoomCreator({ application, onChatCreated, className 
                         </div>
                     </div>
 
-                    {/* Info */}
+                    {}
                     <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                         <div className="flex items-start gap-2">
                             <MessageCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
@@ -145,14 +145,14 @@ export default function ChatRoomCreator({ application, onChatCreated, className 
                         </div>
                     </div>
 
-                    {/* Error Message */}
+                    {}
                     {error && (
                         <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
                             <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
                         </div>
                     )}
 
-                    {/* Actions */}
+                    {}
                     <div className="flex gap-3 pt-2">
                         <Button
                             variant="outline"

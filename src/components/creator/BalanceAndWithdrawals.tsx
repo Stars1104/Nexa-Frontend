@@ -10,7 +10,7 @@ import { useAppSelector } from '@/store/hooks';
 import { useAppDispatch } from '@/store/hooks';
 import { checkAuthStatus } from '@/store/slices/authSlice';
 
-// Interface that matches WithdrawalModal's expected CreatorBalance
+
 interface WithdrawalModalBalance {
   balance: {
     available_balance: number;
@@ -64,7 +64,7 @@ export default function BalanceAndWithdrawals({ setComponent }: BalanceAndWithdr
   const { token, isAuthenticated, user } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
 
-  // Check if Redux persist is ready
+  
   useEffect(() => {
     const checkPersist = () => {
       try {
@@ -79,27 +79,27 @@ export default function BalanceAndWithdrawals({ setComponent }: BalanceAndWithdr
       }
     };
     
-    // Check immediately
+    
     checkPersist();
     
-    // Also check after a short delay to ensure persist is complete
+    
     const timer = setTimeout(checkPersist, 100);
     return () => clearTimeout(timer);
   }, []);
 
-  // Check auth status if we have a token but Redux state is not set
+  
   useEffect(() => {
     if (persistReady && !isAuthenticated && !token && localStorage.getItem('token')) {
       dispatch(checkAuthStatus());
     }
   }, [persistReady, isAuthenticated, token, dispatch]);
 
-  // Function to check and fix token mismatch
+  
   const checkAndFixToken = () => {
     const localStorageToken = localStorage.getItem('token');
     const reduxToken = token;
     
-    // If there's a mismatch, try to use localStorage token
+    
     if (localStorageToken && !reduxToken) {
       return localStorageToken;
     }
@@ -111,7 +111,7 @@ export default function BalanceAndWithdrawals({ setComponent }: BalanceAndWithdr
     try {
       setLoading(true);
       
-      // Check for token mismatch and fix if needed
+      
       const currentToken = checkAndFixToken();
       if (!currentToken) {
         window.location.href = '/auth';
@@ -151,7 +151,7 @@ export default function BalanceAndWithdrawals({ setComponent }: BalanceAndWithdr
   };
 
   useEffect(() => {
-    // Only load balance if we have authentication and persist is ready
+    
     if (persistReady && (isAuthenticated || localStorage.getItem('token'))) {
       loadBalance();
     } else {
@@ -159,12 +159,12 @@ export default function BalanceAndWithdrawals({ setComponent }: BalanceAndWithdr
   }, [token, isAuthenticated, user, persistReady]);
 
   const handleWithdrawalCreated = () => {
-    // Refresh balance data after withdrawal
+    
     setShowWithdrawalModal(false);
     loadBalance();
   };
 
-  // Transform balance data to match WithdrawalModal's expected interface
+  
   const transformedBalance: WithdrawalModalBalance | null = balance ? {
     balance: {
       available_balance: balance.balance.available_balance,
@@ -206,7 +206,7 @@ export default function BalanceAndWithdrawals({ setComponent }: BalanceAndWithdr
   return (
     <div className="w-full p-6 space-y-6 dark:bg-[#171717]">
 
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between relative" style={{ zIndex: 100 }}>
         <div>
           <h1 className="text-3xl font-bold text-foreground">Saldo e Saques</h1>
@@ -276,7 +276,7 @@ export default function BalanceAndWithdrawals({ setComponent }: BalanceAndWithdr
         </div>
       </div>
 
-      {/* Quick Stats Cards */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -324,10 +324,10 @@ export default function BalanceAndWithdrawals({ setComponent }: BalanceAndWithdr
         </Card>
       </div>
 
-      {/* Main Balance Component */}
+      {}
       <CreatorBalance />
 
-      {/* Withdrawal Modal */}
+      {}
       {transformedBalance && (
         <WithdrawalModal
           isOpen={showWithdrawalModal}

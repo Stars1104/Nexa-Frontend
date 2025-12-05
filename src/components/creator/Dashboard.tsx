@@ -42,11 +42,11 @@ import {
   CardTitle,
 } from "../ui/card";
 import { hiringApi } from "../../api/hiring";
-// import { useSafeToast } from "../../hooks/useSafeToast";
 
-// Stats will be calculated dynamically based on approved campaigns
 
-// Categorias em português
+
+
+
 const categories = [
   "Todas as categorias",
   "Vídeo",
@@ -62,7 +62,7 @@ const categories = [
   "Blog",
 ];
 
-// Estados brasileiros por nome
+
 const brazilianStates = [
   "Acre",
   "Alagoas",
@@ -132,12 +132,12 @@ export default function Dashboard({
   const { user } = useAppSelector((state) => state.auth);
   const safeToast = useSafeToast();
 
-  // Ensure creatorApplications is always an array
+  
   const safeCreatorApplications = Array.isArray(creatorApplications)
     ? creatorApplications
     : [];
 
-  // Filter state
+  
   const [filters, setFilters] = useState<FilterState>({
     category: "all",
     region: "all",
@@ -149,24 +149,24 @@ export default function Dashboard({
     budgetMax: "",
   });
 
-  // Filter panel state
+  
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  // Ensure approvedCampaigns is always an array
+  
   const campaigns = Array.isArray(approvedCampaigns) ? approvedCampaigns : [];
   
-  // Add state for completed campaigns and reviews
+  
   const [completedCampaigns, setCompletedCampaigns] = useState<number>(0);
   const [reviewStats, setReviewStats] = useState<{ total: number; average: number }>({ total: 0, average: 0 });
 
-  // Fetch approved campaigns on component mount
+  
   useEffect(() => {
     if (user?.role === "creator" || user?.role === "student") {
-      // Parallel API calls for better performance
+      
       const fetchDataInParallel = async () => {
         try {
-          // Fetch both in parallel instead of sequentially
+          
           await Promise.all([
             dispatch(fetchApprovedCampaigns()).unwrap(),
             dispatch(fetchCreatorApplications()).unwrap()
@@ -181,7 +181,7 @@ export default function Dashboard({
     }
   }, [dispatch, user?.role]);
 
-  // Clear error on component unmount
+  
   useEffect(() => {
     return () => {
       if (error) {
@@ -190,23 +190,23 @@ export default function Dashboard({
     };
   }, [dispatch]);
 
-  // Add periodic refresh to catch newly approved campaigns
-  // Temporarily disabled to fix infinite loop issue
-  // useEffect(() => {
-  //   if (user?.role === "creator") {
-  //     const interval = setInterval(() => {
-  //       dispatch(fetchApprovedCampaigns());
-  //     }, 30000); // Refresh every 30 seconds
+  
+  
+  
+  
+  
+  
+  
 
-  //     return () => clearInterval(interval);
-  //   }
-  // }, [dispatch, user?.role]);
+  
+  
+  
 
-  // Fetch completed campaigns and reviews on mount (after user is loaded)
+  
   useEffect(() => {
     const fetchStats = async () => {
       if (!user?.id) return;
-      // Fetch completed campaigns
+      
       try {
         const workHistoryRes = await hiringApi.getCreatorWorkHistory();
         const completed = Array.isArray(workHistoryRes.data.data)
@@ -216,7 +216,7 @@ export default function Dashboard({
       } catch (e) {
         setCompletedCampaigns(0);
       }
-      // Fetch reviews
+      
       try {
         const reviewsRes = await hiringApi.getReviews(user.id, undefined, true);
         const stats = reviewsRes.data.stats || {};
@@ -231,7 +231,7 @@ export default function Dashboard({
     if (user?.id) fetchStats();
   }, [user]);
 
-  // Clear all filters
+  
   const clearFilters = () => {
     setFilters({
       category: "all",
@@ -245,7 +245,7 @@ export default function Dashboard({
     });
   };
 
-  // Check if any filters are active
+  
   const hasActiveFilters =
     filters.category !== "all" ||
     filters.region !== "all" ||
@@ -263,15 +263,15 @@ export default function Dashboard({
     try {
       const result = await dispatch(toggleFavoriteCampaign(campaignId)).unwrap();
       
-      // Show success message
+      
       if (result.is_favorited) {
         safeToast.success("Campanha adicionada aos favoritos!");
       } else {
         safeToast.success("Campanha removida dos favoritos!");
       }
       
-      // The campaign slice will automatically update the local state
-      // No need to refetch all campaigns
+      
+      
       
     } catch (error) {
       console.error('❌ Error in handleToggleFavorite:', error);
@@ -279,10 +279,10 @@ export default function Dashboard({
     }
   };
 
-  // Filter and sort campaigns - memoized for performance
+  
   const filteredAndSortedCampaigns = useMemo(() => {
     return campaigns.filter((campaign) => {
-      // Search filter
+      
       if (filters.search) {
         const searchTerm = filters.search.toLowerCase();
         const title = campaign.title?.toLowerCase() || "";
@@ -303,7 +303,7 @@ export default function Dashboard({
         }
       }
 
-      // Category filter
+      
       if (filters.category !== "all") {
         const campaignCategory =
           campaign.category?.toLowerCase() ||
@@ -314,7 +314,7 @@ export default function Dashboard({
         }
       }
 
-      // Region filter
+      
       if (filters.region !== "all") {
         const campaignLocations =
           typeof campaign.location === "string"
@@ -331,7 +331,7 @@ export default function Dashboard({
         }
       }
 
-      // Budget range filter
+      
       if (
         filters.budgetMin &&
         campaign.budget < parseFloat(filters.budgetMin)
@@ -345,7 +345,7 @@ export default function Dashboard({
         return false;
       }
 
-      // Date range filter
+      
       if (filters.dateFrom) {
         const campaignDate = new Date(campaign.deadline);
         const fromDate = new Date(filters.dateFrom);
@@ -365,11 +365,11 @@ export default function Dashboard({
       return true;
     })
     .sort((a, b) => {
-      // First priority: Favorited campaigns
+      
       if (a.is_favorited && !b.is_favorited) return -1;
       if (!a.is_favorited && b.is_favorited) return 1;
       
-      // Second priority: Sort by specified criteria
+      
       switch (filters.sort) {
         case "newest-first":
           return new Date(b.submissionDate || b.created_at).getTime() - new Date(a.submissionDate || a.created_at).getTime();
@@ -389,13 +389,13 @@ export default function Dashboard({
     });
   }, [campaigns, filters]);
 
-  // Format date for display - memoized
+  
   const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("pt-BR");
   }, []);
 
-  // Format budget for display
+  
   const formatBudget = (budget: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -403,16 +403,16 @@ export default function Dashboard({
     }).format(budget);
   };
 
-// Helper function to safely convert budget to number
+
   const safeParseBudget = (budget: any): number => {
     if (typeof budget === 'number') {
       return isNaN(budget) ? 0 : budget;
     }
     if (typeof budget === 'string') {
-      // Remove currency symbols and formatting
+      
       const cleanValue = budget.replace(/[^\d,.-]/g, '');
       if (cleanValue.includes(',')) {
-        // Handle Brazilian format (1.500,50 -> 1500.50)
+        
         const withoutThousands = cleanValue.replace(/\./g, '');
         const numericValue = withoutThousands.replace(',', '.');
         const parsed = parseFloat(numericValue);
@@ -425,7 +425,7 @@ export default function Dashboard({
     return 0;
   };
 
-  // Calculate days until deadline
+  
   const getDaysUntilDeadline = (deadline: string) => {
     const deadlineDate = new Date(deadline);
     const today = new Date();
@@ -434,7 +434,7 @@ export default function Dashboard({
     return diffDays;
   };
 
-  // Get deadline status
+  
   const getDeadlineStatus = (deadline: string) => {
     const days = getDaysUntilDeadline(deadline);
     if (days < 0)
@@ -462,7 +462,7 @@ export default function Dashboard({
     };
   };
 
-  // Calculate enhanced stats
+  
   const activeOpportunities = campaigns.filter(
     (c) => getDaysUntilDeadline(c.deadline) > 0
   ).length;
@@ -487,7 +487,7 @@ export default function Dashboard({
 
   return (
     <div className="flex flex-col gap-4 sm:gap-6 lg:gap-8 p-4 sm:p-6 lg:p-8 min-h-[92vh] dark:bg-[#171717]">
-      {/* Welcome */}
+      {}
       <div className="flex flex-col gap-2">
         <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold flex items-center gap-2">
           Bem-vinda, {user?.name || "Criador"} <span>👋</span>
@@ -497,7 +497,7 @@ export default function Dashboard({
         </p>
       </div>
 
-      {/* Enhanced Stats */}
+      {}
       <CampaignStats
         totalCampaigns={campaigns.length}
         myApplications={safeCreatorApplications.length}
@@ -508,9 +508,9 @@ export default function Dashboard({
         averageBudget={averageBudget}
       />
 
-      {/* Search and Filters */}
+      {}
       <div className="space-y-4">
-        {/* Search Bar */}
+        {}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
@@ -523,7 +523,7 @@ export default function Dashboard({
           />
         </div>
 
-        {/* Filter Toggle and Quick Actions */}
+        {}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 justify-between">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
             <Button
@@ -599,7 +599,7 @@ export default function Dashboard({
           </div>
         </div>
 
-        {/* Advanced Filters Panel */}
+        {}
         {showFilters && (
           <Card className="border-2">
             <CardHeader>
@@ -610,7 +610,7 @@ export default function Dashboard({
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Category Filter */}
+                {}
                 <div className="space-y-2">
                   <Label
                     htmlFor="category-filter"
@@ -640,7 +640,7 @@ export default function Dashboard({
                   </Select>
                 </div>
 
-                {/* Region Filter */}
+                {}
                 <div className="space-y-2">
                   <Label
                     htmlFor="region-filter"
@@ -668,7 +668,7 @@ export default function Dashboard({
                   </Select>
                 </div>
 
-                {/* Budget Min Filter */}
+                {}
                 <div className="space-y-2">
                   <Label className="text-xs font-medium">
                     Orçamento Mínimo
@@ -687,7 +687,7 @@ export default function Dashboard({
                   />
                 </div>
 
-                {/* Budget Max Filter */}
+                {}
                 <div className="space-y-2">
                   <Label className="text-xs font-medium">
                     Orçamento Máximo
@@ -706,7 +706,7 @@ export default function Dashboard({
                   />
                 </div>
 
-                {/* Date From Filter */}
+                {}
                 <div className="space-y-2">
                   <Label className="text-xs font-medium">Data Inicial</Label>
                   <Popover>
@@ -738,7 +738,7 @@ export default function Dashboard({
                   </Popover>
                 </div>
 
-                {/* Date To Filter */}
+                {}
                 <div className="space-y-2">
                   <Label className="text-xs font-medium">Data Final</Label>
                   <Popover>
@@ -775,7 +775,7 @@ export default function Dashboard({
         )}
       </div>
 
-      {/* Tabs for Campaigns and Contracts */}
+      {}
       <Tabs defaultValue="campaigns" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="campaigns" className="flex items-center gap-2">

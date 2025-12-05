@@ -23,7 +23,7 @@ const ResetPassword: React.FC = () => {
   const email = searchParams.get("email");
 
   useEffect(() => {
-    // If token or email is missing, redirect to forgot password page
+    
     if (!token || !email) {
       setTimeout(() => {
         navigate("/forgot-password");
@@ -36,7 +36,7 @@ const ResetPassword: React.FC = () => {
     setError("");
     setLoading(true);
 
-    // Password validation
+    
     if (password.length < 8) {
       setError("A senha deve ter pelo menos 8 caracteres.");
       setLoading(false);
@@ -49,28 +49,28 @@ const ResetPassword: React.FC = () => {
       return;
     }
 
-    // Check for at least 1 number
+    
     if (!/\d/.test(password)) {
       setError("A senha deve conter pelo menos 1 número.");
       setLoading(false);
       return;
     }
 
-    // Check for at least 1 uppercase letter
+    
     if (!/[A-Z]/.test(password)) {
       setError("A senha deve conter pelo menos 1 letra maiúscula.");
       setLoading(false);
       return;
     }
 
-    // Check for at least 1 special character
+    
     if (!/[^a-zA-Z0-9]/.test(password)) {
       setError("A senha deve conter pelo menos 1 caractere especial.");
       setLoading(false);
       return;
     }
 
-    // Check for at least 1 lowercase letter
+    
     if (!/[a-z]/.test(password)) {
       setError("A senha deve conter pelo menos 1 letra minúscula.");
       setLoading(false);
@@ -94,7 +94,7 @@ const ResetPassword: React.FC = () => {
     }
   };
 
-  // Show message if token or email is missing
+  
   if (!token || !email) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-[#171717] transition-colors duration-300 relative">
@@ -215,7 +215,7 @@ const ResetPassword: React.FC = () => {
           </>
         )}
 
-        {/* Login link */}
+        {}
         <div className="text-center mt-4 text-sm flex flex-col gap-2">
           <div className="flex justify-center gap-2">
             <span className="text-gray-700 dark:text-gray-200">

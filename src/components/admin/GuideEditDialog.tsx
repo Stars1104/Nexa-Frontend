@@ -34,12 +34,10 @@ import { UpdateGuide } from "@/api/admin/guide";
 import { Plus, Trash2, GripVertical, Play, Image } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
-/**
- * Validation schemas
- */
 
-const MAX_VIDEO_BYTES = 80 * 1024 * 1024; // 80MB
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
+
+const MAX_VIDEO_BYTES = 80 * 1024 * 1024; 
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024; 
 
 const stepSchema = z.object({
   id: z.number().optional(),
@@ -103,14 +101,14 @@ const GuideEditDialog: React.FC<GuideEditDialogProps> = ({ isOpen, onClose, guid
 
   useEffect(() => {
     if (isOpen && guide) {
-      // Reset form with guide data
+      
       form.reset({
         title: guide.title,
         audience: guide.audience as "Brand" | "Creator",
         description: guide.description,
       });
 
-      // Set steps with existing data
+      
       if (guide.steps && guide.steps.length > 0) {
         const sortedSteps = [...guide.steps].sort((a: any, b: any) => a.order - b.order);
         setSteps(sortedSteps.map((step: any) => ({
@@ -147,7 +145,7 @@ const GuideEditDialog: React.FC<GuideEditDialogProps> = ({ isOpen, onClose, guid
   };
 
   const validateSteps = (): boolean => {
-    // Validate steps manually
+    
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
       if (!step.title || step.title.length < 2) {
@@ -172,7 +170,7 @@ const GuideEditDialog: React.FC<GuideEditDialogProps> = ({ isOpen, onClose, guid
 
   const onSubmit = async (values: GuideFormValues) => {
     try {
-      // Check authentication
+      
       const token = localStorage.getItem('token');
       if (!token) {
         toast({
@@ -183,14 +181,14 @@ const GuideEditDialog: React.FC<GuideEditDialogProps> = ({ isOpen, onClose, guid
         return;
       }
       
-      // Validate steps before submission
+      
       if (!validateSteps()) {
         return;
       }
 
       setLoading(true);
 
-      // Build FormData because your backend expects multipart/form-data with file
+      
       const fd = new FormData();
       fd.append("title", values.title);
       fd.append("audience", values.audience);
@@ -204,7 +202,7 @@ const GuideEditDialog: React.FC<GuideEditDialogProps> = ({ isOpen, onClose, guid
         }
       });
 
-      // Call the API function with FormData
+      
       const result = await UpdateGuide(guide.id, {
         title: values.title,
         audience: values.audience,
@@ -212,7 +210,7 @@ const GuideEditDialog: React.FC<GuideEditDialogProps> = ({ isOpen, onClose, guid
         steps: steps,
       });
 
-      // Show success toast
+      
       toast({
         title: "Guia atualizado com sucesso!",
         description: "O guia foi atualizado no sistema.",
@@ -220,7 +218,7 @@ const GuideEditDialog: React.FC<GuideEditDialogProps> = ({ isOpen, onClose, guid
 
       onClose(false);
       
-      // Call onSuccess callback if provided
+      
       if (onSuccess) {
         onSuccess();
       }
@@ -252,7 +250,7 @@ const GuideEditDialog: React.FC<GuideEditDialogProps> = ({ isOpen, onClose, guid
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Main Guide Fields */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -305,7 +303,7 @@ const GuideEditDialog: React.FC<GuideEditDialogProps> = ({ isOpen, onClose, guid
               )}
             />
 
-            {/* Steps Section */}
+            {}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Passos do Guia</h3>

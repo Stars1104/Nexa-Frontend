@@ -43,7 +43,7 @@ export default function ContractPaymentModal({
       const response = await brandPaymentApi.getAvailablePaymentMethods();
       if (response.success && response.data) {
         setPaymentMethods(response.data);
-        // Auto-select default payment method
+        
         const defaultMethod = response.data.find(method => method.is_default);
         if (defaultMethod) {
           setSelectedPaymentMethod(defaultMethod.id);
@@ -176,7 +176,7 @@ export default function ContractPaymentModal({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Contract Summary */}
+          {}
           <Card>
             <CardContent className="pt-6">
               <div className="space-y-2">
@@ -191,7 +191,7 @@ export default function ContractPaymentModal({
             </CardContent>
           </Card>
 
-          {/* Payment Methods */}
+          {}
           <div className="space-y-3">
             <h4 className="font-medium">Método de Pagamento</h4>
             <RadioGroup value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
@@ -223,7 +223,7 @@ export default function ContractPaymentModal({
             </RadioGroup>
           </div>
 
-          {/* Payment Info */}
+          {}
           <Card className="bg-muted/50">
             <CardContent className="pt-6">
               <div className="space-y-2">

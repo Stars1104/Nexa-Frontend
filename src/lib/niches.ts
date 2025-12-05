@@ -1,4 +1,4 @@
-// Fonte unificada de nichos/tipos para Creator e Campanha
+
 
 const CREATOR_NICHES_BASE = [
   "Moda e Beleza", "Tecnologia", "Saúde e Bem-estar", "Educação", "Entretenimento",
@@ -28,7 +28,7 @@ function toTitleCaseBasic(value: string): string {
     .join("");
 }
 
-// Unifica e remove duplicatas (case-insensitive), normalizando capitalização
+
 const unifiedSet = new Map<string, string>();
 for (const item of [...CREATOR_NICHES_BASE, ...CAMPAIGN_TYPES_BASE]) {
   const normalized = item.trim();

@@ -17,7 +17,6 @@ import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { disableTranslation } from "./utils/translationUtils";
 
-// Lazy load routes for code splitting
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AuthStep = lazy(() => import("./pages/auth/AuthStep"));
@@ -48,46 +47,37 @@ const App = () => {
   const [isAppReady, setIsAppReady] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Carregando...');
   
-  // Disable browser translation on app mount
   useEffect(() => {
     disableTranslation();
   }, []);
   
-  // Initialize auth rehydration
   const authState = useAuthRehydration();
   
-  // Initialize global socket connection for real-time notifications
   useSocket();
   
-  // Initialize session timeout
   const sessionTimeout = useSessionTimeout({
     onTimeout: () => {},
     onWarning: () => {}
   });
 
-  // Initialize browser close logout
   useBrowserCloseLogout({
-    enabled: false, // Disabled to prevent aggressive logout
+    enabled: false,
     onLogout: () => {}
   });
 
-  // Set app as ready after authentication is properly initialized
   useEffect(() => {
     const timer = setTimeout(() => {
-      // Only set app as ready if authentication rehydration is complete
-      // This prevents routes from rendering before auth state is restored
       if (!authState.isRehydrating) {
         setIsAppReady(true);
       }
     }, 1000);
 
-    // Add a timeout to prevent infinite loading
     const timeoutTimer = setTimeout(() => {
       if (!isAppReady) {
         console.warn('App - Initialization timeout, forcing ready state');
         setIsAppReady(true);
       }
-    }, 10000); // 10 second timeout
+    }, 10000);
 
     return () => {
       clearTimeout(timer);
@@ -95,7 +85,6 @@ const App = () => {
     };
   }, [authState.isRehydrating, isAppReady]);
 
-  // Loading component for lazy routes
   const RouteLoading = () => (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
@@ -105,7 +94,6 @@ const App = () => {
     </div>
   );
 
-  // Show loading state while app initializes
   if (!isAppReady) {
     const message = authState.isRehydrating 
       ? 'Verificando autenticação...' 
@@ -129,14 +117,12 @@ const App = () => {
             <PremiumProvider>
               <TooltipProvider>
                 <Sonner />
-                {/* <DebugUserState /> */}
                 <BrowserRouter
                   future={{
                     v7_startTransition: true,
                     v7_relativeSplatPath: true,
                   }}
                 >
-                  {/* Session Warning Modal */}
                   <SessionWarningModal
                     isOpen={sessionTimeout.isWarningShown}
                     remainingMinutes={sessionTimeout.remainingMinutes}
@@ -206,15 +192,12 @@ const App = () => {
                           <NotificationsPage />
                         </ProtectedRoute>
                       } />             
-                      {/* Guide route - accessible to everyone */}
                       <Route path="/guides" element={<Guide />} />
                       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               
-                      {/* Documentation route - accessible to everyone */}
                       <Route path="/docs" element={<Documentation />} />
                       <Route path="/docs/:section" element={<Documentation />} />
                       
-                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>

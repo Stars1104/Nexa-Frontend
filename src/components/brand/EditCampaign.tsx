@@ -35,8 +35,8 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
     title: campaign.title,
     description: campaign.description,
     budget: campaign.budget,
-    // Work directly with date string to avoid timezone conversion issues
-    // campaign.deadline comes as "YYYY-MM-DD" from backend, use it directly
+    
+    
     deadline: campaign.deadline ? (typeof campaign.deadline === 'string' ? campaign.deadline.split('T')[0] : format(new Date(campaign.deadline), 'yyyy-MM-dd')) : '',
     remuneration_type: campaign.remuneration_type,
     requirements: campaign.requirements || '',
@@ -62,8 +62,8 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
     if (!formData.deadline) {
       newErrors.deadline = 'Prazo é obrigatório';
     } else {
-      // Create Date in local timezone to avoid UTC conversion issues
-      // formData.deadline is in format "YYYY-MM-DD"
+      
+      
       const [year, month, day] = formData.deadline.split('-').map(Number);
       const deadlineDate = new Date(year, month - 1, day);
       const today = new Date();
@@ -85,15 +85,15 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
     }
     setIsUpdating(true);
     try {
-      // Validate deadline date format (YYYY-MM-DD)
+      
       if (!formData.deadline || !/^\d{4}-\d{2}-\d{2}$/.test(formData.deadline)) {
         toast.error("Data de prazo inválida");
         setIsUpdating(false);
         return;
       }
       
-      // Create Date in local timezone to avoid UTC conversion issues
-      // This ensures the date is interpreted in the user's local timezone, not UTC
+      
+      
       const [year, month, day] = formData.deadline.split('-').map(Number);
       const deadlineDate = new Date(year, month - 1, day);
       
@@ -103,7 +103,7 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
         return;
       }
 
-      // Map form data to CampaignFormData interface
+      
       const campaignData = {
         title: formData.title?.trim() || '',
         description: formData.description?.trim() || '',
@@ -120,7 +120,7 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
         maxAge: campaign.max_age,
       };
 
-      // Validate critical fields
+      
       if (!campaignData.title) {
         toast.error("Título é obrigatório");
         setIsUpdating(false);
@@ -150,7 +150,7 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
+    
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -174,7 +174,7 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Title */}
+          {}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Título da Campanha *
@@ -193,7 +193,7 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
             )}
           </div>
 
-          {/* Description */}
+          {}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Descrição *
@@ -212,7 +212,7 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
             )}
           </div>
 
-          {/* Remuneration Type */}
+          {}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Tipo de Remuneração
@@ -243,7 +243,7 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
             </div>
           </div>
 
-          {/* Budget */}
+          {}
           {formData.remuneration_type === 'paga' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -266,7 +266,7 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
             </div>
           )}
 
-          {/* Deadline */}
+          {}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Prazo *
@@ -284,7 +284,7 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
             )}
           </div>
 
-          {/* Requirements */}
+          {}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Requisitos e Briefing
@@ -298,7 +298,7 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
             />
           </div>
 
-          {/* Note about limitations */}
+          {}
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
@@ -313,7 +313,7 @@ const EditCampaign: React.FC<EditCampaignProps> = ({ campaign, onClose, onSave }
             </div>
           </div>
 
-          {/* Actions */}
+          {}
           <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               type="button"

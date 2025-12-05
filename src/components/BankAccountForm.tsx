@@ -41,7 +41,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
     name: ''
   });
 
-  // Brazilian bank codes and names
+  
   const bankOptions = [
     { code: '001', name: 'Banco do Brasil S.A.' },
     { code: '104', name: 'Caixa Econômica Federal' },
@@ -60,7 +60,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
     { code: '756', name: 'Sicoob – Sistema de Cooperativas de Crédito' }
   ];
 
-  // Ensure bankInfo is never undefined
+  
   const safeBankInfo = bankInfo || {
     bank_code: '',
     agencia: '',
@@ -71,15 +71,15 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
     name: ''
   };
 
-  // CPF validation function
+  
   const validateCPF = (cpf: string): boolean => {
     const cleanCPF = cpf.replace(/\D/g, '');
     if (cleanCPF.length !== 11) return false;
     
-    // Check for known invalid CPFs
+    
     if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
     
-    // Validate first digit
+    
     let sum = 0;
     for (let i = 0; i < 9; i++) {
       sum += parseInt(cleanCPF.charAt(i)) * (10 - i);
@@ -88,7 +88,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
     if (remainder === 10 || remainder === 11) remainder = 0;
     if (remainder !== parseInt(cleanCPF.charAt(9))) return false;
     
-    // Validate second digit
+    
     sum = 0;
     for (let i = 0; i < 10; i++) {
       sum += parseInt(cleanCPF.charAt(i)) * (11 - i);
@@ -100,53 +100,53 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
     return true;
   };
 
-  // Form validation
+  
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
 
-    // Bank code validation
+    
     if (!safeBankInfo.bank_code.trim()) {
       newErrors.bank_code = 'Código do banco é obrigatório';
     } else if (!/^\d{3,4}$/.test(safeBankInfo.bank_code)) {
       newErrors.bank_code = 'Código do banco deve ter 3 ou 4 dígitos';
     }
 
-    // Agency validation
+    
     if (!safeBankInfo.agencia.trim()) {
       newErrors.agencia = 'Agência é obrigatória';
     } else if (!/^\d{1,5}$/.test(safeBankInfo.agencia)) {
       newErrors.agencia = 'Agência deve ter até 5 dígitos';
     }
 
-    // Agency DV validation
+    
     if (!safeBankInfo.agencia_dv.trim()) {
       newErrors.agencia_dv = 'Dígito da agência é obrigatório';
     } else if (!/^\d{1,2}$/.test(safeBankInfo.agencia_dv)) {
               newErrors.agencia_dv = 'Dígito da agência deve ter 1 ou 2 dígitos';
     }
 
-    // Account validation
+    
     if (!safeBankInfo.conta.trim()) {
       newErrors.conta = 'Conta é obrigatória';
     } else if (!/^\d{1,12}$/.test(safeBankInfo.conta)) {
       newErrors.conta = 'Conta deve ter até 12 dígitos';
     }
 
-    // Account DV validation
+    
     if (!safeBankInfo.conta_dv.trim()) {
       newErrors.conta_dv = 'Dígito da conta é obrigatório';
     } else if (!/^\d{1,2}$/.test(safeBankInfo.conta_dv)) {
               newErrors.conta_dv = 'Dígito da conta deve ter 1 ou 2 dígitos';
     }
 
-    // CPF validation
+    
     if (!safeBankInfo.cpf.trim()) {
       newErrors.cpf = 'CPF é obrigatório';
     } else if (!validateCPF(safeBankInfo.cpf)) {
       newErrors.cpf = 'CPF inválido';
     }
 
-    // Name validation
+    
     if (!safeBankInfo.name.trim()) {
       newErrors.name = 'Nome completo é obrigatório';
     } else if (safeBankInfo.name.trim().split(' ').length < 2) {
@@ -160,12 +160,12 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
-    // Clear error when user starts typing
+    
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
 
-    // Format CPF input
+    
     if (name === 'cpf') {
       const cleanValue = value.replace(/\D/g, '');
       const formattedValue = cleanValue.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
@@ -181,7 +181,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
       bank_code: value
     }));
 
-    // Clear error when user selects a bank
+    
     if (errors.bank_code) {
       setErrors(prev => ({
         ...prev,
@@ -213,7 +213,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
           description: "Informações bancárias registradas com sucesso",
         });
         
-        // Reset form
+        
         setBankInfo({
           bank_code: '',
           agencia: '',
@@ -225,7 +225,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
         });
         setErrors({});
         
-        // Call success callback if provided
+        
         if (onSuccess) {
           onSuccess();
         }
@@ -256,7 +256,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
         if (result.success && result.data?.bank_info) {
           setBankInfo(result.data.bank_info);
         } else if (result.success && result.data) {
-          // If the API returns the bank info directly without the bank_info wrapper
+          
           const bankData = result.data;
           if (bankData.bank_code || bankData.agencia || bankData.conta) {
             setBankInfo({
@@ -272,7 +272,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
         }
       } catch (error) {
         console.error('Error fetching bank info:', error);
-        // Keep the default bankInfo state if there's an error
+        
       }
     };
     fetchBankInfo();
@@ -295,7 +295,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
         
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Bank Information Section */}
+            {}
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <Building2 className="w-4 h-4" />
@@ -386,7 +386,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
               </div>
             </div>
 
-            {/* Account Information Section */}
+            {}
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <CreditCard className="w-4 h-4" />
@@ -452,7 +452,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
               </div>
             </div>
 
-            {/* Personal Information Section */}
+            {}
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <User className="w-4 h-4" />
@@ -513,7 +513,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
               </div>
             </div>
 
-            {/* Security Notice */}
+            {}
             <div className="bg-muted/50 rounded-lg p-4 border border-border">
               <div className="flex items-start gap-3">
                 <Shield className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
@@ -527,7 +527,7 @@ const BankAccountForm: React.FC<BankAccountFormProps> = ({ onSuccess }) => {
               </div>
             </div>
 
-            {/* Submit Button */}
+            {}
             <Button
               type="submit"
               className="w-full bg-primary text-primary-foreground font-medium py-3 bg-[#e91e63] text-white hover:bg-[#e91e63]/90"

@@ -43,39 +43,39 @@ function Index() {
         additionalParams: projectId ? { projectId: projectId.toString() } : {}
     });
 
-    // Handle post-login navigation to ensure proper browser history
+    
     usePostLoginNavigation({
         dashboardPath: "/creator",
         defaultComponent: "Painel"
     });
 
-    // Check if user is ONLY a student (not a creator) and not verified - show verification page
-    // This runs after post-login navigation to ensure student verification takes priority
+    
+    
     useEffect(() => {
-        // Only check if user is loaded and is a student
+        
         if (user && user.role === 'student') {
-            // If student_verified is explicitly false or undefined, show verification page
-            // This should override any default component set by post-login navigation
+            
+            
             if (user.student_verified !== true && component !== "Verificação de Aluno") {
                 setComponent("Verificação de Aluno");
             }
         }
     }, [user?.id, user?.role, user?.student_verified, component, setComponent]);
 
-    // Handle subscription route - convert pathname route to query param route
+    
     useEffect(() => {
         if (location.pathname === '/creator/subscription') {
-            // Convert /creator/subscription pathname to /creator?component=subscription query param
-            // This ensures proper navigation works after purchase
+            
+            
             const currentSearch = location.search;
             if (!currentSearch.includes('component=')) {
-                // Only convert if not already using query params
+                
                 setComponent("Assinatura");
             }
         }
     }, [location.pathname, location.search, setComponent]);
 
-    // Enhanced setComponent that also handles projectId
+    
     const handleComponentChange = (newComponent: string, newProjectId?: number | null) => {
         setComponent(newComponent, { projectId: newProjectId?.toString() });
         if (newProjectId !== undefined) {
@@ -84,20 +84,20 @@ function Index() {
     };
 
     const CreatorComponent = () => {
-        // If user is ONLY a student (not a creator) and not verified, force verification page
-        // Check if student_verified is explicitly not true (false or undefined)
+        
+        
         if (user && user.role === 'student' && user.student_verified !== true) {
             return <StudentVerify setComponent={handleComponentChange} />;
         }
 
-        // Define which components require premium access
+        
         const premiumRequiredComponents = ["Painel", "Detalhes do Projeto", "Minha Aplicação", "Chat", "Notificações"];
         const isPremiumRequired = premiumRequiredComponents.includes(component || "");
         
-        // Use the premium context which includes proper student trial logic
+        
         const userHasPremium = hasPremium;
         
-        // If premium is required and user doesn't have it, show premium guard
+        
         if (isPremiumRequired && !userHasPremium && !premiumLoading) {
             return (
                 <PremiumAccessGuard setComponent={handleComponentChange}>
@@ -131,8 +131,8 @@ function Index() {
                 return <Subscription />;
             case "Histórico de Pagamentos":
                 return <TransactionHistory />;
-            // case "Cadastro Bancário":
-            //     return <BankRegistrationDemo />;
+            
+            
             case "Configuração Stripe":
                 return <StripeConnectPage />;
             case "Verificação de Aluno":
@@ -148,7 +148,7 @@ function Index() {
         }
     }
 
-    // Show loading while checking premium status
+    
     if (premiumLoading) {
         return (
             <ThemeProvider>

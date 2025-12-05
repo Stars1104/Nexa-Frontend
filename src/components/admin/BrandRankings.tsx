@@ -28,10 +28,10 @@ export default function BrandRankings() {
                 adminApi.getComprehensiveRankings()
             ]);
 
-            // Validate rankings data structure
+            
             if (rankingsRes.data && typeof rankingsRes.data === 'object') {
                 const rankingsData = rankingsRes.data;
-                // Ensure all expected arrays exist and are arrays
+                
                 const validatedRankings = {
                     mostPosted: Array.isArray(rankingsData.mostPosted) ? rankingsData.mostPosted : [],
                     mostHired: Array.isArray(rankingsData.mostHired) ? rankingsData.mostHired : [],
@@ -47,7 +47,7 @@ export default function BrandRankings() {
                 });
             }
 
-            // Validate comprehensive rankings data
+            
             if (Array.isArray(comprehensiveRes.data)) {
                 setComprehensiveRankings(comprehensiveRes.data);
             } else {
@@ -61,7 +61,7 @@ export default function BrandRankings() {
                 description: "Falha ao carregar rankings das marcas",
                 variant: "destructive",
             });
-            // Set empty data on error
+            
             setRankings({
                 mostPosted: [],
                 mostHired: [],

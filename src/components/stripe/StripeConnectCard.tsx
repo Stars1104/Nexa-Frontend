@@ -39,7 +39,7 @@ export const StripeConnectCard: React.FC<StripeConnectCardProps> = ({
       
       const accountLink = await createAccountLink();
       
-      // Open Stripe onboarding in a new window
+      
       const newWindow = window.open(
         accountLink.url,
         'stripe-onboarding',
@@ -50,11 +50,11 @@ export const StripeConnectCard: React.FC<StripeConnectCardProps> = ({
         throw new Error('Não foi possível abrir a janela de onboarding. Verifique se o bloqueador de pop-ups está desabilitado.');
       }
 
-      // Monitor the popup window
+      
       const checkClosed = setInterval(() => {
         if (newWindow.closed) {
           clearInterval(checkClosed);
-          // Reload account status after popup closes
+          
           setTimeout(() => {
             loadAccountStatus();
             onComplete?.();
@@ -62,7 +62,7 @@ export const StripeConnectCard: React.FC<StripeConnectCardProps> = ({
         }
       }, 1000);
 
-      // Auto-close after 10 minutes if still open
+      
       setTimeout(() => {
         if (!newWindow.closed) {
           newWindow.close();

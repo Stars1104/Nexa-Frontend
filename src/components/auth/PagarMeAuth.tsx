@@ -34,7 +34,7 @@ export default function PagarMeAuth({ onSuccess, onCancel, mode = 'login' }: Pag
       ...prev,
       [name]: value
     }));
-    setError(null); // Clear error when user starts typing
+    setError(null); 
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,11 +44,11 @@ export default function PagarMeAuth({ onSuccess, onCancel, mode = 'login' }: Pag
 
     try {
       if (mode === 'login') {
-        // Authenticate user
+        
         const response = await pagarmeAuthApi.authenticate(formData);
         
         if (response.success) {
-          // Dispatch login success
+          
           dispatch(loginSuccess({
             user: response.user,
             token: response.token
@@ -62,7 +62,7 @@ export default function PagarMeAuth({ onSuccess, onCancel, mode = 'login' }: Pag
           onSuccess?.();
         }
       } else if (mode === 'link') {
-        // Link account
+        
         const response = await pagarmeAuthApi.linkAccount({
           account_id: formData.account_id
         });

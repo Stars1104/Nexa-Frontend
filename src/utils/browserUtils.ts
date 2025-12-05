@@ -1,19 +1,7 @@
-/**
- * Browser utilities for safe client-side operations
- * Prevents hydration mismatches by checking for browser environment
- */
-
-/**
- * Check if code is running in browser environment
- */
 export const isBrowser = (): boolean => {
   return typeof window !== 'undefined';
 };
 
-/**
- * Safely get item from localStorage
- * Returns null if not in browser environment
- */
 export const safeGetLocalStorage = (key: string): string | null => {
   if (!isBrowser()) {
     return null;
@@ -26,10 +14,6 @@ export const safeGetLocalStorage = (key: string): string | null => {
   }
 };
 
-/**
- * Safely set item in localStorage
- * No-op if not in browser environment
- */
 export const safeSetLocalStorage = (key: string, value: string): void => {
   if (!isBrowser()) {
     return;
@@ -41,10 +25,6 @@ export const safeSetLocalStorage = (key: string, value: string): void => {
   }
 };
 
-/**
- * Safely remove item from localStorage
- * No-op if not in browser environment
- */
 export const safeRemoveLocalStorage = (key: string): void => {
   if (!isBrowser()) {
     return;
@@ -56,10 +36,6 @@ export const safeRemoveLocalStorage = (key: string): void => {
   }
 };
 
-/**
- * Safely dispatch custom event
- * No-op if not in browser environment
- */
 export const safeDispatchEvent = (eventName: string, detail?: any): void => {
   if (!isBrowser()) {
     return;
@@ -71,10 +47,6 @@ export const safeDispatchEvent = (eventName: string, detail?: any): void => {
   }
 };
 
-/**
- * Safely add event listener
- * No-op if not in browser environment
- */
 export const safeAddEventListener = (
   eventName: string, 
   handler: EventListener, 
@@ -90,10 +62,6 @@ export const safeAddEventListener = (
   }
 };
 
-/**
- * Safely remove event listener
- * No-op if not in browser environment
- */
 export const safeRemoveEventListener = (
   eventName: string, 
   handler: EventListener
@@ -108,16 +76,12 @@ export const safeRemoveEventListener = (
   }
 };
 
-/**
- * Get token safely from localStorage
- */
+
 export const getAuthToken = (): string | null => {
   return safeGetLocalStorage('token');
 };
 
-/**
- * Dispatch premium status update event safely
- */
+
 export const dispatchPremiumStatusUpdate = (): void => {
   safeDispatchEvent('premium-status-updated');
 };

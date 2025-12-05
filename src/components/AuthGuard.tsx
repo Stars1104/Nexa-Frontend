@@ -29,18 +29,18 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    // If not authenticated and we have a user object, check if token is valid
+    
     if (!isAuthenticated && !user?.id) {
-      // Check if there's a token in localStorage
+      
       const token = localStorage.getItem('token');
       if (!token) {
-        // No token found, redirect to login
+        
         navigate('/login');
       }
     }
   }, [isAuthenticated, user?.id, navigate]);
 
-  // Show fallback if not authenticated
+  
   if (!isAuthenticated || !user?.id) {
     return <>{fallback}</>;
   }

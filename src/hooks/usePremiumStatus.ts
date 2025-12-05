@@ -15,7 +15,7 @@ export const usePremiumStatus = () => {
   const { toast } = useToast()
 
   const checkPremiumStatus = useCallback(async () => {
-    // Check if user is authenticated before making API call
+    
     const token = localStorage.getItem('token');
     if (!token) {
       setPremiumStatus(null);
@@ -32,7 +32,7 @@ export const usePremiumStatus = () => {
     } catch (error: any) {
       console.error('Error checking premium status:', error)
       
-      // Handle 401 errors specifically - user is not authenticated
+      
       if (error.response?.status === 401) {
         setPremiumStatus(null);
       } else {
@@ -53,7 +53,7 @@ export const usePremiumStatus = () => {
   }, [checkPremiumStatus])
 
   useEffect(() => {
-    // Only check premium status if user is authenticated
+    
     const token = localStorage.getItem('token');
     if (token) {
       checkPremiumStatus()
@@ -62,7 +62,7 @@ export const usePremiumStatus = () => {
     }
   }, [checkPremiumStatus])
 
-  // Listen for custom events to refresh premium status
+  
   useEffect(() => {
     const handlePremiumUpdate = () => {
       refreshPremiumStatus()

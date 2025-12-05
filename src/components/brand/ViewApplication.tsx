@@ -9,7 +9,7 @@ const labelClass =
   "text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1";
 const valueClass = "text-base font-semibold text-gray-800 dark:text-gray-100";
 
-// Component for image attachment preview with aspect ratio preservation
+
 const ImageAttachmentPreview: React.FC<{ src: string; alt: string; fileName: string }> = ({ src, alt, fileName }) => {
   const [imageError, setImageError] = useState(false);
   
@@ -62,14 +62,14 @@ interface ViewApplicationProps {
 }
 
 const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaign: propCampaign }) => {
-  // Extract campaign data from prop if it's wrapped in a response object
+  
   const extractCampaignData = (campaignObj: any) => {
     if (campaignObj && typeof campaignObj === 'object') {
-      // Check if the campaign data is wrapped in a 'data' property (API response structure)
+      
       if (campaignObj.data && typeof campaignObj.data === 'object') {
         return campaignObj.data;
       }
-      // Check if it's a direct campaign object
+      
       if (campaignObj.id && (campaignObj.title || campaignObj.description || campaignObj.budget)) {
         return campaignObj;
       }
@@ -81,19 +81,19 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
   const [campaign, setCampaign] = useState(extractCampaignData(propCampaign));
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check if we need to fetch campaign data (only ID available)
+  
   const needsFetching = campaign && campaign.id && !campaign.title;
 
-  // Fetch campaign data if only ID is available
+  
   useEffect(() => {
     if (needsFetching && campaign.id) {
       setIsLoading(true);
       dispatch(fetchCampaignById(campaign.id))
         .unwrap()
         .then((fetchedCampaign) => {
-          // Handle API response structure - campaign data might be wrapped in a 'data' property
+          
           const campaignData = (fetchedCampaign as any).data || fetchedCampaign;
-          // Update the campaign state with fetched data
+          
           setCampaign(campaignData);
         })
         .catch((error) => {
@@ -105,13 +105,13 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
     }
   }, [needsFetching, campaign?.id, dispatch]);
 
-  // Update local state when prop changes
+  
   useEffect(() => {
     const extractedData = extractCampaignData(propCampaign);
     setCampaign(extractedData);
   }, [propCampaign]);
 
-  // Check if campaign exists
+  
   if (!campaign) {
     return (
       <div className="min-h-[92vh] dark:bg-[#171717] flex flex-col items-center justify-center py-4 px-2 sm:px-10">
@@ -129,7 +129,7 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
     );
   }
 
-  // Show loading state if fetching campaign data
+  
   if (isLoading) {
     return (
       <div className="min-h-[92vh] dark:bg-[#171717] flex flex-col items-center justify-center py-4 px-2 sm:px-10">
@@ -142,7 +142,7 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
     );
   }
 
-  // Check if we have enough campaign data to display
+  
   const hasEnoughData = campaign.title || campaign.description || campaign.budget;
   if (!hasEnoughData && needsFetching) {
     return (
@@ -161,9 +161,9 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
     );
   }
 
-  // Helper function to get the best available description
+  
   const getDescription = () => {
-    // Handle requirements as array, join with commas if multiple
+    
     const requirements = Array.isArray(campaign.requirements) 
       ? campaign.requirements.join(', ') 
       : campaign.requirements;
@@ -171,7 +171,7 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
     return desc || 'Descrição não disponível';
   };
 
-  // Helper function to get remuneration type
+  
   const getRemunerationType = () => {
     const type = campaign.remunerationType || (campaign as any).remuneration_type;
     if (type === 'paga') return '💰 Paga';
@@ -179,29 +179,29 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
     return 'Não especificado';
   };
 
-  // Helper function to format date
+  
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Não especificada';
     try {
-      // Check if date is in YYYY-MM-DD format (from backend)
-      // If so, create Date in local timezone to avoid UTC conversion issues
+      
+      
       if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
         const [year, month, day] = dateString.split('-').map(Number);
         const date = new Date(year, month - 1, day);
         return date.toLocaleDateString('pt-BR');
       }
-      // For other formats, use standard parsing
+      
       return new Date(dateString).toLocaleDateString('pt-BR');
     } catch {
       return 'Data inválida';
     }
   };
 
-  // Helper function to format budget - handle both string and number types
+  
   const formatBudget = (budget?: number | string) => {
     if (!budget) return 'Não especificado';
     
-    // Convert string to number if needed
+    
     let numericBudget: number;
     if (typeof budget === 'string') {
       numericBudget = parseFloat(budget);
@@ -216,7 +216,7 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
 
 
 
-  // Helper function to get target states - handle both string and array types
+  
   const getTargetStates = () => {
     if (!campaign.target_states) return [];
     
@@ -224,7 +224,7 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
       return campaign.target_states;
     }
     
-    // Handle case where target_states is a JSON string
+    
     if (typeof campaign.target_states === 'string') {
       try {
         const parsed = JSON.parse(campaign.target_states);
@@ -239,7 +239,7 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
 
   return (
     <div className="min-h-[92vh] dark:bg-[#171717] flex flex-col items-center py-4 px-2 sm:px-10">
-      {/* Top Bar */}
+      {}
       <div className="w-full flex items-center gap-2 mb-6">
         <button
           onClick={() => setComponent?.('Minhas campanhas')}
@@ -259,9 +259,9 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
         </button>
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">Detalhes da Campanha</h1>
       </div>
-      {/* Main Card */}
+      {}
       <div className="w-full bg-background rounded-xl shadow-md p-4 sm:p-8">
-        {/* Header */}
+        {}
         <div className="flex flex-col sm:flex-row items-center justify-between sm:items-start gap-4 border-b border-gray-200 dark:border-neutral-700 pb-4 mb-4">
           <div className="flex justify-center items-center gap-4">
             <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gray-200 dark:bg-neutral-700 flex items-center justify-center text-3xl font-bold text-gray-400 overflow-hidden">
@@ -307,7 +307,7 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
           </span>
         </div>
 
-        {/* Info Grid */}
+        {}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6 border-b border-gray-200 dark:border-neutral-700 pb-4">
           <div>
             <div className={labelClass}>Valor</div>
@@ -327,13 +327,13 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
           </div>
         </div>
 
-        {/* Briefing */}
+        {}
         <section className="mb-6">
           <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Briefing</h3>
           <p className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed">{getDescription()}</p>
         </section>
 
-        {/* States */}
+        {}
         <section className="mb-6">
           <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Estados</h3>
           <div className="flex flex-wrap gap-2">
@@ -352,9 +352,9 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
           </div>
         </section>
 
-        {/* Attachments */}
+        {}
         {(() => {
-          // Handle both array format (new) and string format (backward compatibility)
+          
           const attachments = campaign.attachments || (campaign.attach_file ? (Array.isArray(campaign.attach_file) ? campaign.attach_file : [campaign.attach_file]) : []);
           return attachments.length > 0 && (
             <section className="mb-6">
@@ -364,7 +364,7 @@ const ViewApplication: React.FC<ViewApplicationProps> = ({ setComponent, campaig
                 const fileName = attachment.split('/').pop() || `Arquivo ${index + 1}`;
                 const fileExtension = fileName.split('.').pop()?.toLowerCase();
                 
-                // Determine file type icon and styling
+                
                 const getFileIcon = () => {
                   if (['pdf'].includes(fileExtension || '')) {
                     return (

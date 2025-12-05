@@ -54,7 +54,7 @@ const CampaignList: React.FC = () => {
   const campaignsToDisplay = Array.isArray(campaigns) ? campaigns : [];
   const filtered = filterCampaigns(campaignsToDisplay, tab);
 
-  // Fetch campaigns on component mount
+  
   useEffect(() => {
     const fetchCampaignsData = async () => {
       try {
@@ -68,7 +68,7 @@ const CampaignList: React.FC = () => {
     fetchCampaignsData();
   }, [dispatch]);
 
-  // Clear error on component unmount
+  
   useEffect(() => {
     return () => {
       if (error) {
@@ -143,8 +143,8 @@ const CampaignList: React.FC = () => {
   const handleEditSave = async (campaignData?: any) => {
     if (!selectedCampaign) return;
     
-    // If campaignData is provided, update the campaign
-    // Otherwise, just refresh the list (campaign was already updated in EditCampaign component)
+    
+    
     if (campaignData) {
       try {
         await dispatch(updateCampaign({ campaignId: selectedCampaign.id, data: campaignData })).unwrap();
@@ -156,23 +156,23 @@ const CampaignList: React.FC = () => {
         toast.error("Erro ao atualizar campanha");
       }
     } else {
-      // Just refresh the list since EditCampaign already handled the update
+      
       setShowEditModal(false);
       setSelectedCampaign(null);
       await dispatch(fetchCampaigns()).unwrap();
     }
   };
 
-  // Format date for display
+  
   const formatDate = (dateString: string) => {
-    // Check if date is in YYYY-MM-DD format (from backend)
-    // If so, create Date in local timezone to avoid UTC conversion issues
+    
+    
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       const [year, month, day] = dateString.split('-').map(Number);
       const date = new Date(year, month - 1, day);
       return date.toLocaleDateString('pt-BR');
     }
-    // For other formats, use standard parsing
+    
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR');
   };
@@ -229,7 +229,7 @@ const CampaignList: React.FC = () => {
         <h2 className="text-2xl sm:text-3xl font-bold mb-1 text-gray-900 dark:text-gray-100">Todas as Campanhas</h2>
         <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm sm:text-base">Visualize e gerencie todas as campanhas da plataforma</p>
         
-        {/* Tabs */}
+        {}
         <div className="flex flex-wrap gap-2 mb-6">
           {TABS.map((t) => (
             <button
@@ -246,7 +246,7 @@ const CampaignList: React.FC = () => {
           ))}
         </div>
 
-        {/* Table for desktop, cards for mobile */}
+        {}
         <div className="bg-background rounded-xl shadow p-2 sm:p-6">
           {filtered.length === 0 ? (
             <div className="text-center py-8">
@@ -254,7 +254,7 @@ const CampaignList: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* Desktop Table */}
+              {}
               <div className="hidden md:block">
                 <table className="w-full text-left">
                   <thead>
@@ -329,11 +329,11 @@ const CampaignList: React.FC = () => {
                 </table>
               </div>
 
-              {/* Mobile Cards */}
+              {}
               <div className="md:hidden flex flex-col gap-3">
                 {filtered.map((c, i) => (
                   <div key={i} className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm p-4 flex flex-col gap-3">
-                    {/* Header with title and status */}
+                    {}
                     <div className="flex items-start justify-between gap-3">
                       <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-tight flex-1">
                         {c.title}
@@ -351,7 +351,7 @@ const CampaignList: React.FC = () => {
                       </button>
                     </div>
 
-                    {/* Status badge */}
+                    {}
                     <div className="flex items-center gap-2">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[c.status]}`}>
                         {STATUS_LABELS[c.status]}
@@ -361,7 +361,7 @@ const CampaignList: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Info grid */}
+                    {}
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div className="flex flex-col">
                         <span className="text-gray-500 dark:text-gray-400">Data</span>
@@ -377,7 +377,7 @@ const CampaignList: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Action buttons - Stack for better mobile UX */}
+                    {}
                     <div className="flex flex-col gap-2 mt-1">
                       <button
                         className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 font-medium text-sm"
@@ -410,7 +410,7 @@ const CampaignList: React.FC = () => {
           )}
         </div>
 
-        {/* Campaign Detail Modal */}
+        {}
         {isModalOpen && selectedCampaign && (
           <CampaignDetail
             campaign={selectedCampaign}
@@ -421,7 +421,7 @@ const CampaignList: React.FC = () => {
           />
         )}
 
-        {/* Edit Campaign Modal */}
+        {}
         {showEditModal && selectedCampaign && (
           <EditCampaign
             campaign={selectedCampaign}
@@ -434,7 +434,7 @@ const CampaignList: React.FC = () => {
           />
         )}
 
-        {/* Delete Confirmation Modal */}
+        {}
         {showDeleteModal && campaignToDelete && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">

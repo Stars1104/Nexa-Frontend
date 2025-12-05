@@ -119,7 +119,7 @@ const NotificationsPage = () => {
     return (
         <div className="min-h-screen bg-background">
             <div className="container mx-auto px-4 py-8 max-w-4xl">
-                {/* Header */}
+                {}
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
                         <Button
@@ -153,7 +153,7 @@ const NotificationsPage = () => {
                     </div>
                 </div>
 
-                {/* Filter Tabs */}
+                {}
                 <div className="flex gap-2 mb-6">
                     <Button
                         variant={filter === 'all' ? 'default' : 'outline'}
@@ -169,7 +169,7 @@ const NotificationsPage = () => {
                     </Button>
                 </div>
 
-                {/* Notifications List */}
+                {}
                 <div className="space-y-4">
                     {filteredNotifications.length === 0 ? (
                         <Card>

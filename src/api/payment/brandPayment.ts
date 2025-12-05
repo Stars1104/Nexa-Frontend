@@ -84,7 +84,7 @@ export interface RetryPaymentResponse {
   error?: string;
 }
 
-// Brand payment API functions
+
 export const brandPaymentApi = {
   savePaymentMethod: async (paymentData: SavePaymentMethodRequest): Promise<SavePaymentMethodResponse> => {
     try {
@@ -107,10 +107,7 @@ export const brandPaymentApi = {
     }
   },
 
-  /**
-   * Get brand's payment methods
-   * GET /api/brand-payment/methods
-   */
+  
   getPaymentMethods: async (): Promise<{ success: boolean; data?: BrandPaymentMethod[]; error?: string }> => {
     try {
       const response = await apiClient.get('/brand-payment/methods');
@@ -130,10 +127,7 @@ export const brandPaymentApi = {
     }
   },
 
-  /**
-   * Set payment method as default
-   * POST /api/brand-payment/set-default
-   */
+  
   setDefaultPaymentMethod: async (paymentMethodId: string): Promise<{ success: boolean; message?: string; error?: string }> => {
     try {
       const response = await apiClient.post('/brand-payment/set-default', {
@@ -155,10 +149,7 @@ export const brandPaymentApi = {
     }
   },
 
-  /**
-   * Delete payment method
-   * DELETE /api/brand-payment/methods
-   */
+  
   deletePaymentMethod: async (paymentMethodId: string): Promise<{ success: boolean; message?: string; error?: string }> => {
     try {
       const response = await apiClient.delete('/brand-payment/methods', {
@@ -168,7 +159,7 @@ export const brandPaymentApi = {
     } catch (error: any) {
       if (error.response) {
         const errorData = error.response.data;
-        // Extract error message from all possible locations in the error response
+        
         const errorMessage = errorData.message || errorData.error || 'Erro ao deletar método de pagamento';
         return {
           success: false,
@@ -185,10 +176,7 @@ export const brandPaymentApi = {
     }
   },
 
-  /**
-   * Process contract payment
-   * POST /api/contract-payment/process
-   */
+  
   processContractPayment: async (paymentData: ContractPaymentRequest): Promise<ContractPaymentResponse> => {
     try {
       const response = await apiClient.post('/contract-payment/process', paymentData);
@@ -210,10 +198,7 @@ export const brandPaymentApi = {
     }
   },
 
-  /**
-   * Get contract payment status
-   * GET /api/contract-payment/status?contract_id={id}
-   */
+  
   getContractPaymentStatus: async (contractId: string): Promise<{ success: boolean; data?: ContractPaymentStatus; error?: string }> => {
     try {
       const response = await apiClient.get('/contract-payment/status', {
@@ -235,10 +220,7 @@ export const brandPaymentApi = {
     }
   },
 
-  /**
-   * Retry contract payment
-   * POST /api/contract-payment/retry
-   */
+  
   retryContractPayment: async (paymentData: RetryPaymentRequest): Promise<RetryPaymentResponse> => {
     try {
       const response = await apiClient.post('/contract-payment/retry', paymentData);
@@ -260,10 +242,7 @@ export const brandPaymentApi = {
     }
   },
 
-  /**
-   * Get available payment methods for contract
-   * GET /api/contract-payment/methods
-   */
+  
   getAvailablePaymentMethods: async (): Promise<{ success: boolean; data?: BrandPaymentMethod[]; error?: string }> => {
     try {
       const response = await apiClient.get('/contract-payment/methods');
@@ -283,10 +262,7 @@ export const brandPaymentApi = {
     }
   },
 
-  /**
-   * Handle offer funding success callback
-   * POST /api/brand-payment/handle-offer-funding-success
-   */
+  
   handleOfferFundingSuccess: async (sessionId: string): Promise<{ success: boolean; data?: any; error?: string; message?: string }> => {
     try {
       const response = await apiClient.post('/brand-payment/handle-offer-funding-success', {
@@ -310,10 +286,7 @@ export const brandPaymentApi = {
     }
   },
 
-  /**
-   * Create Stripe Checkout Session for adding payment method
-   * POST /api/brand-payment/create-checkout-session
-   */
+  
   createCheckoutSession: async (): Promise<{ success: boolean; url?: string; session_id?: string; error?: string }> => {
     try {
       const response = await apiClient.post('/brand-payment/create-checkout-session');
@@ -333,10 +306,7 @@ export const brandPaymentApi = {
     }
   },
 
-  /**
-   * Handle successful Stripe Checkout Session
-   * POST /api/brand-payment/handle-checkout-success
-   */
+  
   handleCheckoutSuccess: async (sessionId: string): Promise<SavePaymentMethodResponse> => {
     try {
       const response = await apiClient.post('/brand-payment/handle-checkout-success', {
@@ -360,10 +330,7 @@ export const brandPaymentApi = {
     }
   },
 
-  /**
-   * Create Stripe Checkout Session for contract funding (escrow deposit)
-   * POST /api/contract-payment/checkout-session
-   */
+  
   createContractCheckoutSession: async (contractId: number): Promise<{ success: boolean; url?: string; session_id?: string; error?: string }> => {
     try {
       const response = await apiClient.post('/contract-payment/checkout-session', {
@@ -385,10 +352,7 @@ export const brandPaymentApi = {
     }
   },
 
-  /**
-   * Get brand's transaction history (transactions related to brand's contracts)
-   * GET /api/brand/transactions
-   */
+  
   getBrandTransactionHistory: async (
     page: number = 1,
     perPage: number = 10

@@ -15,7 +15,7 @@ export const useRoleNavigation = () => {
       case "admin":
         return "/admin";
       case "student":
-        return "/creator"; // Students are redirected to creator dashboard after verification
+        return "/creator"; 
       default:
         return "/creator";
     }
@@ -24,7 +24,7 @@ export const useRoleNavigation = () => {
   const navigateToRoleDashboard = (role?: string, options?: { replace?: boolean }) => {
     const userRole = role || user?.role;
     if (userRole) {
-      // Clean up translation artifacts before navigation to prevent errors
+      
       if (isTranslationActive()) {
         cleanupTranslationArtifacts();
       }
@@ -34,7 +34,7 @@ export const useRoleNavigation = () => {
   };
 
   const navigateToStudentVerification = () => {
-    // Clean up translation artifacts before navigation
+    
     if (isTranslationActive()) {
       cleanupTranslationArtifacts();
     }
@@ -42,8 +42,8 @@ export const useRoleNavigation = () => {
   };
 
   const navigateToSubscription = () => {
-    // Don't replace for subscription navigation to allow back button to work
-    // Navigate to creator page with subscription component active
+    
+    
     navigate("/creator?component=subscription", { replace: false });
   };
 

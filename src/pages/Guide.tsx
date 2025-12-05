@@ -44,7 +44,7 @@ function usePageSEO() {
     
     document.title = title;
     
-    // Update meta description
+    
     let metaDescription = document.querySelector('meta[name="description"]');
     if (!metaDescription) {
       metaDescription = document.createElement('meta');
@@ -53,7 +53,7 @@ function usePageSEO() {
     }
     metaDescription.setAttribute('content', description);
     
-    // Add structured data for SEO
+    
     const structuredData = {
       "@context": "https://schema.org",
       "@type": "ItemList",
@@ -73,13 +73,13 @@ function usePageSEO() {
       ]
     };
     
-    // Remove existing structured data
+    
     const existingScript = document.querySelector('script[type="application/ld+json"]');
     if (existingScript) {
       existingScript.remove();
     }
     
-    // Add new structured data
+    
     const script = document.createElement('script');
     script.type = 'application/ld+json';
     script.textContent = JSON.stringify(structuredData);
@@ -96,7 +96,7 @@ const MediaSlot = ({ step, label }: { step: Step; label: string }) => {
   const hasVideo = !!step.video_url;
   const hasScreenshots = !!step.screenshot_urls && step.screenshot_urls.length > 0;
 
-  // Default to screenshots if available, otherwise video
+  
   useEffect(() => {
     if (hasScreenshots) {
       setMediaType('screenshots');
@@ -130,7 +130,7 @@ const MediaSlot = ({ step, label }: { step: Step; label: string }) => {
 
   return (
     <div className="h-full space-y-3">
-      {/* Media Type Toggle */}
+      {}
       {hasVideo && hasScreenshots && (
         <div className="flex gap-2 justify-center">
           <Button
@@ -188,7 +188,7 @@ const MediaSlot = ({ step, label }: { step: Step; label: string }) => {
                 onError={() => setError("Failed to load screenshot")}
               />
               
-              {/* Screenshot Navigation */}
+              {}
               {step.screenshot_urls.length > 1 && (
                 <>
                   <Button
@@ -210,7 +210,7 @@ const MediaSlot = ({ step, label }: { step: Step; label: string }) => {
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                   
-                  {/* Screenshot Counter */}
+                  {}
                   <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
                     {currentScreenshot + 1} / {step.screenshot_urls.length}
                   </div>
@@ -356,7 +356,7 @@ export default function Guides() {
       <Navbar />
 
       <main className="w-full mx-auto max-w-7xl px-4 py-8 pb-16">
-        {/* Page Header */}
+        {}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold tracking-tight mb-4">
             Nexa Platform Guides

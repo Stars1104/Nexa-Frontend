@@ -10,7 +10,7 @@ interface User {
   whatsapp?: string;
   isStudent?: boolean;
   student_verified?: boolean;
-  isPremium?: boolean; // Legacy field, use has_premium instead
+  isPremium?: boolean; 
   has_premium?: boolean;
   premium_expires_at?: string;
   stripe_account_id?: string;
@@ -48,21 +48,21 @@ const initialState: AuthState = {
   isSigningUp: false,
 };
 
-// Async thunk for checking authentication status
+
 export const checkAuthStatus = createAsyncThunk(
   'auth/checkAuthStatus',
   async (_, { getState, dispatch }) => {
     const state = getState() as { auth: AuthState };
     const { token } = state.auth;
     
-    // If no token in state, check localStorage
+    
     if (!token) {
       const storedToken = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
       
       if (storedToken && storedUser) {
         try {
-          // Create authenticated client with stored token
+          
           const authenticatedClient = createAuthenticatedClient(storedToken);
           const response = await authenticatedClient.get('/user');
           
@@ -81,7 +81,7 @@ export const checkAuthStatus = createAsyncThunk(
       throw new Error('Nenhuma autenticação válida encontrada');
     }
     
-    // If token exists in state, validate it
+    
     try {
       const authenticatedClient = createAuthenticatedClient(token);
       const response = await authenticatedClient.get('/user');
@@ -113,7 +113,7 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.token = action.payload.token;
       
-      // Also store in localStorage as backup
+      
       localStorage.setItem('token', action.payload.token);
       localStorage.setItem('user', JSON.stringify(action.payload.user));
     },
@@ -121,7 +121,7 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
-    // Sign-up actions
+    
     signupStart: (state) => {
       state.isSigningUp = true;
       state.error = null;
@@ -132,7 +132,7 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.token = action.payload.token;
       
-      // Also store in localStorage as backup
+      
       localStorage.setItem('token', action.payload.token);
       localStorage.setItem('user', JSON.stringify(action.payload.user));
     },
@@ -145,34 +145,34 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       
-      // Clear localStorage as well
+      
       localStorage.removeItem('token');
       localStorage.removeItem('user');
     },
     clearError: (state) => {
       state.error = null;
     },
-    // Toggle premium status (for testing)
+    
     togglePremium: (state) => {
       if (state.user) {
         state.user.has_premium = !state.user.has_premium;
-        // Also update legacy field for backward compatibility
+        
         state.user.isPremium = state.user.has_premium;
       }
     },
-    // Temporary action to toggle admin role for testing
+    
     toggleAdminRole: (state) => {
       if (state.user) {
         state.user.role = state.user.role === 'admin' ? 'creator' : 'admin';
       }
     },
-    // Update user data (useful for refreshing user data after subscription)
+    
     updateUser: (state, action: PayloadAction<Partial<User>>) => {
       if (state.user) {
         state.user = { ...state.user, ...action.payload };
       }
     },
-    // Reset loading states (useful for clearing stuck states)
+    
     resetLoadingStates: (state) => {
       state.isLoading = false;
       state.isSigningUp = false;

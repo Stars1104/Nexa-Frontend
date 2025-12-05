@@ -16,41 +16,41 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAuthenticated, token, user } = useAppSelector((state) => state.auth);
   const location = useLocation();
 
-  // If not authenticated, no token, or no user, redirect to auth page
+  
   if (!isAuthenticated || !token || !user?.id) {
-    // Check if there's a token in localStorage that might be expired
+    
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
-      // Clear expired token
+      
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('persist:auth');
     }
-    // Store the current location so we can redirect back after login
+    
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // If user exists and role-based access is specified
+  
   if (user && allowedRoles && allowedRoles.length > 0) {
-    // Check if user's role is allowed
+    
     if (!allowedRoles.includes(user.role)) {
-      // Calculate target dashboard (fallback para creator em roles inválidas)
+      
       const defaultDashboard = getDefaultDashboard(user.role);
       const target = redirectTo || defaultDashboard;
-      // Evitar loop: se já estamos no destino, renderizar children mesmo com role inválida
+      
       if (location.pathname === target) {
         return <>{children}</>;
       }
-      // Don't use replace: true for role-based redirects to allow proper browser history
+      
       return <Navigate to={target} replace={false} />;
     }
   }
 
-  // If authenticated and role check passes (or no role check required), render the protected component
+  
   return <>{children}</>;
 };
 
-// Helper function to get default dashboard based on user role
+
 const getDefaultDashboard = (userRole: string): string => {
   switch (userRole) {
     case "creator":
@@ -60,7 +60,7 @@ const getDefaultDashboard = (userRole: string): string => {
     case "admin":
       return "/admin";
     case "student":
-      return "/creator"; // Students are redirected to creator dashboard after verification
+      return "/creator"; 
     default:
       return "/creator";
   }

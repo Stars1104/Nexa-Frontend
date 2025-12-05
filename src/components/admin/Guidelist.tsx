@@ -18,7 +18,7 @@ const NexaGuide: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch guides on component mount
+  
   useEffect(() => {
     fetchGuides();
   }, []);
@@ -27,7 +27,7 @@ const NexaGuide: React.FC = () => {
     try {
       setLoading(true);
       const data = await GetAdminGuides();
-      setGuides(data?.data || data); // Handle both paginated and non-paginated responses
+      setGuides(data?.data || data); 
       setError(null);
     } catch (err: any) {
       setError(err.message || "Failed to fetch guides");
@@ -63,7 +63,7 @@ const NexaGuide: React.FC = () => {
         title: "Guide removed", 
         description: `"${guide.title}" has been removed successfully` 
       });
-      // Refresh the guides list
+      
       fetchGuides();
     } catch (err: any) {
       toast({ 
@@ -77,12 +77,12 @@ const NexaGuide: React.FC = () => {
   const handleBrandChange = (val: string) => setBrandFilter(val === "__all__" ? "" : val);
 
   const handleGuideCreated = () => {
-    // Refresh the guides list after creating a new guide
+    
     fetchGuides();
   };
 
   const handleGuideUpdated = () => {
-    // Refresh the guides list after updating a guide
+    
     fetchGuides();
   };
 
@@ -111,18 +111,18 @@ const NexaGuide: React.FC = () => {
     );
   }
 
-  // if (error) {
-  //   return (
-  //     <main className="w-full p-6">
-  //       <div className="flex items-center justify-center h-64">
-  //         <div className="text-center">
-  //           <p className="text-red-500 mb-4">{error}</p>
-  //           <Button onClick={fetchGuides} variant="outline">Retry</Button>
-  //         </div>
-  //       </div>
-  //     </main>
-  //   );
-  // }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
   return (
     <main className="w-full p-6">
@@ -137,7 +137,7 @@ const NexaGuide: React.FC = () => {
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Guia Nexa</h1>
       </header>
 
-      {/* Filters */}
+      {}
       <section aria-label="Filters" className="mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 place-items-end">
           <div className="space-y-2 w-full">
@@ -160,7 +160,7 @@ const NexaGuide: React.FC = () => {
         </div>
       </section>
 
-      {/* Guides List */}
+      {}
       <section aria-label="Guides" className="space-y-6">
         {filteredGuides.map((guide) => (
           <GuideCard
@@ -177,14 +177,14 @@ const NexaGuide: React.FC = () => {
         )}
       </section>
 
-      {/* Create Guide Dialog */}
+      {}
       <GuideCreateDialog 
         isOpen={isCreateOpen} 
         onClose={setIsCreateOpen}
         onSuccess={handleGuideCreated}
       />
 
-      {/* Edit Guide Dialog */}
+      {}
       {selectedGuide && (
         <GuideEditDialog
           isOpen={isEditOpen}

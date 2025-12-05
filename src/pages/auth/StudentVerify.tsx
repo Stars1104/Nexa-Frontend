@@ -33,20 +33,20 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Stripe removido: tela não depende mais de Stripe para renderizar
+  
 
-  // Check if we're inside the Creator dashboard
+  
   const isInsideCreatorDashboard = location.pathname === '/creator' && setComponent;
   
-  // Check if user is already verified as a student
+  
   useEffect(() => {
     if (user?.student_verified) {
       toast.success('Você já está verificado como aluno!');
       if (isInsideCreatorDashboard) {
-        // If inside Creator dashboard, just show success message
+        
         return;
       } else {
-        // If on standalone page, redirect to dashboard
+        
         setTimeout(() => {
           navigateToRoleDashboard('creator');
         }, 2000);
@@ -56,17 +56,17 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    // Clear error when user starts typing
+    
     if (error) setError(null);
   };
 
   const handleSkip = () => {
     toast.info('Pulando verificação de aluno. Você pode verificar seu status posteriormente no dashboard.');
     if (isInsideCreatorDashboard) {
-      // If inside Creator dashboard, navigate to main dashboard
+      
       setComponent?.('Painel');
     } else {
-      // If on standalone page, redirect to dashboard
+      
       navigateToRoleDashboard('creator');
     }
   };
@@ -76,7 +76,7 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
     
     if (isSubmitting) return;
     
-    // Check if user is already verified
+    
     if (user?.student_verified) {
       toast.info('Você já está verificado como aluno!');
       if (isInsideCreatorDashboard) {
@@ -91,7 +91,7 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
     setError(null);
 
     try {
-      // Validate required fields
+      
       const requiredFields = ['username', 'email'];
       const missingFields = requiredFields.filter(field => !form[field as keyof typeof form].trim());
       
@@ -100,14 +100,14 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
         return;
       }
 
-      // Validate email format
+      
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(form.email)) {
         setError('Por favor, insira um e-mail válido.');
         return;
       }
 
-      // Registrar solicitação de verificação - requer aprovação admin
+      
       try {
         const res = await apiClient.post('/student/verify', {
           purchase_email: form.email,
@@ -115,10 +115,10 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
         });
         const data = res?.data || {};
         if (data?.success) {
-          // Solicitação registrada - sempre aguarda aprovação admin
+          
           toast.success(data?.message || 'Solicitação registrada com sucesso! Aguarde a aprovação do administrador.');
           
-          // Navegar ao dashboard
+          
           setTimeout(() => {
             if (isInsideCreatorDashboard) {
               setComponent?.('Painel');
@@ -130,7 +130,7 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
           toast.info(data?.message || 'Solicitação registrada. Nossa equipe validará seu acesso de aluno.');
         }
       } catch (e) {
-        // Handle specific errors from the try block
+        
         const errorMessage = e?.response?.data?.message || 'Erro ao verificar. Tente novamente.';
         
         if (e?.response?.status === 422) {
@@ -142,16 +142,16 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
     } catch (err: any) {
       console.error('Student verification error:', err);
       
-      // Handle axios errors
+      
       if (err.response) {
-        // Server responded with error status
+        
         const errorMessage = err.response.data?.message || err.response.data?.error || 'Erro do servidor';
         setError(errorMessage);
       } else if (err.request) {
-        // Request was made but no response received
+        
         setError('Erro de conexão. Verifique sua internet e tente novamente.');
       } else {
-        // Something else happened
+        
         setError(err.message || 'Erro ao verificar status de aluno. Tente novamente.');
       }
     } finally {
@@ -165,7 +165,7 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
     "@type": "ItemList",
   };
 
-  // Tela sempre renderiza (sem dependência de Stripe)
+  
 
   return (
     <>
@@ -204,7 +204,7 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
             </AlertDescription>
           </Alert>
 
-          {/* Success Alert for Already Verified Students */}
+          {}
           {user?.student_verified && (
             <Alert className="mb-6 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
               <AlertDescription className="text-green-600 dark:text-green-400">
@@ -213,7 +213,7 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
             </Alert>
           )}
 
-          {/* Error Alert */}
+          {}
           {error && (
             <Alert className="mb-6 border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
               <AlertDescription className="text-red-600 dark:text-red-400">
@@ -251,7 +251,7 @@ export default function StudentVerify({ setComponent }: StudentVerifyProps = {})
               disabled={isSubmitting}
             />
           </div>
-          {/* Campos de pagamento removidos */}
+          {}
           <div className="md:col-span-2 mt-4 flex flex-col sm:flex-row gap-3">
             <Button 
               type="submit" 

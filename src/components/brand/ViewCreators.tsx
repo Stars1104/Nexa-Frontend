@@ -16,12 +16,12 @@ function getInitials(name?: string) {
 function getAvatarUrl(avatarPath?: string | null): string | null {
   if (!avatarPath || avatarPath === 'null' || avatarPath.trim() === '') return null;
   
-  // If already a full URL, return as-is
+  
   if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://')) {
     return avatarPath;
   }
   
-  // Construct full URL from relative path
+  
   const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
   return `${baseUrl}${avatarPath}`;
 }
@@ -53,22 +53,22 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
       setSidebarOpen(false);
       setSelectedApp(null);
     } catch (error: any) {
-      // Check if this is a funding requirement error (object payload from thunk)
+      
       if (error && typeof error === 'object' && error.requiresFunding && error.redirectUrl) {
         const message = error.message || "Configure um método de pagamento para continuar";
         toast.info(message);
-        // Redirect to Stripe checkout session or payment page
+        
         window.location.href = error.redirectUrl;
         return;
       }
-      // Check if this is a Stripe account requirement error
+      
       if (error && typeof error === 'object' && error.requiresStripeAccount && error.redirectUrl) {
         const message = error.message || "Você precisa conectar sua conta Stripe antes de aprovar propostas";
         toast.info(message);
         window.location.href = error.redirectUrl;
         return;
       }
-      // Handle string error messages
+      
       const errorMessage = typeof error === 'string' ? error : error?.message || "Erro ao aprovar aplicação";
       toast.error(errorMessage);
     }
@@ -85,18 +85,18 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
     }
   };
 
-  // Filter applications for this campaign
+  
   const filteredApps = applications.filter(app => app.campaign_id === campaignId);
 
-  // Sidebar close handler
+  
   const closeSidebar = () => {
     setSidebarOpen(false);
-    setTimeout(() => setSelectedApp(null), 300); // Wait for animation
+    setTimeout(() => setSelectedApp(null), 300); 
   };
 
   return (
     <div className="min-h-[92vh] dark:bg-[#171717] px-2 sm:px-10 py-4 relative">
-      {/* Header */}
+      {}
       <div className="flex items-center gap-2 mb-6">
         <button className="text-gray-500 dark:text-gray-300 hover:text-pink-500 transition-colors" aria-label="Voltar para Campanhas" onClick={() => setComponent?.("Minhas campanhas")}> 
           <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -118,7 +118,7 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
           const isRejected = status === 'rejected';
           const creator = app.creator || {};
           
-          // Debug logging
+          
           if (!app.creator) {
             console.warn('Application missing creator data:', {
               appId: app.id,
@@ -134,7 +134,7 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
               className="bg-background rounded-xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-6 gap-4 border border-gray-100 dark:border-neutral-700 cursor-pointer hover:shadow-md transition"
               onClick={() => { setSelectedApp(app); setSidebarOpen(true); }}
             >
-              {/* User Info */}
+              {}
               <div className="flex items-center gap-4 w-full sm:w-auto">
                 {(() => {
                   const avatarUrl = getAvatarUrl(creator.avatar || creator.avatar_url);
@@ -144,7 +144,7 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
                       alt={creator.name || "Criador"}
                       className="w-14 h-14 rounded-full object-cover border border-gray-200 dark:border-neutral-700"
                       onError={(e) => {
-                        // Hide the image on error and show fallback
+                        
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
                         if (target.nextElementSibling) {
@@ -179,11 +179,11 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
                     </button>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-300">
-                    {/* Follower count if available */}
+                    {}
                     {creator.followers && <span>{creator.followers} seguidores</span>}
                   </div>
                   <div className="mt-2 space-y-1">
-                    {/* Application Status */}
+                    {}
                     {status === 'pending' && (
                       <span className="inline-block bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs px-3 py-1 rounded-full">Aguardando decisão</span>
                     )}
@@ -194,7 +194,7 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
                       <span className="inline-block bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-xs px-3 py-1 rounded-full">Rejeitado</span>
                     )}
                     
-                    {/* Workflow Status - Only show for approved applications */}
+                    {}
                     {status === 'approved' && app.workflow_status && (
                       <div className="flex items-center gap-2">
                         {app.workflow_status === 'first_contact_pending' && (
@@ -226,7 +226,7 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
                   </div>
                 </div>
               </div>
-              {/* Actions */}
+              {}
               <div className="flex gap-2 w-full sm:w-auto justify-end">
                 {isApproved && creator.id ? (
                   <button 
@@ -305,7 +305,7 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
         )}
       </div>
 
-      {/* Proposal Sidebar (Right) */}
+      {}
       <div
         className={`fixed top-0 right-0 h-full w-full z-50 transition-all duration-300 ${sidebarOpen ? "pointer-events-auto" : "pointer-events-none"}`}
         style={{ background: sidebarOpen ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0)" }}
@@ -325,7 +325,7 @@ const ViewCreators: React.FC<ViewCreatorsProps> = ({ setComponent, campaignId, c
                     alt={selectedApp.creator.name || "Criador"}
                     className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-neutral-700"
                     onError={(e) => {
-                      // Hide the image on error and show fallback
+                      
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
                       if (target.nextElementSibling) {

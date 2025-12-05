@@ -1,6 +1,6 @@
 import { apiClient } from '@/services/apiClient';
 
-// Types
+
 export interface Offer {
   id: number;
   title: string;
@@ -84,7 +84,7 @@ export interface Contract {
     comment?: string;
     created_at: string;
   };
-  // Review status fields
+  
   has_brand_review?: boolean;
   has_creator_review?: boolean;
   has_both_reviews?: boolean;
@@ -223,9 +223,9 @@ export interface CreateWithdrawalRequest {
   withdrawal_details: Record<string, any>;
 }
 
-// API Functions
+
 export const hiringApi = {
-  // Offers
+  
   createOffer: async (data: CreateOfferRequest): Promise<any> => {
     const response = await apiClient.post('/offers', data);
     return response.data;
@@ -281,7 +281,7 @@ export const hiringApi = {
     return response.data;
   },
 
-  // Contracts
+  
   getContracts: async (status?: string, workflowStatus?: string): Promise<{ data: { data: Contract[] } }> => {
     const params = new URLSearchParams();
     if (status) params.append('status', status);
@@ -326,7 +326,7 @@ export const hiringApi = {
     return response.data;
   },
 
-  // Reviews
+  
   createReview: async (data: CreateReviewRequest): Promise<any> => {
     const response = await apiClient.post('/reviews', data);
     return response.data;
@@ -362,7 +362,7 @@ export const hiringApi = {
     return response.data;
   },
 
-  // Creator Balance
+  
   getCreatorBalance: async (): Promise<{ data: CreatorBalance }> => {
     const response = await apiClient.get('/creator-balance');
     return response.data;
@@ -387,7 +387,7 @@ export const hiringApi = {
     return response.data;
   },
 
-  // Withdrawals
+  
   createWithdrawal: async (data: CreateWithdrawalRequest): Promise<any> => {
     const response = await apiClient.post('/freelancer/withdrawals', data);
     return response.data;
@@ -416,7 +416,7 @@ export const hiringApi = {
     return response.data;
   },
 
-  // Post-contract workflow
+  
   getContractsWaitingForReview: async (): Promise<{ data: Contract[] }> => {
     const response = await apiClient.get('/post-contract/waiting-review');
     return response.data;
@@ -436,7 +436,7 @@ export const hiringApi = {
     return response.data;
   },
 
-  // Send renewal offer after contract completion
+  
   sendRenewalOffer: async (data: {
     chat_room_id: string;
     budget?: number;

@@ -164,7 +164,7 @@ export default function GuideEmbedded({ audience }: GuideEmbeddedProps) {
 
   return (
     <div className="w-full mx-auto max-w-7xl px-4 py-8">
-      {/* Page Header */}
+      {}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold tracking-tight mb-4">
           Guias da Plataforma Nexa

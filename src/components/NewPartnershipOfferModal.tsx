@@ -80,7 +80,7 @@ export default function NewPartnershipOfferModal({
           description: "Nova oferta de parceria enviada com sucesso!",
         });
         
-        // Reset form
+        
         setFormData({
           title: "",
           description: "",

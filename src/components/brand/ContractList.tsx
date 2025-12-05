@@ -48,18 +48,18 @@ export default function ContractList() {
     loadContracts();
   }, []);
 
-  // Memoize filtered contracts to prevent unnecessary recalculations
+  
   const filteredContractsMemo = useMemo(() => {
     let filtered = [...contracts];
 
-    // Filter by status
+    
     if (statusFilter !== "all") {
       filtered = filtered.filter(
         (contract) => contract.status === statusFilter
       );
     }
 
-    // Filter by search term
+    
     if (searchTerm) {
       filtered = filtered.filter(
         (contract) =>
@@ -94,7 +94,7 @@ export default function ContractList() {
     }
   };
 
-  // filterContracts is now handled by useMemo above
+  
 
   const handleContractUpdated = () => {
     loadContracts();
@@ -111,8 +111,8 @@ export default function ContractList() {
   };
 
   const handleRenewalOffer = (contract: Contract) => {
-    // This will be handled by the parent component (ChatPage)
-    // For now, we'll just show a toast message
+    
+    
     toast({
       title: "Oferta de Renovação",
       description: "Use o chat para enviar uma nova oferta de renovação.",
@@ -420,8 +420,8 @@ export default function ContractList() {
                           key={contract.id}
                           className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
                           onClick={() => {
-                            // This will be handled by the parent component
-                            // For now, just show a message
+                            
+                            
                             toast({
                               title: "Funcionalidade em Desenvolvimento",
                               description: "A gestão de materiais de entrega será implementada em breve.",
@@ -457,7 +457,7 @@ export default function ContractList() {
         </CardContent>
       </Card>
 
-      {/* Payment Modal */}
+      {}
       {selectedContract && (
         <PaymentModal
           isOpen={showPaymentModal}
@@ -470,7 +470,7 @@ export default function ContractList() {
         />
       )}
 
-      {/* Review Modal */}
+      {}
       {selectedContract && (
         <ReviewModal
           isOpen={showReviewModal}
